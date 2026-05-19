@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# regenerable raw downloads (script 05a rebuilds these)
+data/longhistory/raw/
+
+# local tooling
+bin/
+
+# never publish: broker / strategy data does not belong in this repo
+*fxpro_forex_m5*
+FxPro_M5_*.csv

@@ -1,0 +1,1229 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LTCMA 2026 — Full Report</title>
+<link rel="stylesheet" href="style.css"></head><body>
+<header><div class="wrap"><h1>LTCMA 2026 — Full Report</h1>
+<p class="sub"><a href="index.html">&larr; back to dashboard</a></p></div></header>
+<main class="wrap report"><h1>Long-Term Capital Market Assumptions — 2026 Edition</h1>
+<p><strong>A proprietary 12-year forward outlook for global asset classes</strong></p>
+<ul>
+<li><strong>As-of date:</strong> 18 May 2026</li>
+<li><strong>Base currency:</strong> USD</li>
+<li><strong>Horizon:</strong> 12 years (midpoint of a 10–15-year window)</li>
+<li><strong>Universe:</strong> 24 asset classes spanning global equities, fixed income, and real assets</li>
+<li><strong>Engine:</strong> building-block returns + Ledoit-Wolf shrinkage + regime-switching GPU Monte Carlo</li>
+<li><strong>Data:</strong> free public sources — Yahoo Finance, FRED, Damodaran (1928+),
+  Shiller (1871+), Ken French (1990+), Siblis Research, the GPR and EPU
+  uncertainty indices, central banks</li>
+</ul>
+<blockquote>
+<p>This document is the <em>strategic</em> layer (Step 1) of a three-step allocation
+process: (1) LTCMA 10–15-year assumptions → (2) normalize to a 3–5-year
+cycle-aware forecast → (3) overlay current macro indicators. Reviewed annually.</p>
+</blockquote>
+<hr />
+<h2>1. Executive Summary</h2>
+<p>After a long US-led bull market, <strong>the starting point for the next decade is one
+of extreme valuation dispersion.</strong> The US trades at a CAPE of ~35 and Japan ~29,
+while Mexico, Brazil, and China trade at 12–18× earnings. That gap drives four
+strategic conclusions:</p>
+<ol>
+<li>
+<p><strong>US large-cap equity has the lowest expected return of any equity market
+   in the universe (~6.6% base case)</strong> — and the <em>highest</em> sensitivity to the
+   valuation assumption. A 2.4-percentage-point swing separates the optimistic and
+   pessimistic scenarios. Owning US equity at today's multiple is, mathematically,
+   a bet that rich valuations persist.</p>
+</li>
+<li>
+<p><strong>Emerging and Latin American equity offer the highest expected returns
+   (~8.0–8.8%)</strong> and the <em>smallest</em> valuation bet — their return is carried by
+   income and growth, not multiple expansion.</p>
+</li>
+<li>
+<p><strong>The richest fixed-income edge is in EM local and USD sovereign debt.</strong>
+   Mexican local government bonds offer ~6.3% in USD at one of the best downside
+   profiles in the universe; EM USD sovereigns ~6.0%. Both beat US investment-grade
+   and high-yield credit, which sit at multi-year-tight spreads.</p>
+</li>
+<li>
+<p><strong>Bonds still diversify, but less reliably than the pre-2021 era.</strong> The
+   trailing stock/long-Treasury correlation is ~0.00. Gold (0.12 vs US equity)
+   and the Treasury/commodity pairing (−0.35) now do more genuine diversification
+   work than nominal bonds alone.</p>
+</li>
+</ol>
+<p><strong>Two cross-checks against the live market</strong> sharpen the picture:</p>
+<ul>
+<li><strong>What's priced in (Section 4):</strong> the Treasury curve says the market expects
+  <strong>no further rate cuts</strong> — short-rate forwards rise, not fall. Inflation
+  expectations (2.5%) sit right on the LTCMA assumption. Credit is priced for
+  perfection. The LTCMA's <em>active bets</em> are exactly where it diverges from this.</li>
+<li><strong>News and regime risk (Section 7):</strong> geopolitical and policy uncertainty
+  (GPR, EPU indices) are <strong>elevated, and the market is currently in a "stress"
+  regime.</strong> Quantified, that history shows stress periods amplify volatility
+  (1.2–2.2×) and cross-correlations (0.66→0.74) — but, tellingly, did <em>not</em>
+  reliably depress returns over 2013–2026.</li>
+</ul>
+<p><strong>Headline expected returns (USD, 12-year, base case):</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Point estimate</th>
+<th>Simulated 12y median</th>
+<th>Volatility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>US large-cap equity</td>
+<td>6.6%</td>
+<td>5.7%</td>
+<td>13.6%</td>
+</tr>
+<tr>
+<td>EM equity</td>
+<td>8.0%</td>
+<td>6.4%</td>
+<td>18.8%</td>
+</tr>
+<tr>
+<td>Brazil / Mexico equity</td>
+<td>8.8% / 8.0%</td>
+<td>4.1% / 5.7%</td>
+<td>32.7% / 22.4%</td>
+</tr>
+<tr>
+<td>US Treasury / IG credit</td>
+<td>4.5% – 5.0%</td>
+<td>4.2% – 4.7%</td>
+<td>7.6% – 8.0%</td>
+</tr>
+<tr>
+<td>EM USD sovereign / Mexican local govt</td>
+<td>6.0% / 6.3%</td>
+<td>5.5% / 5.7%</td>
+<td>9.9% / 11.3%</td>
+</tr>
+<tr>
+<td>Cash (US T-bills)</td>
+<td>3.3%</td>
+<td>3.2%</td>
+<td>3.4%</td>
+</tr>
+</tbody>
+</table>
+<p>(Simulated medians sit below point estimates by design — the volatility drag on
+compounded returns. See Section 7.)</p>
+<hr />
+<h2>2. Methodology</h2>
+<h3>2.1 Building-block framework</h3>
+<p>Every serious capital-market-assumptions publisher — J.P. Morgan, BlackRock,
+Vanguard, Northern Trust, GMO, Research Affiliates, AQR — uses the same
+<em>building-block</em> skeleton. Expected return is decomposed into observable,
+defensible components rather than extrapolated from past performance.</p>
+<p><strong>Equities</strong> (return expressed directly in USD):</p>
+<pre><code>ER = dividend yield + net buyback yield + real EPS growth
+     + US inflation + λ × valuation reversion
+</code></pre>
+<p>The <em>relative-PPP assumption</em> lets us anchor on <strong>US</strong> inflation: a foreign
+market's local inflation is, over a long horizon, broadly offset by depreciation
+of its currency against the dollar.</p>
+<p><strong>Fixed income:</strong> <code>ER = starting yield + roll − expected credit loss ± normalization</code>,
+where expected credit loss = default rate × (1 − recovery rate).</p>
+<p><strong>Currencies:</strong> purchasing-power parity + real-interest-rate differential.</p>
+<h3>2.2 The valuation-reversion dial (λ) — a multi-firm synthesis</h3>
+<p>Firms agree on the skeleton; they disagree on <em>how hard valuations mean-revert.</em>
+This model exposes that choice as one parameter, λ:</p>
+<table>
+<thead>
+<tr>
+<th>λ</th>
+<th>Meaning</th>
+<th>Closest to the house view of</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0.0</strong></td>
+<td>No reversion — today's multiples persist</td>
+<td>Momentum / regime views (Bridgewater-style)</td>
+</tr>
+<tr>
+<td><strong>0.5</strong></td>
+<td>Partial normalization (<strong>base case</strong>)</td>
+<td>J.P. Morgan, BlackRock, Vanguard, Northern Trust</td>
+</tr>
+<tr>
+<td><strong>1.0</strong></td>
+<td>Full reversion to fair value</td>
+<td>GMO, Research Affiliates, AQR</td>
+</tr>
+</tbody>
+</table>
+<p>Annualized reversion is <code>(fair multiple / current multiple)^(1/H) − 1</code>. The
+spread across λ is itself a signal — the <strong>"valuation bet"</strong> column.</p>
+<p><strong>The fair-value anchor is data-driven.</strong> Shiller's 150-year series puts the US
+CAPE at a 1990+ <strong>median of 26.0</strong> — exactly the anchor used here.</p>
+<h3>2.3 Risk model — shrinkage and long history</h3>
+<p>Volatility blends a trailing-window estimate with multi-decade history (Shiller
+1871+, Ken French 1990+, Damodaran 1928+), plus <strong>25 years of intraday FX history</strong>
+(FxPro M5 data aggregated to monthly — EURUSD/USDJPY since 2000, USDMXN since
+2007). The covariance matrix uses <strong>Ledoit-Wolf shrinkage</strong> — well-conditioned
+and positive semi-definite, a requirement for the simulation engine.</p>
+<h3>2.4 Priced-in indicators</h3>
+<p>Markets continuously quote their own expectations. Section 4 extracts them —
+the rate path implied by Treasury forwards, inflation from breakevens, risk from
+VIX and credit spreads — and contrasts each with the LTCMA. Where they diverge,
+the LTCMA is making an explicit, identifiable active bet.</p>
+<h3>2.5 Quantifying news and market regimes</h3>
+<p>Discretionary news — a tariff tweet, a Fed-chair change, a strike on Iran —
+cannot be turned into a defensible number tweet-by-tweet. The rigorous approach,
+and the one used here, is <strong>established text-based uncertainty indices</strong>:</p>
+<ul>
+<li><strong>GPR</strong> — Geopolitical Risk index (Caldara-Iacoviello), built from newspaper
+  text; spikes on wars and military escalation.</li>
+<li><strong>EPU</strong> — Economic Policy Uncertainty (Baker-Bloom-Davis); spikes on
+  Fed-chair uncertainty, tariff conflict, fiscal standoffs.</li>
+</ul>
+<p>These quantify the <em>aggregate</em> of the news flow. They are used to classify
+history into <strong>calm</strong> and <strong>stress</strong> regimes (Section 7), which then drive the
+simulation — so "the news" enters the model as regime probabilities and
+regime-specific risk, not as ad-hoc adjustments.</p>
+<h3>2.6 Regime-switching Monte Carlo engine</h3>
+<p>A GPU Monte Carlo engine simulates <strong>100,000 monthly multi-asset paths</strong> over the
+12-year horizon. It is <strong>two-regime Markov-switching</strong> (calm/stress, calibrated
+from the news indices) with <strong>Student-t innovations</strong> (fat tails), and it
+<strong>starts in the stress regime</strong> to reflect today's elevated-uncertainty reading.
+It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
+<em>distributions</em> — percentiles, probability of loss, and conditional tail loss
+(CVaR) — for every asset and portfolio.</p>
+<h3>2.7 Consensus and historical cross-checks</h3>
+<ul>
+<li><strong>Forward consensus:</strong> 2026 published LTCMAs put US large-cap equity at 5–7.6%
+  and US aggregate bonds at 4.1–4.8%. This model's base case sits inside both.</li>
+<li><strong>Historical realized (Damodaran, 1928–2025):</strong> US large-cap returned 10.0%
+  annualized, 10-year Treasuries 4.5%, T-bills 3.4%. The forward US equity number
+  is deliberately below its history — the starting CAPE (35) is far above the
+  historical norm.</li>
+</ul>
+<hr />
+<h2>3. Macro Backdrop &amp; Fundamentals Grid</h2>
+<table>
+<thead>
+<tr>
+<th>Market</th>
+<th>Policy rate</th>
+<th>10Y nominal</th>
+<th>10Y real*</th>
+<th>Inflation</th>
+<th>Trend real GDP</th>
+<th>Equity valuation</th>
+<th>Damodaran ERP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>US</strong></td>
+<td>~3.6%</td>
+<td>4.59%</td>
+<td>~1.9%</td>
+<td>~2.7%</td>
+<td>~1.9%</td>
+<td>CAPE 34.7 — <strong>rich</strong></td>
+<td>4.46%</td>
+</tr>
+<tr>
+<td><strong>Mexico</strong></td>
+<td>6.50%</td>
+<td>8.88%</td>
+<td>~4.4%</td>
+<td>4.45%</td>
+<td>~2.0%</td>
+<td>P/E 13.0 — <strong>cheap</strong></td>
+<td>6.69%</td>
+</tr>
+<tr>
+<td><strong>Brazil</strong></td>
+<td>14.50%</td>
+<td>~13.5%</td>
+<td>~9.0%</td>
+<td>~4.5%</td>
+<td>~2.0%</td>
+<td>P/E 11.8 — <strong>cheap</strong></td>
+<td>7.47%</td>
+</tr>
+<tr>
+<td><strong>China</strong></td>
+<td>~3.0% (LPR)</td>
+<td>~1.8%</td>
+<td>~1.3%</td>
+<td>~0.5%</td>
+<td>~4.0%</td>
+<td>CAPE 17.7 — <strong>cheap</strong></td>
+<td>5.14%</td>
+</tr>
+<tr>
+<td><strong>Japan</strong></td>
+<td>~0.75%</td>
+<td>2.52%</td>
+<td>~0.0%</td>
+<td>~2.5%</td>
+<td>~0.7%</td>
+<td>CAPE 29.4 — <strong>rich</strong></td>
+<td>5.14%</td>
+</tr>
+<tr>
+<td><strong>UK</strong></td>
+<td>~3.9%</td>
+<td>4.82%</td>
+<td>~1.8%</td>
+<td>~3.0%</td>
+<td>~1.3%</td>
+<td>CAPE 20.2 — <strong>fair</strong></td>
+<td>5.01%</td>
+</tr>
+<tr>
+<td><strong>France</strong></td>
+<td>~2.0% (ECB)</td>
+<td>3.68%</td>
+<td>~1.9%</td>
+<td>~1.8%</td>
+<td>~1.2%</td>
+<td>CAPE ~21 — <strong>fair</strong></td>
+<td>5.01%</td>
+</tr>
+</tbody>
+</table>
+<p>*Real yield = 10Y nominal − current inflation (approximate).</p>
+<p><strong>What the grid says:</strong> valuation is bimodal — the US and Japan are expensive,
+EM/LatAm and China are cheap, with only the UK and France in between. Real yields
+favor Latin America massively (Mexico ~4.4%, Brazil ~9%, vs US ~1.9%). Rate
+<em>direction</em> is no longer a tailwind anywhere — carry, not duration, is where the
+return is. China is the contrarian case: cheap and still growing ~4%, but
+deflation and policy risk are what the discount prices.</p>
+<p><img alt="Valuation dispersion across equity markets" src="figures/fig_valuation.png" /></p>
+<hr />
+<h2>4. Priced-In Indicators</h2>
+<p>A capital-market assumption is only <em>active</em> where it disagrees with what the
+market already expects. This section extracts the market's own forecasts.</p>
+<h3>4.1 Priced-in policy-rate path — the headline</h3>
+<p>The Treasury curve, read as implied forward rates, reveals the market's expected
+path of short rates:</p>
+<table>
+<thead>
+<tr>
+<th>Period</th>
+<th>Implied avg short rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Current fed funds (effective)</td>
+<td>3.63%</td>
+</tr>
+<tr>
+<td>Next 12 months (1Y Treasury)</td>
+<td>3.82%</td>
+</tr>
+<tr>
+<td>1–2 years forward</td>
+<td>4.36%</td>
+</tr>
+<tr>
+<td>2–3 years forward</td>
+<td>4.24%</td>
+</tr>
+<tr>
+<td>3–5 years forward</td>
+<td>4.44%</td>
+</tr>
+<tr>
+<td>5–10 years forward</td>
+<td>~4.9%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The market is pricing zero further rate cuts.</strong> Forward short rates <em>rise</em>, not
+fall — the curve says the Fed's easing cycle is over and the next move is as
+likely up as down. This matters: despite a steady "central banks are easing"
+narrative, anyone positioning for a rate-cut tailwind is fighting the curve. The
+LTCMA's cash assumption (3.3%, assuming a drift toward a ~3.0–3.3% neutral rate)
+is <em>slightly below</em> what the market prices — a small, deliberate divergence.</p>
+<p><img alt="Priced-in rate path: spot Treasury curve vs implied forwards" src="figures/fig_priced_in.png" /></p>
+<h3>4.2 Priced-in inflation, risk, and the dashboard</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>What the market prices</th>
+<th>LTCMA assumption</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rate path</strong></td>
+<td>No cuts; 1–2y forward 4.4%</td>
+<td>Cash 3.3%</td>
+<td>Market more hawkish than the LTCMA's neutral-rate drift</td>
+</tr>
+<tr>
+<td><strong>Long-run inflation</strong></td>
+<td>10y breakeven 2.48%, 5y5y forward 2.27%</td>
+<td>2.40%</td>
+<td><strong>Aligned</strong> — LTCMA sits mid-range</td>
+</tr>
+<tr>
+<td><strong>US credit risk</strong></td>
+<td>HY OAS 2.80% (~14th percentile — very tight)</td>
+<td>HY 5.0%, tight-spread drag applied</td>
+<td><strong>Agreement</strong> — credit priced for perfection; LTCMA already cautious</td>
+</tr>
+<tr>
+<td><strong>Equity volatility</strong></td>
+<td>VIX 18.4 (~historical median)</td>
+<td>Equity vols 13–33%</td>
+<td>Market calm; no near-term stress priced</td>
+</tr>
+<tr>
+<td><strong>Recession</strong></td>
+<td>Yield curve 10Y–3M +0.93% (positive)</td>
+<td>n/a</td>
+<td>No recession priced in</td>
+</tr>
+<tr>
+<td><strong>Policy uncertainty</strong></td>
+<td>EPU 212 (baseline ~100 — elevated)</td>
+<td>n/a</td>
+<td><strong>Complacency divergence</strong> — see below</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The complacency divergence.</strong> Policy uncertainty (EPU) is elevated at ~212
+while equity volatility (VIX) sits near its historical median. The market is
+treating heavy policy noise — a Fed-chair transition, tariff conflict, the Gulf
+situation — as signal-free. Either the noise resolves benignly (the 2013–2026
+pattern) or this gap closes through a volatility spike. The regime engine in
+Section 7 is built precisely to price that asymmetry.</p>
+<hr />
+<h2>5. Expected Returns</h2>
+<h3>5.1 Full table (USD, 12-year)</h3>
+<table>
+<thead>
+<tr>
+<th>Asset class</th>
+<th>Type</th>
+<th>ER λ=0</th>
+<th><strong>ER base (λ=0.5)</strong></th>
+<th>ER λ=1</th>
+<th>Volatility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>US Large Cap</td>
+<td>Equity</td>
+<td>7.8%</td>
+<td><strong>6.6%</strong></td>
+<td>5.4%</td>
+<td>13.6%</td>
+</tr>
+<tr>
+<td>US Small Cap</td>
+<td>Equity</td>
+<td>6.7%</td>
+<td><strong>6.5%</strong></td>
+<td>6.3%</td>
+<td>19.6%</td>
+</tr>
+<tr>
+<td>Mexico Equity</td>
+<td>Equity</td>
+<td>7.4%</td>
+<td><strong>8.0%</strong></td>
+<td>8.6%</td>
+<td>22.4%</td>
+</tr>
+<tr>
+<td>Brazil Equity</td>
+<td>Equity</td>
+<td>8.9%</td>
+<td><strong>8.8%</strong></td>
+<td>8.7%</td>
+<td>32.7%</td>
+</tr>
+<tr>
+<td>China Equity</td>
+<td>Equity</td>
+<td>8.1%</td>
+<td><strong>7.4%</strong></td>
+<td>6.7%</td>
+<td>23.1%</td>
+</tr>
+<tr>
+<td>Japan Equity</td>
+<td>Equity</td>
+<td>7.1%</td>
+<td><strong>6.4%</strong></td>
+<td>5.8%</td>
+<td>16.7%</td>
+</tr>
+<tr>
+<td>UK Equity</td>
+<td>Equity</td>
+<td>8.0%</td>
+<td><strong>7.0%</strong></td>
+<td>6.1%</td>
+<td>16.6%</td>
+</tr>
+<tr>
+<td>France Equity</td>
+<td>Equity</td>
+<td>7.4%</td>
+<td><strong>7.2%</strong></td>
+<td>7.0%</td>
+<td>17.7%</td>
+</tr>
+<tr>
+<td>EM Equity (broad)</td>
+<td>Equity</td>
+<td>8.0%</td>
+<td><strong>8.0%</strong></td>
+<td>8.0%</td>
+<td>18.8%</td>
+</tr>
+<tr>
+<td>DM ex-US Equity (broad)</td>
+<td>Equity</td>
+<td>7.5%</td>
+<td><strong>7.7%</strong></td>
+<td>8.0%</td>
+<td>15.7%</td>
+</tr>
+<tr>
+<td>US Cash / T-Bills</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>3.3%</strong></td>
+<td>—</td>
+<td>3.4%</td>
+</tr>
+<tr>
+<td>US Treasury Intermediate</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>4.5%</strong></td>
+<td>—</td>
+<td>7.6%</td>
+</tr>
+<tr>
+<td>US Treasury Long</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>4.8%</strong></td>
+<td>—</td>
+<td>15.2%</td>
+</tr>
+<tr>
+<td>US TIPS</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>4.5%</strong></td>
+<td>—</td>
+<td>6.2%</td>
+</tr>
+<tr>
+<td>US IG Corporate</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>5.0%</strong></td>
+<td>—</td>
+<td>8.0%</td>
+</tr>
+<tr>
+<td>US High Yield</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>5.0%</strong></td>
+<td>—</td>
+<td>7.9%</td>
+</tr>
+<tr>
+<td>EM USD Sovereign</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>6.0%</strong></td>
+<td>—</td>
+<td>9.9%</td>
+</tr>
+<tr>
+<td>EM Local Debt</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>4.8%</strong></td>
+<td>—</td>
+<td>11.3%</td>
+</tr>
+<tr>
+<td>Mexico Govt (local, Mbonos)</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>6.3%</strong></td>
+<td>—</td>
+<td>11.3%</td>
+</tr>
+<tr>
+<td>Global Aggregate ex-US (hedged)</td>
+<td>Fixed Income</td>
+<td>—</td>
+<td><strong>3.8%</strong></td>
+<td>—</td>
+<td>5.9%</td>
+</tr>
+<tr>
+<td>US REITs</td>
+<td>Real Asset</td>
+<td>—</td>
+<td><strong>6.3%</strong></td>
+<td>—</td>
+<td>17.6%</td>
+</tr>
+<tr>
+<td>Global REITs ex-US</td>
+<td>Real Asset</td>
+<td>—</td>
+<td><strong>6.4%</strong></td>
+<td>—</td>
+<td>16.5%</td>
+</tr>
+<tr>
+<td>Commodities (broad)</td>
+<td>Real Asset</td>
+<td>—</td>
+<td><strong>3.5%</strong></td>
+<td>—</td>
+<td>17.2%</td>
+</tr>
+<tr>
+<td>Gold</td>
+<td>Real Asset</td>
+<td>—</td>
+<td><strong>3.3%</strong></td>
+<td>—</td>
+<td>18.6%</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Risk/return map of the 24-asset universe" src="figures/fig_return_risk.png" /></p>
+<h3>5.2 Equity building-block decomposition (base case, λ=0.5)</h3>
+<table>
+<thead>
+<tr>
+<th>Market</th>
+<th>Dividend</th>
+<th>Buyback</th>
+<th>Real EPS growth</th>
+<th>US inflation</th>
+<th>Valuation reversion</th>
+<th>= ER</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>US Large Cap</td>
+<td>1.2%</td>
+<td>1.7%</td>
+<td>2.5%</td>
+<td>2.4%</td>
+<td>−1.2%</td>
+<td>6.6%</td>
+</tr>
+<tr>
+<td>US Small Cap</td>
+<td>1.3%</td>
+<td>0.5%</td>
+<td>2.5%</td>
+<td>2.4%</td>
+<td>−0.2%</td>
+<td>6.5%</td>
+</tr>
+<tr>
+<td>Mexico</td>
+<td>3.2%</td>
+<td>0.0%</td>
+<td>1.8%</td>
+<td>2.4%</td>
+<td>+0.6%</td>
+<td>8.0%</td>
+</tr>
+<tr>
+<td>Brazil</td>
+<td>4.5%</td>
+<td>0.0%</td>
+<td>2.0%</td>
+<td>2.4%</td>
+<td>−0.1%</td>
+<td>8.8%</td>
+</tr>
+<tr>
+<td>China</td>
+<td>2.2%</td>
+<td>0.5%</td>
+<td>3.0%</td>
+<td>2.4%</td>
+<td>−0.7%</td>
+<td>7.4%</td>
+</tr>
+<tr>
+<td>Japan</td>
+<td>2.2%</td>
+<td>1.0%</td>
+<td>1.5%</td>
+<td>2.4%</td>
+<td>−0.7%</td>
+<td>6.4%</td>
+</tr>
+<tr>
+<td>UK</td>
+<td>3.8%</td>
+<td>0.5%</td>
+<td>1.3%</td>
+<td>2.4%</td>
+<td>−1.0%</td>
+<td>7.0%</td>
+</tr>
+<tr>
+<td>France</td>
+<td>3.0%</td>
+<td>0.5%</td>
+<td>1.5%</td>
+<td>2.4%</td>
+<td>−0.2%</td>
+<td>7.2%</td>
+</tr>
+<tr>
+<td>EM (broad)</td>
+<td>2.8%</td>
+<td>0.0%</td>
+<td>2.8%</td>
+<td>2.4%</td>
+<td>0.0%</td>
+<td>8.0%</td>
+</tr>
+<tr>
+<td>DM ex-US (broad)</td>
+<td>3.2%</td>
+<td>0.4%</td>
+<td>1.5%</td>
+<td>2.4%</td>
+<td>+0.2%</td>
+<td>7.7%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>US equity's return is built on growth and buybacks fighting a valuation
+headwind; EM/LatAm's return is built on income</strong> — a more reliable foundation.</p>
+<p><img alt="Equity expected-return building blocks" src="figures/fig_building_blocks.png" /></p>
+<hr />
+<h2>6. Risk — Volatility &amp; Correlation</h2>
+<p>Volatility blends a trailing window with multi-decade history; the covariance
+matrix is Ledoit-Wolf shrunk and positive semi-definite.</p>
+<h3>6.1 Selected correlation matrix (full-sample)</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>US LC</th>
+<th>EM Eq</th>
+<th>Mexico</th>
+<th>Japan</th>
+<th>DM exUS</th>
+<th>US Treas Long</th>
+<th>US HY</th>
+<th>EM USD Sov</th>
+<th>Gold</th>
+<th>Commod</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>US Large Cap</strong></td>
+<td>1.00</td>
+<td>0.71</td>
+<td>0.61</td>
+<td>0.69</td>
+<td>0.83</td>
+<td>−0.01</td>
+<td>0.79</td>
+<td>0.66</td>
+<td>0.12</td>
+<td>0.41</td>
+</tr>
+<tr>
+<td><strong>EM Equity</strong></td>
+<td>0.71</td>
+<td>1.00</td>
+<td>0.67</td>
+<td>0.70</td>
+<td>0.83</td>
+<td>0.00</td>
+<td>0.70</td>
+<td>0.72</td>
+<td>0.38</td>
+<td>0.49</td>
+</tr>
+<tr>
+<td><strong>Mexico Equity</strong></td>
+<td>0.61</td>
+<td>0.67</td>
+<td>1.00</td>
+<td>0.58</td>
+<td>0.73</td>
+<td>−0.04</td>
+<td>0.66</td>
+<td>0.65</td>
+<td>0.27</td>
+<td>0.44</td>
+</tr>
+<tr>
+<td><strong>Japan Equity</strong></td>
+<td>0.69</td>
+<td>0.70</td>
+<td>0.58</td>
+<td>1.00</td>
+<td>0.83</td>
+<td>0.03</td>
+<td>0.61</td>
+<td>0.58</td>
+<td>0.13</td>
+<td>0.31</td>
+</tr>
+<tr>
+<td><strong>US Treasury Long</strong></td>
+<td>−0.01</td>
+<td>0.00</td>
+<td>−0.04</td>
+<td>0.03</td>
+<td>−0.01</td>
+<td>1.00</td>
+<td>0.13</td>
+<td>0.36</td>
+<td>0.27</td>
+<td>−0.35</td>
+</tr>
+<tr>
+<td><strong>US High Yield</strong></td>
+<td>0.79</td>
+<td>0.70</td>
+<td>0.66</td>
+<td>0.61</td>
+<td>0.78</td>
+<td>0.13</td>
+<td>1.00</td>
+<td>0.81</td>
+<td>0.27</td>
+<td>0.45</td>
+</tr>
+<tr>
+<td><strong>Gold</strong></td>
+<td>0.12</td>
+<td>0.38</td>
+<td>0.27</td>
+<td>0.13</td>
+<td>0.26</td>
+<td>0.27</td>
+<td>0.27</td>
+<td>0.37</td>
+<td>1.00</td>
+<td>0.22</td>
+</tr>
+<tr>
+<td><strong>Commodities</strong></td>
+<td>0.41</td>
+<td>0.49</td>
+<td>0.44</td>
+<td>0.31</td>
+<td>0.46</td>
+<td>−0.35</td>
+<td>0.45</td>
+<td>0.33</td>
+<td>0.22</td>
+<td>1.00</td>
+</tr>
+</tbody>
+</table>
+<h3>6.2 What the risk picture tells us</h3>
+<ul>
+<li><strong>Equities are highly correlated (0.6–0.83).</strong> Geographic diversification
+  reduces single-country risk but little systemic drawdown risk.</li>
+<li><strong>Long Treasuries are the cleanest equity diversifier on paper (≈0.00)</strong> — but
+  regime-dependent (Section 7); the average hides post-2021 positive-correlation
+  episodes.</li>
+<li><strong>Gold is a genuine diversifier</strong> (0.12 vs US equity) and earns its place
+  despite a modest 3.3% return.</li>
+<li><strong>High yield is equity in disguise</strong> (0.79 correlation with US equity).</li>
+<li><strong>The Treasury/commodity pair (−0.35)</strong> is the strongest natural hedge.</li>
+</ul>
+<p><img alt="Asset correlation matrix (Ledoit-Wolf shrunk)" src="figures/fig_correlation.png" /></p>
+<hr />
+<h2>7. News, Regimes &amp; Monte Carlo Simulation</h2>
+<h3>7.1 Quantifying the news</h3>
+<p>Geopolitical and policy events enter the model through two text-based indices
+(see 2.5): <strong>GPR</strong> (geopolitical risk) and <strong>EPU</strong> (economic policy uncertainty).
+Both are currently elevated — GPR ~231 and EPU ~212 against a ~100 baseline,
+reflecting the Gulf situation, tariff conflict, and the Fed-chair transition.</p>
+<p>History (2013–2026) is classified into <strong>calm</strong> and <strong>stress</strong> regimes — a stress
+month being one in the top third of a combined GPR+EPU score. <strong>34% of months
+were stress months; as of May 2026 the market is <em>in</em> a stress regime.</strong></p>
+<p><img alt="GPR and EPU uncertainty indices with stress months shaded" src="figures/fig_regime_timeline.png" /></p>
+<h3>7.2 What stress regimes do — and don't do</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior in stress months</th>
+<th>Finding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Volatility</strong></td>
+<td>Amplifies 1.2–2.2× (US equity 1.6×, high yield 2.1×, EM sovereign 2.2×; <strong>gold least affected at 1.2×</strong>)</td>
+</tr>
+<tr>
+<td><strong>Correlation</strong></td>
+<td>Equity cross-correlation rises 0.66 → 0.74 — diversification weakens just when it is needed</td>
+</tr>
+<tr>
+<td><strong>Persistence</strong></td>
+<td>Stress regimes last ~5.7 months on average (Markov: stress→stress 0.82)</td>
+</tr>
+<tr>
+<td><strong>Returns</strong></td>
+<td><strong>No reliable drawdown.</strong> Over 2013–2026, news-stress months did <em>not</em> systematically post lower returns — markets repeatedly "climbed the wall of worry"</td>
+</tr>
+</tbody>
+</table>
+<p>This last point is the honest, important finding. <strong>Elevated geopolitical and
+policy uncertainty is reliably a <em>volatility</em> event, not reliably a <em>return</em>
+event.</strong> Accordingly the simulation amplifies risk (volatility, correlation, fat
+tails) in the stress regime but does <em>not</em> impose a speculative mean drawdown —
+that would overfit a benign 13-year sample. Severe downside is instead captured
+two honest ways: through fat tails and regime clustering in the simulation, and
+through an explicit deterministic scenario (7.5).</p>
+<p><img alt="Regime volatility amplification — peso most sensitive" src="figures/fig_regime_amp.png" /></p>
+<h3>7.3 The simulation engine</h3>
+<p>100,000 paths, monthly steps over 12 years, two-regime Markov-switching with
+Student-t fat tails, <strong>starting in the stress regime</strong>. The engine ran on the
+RTX 4060 in ~15 seconds.</p>
+<h3>7.4 Simulated 12-year outcomes — portfolios</h3>
+<table>
+<thead>
+<tr>
+<th>Portfolio</th>
+<th>5th pct</th>
+<th><strong>Median</strong></th>
+<th>95th pct</th>
+<th>Mean</th>
+<th>CVaR (worst-5% avg)</th>
+<th>P(loss)</th>
+<th>P(&lt; inflation)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conservative 30/70</td>
+<td>1.7%</td>
+<td><strong>5.0%</strong></td>
+<td>8.5%</td>
+<td>5.0%</td>
+<td>+0.8%</td>
+<td>1%</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Moderate 60/40</td>
+<td>1.1%</td>
+<td><strong>5.7%</strong></td>
+<td>10.6%</td>
+<td>5.8%</td>
+<td>−0.1%</td>
+<td>2%</td>
+<td>12%</td>
+</tr>
+<tr>
+<td>Growth 90/10</td>
+<td>0.2%</td>
+<td><strong>6.2%</strong></td>
+<td>12.6%</td>
+<td>6.3%</td>
+<td>−1.4%</td>
+<td>5%</td>
+<td>15%</td>
+</tr>
+<tr>
+<td><strong>Edge-Tilted (moderate risk)</strong></td>
+<td><strong>0.7%</strong></td>
+<td><strong>5.8%</strong></td>
+<td><strong>11.2%</strong></td>
+<td><strong>5.9%</strong></td>
+<td><strong>−0.6%</strong></td>
+<td><strong>3%</strong></td>
+<td><strong>14%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>CVaR</strong> is the average annualized return in the worst 5% of paths — the genuine
+tail. The gap between the 5th percentile and CVaR is the fat tail at work: in a
+genuinely bad 12-year run, a Growth portfolio compounds at <strong>−1.4% per year</strong>,
+not the −0.2%/yr a normal-distribution model would suggest. Conservative, by
+contrast, still eked out a small positive return even in its worst 5%.</p>
+<p><img alt="Monte Carlo outcome fans for the four portfolios" src="figures/fig_mc_fan.png" /></p>
+<p>Asset-level distributions (<code>data/mc_regime_assets.csv</code>) confirm the earlier
+ranking: <strong>Mexican local government bonds (5.7% median, 3.5% chance of a 12-year
+loss) and EM USD sovereigns (5.5% median, 2.6% loss probability)</strong> remain the
+standout risk-adjusted holdings; <strong>gold and commodities have a &gt;50% chance of
+failing to beat inflation</strong> and belong in a portfolio for correlation, not return.</p>
+<h3>7.5 Deterministic geopolitical-stress scenario</h3>
+<p>Separately from the simulation, a severe one-year geopolitical shock —
+2008/2020-magnitude: global equities −28% to −42%, high yield −14%, EM sovereign
+−16%, gold +15%, long Treasuries +12% — produces:</p>
+<table>
+<thead>
+<tr>
+<th>Portfolio</th>
+<th>1-year impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conservative 30/70</td>
+<td>−8.8%</td>
+</tr>
+<tr>
+<td>Moderate 60/40</td>
+<td>−18.0%</td>
+</tr>
+<tr>
+<td>Growth 90/10</td>
+<td>−27.2%</td>
+</tr>
+<tr>
+<td>Edge-Tilted (moderate risk)</td>
+<td>−20.2%</td>
+</tr>
+</tbody>
+</table>
+<p>Note the Edge-Tilted portfolio loses <em>more</em> than the conventional Moderate 60/40
+in this scenario (−20.2% vs −18.0%) — its EM and Latin American tilt sells off
+harder in a global risk-off. <strong>That is the honest cost of the strategic edge:
+higher expected return and higher geopolitical-tail risk.</strong> It should be sized as
+a deliberate, risk-budgeted decision.</p>
+<h3>7.6 Long-history validation (25 years of FX &amp; equity data)</h3>
+<p>The regime model is calibrated on 2013–2026 ETF data — a window with no global
+financial crisis. To test whether that biases the result, the calibration was
+re-run on a longer, cleaner dataset: Shiller US equity since 2000 and 25 years of
+FxPro intraday FX history (EURUSD/USDJPY from 2000, USDMXN from 2007), which <em>do</em>
+include the 2008 GFC, the 2000–02 dot-com bust, and 2020.</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>2013–26 window</th>
+<th>2000–26 (incl. crises)</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Equity stress/calm vol multiple</td>
+<td>1.61×</td>
+<td>1.51×</td>
+<td><strong>Stable</strong> — model not biased by the benign window</td>
+</tr>
+<tr>
+<td>MXN depreciation vs USD</td>
+<td>2.5% assumed</td>
+<td><strong>2.43% realized</strong></td>
+<td><strong>Assumption confirmed</strong></td>
+</tr>
+<tr>
+<td>Worst equity month</td>
+<td>—</td>
+<td>Oct 2008 −20%, Mar 2020 −19%, Sep 2001 −11% (GPR spiked to 499)</td>
+<td>Regime classifier catches real crises</td>
+</tr>
+</tbody>
+</table>
+<p>Two things came out of this. First, the model <strong>survives the robustness check</strong> —
+the regime amplification is a stable ~1.5–1.6× whether or not the GFC is in the
+sample, and the Mexican-peso depreciation assumption is confirmed almost exactly
+by 18 years of data. Second, a <strong>new finding</strong>: the <strong>Mexican peso is the most
+regime-sensitive asset in the book</strong> — USDMXN volatility amplifies <strong>1.85×</strong> in
+stress regimes, more than equities (1.5×) or developed-market FX (1.2×). The
+peso-heavy Edge-Tilted portfolio therefore concentrates stress risk in the
+currency; that is a deliberate, identified exposure, not a hidden one.</p>
+<blockquote>
+<p><em>Data-quality note:</em> the FxPro index-CFD series (#USNDAQ100 etc.) were found to
+have spurious year-boundary jumps in early years and were <strong>excluded</strong>; only the
+clean continuous FX-pair data and Shiller's equity series were used.</p>
+</blockquote>
+<hr />
+<h2>8. Strategic-Edge Scan</h2>
+<h3>8.1 Highest expected return (base case)</h3>
+<p>Brazil 8.8% · Mexico &amp; EM 8.0% · DM ex-US 7.7% · China 7.4% · UK 7.0%</p>
+<h3>8.2 Best risk-adjusted (return per unit of volatility)</h3>
+<p>DM ex-US equity 0.28 · EM USD sovereign 0.27 · <strong>Mexican local govt bonds 0.27</strong>
+· EM equity 0.25 · US Large Cap 0.24</p>
+<h3>8.3 Smallest "valuation bet"</h3>
+<p>EM equity (0.0pp), Brazil (0.2pp), US Small Cap &amp; France (0.4–0.5pp) barely move
+with λ. <strong>US Large Cap (2.4pp) and UK (1.9pp) carry the largest valuation risk.</strong></p>
+<h3>8.4 The five edges this LTCMA identifies</h3>
+<ol>
+<li>
+<p><strong>Sell expensive US beta, buy cheap ex-US beta.</strong> US large-cap has the lowest
+   equity return <em>and</em> the highest valuation risk; DM ex-US and EM offer more
+   return with less valuation risk. Highest-conviction edge.</p>
+</li>
+<li>
+<p><strong>Mexican local government bonds are the standout fixed-income holding.</strong>
+   ~6.3% USD return, and the simulation confirms an outstanding downside profile
+   (3.5% loss probability). The ~4.4% real yield is a thick cushion against MXN
+   depreciation.</p>
+</li>
+<li>
+<p><strong>EM USD sovereign debt over US credit.</strong> 6.0% vs 5.0%, similar volatility,
+   the best inflation-beating odds in the book, and it avoids the tight-spread
+   compression risk in US IG and HY.</p>
+</li>
+<li>
+<p><strong>Use gold and commodities for diversification, not return.</strong> With the
+   stock/bond correlation no longer dependably negative, and gold the <em>least</em>
+   volatility-amplified asset in stress regimes (1.2×), it is a structural hedge —
+   but the simulation is blunt that it rarely beats inflation, so size it as one.</p>
+</li>
+<li>
+<p><strong>Don't fight the curve on rates.</strong> The market prices no cuts; positioning
+   long duration <em>for</em> an easing tailwind is a bet against what is priced in.
+   Carry — EM and Mexican local rates — is the better-paid risk.</p>
+</li>
+</ol>
+<p><strong>Contrarian watch-item:</strong> China is cheap with decent growth, but deflation and
+policy risk are real. A diversified EM allocation, not a standalone overweight.</p>
+<hr />
+<h2>9. Sample Portfolios</h2>
+<p>Three conventional risk-ladder portfolios plus an Edge-Tilted variant, each run
+through the regime-switching engine (annually rebalanced).</p>
+<table>
+<thead>
+<tr>
+<th>Portfolio</th>
+<th>Mean</th>
+<th>Median</th>
+<th>5th–95th range</th>
+<th>CVaR</th>
+<th>Geopolitical scenario</th>
+<th>P(&lt; inflation)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conservative 30/70</td>
+<td>5.0%</td>
+<td>5.0%</td>
+<td>1.7% – 8.5%</td>
+<td>+0.8%</td>
+<td>−8.8%</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Moderate 60/40</td>
+<td>5.8%</td>
+<td>5.7%</td>
+<td>1.1% – 10.6%</td>
+<td>−0.1%</td>
+<td>−18.0%</td>
+<td>12%</td>
+</tr>
+<tr>
+<td>Growth 90/10</td>
+<td>6.3%</td>
+<td>6.2%</td>
+<td>0.2% – 12.6%</td>
+<td>−1.4%</td>
+<td>−27.2%</td>
+<td>15%</td>
+</tr>
+<tr>
+<td><strong>Edge-Tilted (moderate risk)</strong></td>
+<td><strong>5.9%</strong></td>
+<td><strong>5.8%</strong></td>
+<td><strong>0.7% – 11.2%</strong></td>
+<td><strong>−0.6%</strong></td>
+<td><strong>−20.2%</strong></td>
+<td><strong>14%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>Edge-Tilted</strong> portfolio underweights US large-cap, overweights EM/DM-ex-US
+and Japan equity, and replaces much of the bond sleeve with EM USD sovereign
+debt, Mexican local government bonds, TIPS, and gold. It delivers a <strong>higher
+median than the conventional Moderate 60/40 at a similar central risk profile</strong> —
+but, as Section 7.5 shows, it carries more geopolitical-tail risk. The edge is
+real and should be taken deliberately, not by accident. Allocations are in
+<code>data/mc_regime_portfolios.csv</code> and the scripts.</p>
+<hr />
+<h2>10. Assumptions, Limitations &amp; Sources</h2>
+<h3>10.1 Key judgment assumptions</h3>
+<ul>
+<li><strong>US long-run inflation: 2.4%</strong> — confirmed close to the 2.5% the market prices.</li>
+<li><strong>Fair-value valuation anchors:</strong> US CAPE 26 (Shiller-confirmed); China 15,
+  Japan 25, UK 16, France 20, EM 16 remain judgment anchors (no long CAPE history
+  sourced for these) — the most subjective inputs, exposed via the λ dial.</li>
+<li><strong>Real EPS growth</strong> is set below trend GDP for most markets (share dilution);
+  the US is held near trend (buybacks offset dilution).</li>
+<li><strong>Regime means held equal across calm/stress</strong> — the 2013–2026 sample does not
+  reliably identify a stress mean shift; imposing one would overfit (see 7.2).</li>
+<li><strong>Student-t with ν=6</strong> for fat tails; regime-switching adds tail clustering.</li>
+</ul>
+<h3>10.2 Limitations</h3>
+<ul>
+<li><strong>No paid data.</strong> Valuations rely on Yahoo Finance ETF data and Siblis Research
+  CAPE; ETF distribution yields were hand-adjusted toward true dividend yields.</li>
+<li><strong>ETF proxies, not indices</strong>, for current-regime prices; the regional long
+  history (French) proxies some single-country exposures (France/UK use European
+  data).</li>
+<li><strong>Mexican local govt bonds</strong> have no clean USD price series — return computed
+  from yield, risk statistics proxied from EM local debt.</li>
+<li><strong>The regime model is primarily calibrated on 2013–2026</strong>, but the calibration
+  has been validated against 25 years of FX/equity history including 2008 and
+  2020 (Section 7.6); the deterministic scenario (7.5) imports crisis-magnitude
+  shocks explicitly.</li>
+<li><strong>FX/index data quality:</strong> the FxPro intraday FX pairs are clean; the broker's
+  index-CFD series had year-boundary artifacts and were excluded (see 7.6).</li>
+<li>This is the <strong>strategic (Step 1)</strong> layer only.</li>
+</ul>
+<h3>10.3 Data sources</h3>
+<ul>
+<li>Prices / returns: Yahoo Finance (<code>yfinance</code>), monthly, dividend-adjusted.</li>
+<li>Yields, curve, spreads, breakevens, VIX, EPU, macro: Federal Reserve (FRED).</li>
+<li>Geopolitical Risk index: Caldara &amp; Iacoviello (matteoiacoviello.com).</li>
+<li>Long history: Damodaran/NYU Stern (1928+), Shiller (1871+), Ken French (1990+).</li>
+<li>Intraday FX: FxPro MetaTrader 5 M5 data (2000+), aggregated to monthly.</li>
+<li>Equity risk premiums: Damodaran 2026. CAPE: Siblis Research (Dec 2025).</li>
+<li>Policy rates / inflation: Banco de México, central bank releases.</li>
+<li>Consensus cross-check: 2026 LTCMAs (Schwab, BlackRock, BNY, Vanguard, Northern
+  Trust, J.P. Morgan); Horizon Actuarial survey recommended for recalibration.</li>
+</ul>
+<h3>10.4 Reproducibility</h3>
+<p>All figures regenerate from the scripts in <code>~/LTCMA/scripts</code> (WSL, <code>cudf-env</code>):
+<code>01</code>–<code>02</code> data · <code>03</code>–<code>04</code> returns/portfolios · <code>05a</code>–<code>05b</code> long history ·
+<code>06</code> shrinkage risk model · <code>07</code> Monte Carlo · <code>08</code>–<code>09</code> signals &amp; priced-in ·
+<code>10</code> regimes · <code>11</code> regime-switching GPU Monte Carlo · <code>13</code>–<code>14</code> FX ingest &amp;
+long-history validation · <code>15</code> visualizations · <code>12</code> Word/PDF rendering.</p>
+<hr />
+<p><em>Prepared 18 May 2026. Expected returns are forward-looking estimates, not
+guarantees; actual outcomes will differ. For internal strategic-allocation use.</em></p></main>
+<footer><div class="wrap"><p>Research, not investment advice.</p></div></footer>
+</body></html>

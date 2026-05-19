@@ -1,0 +1,7 @@
+metric,value
+p_calm_to_calm,0.9019607843137255
+p_calm_to_stress,0.09803921568627451
+p_stress_to_calm,0.17647058823529413
+p_stress_to_stress,0.8235294117647058
+p_stress_uncond,0.33766233766233766
+n_months,154.0

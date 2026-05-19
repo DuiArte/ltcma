@@ -1,0 +1,11 @@
+# Dependencies for the GitHub Actions weekly refresh (scripts 08 + 17).
+# The full local pipeline additionally uses scikit-learn, weasyprint,
+# python-docx, and the RAPIDS GPU stack (cudf/cupy) -- none of which run
+# on GitHub runners and none of which the scheduled refresh needs.
+pandas
+numpy
+requests
+openpyxl
+xlrd
+markdown
+plotly
