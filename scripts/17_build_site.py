@@ -418,6 +418,12 @@ gap:1px;background:#e0e0e0;border:1px solid #e0e0e0}
 font-size:11px;padding:3px 10px;margin:-10px 0 14px;letter-spacing:.2px}
 .caption{font-size:13px;color:#525252;padding:2px 12px 10px;margin:0;line-height:1.45}
 .note a,.lede a{color:#0f62fe}
+.ccy-toggle{display:inline-flex;border:1px solid #0f62fe;margin-bottom:12px}
+.ccy-toggle button{background:#fff;color:#0f62fe;border:0;
+border-right:1px solid #0f62fe;padding:7px 22px;font-family:inherit;
+font-size:13px;font-weight:600;cursor:pointer}
+.ccy-toggle button:last-child{border-right:0}
+.ccy-toggle button.active{background:#0f62fe;color:#fff}
 .gloss{margin:0}
 .gloss dt{font-weight:600;font-size:14px;color:#0f62fe;margin-top:16px}
 .gloss dd{font-size:14px;color:#393939;margin:3px 0 0;max-width:900px}

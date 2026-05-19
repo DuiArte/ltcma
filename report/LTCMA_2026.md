@@ -536,16 +536,52 @@ real and should be taken deliberately, not by accident. Allocations are in
   index-CFD series had year-boundary artifacts and were excluded (see 7.6).
 - This is the **strategic (Step 1)** layer only.
 
-### 10.3 Data sources
-- Prices / returns: Yahoo Finance (`yfinance`), monthly, dividend-adjusted.
-- Yields, curve, spreads, breakevens, VIX, EPU, macro: Federal Reserve (FRED).
-- Geopolitical Risk index: Caldara & Iacoviello (matteoiacoviello.com).
-- Long history: Damodaran/NYU Stern (1928+), Shiller (1871+), Ken French (1990+).
-- Intraday FX: FxPro MetaTrader 5 M5 data (2000+), aggregated to monthly.
-- Equity risk premiums: Damodaran 2026. CAPE: Siblis Research (Dec 2025).
-- Policy rates / inflation: Banco de México, central bank releases.
-- Consensus cross-check: 2026 LTCMAs (Schwab, BlackRock, BNY, Vanguard, Northern
-  Trust, J.P. Morgan); Horizon Actuarial survey recommended for recalibration.
+### 10.3 References
+
+Data sources and works cited, in APA format, so that every figure in this
+report can be traced to its origin.
+
+Baker, S. R., Bloom, N., & Davis, S. J. (2016). Measuring economic policy
+uncertainty. *The Quarterly Journal of Economics, 131*(4), 1593–1636.
+
+Banco de México. (2026). *Monetary policy announcements and inflation
+statistics* [Data set]. https://www.banxico.org.mx
+
+BlackRock Investment Institute. (2026). *Capital market assumptions* (2026 ed.).
+BlackRock.
+
+Caldara, D., & Iacoviello, M. (2022). Measuring geopolitical risk. *American
+Economic Review, 112*(4), 1194–1225.
+
+Charles Schwab. (2026). *Long-term capital market expectations* (2026 ed.).
+Charles Schwab Investment Advisory.
+
+Damodaran, A. (2026). *Historical returns on stocks, bonds and bills, and
+country equity risk premiums* [Data set]. NYU Stern School of Business.
+https://pages.stern.nyu.edu/~adamodar/
+
+Federal Reserve Bank of St. Louis. (2026). *Federal Reserve Economic Data
+(FRED)* [Data set]. https://fred.stlouisfed.org
+
+French, K. R. (2026). *Data library: Developed and emerging-market factor
+returns* [Data set]. Tuck School of Business, Dartmouth College.
+https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/
+
+FxPro. (2026). *MetaTrader 5 historical price data* [Data set]. FxPro Financial
+Services Ltd.
+
+J.P. Morgan Asset Management. (2026). *Long-term capital market assumptions*
+(30th annual ed.). J.P. Morgan.
+
+Shiller, R. J. (2026). *U.S. stock market data, 1871–present, and the
+cyclically adjusted price-to-earnings ratio* [Data set]. Yale University.
+http://www.econ.yale.edu/~shiller/data.htm
+
+Siblis Research. (2025). *CAPE ratios by country* [Data set].
+https://siblisresearch.com/data/cape-ratios-by-country/
+
+Yahoo Finance. (2026). *Historical market and fundamental data* [Data set].
+https://finance.yahoo.com
 
 ### 10.4 Reproducibility
 All figures regenerate from the scripts in `~/LTCMA/scripts` (WSL, `cudf-env`):

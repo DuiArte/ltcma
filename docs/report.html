@@ -1209,18 +1209,38 @@ real and should be taken deliberately, not by accident. Allocations are in
   index-CFD series had year-boundary artifacts and were excluded (see 7.6).</li>
 <li>This is the <strong>strategic (Step 1)</strong> layer only.</li>
 </ul>
-<h3>10.3 Data sources</h3>
-<ul>
-<li>Prices / returns: Yahoo Finance (<code>yfinance</code>), monthly, dividend-adjusted.</li>
-<li>Yields, curve, spreads, breakevens, VIX, EPU, macro: Federal Reserve (FRED).</li>
-<li>Geopolitical Risk index: Caldara &amp; Iacoviello (matteoiacoviello.com).</li>
-<li>Long history: Damodaran/NYU Stern (1928+), Shiller (1871+), Ken French (1990+).</li>
-<li>Intraday FX: FxPro MetaTrader 5 M5 data (2000+), aggregated to monthly.</li>
-<li>Equity risk premiums: Damodaran 2026. CAPE: Siblis Research (Dec 2025).</li>
-<li>Policy rates / inflation: Banco de México, central bank releases.</li>
-<li>Consensus cross-check: 2026 LTCMAs (Schwab, BlackRock, BNY, Vanguard, Northern
-  Trust, J.P. Morgan); Horizon Actuarial survey recommended for recalibration.</li>
-</ul>
+<h3>10.3 References</h3>
+<p>Data sources and works cited, in APA format, so that every figure in this
+report can be traced to its origin.</p>
+<p>Baker, S. R., Bloom, N., &amp; Davis, S. J. (2016). Measuring economic policy
+uncertainty. <em>The Quarterly Journal of Economics, 131</em>(4), 1593–1636.</p>
+<p>Banco de México. (2026). <em>Monetary policy announcements and inflation
+statistics</em> [Data set]. https://www.banxico.org.mx</p>
+<p>BlackRock Investment Institute. (2026). <em>Capital market assumptions</em> (2026 ed.).
+BlackRock.</p>
+<p>Caldara, D., &amp; Iacoviello, M. (2022). Measuring geopolitical risk. <em>American
+Economic Review, 112</em>(4), 1194–1225.</p>
+<p>Charles Schwab. (2026). <em>Long-term capital market expectations</em> (2026 ed.).
+Charles Schwab Investment Advisory.</p>
+<p>Damodaran, A. (2026). <em>Historical returns on stocks, bonds and bills, and
+country equity risk premiums</em> [Data set]. NYU Stern School of Business.
+https://pages.stern.nyu.edu/~adamodar/</p>
+<p>Federal Reserve Bank of St. Louis. (2026). <em>Federal Reserve Economic Data
+(FRED)</em> [Data set]. https://fred.stlouisfed.org</p>
+<p>French, K. R. (2026). <em>Data library: Developed and emerging-market factor
+returns</em> [Data set]. Tuck School of Business, Dartmouth College.
+https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/</p>
+<p>FxPro. (2026). <em>MetaTrader 5 historical price data</em> [Data set]. FxPro Financial
+Services Ltd.</p>
+<p>J.P. Morgan Asset Management. (2026). <em>Long-term capital market assumptions</em>
+(30th annual ed.). J.P. Morgan.</p>
+<p>Shiller, R. J. (2026). <em>U.S. stock market data, 1871–present, and the
+cyclically adjusted price-to-earnings ratio</em> [Data set]. Yale University.
+http://www.econ.yale.edu/~shiller/data.htm</p>
+<p>Siblis Research. (2025). <em>CAPE ratios by country</em> [Data set].
+https://siblisresearch.com/data/cape-ratios-by-country/</p>
+<p>Yahoo Finance. (2026). <em>Historical market and fundamental data</em> [Data set].
+https://finance.yahoo.com</p>
 <h3>10.4 Reproducibility</h3>
 <p>All figures regenerate from the scripts in <code>~/LTCMA/scripts</code> (WSL, <code>cudf-env</code>):
 <code>01</code>–<code>02</code> data · <code>03</code>–<code>04</code> returns/portfolios · <code>05a</code>–<code>05b</code> long history ·

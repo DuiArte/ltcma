@@ -4,6 +4,7 @@ only -- FX positions and non-GBM bank cash are excluded by design).
 A x1.8 scaling constant is applied to share counts so every formula stays
 intact (value = shares*price, P/M = value - cost, weights unchanged) while the
 displayed magnitudes are not the real amounts. Source Excel is never modified.
+A MXN / USD currency toggle converts figures at the latest USDMXN rate.
 Refresh: update the Excel, re-run this script.
 """
 import os
@@ -13,16 +14,21 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
 XLSX = "/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
+DATA = os.path.expanduser("~/LTCMA/data")
 DOCS = os.path.expanduser("~/LTCMA/docs")
 SCALE = 1.8                       # holdings scaling constant (obfuscation)
 FILTER_ANOMALIES = True           # drop rows with impossible returns (bad data)
 INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
 RED, GREY = "#da1e28", "#8d8d8d"
 
+# latest USDMXN rate for the currency toggle
+sig = pd.read_csv(f"{DATA}/signals_fred.csv", index_col=0)
+RATE = float(pd.to_numeric(sig["USDMXN"], errors="coerce").dropna().iloc[-1])
+
 LAYOUT = dict(template="plotly_white",
               font=dict(family="IBM Plex Sans, sans-serif", size=12, color=INK),
               title_font=dict(color=INK, size=15), dragmode=False,
-              margin=dict(l=60, r=24, t=52, b=46),
+              margin=dict(l=64, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
               xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
 
@@ -33,6 +39,19 @@ def div(fig, name):
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id=name,
                        config={"displayModeBar": False, "scrollZoom": False,
                                "doubleClick": False, "showAxisDragHandles": False})
+
+# --- number formatting (normalized across the page) ---
+def fmt(x, dec=0):
+    return f"{x:,.{dec}f}"
+
+def fmts(x, dec=0):                       # signed
+    return f"{x:+,.{dec}f}"
+
+def cval(mxn, dec=0, signed=False):
+    """A currency-aware figure carrying both MXN and USD, toggled by JS."""
+    f = fmts if signed else fmt
+    return (f'<span class="cval" data-mxn="{f(mxn, dec)}" '
+            f'data-usd="{f(mxn / RATE, dec)}">{f(mxn, dec)}</span>')
 
 # ---------- load & clean ----------
 df = pd.read_excel(XLSX, "DBE Acciones", header=0)
@@ -61,7 +80,7 @@ if FILTER_ANOMALIES:
 
 # ---------- portfolio value time series ----------
 ts = df.groupby("Fecha").agg(value=("value", "sum"), cost=("cost", "sum"))
-ts = ts[~ts.index.isin(bad_dates)]      # drop dates left incomplete by the filter
+ts = ts[~ts.index.isin(bad_dates)]
 ts["ret"] = ts["value"] / ts["cost"] - 1
 dates = ts.index
 
@@ -75,15 +94,15 @@ port_ret = tot_val / tot_cost - 1
 asof = df["Fecha"].max().strftime("%d %b %Y")
 
 # ---------- charts ----------
-# 1. portfolio value over time
+# 1. portfolio value over time (MXN base; USD array embedded for the toggle)
 f1 = go.Figure()
 f1.add_scatter(x=dates, y=ts["value"], mode="lines+markers", name="Portfolio value",
                line=dict(color=BLUE, width=3), fill="tozeroy",
                fillcolor="rgba(15,98,254,0.08)")
-f1.update_layout(title="Stock portfolio market value over time (scaled)",
-                 yaxis_title="MXN (scaled)", xaxis_title="snapshot date")
+f1.update_layout(title="Portfolio market value over time (scaled)",
+                 yaxis_title="MXN value (scaled)", xaxis_title="snapshot date")
 
-# 2. per-holding return vs portfolio (the relative tracker)
+# 2. per-holding return vs portfolio (currency-independent)
 lat = latest.sort_values("ret")
 colors = [GREEN if r >= 0 else RED for r in lat["ret"]]
 f2 = go.Figure(go.Bar(x=lat["ret"] * 100, y=lat["ticker"], orientation="h",
@@ -95,13 +114,14 @@ f2.add_vline(x=port_ret * 100, line=dict(color=INK, dash="dash"),
 f2.update_layout(title="Holding return vs the portfolio (dashed = portfolio total)",
                  xaxis_title="return since cost (%)")
 
-# 3. allocation
+# 3. allocation (currency-independent)
 al = latest.sort_values("weight")
 f3 = go.Figure(go.Bar(x=al["weight"] * 100, y=al["ticker"], orientation="h",
                       marker_color=BLUE,
                       text=[f"{w*100:.1f}%" for w in al["weight"]],
                       textposition="outside"))
-f3.update_layout(title="Current allocation by holding", xaxis_title="% of stock portfolio")
+f3.update_layout(title="Current allocation by holding",
+                 xaxis_title="% of stock portfolio")
 
 # ---------- holdings table ----------
 rows = ""
@@ -109,14 +129,15 @@ for _, r in latest.iterrows():
     rc = "pos" if r["ret"] >= 0 else "neg"
     pc = "pos" if r["pm"] >= 0 else "neg"
     rows += (f"<tr><td>{r['ticker']}</td><td>{r['shares']:,.1f}</td>"
-             f"<td>{r['Costo promedio']:,.2f}</td><td>{r['Precio mercado']:,.2f}</td>"
-             f"<td>{r['value']:,.0f}</td><td>{r['weight']*100:.1f}%</td>"
+             f"<td>{cval(r['Costo promedio'], 2)}</td>"
+             f"<td>{cval(r['Precio mercado'], 2)}</td>"
+             f"<td>{cval(r['value'])}</td><td>{r['weight']*100:.1f}%</td>"
              f"<td class='{rc}'>{r['ret']*100:+.1f}%</td>"
-             f"<td class='{pc}'>{r['pm']:,.0f}</td></tr>")
+             f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
 
 # ---------- metrics ----------
-SNAP = [("Portfolio Value (scaled)", f"{tot_val:,.0f}"),
-        ("Unrealized P / M (scaled)", f"{latest['pm'].sum():+,.0f}"),
+SNAP = [("Portfolio Value (scaled)", cval(tot_val)),
+        ("Unrealized P / M (scaled)", cval(latest["pm"].sum(), signed=True)),
         ("Holdings", f"{len(latest)}"),
         ("Portfolio Return", f"{port_ret*100:+.1f}%"),
         ("As of", asof)]
@@ -124,8 +145,29 @@ snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for k, v in SNAP)
 
+# ---------- currency-toggle JavaScript ----------
+mxn_arr = ",".join(f"{v:.0f}" for v in ts["value"])
+usd_arr = ",".join(f"{v/RATE:.0f}" for v in ts["value"])
+JS = """
+<script>
+var PFV={mxn:[__MXN__],usd:[__USD__]};
+function setCurrency(c){
+  document.querySelectorAll('.cval').forEach(function(e){e.textContent=e.dataset[c];});
+  document.querySelectorAll('.ccy-toggle button').forEach(function(b){
+    b.classList.toggle('active',b.dataset.cur===c);});
+  var lbl=document.getElementById('ccy-label');
+  if(lbl) lbl.textContent=c.toUpperCase();
+  var d=document.getElementById('pf-value');
+  if(d&&window.Plotly){
+    Plotly.restyle(d,{y:[PFV[c]]});
+    Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' value (scaled)'});
+  }
+}
+document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
+</script>
+""".replace("__MXN__", mxn_arr).replace("__USD__", usd_arr)
+
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
-# NAV imported from glossary module
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -137,34 +179,42 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 </div></header>
 <section class="hero"><div class="container">
 <h1>Stock Portfolio Tracker</h1>
-<p class="lede">GBM equity holdings &mdash; tracked against each constituent
-position. Sourced from the portfolio workbook; refreshes when it updates.</p>
-<p class="asof">As of {asof} &middot; GBM stock holdings only</p>
+<p class="lede">A live view of the GBM equity book &mdash; every position
+measured against its cost basis and against the portfolio as a whole.
+Figures convert between Mexican pesos and US dollars at the current rate.</p>
+<p class="asof">As of {asof} &middot; GBM equity holdings &middot;
+USD/MXN {RATE:.2f}</p>
 </div></section>
 <main class="container">
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
 amounts; prices, returns and weights are exact. FX positions and non-GBM cash
-are excluded. Rows with impossible returns (e.g. unadjusted stock splits) are
-filtered out automatically.</div>
+are excluded; rows with impossible returns (e.g. unadjusted stock splits) are
+filtered automatically.</div>
 <section class="block"><h2>Snapshot</h2>
-{ccy_badge("MXN", "GBM brokerage account, valued in Mexican pesos")}
+<div class="ccy-toggle">
+<button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
+<button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
+<p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns and weights
+read the same in either currency. Definitions in the
+<a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(5,1fr)">{snap}</div></section>
 <section class="block"><h2>Portfolio Value</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
 <section class="block"><h2>Holdings</h2>
 <div class="tile" style="padding:0 16px 8px">
 <table class="ptable"><thead><tr><th>Holding</th><th>Shares</th>
-<th>Avg Cost</th><th>Price</th><th>Value (scaled)</th><th>Weight</th>
-<th>Return</th><th>P/M (scaled)</th></tr></thead><tbody>{rows}</tbody></table></div></section>
+<th>Avg Cost</th><th>Price</th><th>Value</th><th>Weight</th>
+<th>Return</th><th>P/M</th></tr></thead><tbody>{rows}</tbody></table></div></section>
 <section class="block"><h2>Portfolio vs Its Holdings</h2>
 <div class="grid"><div class="tile chart"><div class="ch">{div(f2, "pf-rel")}</div></div>
 <div class="tile chart"><div class="ch">{div(f3, "pf-alloc")}</div></div></div></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Figures scaled for
 confidentiality. Research and monitoring, not investment advice.</p></div></footer>
-</body></html>"""
+{JS}</body></html>"""
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
 print(f"Portfolio tracker built -> {DOCS}/portfolio.html")
-print(f"  {len(latest)} holdings | value(scaled) {tot_val:,.0f} | "
-      f"return {port_ret*100:+.1f}% | as-of {asof} | SCALE={SCALE}")
+print(f"  {len(latest)} holdings | value(scaled) MXN {tot_val:,.0f} / "
+      f"USD {tot_val/RATE:,.0f} | return {port_ret*100:+.1f}% | "
+      f"as-of {asof} | USDMXN {RATE:.2f}")
