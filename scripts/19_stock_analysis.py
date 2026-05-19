@@ -13,15 +13,13 @@ import sys, os, glob
 import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
+from glossary import NAV, ccy_badge
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
 INK, BLUE, GOLD, GREEN, RED, GREY = "#161616", "#0f62fe", "#b28600", "#198038", "#da1e28", "#8d8d8d"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 DEFAULT = ["AMZN", "GOOGL", "MSFT", "META", "IBM", "BA", "NVDA", "AAPL"]
-NAV = ('<nav><a href="index.html">Dashboard</a>'
-       '<a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a>'
-       '<a href="stocks.html">Stock Analysis</a>'
-       '<a href="index.html#about">About</a></nav>')
+# NAV imported from glossary module
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
          'family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">')
@@ -61,7 +59,9 @@ def page(title, body):
             f'investment advice.</p></div></footer></body></html>')
 
 def tiles(items):
-    return ('<div class="metrics">' + "".join(
+    n = len(items)
+    return (f'<div class="metrics" style="grid-template-columns:repeat({n},1fr)">'
+            + "".join(
         f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
         for k, v in items) + '</div>')
 
@@ -155,7 +155,8 @@ def analyze(ticker):
 <p class="lede">{info.get('sector','')} &middot; {info.get('industry','')}</p>
 <p class="asof">CFA-framework equity analysis &middot; data: Yahoo Finance</p>
 </div></section><main class="container">
-<section class="block"><h2>Snapshot</h2>{snap}</section>
+<section class="block"><h2>Snapshot</h2>
+{ccy_badge("USD", "US-listed stock, figures in US dollars")}{snap}</section>
 <section class="block"><h2>Valuation</h2>
 <div class="grid"><div class="tile chart"><div class="ch">{div(c3,ticker+'-mult')}</div></div>
 <div class="tile" style="padding:16px 22px">
@@ -252,7 +253,9 @@ profitability, DuPont, financial health, and relative &amp; absolute
 valuation. A reusable tool: run it on any ticker.</p>
 <p class="asof">Data: Yahoo Finance &middot; {len(existing)} companies analyzed</p>
 </div></section><main class="container">
-<section class="block"><h2>Companies</h2><div class="scards">{cards}</div></section>
+<section class="block"><h2>Companies</h2>
+{ccy_badge("USD", "all company figures in US dollars")}
+<div class="scards">{cards}</div></section>
 {METHOD}</main>"""
 open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(
     page("Equity Research — CFA-style Stock Analysis", land))

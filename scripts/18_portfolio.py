@@ -10,6 +10,7 @@ import os
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from glossary import NAV, ccy_badge
 
 XLSX = "/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
 DOCS = os.path.expanduser("~/LTCMA/docs")
@@ -124,11 +125,7 @@ snap = "".join(
     for k, v in SNAP)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
-NAV = ('<nav><a href="index.html">Dashboard</a>'
-       '<a href="report.html">Full Report</a>'
-       '<a href="portfolio.html">Portfolio</a>'
-       '<a href="stocks.html">Stock Analysis</a>'
-       '<a href="index.html#about">About</a></nav>')
+# NAV imported from glossary module
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -150,7 +147,9 @@ constant for confidentiality &mdash; magnitudes are illustrative, not the real
 amounts; prices, returns and weights are exact. FX positions and non-GBM cash
 are excluded. Rows with impossible returns (e.g. unadjusted stock splits) are
 filtered out automatically.</div>
-<section class="block"><h2>Snapshot</h2><div class="metrics">{snap}</div></section>
+<section class="block"><h2>Snapshot</h2>
+{ccy_badge("MXN", "GBM brokerage account, valued in Mexican pesos")}
+<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{snap}</div></section>
 <section class="block"><h2>Portfolio Value</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
 <section class="block"><h2>Holdings</h2>

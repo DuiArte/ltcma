@@ -15,6 +15,10 @@
 > process: (1) LTCMA 10–15-year assumptions → (2) normalize to a 3–5-year
 > cycle-aware forecast → (3) overlay current macro indicators. Reviewed annually.
 
+**Reading this report.** Every technical term — CAPE, volatility, Monte Carlo,
+regime-switching, and the rest — is explained in plain language in the
+[Glossary](glossary.html). All figures are in **USD** unless noted otherwise.
+
 ---
 
 ## 1. Executive Summary

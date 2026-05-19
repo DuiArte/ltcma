@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import markdown
 import plotly.graph_objects as go
+from glossary import GLOSSARY, NAV, ccy_badge
 
 D = os.path.expanduser("~/LTCMA/data")
 REP = os.path.expanduser("~/LTCMA/report")
@@ -156,10 +157,24 @@ f8.add_scatter(x=[-3, 18], y=[-3, 18], mode="lines", name="perfect forecast",
 f8.update_layout(title="Backtest — forecast vs realized 10-year return",
                  xaxis_title="forecast (%)", yaxis_title="realized (%)")
 
-CHARTS = [("priced-in", f1, False), ("risk-return", f2, False),
-          ("valuation", f3, False), ("lambda", f4, False),
-          ("correlation", f5, True), ("regimes", f6, True),
-          ("montecarlo", f7, False), ("backtest", f8, False)]
+CHARTS = [
+ ("priced-in", f1, False, "What the bond market expects interest rates to do "
+  "over the coming years — right now it is not pricing in rate cuts."),
+ ("risk-return", f2, False, "Every asset class plotted by its expected yearly "
+  "return against how much its value swings. Higher and to the left is better."),
+ ("valuation", f3, False, "How expensive each stock market is today. Taller "
+  "bars mean a pricier market with less room to rise."),
+ ("lambda", f4, False, "How the expected return shifts depending on how "
+  "strongly we assume expensive markets cool back down (the 'lambda' dial)."),
+ ("correlation", f5, True, "Which assets move together (red) and which move in "
+  "opposite directions (blue). Opposites are what makes diversification work."),
+ ("regimes", f6, True, "Two news-based gauges of how tense the world is. "
+  "Shaded bands are 'stress' months when markets get jumpier."),
+ ("montecarlo", f7, False, "The range of where a 12-year investment could "
+  "realistically land — from a bad case (left) to a good case (right)."),
+ ("backtest", f8, False, "A check on whether this method's past forecasts came "
+  "true. The closer the dots sit to the diagonal line, the better."),
+]
 
 # ---------- CV / professional experience ----------
 EXPERIENCE = [
@@ -195,18 +210,14 @@ CERTS = ["CFA — Level I Candidate (exam February 2026)",
 
 # ---------- assemble HTML ----------
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
-NAV = ('<nav><a href="index.html">Dashboard</a>'
-       '<a href="report.html">Full Report</a>'
-       '<a href="portfolio.html">Portfolio</a>'
-       '<a href="stocks.html">Stock Analysis</a>'
-       '<a href="index.html#about">About</a></nav>')
 
 snap = "".join(
     f'<div class="metric{" m-" + v.lower() if k == "Market Regime" else ""}">'
     f'<div class="mv">{v}</div><div class="mk">{k}</div></div>' for k, v in SNAP)
 charts = "".join(
-    f'<article class="tile chart{" wide" if wide else ""}"><div class="ch">'
-    f'{div(fig, cid)}</div></article>' for cid, fig, wide in CHARTS)
+    f'<article class="tile chart{" wide" if wide else ""}">'
+    f'<div class="ch">{div(fig, cid)}</div>'
+    f'<p class="caption">{cap}</p></article>' for cid, fig, wide, cap in CHARTS)
 exp = "".join(
     f'<div class="role"><div class="role-h"><span class="role-co">{co}</span>'
     f'<span class="role-d">{d}</span></div>'
@@ -231,11 +242,15 @@ regime-switching GPU Monte Carlo engine.</p>
 <p class="asof">As of {ASOF} &middot; base currency USD &middot; built on free public data</p>
 </div></section>
 <main class="container">
-<section class="block"><h2>Live Market Snapshot</h2>
+<section class="block"><h2>Live Market Snapshot</h2>{ccy_badge("USD")}
 <p class="note">Auto-refreshed weekly from public data (FRED, Yahoo Finance,
-GPR / EPU uncertainty indices).</p>
-<div class="metrics">{snap}</div></section>
+GPR / EPU uncertainty indices). New to a term? See the
+<a href="glossary.html">Glossary</a>.</p>
+<div class="metrics" style="grid-template-columns:repeat(4,1fr)">{snap}</div></section>
 <section class="block"><h2>Model Output</h2>
+{ccy_badge("USD", "all expected returns are in US dollars")}
+<p class="note">Each chart below has a plain-language explanation; full
+definitions are in the <a href="glossary.html">Glossary</a>.</p>
 <div class="grid">{charts}</div></section>
 <section class="block"><h2>Full Written Report</h2>
 <p>Complete analysis — methodology, macro backdrop, return tables, the
@@ -273,6 +288,29 @@ REPORT = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <footer class="shell-foot"><div class="container"><p>Research, not investment
 advice.</p></div></footer></body></html>"""
 open(f"{DOCS}/report.html", "w", encoding="utf-8").write(REPORT)
+
+# ---------- glossary.html ----------
+gloss_html = ""
+for cat, items in GLOSSARY.items():
+    rows = "".join(f"<dt>{t}</dt><dd>{d}</dd>" for t, d in items)
+    gloss_html += (f'<section class="block"><h2>{cat}</h2>'
+                   f'<dl class="gloss">{rows}</dl></section>')
+GLOSSARY_PAGE = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LTCMA 2026 — Glossary</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>{NAV}
+</div></header>
+<section class="hero"><div class="container"><h1>Glossary</h1>
+<p class="lede">Plain-language explanations of every concept used across this
+site — no math, no jargon. If a term on any page is unclear, it is defined here.</p>
+</div></section>
+<main class="container">{gloss_html}</main>
+<footer class="shell-foot"><div class="container"><p>Research, not investment
+advice.</p></div></footer></body></html>"""
+open(f"{DOCS}/glossary.html", "w", encoding="utf-8").write(GLOSSARY_PAGE)
 
 # ---------- Carbon-style CSS ----------
 CSS = """
@@ -375,8 +413,17 @@ gap:1px;background:#e0e0e0;border:1px solid #e0e0e0}
 .sc-t{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600}
 .sc-n{font-size:12px;color:#525252;margin-top:4px}
 .scard:hover .sc-n{color:#d0dcff}
+/* currency badge, chart captions, glossary */
+.ccy{display:inline-block;background:#edf5ff;color:#0043ce;border:1px solid #a6c8ff;
+font-size:11px;padding:3px 10px;margin:-10px 0 14px;letter-spacing:.2px}
+.caption{font-size:13px;color:#525252;padding:2px 12px 10px;margin:0;line-height:1.45}
+.note a,.lede a{color:#0f62fe}
+.gloss{margin:0}
+.gloss dt{font-weight:600;font-size:14px;color:#0f62fe;margin-top:16px}
+.gloss dd{font-size:14px;color:#393939;margin:3px 0 0;max-width:900px}
 @media(max-width:820px){.grid{grid-template-columns:1fr}.hero h1{font-size:30px}
-.report{padding:24px}}
+.report{padding:24px}
+.metrics{grid-template-columns:repeat(2,1fr)!important}}
 """
 open(f"{DOCS}/style.css", "w", encoding="utf-8").write(CSS)
 print(f"Carbon site built -> {DOCS}  | regime={regime} | as-of {ASOF}")
