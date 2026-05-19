@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Equity Research — CFA-style Stock Analysis</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap"><link rel="stylesheet" href="style.css"><script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script></head><body><header class="shell"><div class="shell-in"><span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>Equity Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Analysis</a><a href="index.html#about">About</a></nav></div></header><section class="hero"><div class="container">
+<h1>Equity Research</h1>
+<p class="lede">CFA-framework analysis of individual stocks &mdash;
+profitability, DuPont, financial health, and relative &amp; absolute
+valuation. A reusable tool: run it on any ticker.</p>
+<p class="asof">Data: Yahoo Finance &middot; 8 companies analyzed</p>
+</div></section><main class="container">
+<section class="block"><h2>Companies</h2><div class="scards"><a class="scard" href="stock_AAPL.html"><div class="sc-t">AAPL</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_AMZN.html"><div class="sc-t">AMZN</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_BA.html"><div class="sc-t">BA</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_GOOGL.html"><div class="sc-t">GOOGL</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_IBM.html"><div class="sc-t">IBM</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_META.html"><div class="sc-t">META</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_MSFT.html"><div class="sc-t">MSFT</div><div class="sc-n">analysis &rarr;</div></a><a class="scard" href="stock_NVDA.html"><div class="sc-t">NVDA</div><div class="sc-n">analysis &rarr;</div></a></div></section>
+
+<section class="block"><h2>Methodology — the CFA equity-analysis framework</h2>
+<p class="lede2">Each report follows the standard CFA equity-valuation process:
+quality first, then price.</p>
+<h3>1. Profitability ratios</h3><p>Gross, operating and net margins measure how
+much of revenue survives to each level of the income statement. Return on equity
+(ROE) and return on assets (ROA) measure how efficiently capital generates
+profit.</p>
+<h3>2. DuPont decomposition</h3><p>ROE is broken into three drivers &mdash;
+ROE = net margin &times; asset turnover &times; financial leverage. This shows
+<i>why</i> a company earns its ROE: fat margins, efficient asset use, or
+balance-sheet leverage. Leverage-driven ROE is lower quality than margin-driven
+ROE.</p>
+<h3>3. Solvency &amp; liquidity</h3><p>Debt/equity gauges balance-sheet risk;
+the current and quick ratios gauge the ability to cover short-term obligations.</p>
+<h3>4. Relative valuation (multiples)</h3><p>P/E, P/B, P/S and EV/EBITDA price
+the company against its earnings, book value, sales and cash earnings. They are
+quick but only meaningful in context &mdash; versus the company's history,
+its sector, and its growth.</p>
+<h3>5. Absolute valuation</h3><p>The required return is estimated with the
+<b>CAPM</b>: r = risk-free rate + &beta; &times; equity risk premium
+(here 4.5% + &beta;&middot;4.5%). Sustainable growth is g = ROE &times;
+(1 &minus; payout ratio). For dividend payers, the <b>Gordon dividend-discount
+model</b> values the stock as D&#8321;/(r &minus; g). The <b>justified trailing
+P/E</b>, payout &times; (1+g)/(r &minus; g), is the multiple the fundamentals
+support &mdash; comparing it to the actual P/E shows whether the market is
+optimistic or cautious relative to the fundamentals.</p>
+<h3>Limitations</h3><p>Data is from free Yahoo Finance feeds and is approximate;
+single-stage DDM assumes constant growth, which suits mature firms better than
+high-growth ones. This is an educational framework, not investment advice.</p>
+</section></main><footer class="shell-foot"><div class="container"><p>CFA-framework analysis on free Yahoo Finance data. Educational research, not investment advice.</p></div></footer></body></html>

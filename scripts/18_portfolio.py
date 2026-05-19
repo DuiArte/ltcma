@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 XLSX = "/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
 DOCS = os.path.expanduser("~/LTCMA/docs")
 SCALE = 1.8                       # holdings scaling constant (obfuscation)
+FILTER_ANOMALIES = True           # drop rows with impossible returns (bad data)
 INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
 RED, GREY = "#da1e28", "#8d8d8d"
 
@@ -47,8 +48,19 @@ df["cost"] = df["shares"] * df["Costo promedio"]
 df["pm"] = df["value"] - df["cost"]
 df["ret"] = df["Precio mercado"] / df["Costo promedio"] - 1
 
+# filter obvious data errors (e.g. unadjusted stock-split rows) by default
+bad_dates = set()
+if FILTER_ANOMALIES:
+    bad = df[(df["ret"] < -0.60) | (df["ret"] > 3.0)]
+    for _, b in bad.iterrows():
+        print(f"  filtered anomaly: {b['ticker']} {b['Fecha'].date()} "
+              f"ret={b['ret']*100:.0f}% (likely unadjusted split)")
+    bad_dates = set(bad["Fecha"])
+    df = df.drop(bad.index)
+
 # ---------- portfolio value time series ----------
 ts = df.groupby("Fecha").agg(value=("value", "sum"), cost=("cost", "sum"))
+ts = ts[~ts.index.isin(bad_dates)]      # drop dates left incomplete by the filter
 ts["ret"] = ts["value"] / ts["cost"] - 1
 dates = ts.index
 
@@ -115,6 +127,7 @@ PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
        '<a href="portfolio.html">Portfolio</a>'
+       '<a href="stocks.html">Stock Analysis</a>'
        '<a href="index.html#about">About</a></nav>')
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -135,8 +148,8 @@ position. Sourced from the portfolio workbook; refreshes when it updates.</p>
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
 amounts; prices, returns and weights are exact. FX positions and non-GBM cash
-are excluded. (A 2026-04-21 VGT row in the source carries an unadjusted
-stock-split and dips that date &mdash; fix that cell in the workbook to clear it.)</div>
+are excluded. Rows with impossible returns (e.g. unadjusted stock splits) are
+filtered out automatically.</div>
 <section class="block"><h2>Snapshot</h2><div class="metrics">{snap}</div></section>
 <section class="block"><h2>Portfolio Value</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>

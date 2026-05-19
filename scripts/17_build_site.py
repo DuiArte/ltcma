@@ -198,6 +198,7 @@ PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
        '<a href="portfolio.html">Portfolio</a>'
+       '<a href="stocks.html">Stock Analysis</a>'
        '<a href="index.html#about">About</a></nav>')
 
 snap = "".join(
@@ -366,6 +367,14 @@ font-family:'IBM Plex Mono',monospace}
 .pos{color:#198038}.neg{color:#da1e28}
 .scaled-note{background:#fff;border-left:3px solid #b28600;padding:10px 16px;
 font-size:13px;color:#525252;margin-bottom:18px}
+/* stock cards */
+.scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+gap:1px;background:#e0e0e0;border:1px solid #e0e0e0}
+.scard{background:#fff;padding:22px 20px;text-decoration:none;color:#161616}
+.scard:hover{background:#0f62fe;color:#fff}
+.sc-t{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600}
+.sc-n{font-size:12px;color:#525252;margin-top:4px}
+.scard:hover .sc-n{color:#d0dcff}
 @media(max-width:820px){.grid{grid-template-columns:1fr}.hero h1{font-size:30px}
 .report{padding:24px}}
 """
