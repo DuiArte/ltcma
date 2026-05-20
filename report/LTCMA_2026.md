@@ -502,8 +502,34 @@ and Japan equity, and replaces much of the bond sleeve with EM USD sovereign
 debt, Mexican local government bonds, TIPS, and gold. It delivers a **higher
 median than the conventional Moderate 60/40 at a similar central risk profile** —
 but, as Section 7.5 shows, it carries more geopolitical-tail risk. The edge is
-real and should be taken deliberately, not by accident. Allocations are in
-`data/mc_regime_portfolios.csv` and the scripts.
+real and should be taken deliberately, not by accident.
+
+### 9.1 Composition — all four portfolios
+
+| Asset class | Conservative 30/70 | Moderate 60/40 | Growth 90/10 | **Edge-Tilted** |
+|---|---:|---:|---:|---:|
+| US Large Cap | 14% | 30% | 42% | **16%** |
+| DM ex-US Equity | 8% | 16% | 26% | **14%** |
+| EM Equity | 8% | 14% | 22% | **16%** |
+| Mexico Equity | — | — | — | **7%** |
+| Japan Equity | — | — | — | **7%** |
+| US Treasury Intermediate | 25% | 18% | 5% | **7%** |
+| US IG Corporate | 15% | 10% | 3% | — |
+| Global Aggregate ex-US | 10% | 6% | — | — |
+| US Cash / T-Bills | 12% | — | — | **3%** |
+| US TIPS | — | — | — | **8%** |
+| US High Yield | 4% | 3% | — | — |
+| EM USD Sovereign | 4% | 3% | 2% | **8%** |
+| Mexico Government Local (Mbonos) | — | — | — | **9%** |
+| Gold | — | — | — | **5%** |
+| **Total** | **100%** | **100%** | **100%** | **100%** |
+
+The Edge-Tilted holds the same 60/40 equity-to-fixed split as the Moderate book
+but expresses the four strategic edges from Section 8 explicitly: half the US
+large-cap weight, a 9% allocation to Mexican local government bonds (the
+report's standout fixed-income holding), EM USD sovereigns in place of US
+credit, and TIPS + gold for diversification when stock-bond correlation can
+no longer be relied on.
 
 ---
 

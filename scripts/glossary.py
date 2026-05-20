@@ -7,6 +7,8 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
        '<a href="portfolio.html">Portfolio</a>'
        '<a href="stocks.html">Stock Analysis</a>'
+       '<a href="signals.html">Stock Signals</a>'
+       '<a href="regime.html">Regime Tracker</a>'
        '<a href="glossary.html">Glossary</a>'
        '<a href="index.html#about">About</a></nav>')
 

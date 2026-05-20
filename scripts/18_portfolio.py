@@ -10,6 +10,7 @@ Refresh: update the Excel, re-run this script.
 import os
 import numpy as np
 import pandas as pd
+import yfinance as yf
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
@@ -84,14 +85,66 @@ ts = ts[~ts.index.isin(bad_dates)]
 ts["ret"] = ts["value"] / ts["cost"] - 1
 dates = ts.index
 
-# ---------- latest snapshot ----------
+# ---------- latest snapshot (with LIVE pricing override) ----------
 latest = df[df["Fecha"] == df["Fecha"].max()].copy()
+asof_excel = df["Fecha"].max().strftime("%d %b %Y")
+
+# Map portfolio tickers to yfinance symbols (US-listed = USD native;
+# .MX suffix = BMV-listed, MXN native).
+TICKER_MAP = {
+    "AMZN": "AMZN", "BA": "BA", "GLD": "GLD", "GOOGL": "GOOGL", "IBM": "IBM",
+    "JPM": "JPM", "MA": "MA", "MELI N": "MELI", "META": "META", "MSFT": "MSFT",
+    "QQQ": "QQQ", "SOXX": "SOXX", "VGT": "VGT", "VUG": "VUG",
+    "GMEXICO B": "GMEXICOB.MX",
+}
+
+# refresh USDMXN to the live rate (falls back to FRED rate if yfinance fails)
+try:
+    fx_live = float(yf.Ticker("MXN=X").history(period="2d")["Close"].iloc[-1])
+except Exception:
+    fx_live = RATE
+RATE = fx_live          # used by cval() for the MXN/USD toggle
+
+priced_at = None
+to_fetch = sorted({TICKER_MAP[t] for t in latest["ticker"] if t in TICKER_MAP})
+if to_fetch:
+    try:
+        ld = yf.download(to_fetch, period="5d", interval="1d",
+                         auto_adjust=True, progress=False)["Close"]
+        if isinstance(ld, pd.Series):
+            ld = ld.to_frame(name=to_fetch[0])
+        live_px = {c: float(ld[c].dropna().iloc[-1]) for c in ld.columns
+                   if ld[c].dropna().size}
+        priced_at = ld.dropna(how="all").index[-1].strftime("%d %b %Y")
+        for idx, row in latest.iterrows():
+            yt = TICKER_MAP.get(row["ticker"])
+            if not yt or yt not in live_px:
+                continue
+            ccy = "MXN" if yt.endswith(".MX") else "USD"
+            new_mxn = live_px[yt] if ccy == "MXN" else live_px[yt] * fx_live
+            latest.loc[idx, "Precio mercado"] = new_mxn
+        latest["value"] = latest["shares"] * latest["Precio mercado"]
+        latest["pm"] = latest["value"] - latest["cost"]
+        latest["ret"] = latest["Precio mercado"] / latest["Costo promedio"] - 1
+        print(f"  live priced {len(live_px)} holdings @ "
+              f"{priced_at} USDMXN {fx_live:.2f}")
+    except Exception as e:
+        print(f"  live pricing failed: {e} -- using last-snapshot prices")
+
 tot_val = latest["value"].sum()
 tot_cost = latest["cost"].sum()
 latest["weight"] = latest["value"] / tot_val
 latest = latest.sort_values("value", ascending=False)
 port_ret = tot_val / tot_cost - 1
-asof = df["Fecha"].max().strftime("%d %b %Y")
+asof = priced_at or asof_excel
+
+# Append today's live snapshot to the value time series
+if priced_at:
+    today_idx = pd.Timestamp(priced_at)
+    if today_idx > ts.index[-1]:
+        ts.loc[today_idx] = [tot_val, tot_cost, tot_val / tot_cost - 1]
+        ts = ts.sort_index()
+        dates = ts.index
 
 # ---------- charts ----------
 # 1. portfolio value over time (MXN base; USD array embedded for the toggle)
@@ -140,7 +193,8 @@ SNAP = [("Portfolio Value (scaled)", cval(tot_val)),
         ("Unrealized P / M (scaled)", cval(latest["pm"].sum(), signed=True)),
         ("Holdings", f"{len(latest)}"),
         ("Portfolio Return", f"{port_ret*100:+.1f}%"),
-        ("As of", asof)]
+        ("Live Priced", asof),
+        ("Cost-Basis Date", asof_excel)]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for k, v in SNAP)
@@ -198,7 +252,7 @@ filtered automatically.</div>
 <p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns and weights
 read the same in either currency. Definitions in the
 <a href="glossary.html">Glossary</a>.</p>
-<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{snap}</div></section>
+<div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
 <section class="block"><h2>Portfolio Value</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
 <section class="block"><h2>Holdings</h2>

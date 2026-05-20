@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Analysis</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
 </div></header>
 <main class="container"><article class="tile report"><h1>Long-Term Capital Market Assumptions — 2026 Edition</h1>
 <p><strong>A proprietary 12-year forward outlook for global asset classes</strong></p>
@@ -1176,8 +1176,132 @@ and Japan equity, and replaces much of the bond sleeve with EM USD sovereign
 debt, Mexican local government bonds, TIPS, and gold. It delivers a <strong>higher
 median than the conventional Moderate 60/40 at a similar central risk profile</strong> —
 but, as Section 7.5 shows, it carries more geopolitical-tail risk. The edge is
-real and should be taken deliberately, not by accident. Allocations are in
-<code>data/mc_regime_portfolios.csv</code> and the scripts.</p>
+real and should be taken deliberately, not by accident.</p>
+<h3>9.1 Composition — all four portfolios</h3>
+<table>
+<thead>
+<tr>
+<th>Asset class</th>
+<th style="text-align: right;">Conservative 30/70</th>
+<th style="text-align: right;">Moderate 60/40</th>
+<th style="text-align: right;">Growth 90/10</th>
+<th style="text-align: right;"><strong>Edge-Tilted</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>US Large Cap</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">42%</td>
+<td style="text-align: right;"><strong>16%</strong></td>
+</tr>
+<tr>
+<td>DM ex-US Equity</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">26%</td>
+<td style="text-align: right;"><strong>14%</strong></td>
+</tr>
+<tr>
+<td>EM Equity</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;"><strong>16%</strong></td>
+</tr>
+<tr>
+<td>Mexico Equity</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>7%</strong></td>
+</tr>
+<tr>
+<td>Japan Equity</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>7%</strong></td>
+</tr>
+<tr>
+<td>US Treasury Intermediate</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;"><strong>7%</strong></td>
+</tr>
+<tr>
+<td>US IG Corporate</td>
+<td style="text-align: right;">15%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>Global Aggregate ex-US</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>US Cash / T-Bills</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>3%</strong></td>
+</tr>
+<tr>
+<td>US TIPS</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8%</strong></td>
+</tr>
+<tr>
+<td>US High Yield</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>EM USD Sovereign</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;"><strong>8%</strong></td>
+</tr>
+<tr>
+<td>Mexico Government Local (Mbonos)</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>9%</strong></td>
+</tr>
+<tr>
+<td>Gold</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>5%</strong></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td style="text-align: right;"><strong>100%</strong></td>
+<td style="text-align: right;"><strong>100%</strong></td>
+<td style="text-align: right;"><strong>100%</strong></td>
+<td style="text-align: right;"><strong>100%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The Edge-Tilted holds the same 60/40 equity-to-fixed split as the Moderate book
+but expresses the four strategic edges from Section 8 explicitly: half the US
+large-cap weight, a 9% allocation to Mexican local government bonds (the
+report's standout fixed-income holding), EM USD sovereigns in place of US
+credit, and TIPS + gold for diversification when stock-bond correlation can
+no longer be relied on.</p>
 <hr />
 <h2>10. Assumptions, Limitations &amp; Sources</h2>
 <h3>10.1 Key judgment assumptions</h3>
