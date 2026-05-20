@@ -151,6 +151,25 @@ GLOSSARY = {
         ("Beta",
          "How much a stock tends to move when the whole market moves. Above 1 "
          "= more jumpy than the market; below 1 = steadier."),
+        ("Intrinsic value",
+         "What a share is worth based on its fundamentals — its earnings, "
+         "cash flows and growth — regardless of what the market currently "
+         "charges for it."),
+        ("Synthesized target",
+         "The average intrinsic-value estimate across several CFA valuation "
+         "methods. Used here as a 12-month price target."),
+        ("Justified P/B",
+         "The price-to-book ratio that a company's profitability and growth "
+         "actually support. Computed as (ROE − g) / (r − g)."),
+        ("FCFE perpetuity",
+         "Values a share as the present value of all future free cash flow "
+         "available to equity holders, assuming steady-state growth forever."),
+        ("Terminal growth",
+         "The long-run growth rate a mature company can sustain — typically "
+         "capped near long-run nominal GDP (around 4–5%)."),
+        ("Forecast cone",
+         "The shaded range around a forward price path showing the ±1 "
+         "standard-deviation band, given the stock's recent volatility."),
     ],
     "Portfolio": [
         ("Holding",
