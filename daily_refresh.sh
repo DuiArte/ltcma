@@ -28,7 +28,7 @@ run() { echo "-- $1"; python3 "$1" || echo "   (warn: $1 failed, continuing)"; }
   run scripts/20_regime_tracker.py
 
   echo "[2/4] rebuilding site + AI copies"
-  ( cd scripts && python3 17_build_site.py && (python3 18_portfolio.py || echo "   (warn: portfolio tracker)") && python3 22_ai_copies.py )
+  ( cd scripts && python3 17_build_site.py && python3 23_strategies.py && (python3 18_portfolio.py || echo "   (warn: portfolio tracker)") && python3 22_ai_copies.py )
 
   echo "[3/4] mirroring backup -> $BACKUP"
   mkdir -p "$BACKUP"

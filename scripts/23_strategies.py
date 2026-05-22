@@ -1,16 +1,17 @@
 """LTCMA — Step 23: Systematic Strategies page (docs/strategies.html).
-Equity curves vs S&P 500, drawdown, and a full indicator set for the four
-regime-adaptive strategies. Reads each strategy's walk-forward OOS return series.
-Methodology stays proprietary — this page shows results only.
+Interactive growth-of-100 curves vs S&P 500, drawdown, and a full professional
+indicator set for the four regime-adaptive strategies. A start-date control lets
+the reader re-base every curve and recompute every indicator from any month
+("kill the starting point"). Methodology stays proprietary — results only.
 """
 import os
+import json
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
-from glossary import NAV
+from glossary import NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
-H = os.path.expanduser("~")
+import pandas as pd
 INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
 RED, GREY, PURPLE = "#da1e28", "#8d8d8d", "#8a3ffc"
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
@@ -32,124 +33,108 @@ def div(fig, name):
                                "doubleClick": False, "responsive": True})
 
 
-# ── load the four strategies' OOS return series ──────────────────────────────
-def load(path, col, bench_col, bench_name):
-    df = pd.read_csv(path, index_col=0, parse_dates=True)
-    return df[col].rename("strat"), df[bench_col].rename("bench"), bench_name
-
-STRATS = {
-    "SARS": dict(name="Adaptive US Equity", color=BLUE, rf=0.045,
-                 **dict(zip(["s", "b", "bn"], load(f"{H}/SARS/data/backtest/backtest_returns.csv", "SARS", "SP500", "S&P 500")))),
-    "DUO":  dict(name="Balanced Multi-strategy", color=PURPLE, rf=0.045,
-                 **dict(zip(["s", "b", "bn"], load(f"{H}/DUO/data/duo_returns.csv", "DUO", "SPY", "S&P 500")))),
-    "MARS": dict(name="Defensive Multi-asset", color=GOLD, rf=0.045,
-                 **dict(zip(["s", "b", "bn"], load(f"{H}/MARS/data/backtest/backtest_returns.csv", "MARS", "SP500", "S&P 500")))),
-    "BARS": dict(name="Mexican Equity Rotation", color=GREEN, rf=0.09,
-                 **dict(zip(["s", "b", "bn"], load(f"{H}/BARS/data/backtest/backtest_returns.csv", "BARS", "IPC", "IPC")))),
-}
-
-
-# ── indicator engine ─────────────────────────────────────────────────────────
-def indicators(s, b, rf):
-    s, b = s.dropna(), b.dropna()
-    idx = s.index.intersection(b.index)
-    s, b = s.reindex(idx), b.reindex(idx)
-    n = len(s)
-    ann = (1 + s).prod() ** (12 / n) - 1
-    annb = (1 + b).prod() ** (12 / n) - 1
-    vol = s.std() * np.sqrt(12)
-    dvol = s[s < 0].std() * np.sqrt(12)
-    nav = (1 + s).cumprod()
-    mdd = (nav / nav.cummax() - 1).min()
-    cov = np.cov(s, b)[0, 1]; var = b.var()
-    beta = cov / var if var > 0 else np.nan
-    alpha = ann - (rf + beta * (annb - rf))
-    te = (s - b).std() * np.sqrt(12)
-    ir = (ann - annb) / te if te > 0 else np.nan
-    up = (s[b > 0].mean() / b[b > 0].mean()) if (b > 0).any() else np.nan
-    dn = (s[b < 0].mean() / b[b < 0].mean()) if (b < 0).any() else np.nan
-    return dict(ann_ret=ann, ann_vol=vol, sharpe=(ann - rf) / vol if vol else 0,
-                sortino=(ann - rf) / dvol if dvol else np.nan, max_dd=mdd,
-                calmar=ann / abs(mdd) if mdd else 0, win=(s > 0).mean(),
-                best=s.max(), worst=s.min(), alpha=alpha, beta=beta,
-                te=te, ir=ir, up_cap=up, dn_cap=dn, n=n,
-                start=s.index.min(), end=s.index.max())
-
-METRICS = {k: indicators(v["s"], v["b"], v["rf"]) for k, v in STRATS.items()}
-
-
-# ── 1. USD equity curves vs S&P (common window 2007+, indexed to 100) ────────
+# ── load the four strategies' OOS return series (shared loader) ──────────────
+data = bt_load()
+order = ["SARS", "DUO", "MARS", "BARS"]
 usd = ["SARS", "DUO", "MARS"]
-common = None
-for k in usd:
-    common = STRATS[k]["s"].index if common is None else common.intersection(STRATS[k]["s"].index)
-common = common.sort_values()
+common, aligned, spy = bt_common(data)
 
+# ── 1. USD equity curves vs S&P (common window, indexed to 100) ──────────────
 f_eq = go.Figure()
-spy = STRATS["SARS"]["b"].reindex(common)
-nav_spy = (1 + spy).cumprod(); nav_spy = nav_spy / nav_spy.iloc[0] * 100
 for k in usd:
-    nav = (1 + STRATS[k]["s"].reindex(common)).cumprod()
-    nav = nav / nav.iloc[0] * 100
-    f_eq.add_scatter(x=nav.index, y=nav, mode="lines", name=STRATS[k]["name"],
-                     line=dict(color=STRATS[k]["color"], width=2.4))
-f_eq.add_scatter(x=nav_spy.index, y=nav_spy, mode="lines", name="S&P 500",
+    f_eq.add_scatter(x=common, y=bt_g100(aligned[k]), mode="lines", name=data[k]["name"],
+                     line=dict(color=data[k]["color"], width=2.4))
+f_eq.add_scatter(x=common, y=bt_g100(spy), mode="lines", name="S&P 500",
                  line=dict(color=RED, width=1.8, dash="dot"))
-f_eq.update_layout(title="Growth of 100 — USD strategies vs S&P 500 (common window)",
+f_eq.update_layout(title="Growth of 100 — USD strategies vs S&P 500",
                    legend=dict(orientation="h", y=-0.16), yaxis_type="log")
 
 # ── 2. Drawdown (USD) ────────────────────────────────────────────────────────
 f_dd = go.Figure()
-def dd(r): nav = (1 + r).cumprod(); return (nav / nav.cummax() - 1) * 100
 for k in usd:
-    f_dd.add_scatter(x=common, y=dd(STRATS[k]["s"].reindex(common)), mode="lines",
-                     name=STRATS[k]["name"], line=dict(color=STRATS[k]["color"], width=1.8))
-f_dd.add_scatter(x=common, y=dd(spy), mode="lines", name="S&P 500",
+    f_dd.add_scatter(x=common, y=bt_dd(aligned[k]), mode="lines",
+                     name=data[k]["name"], line=dict(color=data[k]["color"], width=1.8))
+f_dd.add_scatter(x=common, y=bt_dd(spy), mode="lines", name="S&P 500",
                  line=dict(color=RED, width=1.4, dash="dot"), fill="tozeroy",
                  fillcolor="rgba(218,30,40,0.06)")
 f_dd.update_layout(title="Drawdown (%) — USD strategies vs S&P 500",
                    legend=dict(orientation="h", y=-0.16))
 
 # ── 3. BARS vs IPC (MXN) ─────────────────────────────────────────────────────
-bidx = STRATS["BARS"]["s"].index
-nb = (1 + STRATS["BARS"]["s"]).cumprod(); nb = nb / nb.iloc[0] * 100
-ni = (1 + STRATS["BARS"]["b"].reindex(bidx)).cumprod(); ni = ni / ni.iloc[0] * 100
+bd = data["BARS"]
 f_bars = go.Figure()
-f_bars.add_scatter(x=nb.index, y=nb, mode="lines", name="Mexican Equity Rotation",
+f_bars.add_scatter(x=bd["dates"], y=bt_g100(bd["s"]), mode="lines", name="Mexican Equity Rotation",
                    line=dict(color=GREEN, width=2.4))
-f_bars.add_scatter(x=ni.index, y=ni, mode="lines", name="IPC (NAFTRAC)",
+f_bars.add_scatter(x=bd["dates"], y=bt_g100(bd["b"]), mode="lines", name="IPC (NAFTRAC)",
                    line=dict(color=GREY, width=1.8, dash="dot"))
 f_bars.update_layout(title="Growth of 100 (MXN) — Mexican Equity Rotation vs IPC",
                      legend=dict(orientation="h", y=-0.16), yaxis_type="log")
 
 
-# ── metrics table ────────────────────────────────────────────────────────────
-def pct(x, s=False): return ("—" if x is None or (isinstance(x,float) and np.isnan(x))
-                             else (f"{x*100:+.1f}%" if s else f"{x*100:.1f}%"))
-def num(x, d=2): return ("—" if x is None or (isinstance(x,float) and np.isnan(x)) else f"{x:.{d}f}")
+# ── indicator table (initial values over each strategy's full window) ────────
+METRICS = {k: bt_indicators(data[k]["s"], data[k]["b"], data[k]["rf"]) for k in order}
 
-ROWS = [("Ann. return", "ann_ret", "pct"), ("Ann. volatility", "ann_vol", "pct"),
-        ("Sharpe", "sharpe", "num"), ("Sortino", "sortino", "num"),
-        ("Max drawdown", "max_dd", "pct"), ("Calmar", "calmar", "num"),
-        ("Win rate (months)", "win", "pct"), ("Best month", "best", "pcts"),
-        ("Worst month", "worst", "pcts"), ("Alpha vs bench", "alpha", "pcts"),
-        ("Beta vs bench", "beta", "num"), ("Tracking error", "te", "pct"),
-        ("Information ratio", "ir", "num"), ("Up-capture", "up_cap", "num"),
-        ("Down-capture", "dn_cap", "num")]
 
-order = ["SARS", "DUO", "MARS", "BARS"]
-head = "".join(f"<th>{STRATS[k]['name']}<br><span style='font-weight:400;color:#8d8d8d'>"
-               f"vs {STRATS[k]['bn']}</span></th>" for k in order)
+def _nan(x):
+    return x is None or (isinstance(x, (float, np.floating)) and np.isnan(x))
+def f_pct(x):  return "—" if _nan(x) else f"{x*100:.1f}%"
+def f_pcts(x): return "—" if _nan(x) else f"{x*100:+.1f}%"
+def f_num(x, d=2): return "—" if _nan(x) else f"{x:.{d}f}"
+def f_ulc(x):  return "—" if _nan(x) else f"{x:.1f}%"
+def f_ldd(x):  return "—" if _nan(x) else f"{int(round(x))} m"
+FMTP = {"ann_ret": f_pct, "ann_vol": f_pct, "max_dd": f_pct, "win": f_pct, "te": f_pct,
+        "var95": f_pct, "cvar95": f_pct, "best": f_pcts, "worst": f_pcts, "alpha": f_pcts,
+        "sharpe": f_num, "sortino": f_num, "calmar": f_num, "beta": f_num, "ir": f_num,
+        "up_cap": f_num, "dn_cap": f_num, "omega": f_num, "gtp": f_num, "recov": f_num,
+        "skew": f_num, "kurt": f_num, "tail": f_num, "ulcer": f_ulc, "longdd": f_ldd}
+
+GROUPS = [
+    ("Return &amp; growth", [("CAGR (annualised)", "ann_ret"), ("Ann. volatility", "ann_vol"),
+                         ("Best month", "best"), ("Worst month", "worst")]),
+    ("Risk-adjusted", [("Sharpe", "sharpe"), ("Sortino", "sortino"), ("Calmar", "calmar"),
+                       ("Omega (&gt;0)", "omega"), ("Gain-to-pain", "gtp"), ("Recovery factor", "recov")]),
+    ("Drawdown &amp; tail risk", [("Max drawdown", "max_dd"), ("Longest drawdown", "longdd"),
+                                  ("Ulcer index", "ulcer"), ("Monthly VaR 95%", "var95"),
+                                  ("Monthly CVaR 95%", "cvar95"), ("Tail ratio", "tail")]),
+    ("Distribution", [("Win rate (months)", "win"), ("Skew", "skew"), ("Excess kurtosis", "kurt")]),
+    ("Versus benchmark", [("Alpha (ann.)", "alpha"), ("Beta", "beta"), ("Tracking error", "te"),
+                          ("Information ratio", "ir"), ("Up-capture", "up_cap"), ("Down-capture", "dn_cap")]),
+]
+ROWKEYS = [key for _, items in GROUPS for _, key in items]
+
+head = "".join(f"<th>{data[k]['name']}<br><span style='font-weight:400;color:#8d8d8d'>"
+               f"vs {data[k]['bn']}</span></th>" for k in order)
 body = ""
-for label, key, kind in ROWS:
-    cells = ""
-    for k in order:
-        v = METRICS[k][key]
-        cells += f"<td>{pct(v) if kind=='pct' else pct(v,True) if kind=='pcts' else num(v)}</td>"
-    body += f"<tr><td>{label}</td>{cells}</tr>"
-period = "".join(f"<td>{METRICS[k]['start'].strftime('%Y')}&ndash;{METRICS[k]['end'].strftime('%Y')} "
-                 f"({METRICS[k]['n']}m)</td>" for k in order)
-body += f"<tr><td>OOS window</td>{period}</tr>"
+for gname, items in GROUPS:
+    body += f'<tr class="grp"><td>{gname}</td>' + "".join("<td></td>" for _ in order) + "</tr>"
+    for label, key in items:
+        cells = "".join(f'<td id="m_{k}_{key}">{FMTP[key](METRICS[k][key]) if METRICS[k] else "—"}</td>'
+                        for k in order)
+        body += f"<tr><td>{label}</td>{cells}</tr>"
+wins = "".join(f'<td id="m_{k}_window">{data[k]["dates"][0][:4]}&ndash;{data[k]["dates"][-1][:4]} '
+               f'({len(data[k]["dates"])}m)</td>' for k in order)
+body += f'<tr class="wrow"><td>OOS window</td>{wins}</tr>'
+
+# ── interactive start-date control ───────────────────────────────────────────
+CTRL = ('<div class="btctl">'
+        '<div class="btranges">'
+        '<button class="btr on" data-bt-range="all" data-bt-group="s">All</button>'
+        '<button class="btr" data-bt-range="15" data-bt-group="s">15Y</button>'
+        '<button class="btr" data-bt-range="10" data-bt-group="s">10Y</button>'
+        '<button class="btr" data-bt-range="5" data-bt-group="s">5Y</button>'
+        '<button class="btr" data-bt-range="3" data-bt-group="s">3Y</button>'
+        '<button class="btr" data-bt-range="1" data-bt-group="s">1Y</button>'
+        '</div>'
+        '<input type="range" id="s-start" class="btslider" aria-label="Backtest start date">'
+        '<span id="s-start-lbl" class="btlbl">From …</span>'
+        '</div>')
+
+cfg = ('{mode:"own",cellPrefix:"m",group:"s",'
+       'cols:["SARS","DUO","MARS","BARS"],'
+       'rows:' + json.dumps(ROWKEYS, separators=(",", ":")) + ','
+       'eq:"eq",dd:"dd",bars:"bars",slider:"s-start",label:"s-start-lbl"}')
+bt_script = ('<script>window.BT_DATA=' + json.dumps(data, separators=(",", ":")) +
+             ';window.BT_CFG=' + cfg + ';</script>\n<script>' + BT_JS + '</script>')
 
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -168,9 +153,15 @@ full indicator set. Results only — the detection-and-optimisation methodology 
 <p class="asof">As of {ASOF} &middot; out-of-sample &middot; hypothetical, not actual trading results</p>
 </div></section>
 <main class="container">
+<section class="block"><h2>Backtest Window</h2>
+<p class="note">Drag the slider (or pick a range) to move the start date — every curve
+re-bases to 100 and every indicator recomputes from the month you choose. The USD
+comparison chart begins Jan&nbsp;2007 (the first month all three USD strategies coexist);
+earlier starts only extend the longer-history columns in the indicator table below.</p>
+{CTRL}</section>
 <section class="block"><h2>Growth of 100 — USD strategies vs S&amp;P 500</h2>
 <div class="tile chart wide"><div class="ch">{div(f_eq,'eq')}</div></div>
-<p class="note">Log scale, indexed to 100 at the common start. Every strategy compounds
+<p class="note">Log scale, indexed to 100 at the chosen start. Every strategy compounds
 with materially lower drawdowns than the index (below).</p></section>
 <section class="block"><h2>Drawdown</h2>
 <div class="tile chart wide"><div class="ch">{div(f_dd,'dd')}</div></div></section>
@@ -181,12 +172,45 @@ with materially lower drawdowns than the index (below).</p></section>
 <table class="ptable"><thead><tr><th>Indicator</th>{head}</tr></thead>
 <tbody>{body}</tbody></table></div>
 <p class="note">Risk-free rate: 4.5% (USD strategies) / 9% (BARS, CETES). Alpha, beta,
-capture ratios computed vs each strategy's benchmark. Out-of-sample walk-forward;
+capture ratios computed vs each strategy's benchmark; VaR/CVaR are monthly at 95%;
+skew and excess kurtosis are population moments. Out-of-sample walk-forward;
 hypothetical results, past performance does not guarantee future results.</p></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment advice.
 Backtested results are hypothetical and do not represent actual trading.</p></div></footer>
+{bt_script}
 </body></html>"""
 
 open(f"{DOCS}/strategies.html", "w", encoding="utf-8").write(HTML)
-print("strategies.html built:", {k: round(METRICS[k]["sharpe"], 2) for k in order})
+
+
+# ── low-token AI companion (standing rule: every human output gets an AI copy) ─
+def ai_row(k):
+    m = METRICS[k]
+    if not m:
+        return f"{k}|{data[k]['name']}|n/a"
+    g = lambda key, p=1, sign=False: ("nan" if _nan(m[key]) else
+        (f"{m[key]*100:{'+' if sign else ''}.{p}f}%" if key in
+         ("ann_ret", "ann_vol", "max_dd", "win", "te", "var95", "cvar95", "best", "worst", "alpha")
+         else f"{m[key]:.2f}"))
+    w = f"{data[k]['dates'][0][:7]}..{data[k]['dates'][-1][:7]}({m['n']}m)"
+    return ("|".join([k, data[k]["name"], "vs " + data[k]["bn"], w,
+            "CAGR=" + g("ann_ret"), "vol=" + g("ann_vol"), "Sharpe=" + g("sharpe"),
+            "Sortino=" + g("sortino"), "MaxDD=" + g("max_dd"), "Calmar=" + g("calmar"),
+            "Omega=" + g("omega"), "GtP=" + g("gtp"), "Recov=" + g("recov"),
+            "Ulcer=" + f"{m['ulcer']:.1f}%", "VaR95=" + g("var95"), "CVaR95=" + g("cvar95"),
+            "Tail=" + g("tail"), "Win=" + g("win"), "Skew=" + g("skew"), "Kurt=" + g("kurt"),
+            "Alpha=" + g("alpha", sign=True), "Beta=" + g("beta"), "TE=" + g("te"),
+            "IR=" + g("ir"), "UpCap=" + g("up_cap"), "DnCap=" + g("dn_cap"),
+            "LongestDD=" + f"{int(m['longdd'])}m"]))
+
+ai = ["LTCMA SYSTEMATIC STRATEGIES — AI COPY (low-token)",
+      f"asof={ASOF}; freq=monthly; OOS walk-forward; hypothetical, not actual trading",
+      "names public-safe (no mechanism exposed); rf USD=4.5% BARS=9%",
+      "interactive: site lets reader re-base start date; values below = full window",
+      "fields: code|name|bench|window|metrics..."]
+ai += [ai_row(k) for k in order]
+open(f"{DOCS}/strategies.ai.txt", "w", encoding="utf-8").write("\n".join(ai) + "\n")
+
+print("strategies.html built:", {k: (round(METRICS[k]["sharpe"], 2) if METRICS[k] else None) for k in order})
+print("strategies.ai.txt written")

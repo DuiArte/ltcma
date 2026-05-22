@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 import markdown
 import plotly.graph_objects as go
-from glossary import GLOSSARY, NAV, ccy_badge
+from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
+                      bt_indicators, bt_g100, BT_JS)
 
 D = os.path.expanduser("~/LTCMA/data")
 REP = os.path.expanduser("~/LTCMA/report")
@@ -228,21 +229,78 @@ exp = "".join(
     f'<div class="role-t">{t}</div><p>{desc}</p></div>'
     for co, t, d, desc in EXPERIENCE)
 skills = "".join(f'<span class="tag">{s}</span>' for s in SKILLS)
-STRATBT = """<section class="block"><h2>Systematic Strategy Backtests</h2>
-<p class="note">Out-of-sample (walk-forward) performance of three proprietary
-regime-adaptive strategies versus the S&amp;P 500. Each beats the index on
-risk-adjusted return with a fraction of the drawdown. Hypothetical results; the
-detection-and-optimisation methodology is proprietary. Full detail in the
-<a href="report.html">report</a> (Section 10).</p>
-<div class="tile" style="padding:4px 16px 10px;overflow-x:auto">
-<table class="ptable"><thead><tr>
-<th>Strategy</th><th>Ann. Return</th><th>Sharpe</th><th>Max Drawdown</th><th>OOS Window</th>
-</tr></thead><tbody>
-<tr><td>Adaptive US Equity</td><td>12.1%</td><td>0.61</td><td>&minus;17.6%</td><td>2004&ndash;2026</td></tr>
-<tr><td>Balanced Multi-strategy</td><td>9.9%</td><td>0.51</td><td>&minus;15.6%</td><td>2007&ndash;2026</td></tr>
-<tr><td>Defensive Multi-asset</td><td>7.3%</td><td>0.31</td><td>&minus;17.6%</td><td>1998&ndash;2026</td></tr>
-<tr><td>S&amp;P 500 (reference)</td><td>8.3&ndash;10.2%</td><td>0.25&ndash;0.39</td><td>&minus;50.8%</td><td>same</td></tr>
-</tbody></table></div></section>"""
+# ---------- Systematic Strategy Backtests (interactive) ----------
+import json as _json
+_bt = bt_load()
+_common, _aligned, _spy = bt_common(_bt)
+_DCOLS = ["SARS", "DUO", "MARS", "SP500"]
+_DNAMES = {"SARS": _bt["SARS"]["name"], "DUO": _bt["DUO"]["name"],
+           "MARS": _bt["MARS"]["name"], "SP500": "S&amp;P 500"}
+_DMET = {k: bt_indicators(_bt[k]["s"], _bt[k]["b"], _bt[k]["rf"]) for k in ["SARS", "DUO", "MARS"]}
+_DMET["SP500"] = bt_indicators(_spy, _spy, 0.045)
+
+f_strat = go.Figure()
+for _k in ["SARS", "DUO", "MARS"]:
+    f_strat.add_scatter(x=_common, y=bt_g100(_aligned[_k]), mode="lines",
+                        name=_bt[_k]["name"], line=dict(color=_bt[_k]["color"], width=2.2))
+f_strat.add_scatter(x=_common, y=bt_g100(_spy), mode="lines", name="S&P 500",
+                    line=dict(color=RED, width=1.6, dash="dot"))
+f_strat.update_layout(title="Growth of 100 — strategies vs S&P 500 (USD)",
+                      yaxis_type="log", legend=dict(orientation="h", y=-0.22), height=380)
+_chart = div(f_strat, "dash_eq")
+
+def _dpct(x): return "—" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x*100:.1f}%"
+def _dnum(x): return "—" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x:.2f}"
+_DROWS = [("CAGR (ann.)", "ann_ret", _dpct), ("Ann. volatility", "ann_vol", _dpct),
+          ("Sharpe", "sharpe", _dnum), ("Sortino", "sortino", _dnum),
+          ("Max drawdown", "max_dd", _dpct), ("Calmar", "calmar", _dnum)]
+_dhead = "".join(f"<th>{_DNAMES[k]}</th>" for k in _DCOLS)
+_dbody = ""
+for _label, _key, _fmt in _DROWS:
+    _cells = "".join(f'<td id="d_{k}_{_key}">{_fmt(_DMET[k][_key]) if _DMET[k] else "—"}</td>' for k in _DCOLS)
+    _dbody += f"<tr><td>{_label}</td>{_cells}</tr>"
+_DWINTXT = {k: f'{_bt[k]["dates"][0][:4]}&ndash;{_bt[k]["dates"][-1][:4]} ({len(_bt[k]["dates"])}m)'
+            for k in ["SARS", "DUO", "MARS"]}
+_DWINTXT["SP500"] = f'2007&ndash;2026 ({len(_common)}m)'
+_dwin = "".join(f'<td id="d_{k}_window">{_DWINTXT[k]}</td>' for k in _DCOLS)
+_dbody += f'<tr class="wrow"><td>OOS window</td>{_dwin}</tr>'
+
+_DCTRL = ('<div class="btctl"><div class="btranges">'
+          '<button class="btr on" data-bt-range="all" data-bt-group="d">All</button>'
+          '<button class="btr" data-bt-range="15" data-bt-group="d">15Y</button>'
+          '<button class="btr" data-bt-range="10" data-bt-group="d">10Y</button>'
+          '<button class="btr" data-bt-range="5" data-bt-group="d">5Y</button>'
+          '<button class="btr" data-bt-range="3" data-bt-group="d">3Y</button>'
+          '<button class="btr" data-bt-range="1" data-bt-group="d">1Y</button>'
+          '</div><input type="range" id="d-start" class="btslider" aria-label="Backtest start date">'
+          '<span id="d-start-lbl" class="btlbl">From &hellip;</span></div>')
+
+_dash_data = dict(_bt)
+_dash_data["SP500"] = dict(name="S&P 500", color=RED, rf=0.045, bn="S&P 500",
+                           dates=_common, s=_spy, b=_spy)
+_dcfg = ('{mode:"own",cellPrefix:"d",group:"d",'
+         'cols:["SARS","DUO","MARS","SP500"],'
+         'rows:["ann_ret","ann_vol","sharpe","sortino","max_dd","calmar"],'
+         'eq:"dash_eq",slider:"d-start",label:"d-start-lbl"}')
+_dbt_script = ('<script>window.BT_DATA=' + _json.dumps(_dash_data, separators=(",", ":")) +
+               ';window.BT_CFG=' + _dcfg + ';</script>\n<script>' + BT_JS + '</script>')
+
+STRATBT = (
+    '<section class="block"><h2>Systematic Strategy Backtests</h2>'
+    '<p class="note">Out-of-sample (walk-forward) performance of three proprietary '
+    'regime-adaptive strategies versus the S&amp;P 500 &mdash; equity-like returns with a '
+    'fraction of the index&rsquo;s drawdown. Drag the slider (or pick a range) to move the '
+    'start date: the curve re-bases to 100 and every score recomputes live. Hypothetical '
+    'results; the detection-and-optimisation methodology is proprietary. Full indicator set '
+    'on the <a href="strategies.html">Strategies</a> page; detail in the '
+    '<a href="report.html">report</a> (Section&nbsp;10).</p>'
+    + _DCTRL +
+    '<div class="tile chart wide"><div class="ch">' + _chart + '</div></div>'
+    '<div class="tile" style="padding:4px 16px 10px;overflow-x:auto">'
+    '<table class="ptable"><thead><tr><th>Indicator</th>' + _dhead + '</tr></thead>'
+    '<tbody>' + _dbody + '</tbody></table></div>'
+    + _dbt_script +
+    '</section>')
 certs = "".join(f"<li>{c}</li>" for c in CERTS)
 
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -426,6 +484,19 @@ font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
 .ptable td{border-bottom:1px solid #e0e0e0;padding:9px 12px;text-align:right;font-family:'IBM Plex Mono',monospace}
 .ptable td:first-child{text-align:left;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
 .ptable tr:hover td{background:#eef4ff}
+/* interactive backtest control */
+.btctl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:2px 0 16px}
+.btranges{display:inline-flex;border:1px solid #0f62fe}
+.btr{background:#fff;color:#0f62fe;border:0;border-right:1px solid #0f62fe;padding:6px 14px;
+font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .12s,color .12s}
+.btr:last-child{border-right:0}
+.btr:hover{background:#edf5ff}
+.btr.on{background:#0f62fe;color:#fff}
+.btslider{flex:1 1 180px;min-width:140px;max-width:360px;accent-color:#0f62fe;cursor:pointer;height:4px}
+.btlbl{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#525252;white-space:nowrap;min-width:118px}
+.ptable tr.grp td{background:#f4f4f4;color:#0f62fe;font-weight:600;font-size:10.5px;
+text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #c6c6c6;padding-top:12px}
+.ptable tr.wrow td{border-top:2px solid #161616;color:#525252;font-size:11px}
 .pos{color:#198038}.neg{color:#da1e28}
 .scaled-note{background:#fff;border-left:3px solid #b28600;padding:10px 16px;
 font-size:13px;color:#525252;margin-bottom:18px}
@@ -472,6 +543,7 @@ padding:7px 22px;font-family:inherit;font-size:13px;font-weight:600;cursor:point
   .report table,.report td,.report th{font-size:11.5px}
   .report table{display:block;overflow-x:auto;white-space:nowrap}
   .ptable{font-size:12px}.ptable th,.ptable td{padding:7px 8px}
+  .btslider{max-width:100%;flex-basis:100%}.btlbl{min-width:0}.btctl{gap:9px}
   .role-h{flex-direction:column;gap:2px}
   .btn{padding:13px 24px;display:block;text-align:center}
 }
