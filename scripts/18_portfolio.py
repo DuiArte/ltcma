@@ -54,6 +54,14 @@ def cval(mxn, dec=0, signed=False):
     return (f'<span class="cval" data-mxn="{f(mxn, dec)}" '
             f'data-usd="{f(mxn / RATE, dec)}">{f(mxn, dec)}</span>')
 
+# Map portfolio tickers to yfinance symbols — BMV (.MX) listings, MXN-native.
+TICKER_MAP = {
+    "AMZN": "AMZN.MX", "BA": "BA.MX", "GLD": "GLD.MX", "GOOGL": "GOOGL.MX",
+    "IBM": "IBM.MX", "JPM": "JPM.MX", "MA": "MA.MX", "MELI N": "MELI.MX",
+    "META": "META.MX", "MSFT": "MSFT.MX", "QQQ": "QQQ.MX", "SOXX": "SOXX.MX",
+    "VGT": "VGT.MX", "VUG": "VUG.MX", "GMEXICO B": "GMEXICOB.MX",
+}
+
 # ---------- load & clean ----------
 df = pd.read_excel(XLSX, "DBE Acciones", header=0)
 for c in ["Títulos", "Costo promedio", "Precio mercado"]:
@@ -61,6 +69,34 @@ for c in ["Títulos", "Costo promedio", "Precio mercado"]:
 df["Fecha"] = pd.to_datetime(df["Fecha"])
 df["ticker"] = df["Emisora/Fondo"].astype(str).str.replace(" *", "", regex=False).str.strip()
 df = df.dropna(subset=["Títulos", "Costo promedio", "Precio mercado"])
+
+# ---------- Yahoo-sourced market prices (historical + live) ----------
+# Every (date, holding) market price comes from Yahoo Finance via the BMV (.MX)
+# listing; the Excel supplies only share counts and cost basis. Falls back to the
+# Excel price for any ticker Yahoo can't price.
+_lo = (df["Fecha"].min() - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
+_syms = sorted({TICKER_MAP[t] for t in df["ticker"].unique() if t in TICKER_MAP})
+try:
+    _hist = yf.download(_syms, start=_lo, interval="1d",
+                        auto_adjust=True, progress=False)["Close"]
+    if isinstance(_hist, pd.Series):
+        _hist = _hist.to_frame(name=_syms[0])
+    if getattr(_hist.index, "tz", None) is not None:
+        _hist.index = _hist.index.tz_localize(None)
+    _hist = _hist.sort_index().ffill()
+
+    def _asof_px(row):
+        yt = TICKER_MAP.get(row["ticker"])
+        if yt and yt in _hist.columns:
+            s = _hist[yt].dropna()
+            s = s[s.index <= row["Fecha"]]
+            if len(s):
+                return float(s.iloc[-1])
+        return row["Precio mercado"]
+    df["Precio mercado"] = df.apply(_asof_px, axis=1)
+    print(f"  historical prices from Yahoo: {len(_syms)} tickers since {_lo}")
+except Exception as e:
+    print(f"  Yahoo historical pricing failed ({e}) -- using Excel prices")
 
 # x1.8 scaling on share counts -> every downstream formula stays consistent
 df["shares"] = df["Títulos"] * SCALE
@@ -89,16 +125,7 @@ dates = ts.index
 latest = df[df["Fecha"] == df["Fecha"].max()].copy()
 asof_excel = df["Fecha"].max().strftime("%d %b %Y")
 
-# Map portfolio tickers to yfinance symbols (US-listed = USD native;
-# .MX suffix = BMV-listed, MXN native).
-TICKER_MAP = {
-    # Priced from the public BMV exchange (SIC), MXN-native — matches how a GBM
-    # client actually holds these, eliminating the US-price x FX basis mismatch.
-    "AMZN": "AMZN.MX", "BA": "BA.MX", "GLD": "GLD.MX", "GOOGL": "GOOGL.MX",
-    "IBM": "IBM.MX", "JPM": "JPM.MX", "MA": "MA.MX", "MELI N": "MELI.MX",
-    "META": "META.MX", "MSFT": "MSFT.MX", "QQQ": "QQQ.MX", "SOXX": "SOXX.MX",
-    "VGT": "VGT.MX", "VUG": "VUG.MX", "GMEXICO B": "GMEXICOB.MX",
-}
+# (TICKER_MAP defined above — BMV .MX listings)
 
 # refresh USDMXN to the live rate (falls back to FRED rate if yfinance fails)
 try:
