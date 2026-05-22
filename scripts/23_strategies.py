@@ -29,7 +29,7 @@ def div(fig, name):
     fig.update_xaxes(fixedrange=True); fig.update_yaxes(fixedrange=True)
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id=name,
                        config={"displayModeBar": False, "scrollZoom": False,
-                               "doubleClick": False})
+                               "doubleClick": False, "responsive": True})
 
 
 # ── load the four strategies' OOS return series ──────────────────────────────
@@ -38,7 +38,7 @@ def load(path, col, bench_col, bench_name):
     return df[col].rename("strat"), df[bench_col].rename("bench"), bench_name
 
 STRATS = {
-    "SARS": dict(name="US Sector Rotation", color=BLUE, rf=0.045,
+    "SARS": dict(name="Adaptive US Equity", color=BLUE, rf=0.045,
                  **dict(zip(["s", "b", "bn"], load(f"{H}/SARS/data/backtest/backtest_returns.csv", "SARS", "SP500", "S&P 500")))),
     "DUO":  dict(name="Balanced Multi-strategy", color=PURPLE, rf=0.045,
                  **dict(zip(["s", "b", "bn"], load(f"{H}/DUO/data/duo_returns.csv", "DUO", "SPY", "S&P 500")))),

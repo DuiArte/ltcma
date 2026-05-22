@@ -553,7 +553,7 @@ mix*, not the recipe.
 
 | Strategy | Sleeve | Ann. return | Sharpe | Max drawdown | OOS window |
 |---|---|---|---|---|---|
-| **US Sector Rotation** | US equity (11 sectors) | 12.1% | 0.61 | -17.6% | 2004-2026 |
+| **Adaptive US Equity** | US large-cap equity | 12.1% | 0.61 | -17.6% | 2004-2026 |
 | **Balanced Multi-strategy** | Defensive-growth blend | 9.9% | 0.51 | -15.6% | 2007-2026 |
 | **Defensive Multi-asset** | 26 global assets | 7.3% | 0.31 | -17.6% | 1998-2026 |
 | S&P 500 (reference) | US large-cap | 8.3-10.2% | 0.25-0.39 | -50.8% | same |
@@ -567,7 +567,7 @@ includes the 2000 and 2008 bear markets).
 Two findings hold across all three strategies and all sub-periods:
 
 1. **Superior risk-adjusted return.** Every strategy beats the S&P 500 on Sharpe
-   ratio — the Sector Rotation strategy by more than 50% (0.61 vs 0.39). The edge
+   ratio — the Adaptive US Equity strategy by more than 50% (0.61 vs 0.39). The edge
    comes from lower realised volatility, not from chasing higher absolute return.
 2. **A fraction of the drawdown.** The worst peak-to-trough loss for each strategy is
    roughly -16% to -18%, against the index's -50.8%. The regime layer steps out of
@@ -585,7 +585,7 @@ every environment.
 
 As of the report date the regime layer reads a stress environment:
 
-- **US Sector Rotation:** Technology 24%, Energy 24%, Communications 16%,
+- **Adaptive US Equity:** broad US large-cap exposure, currently tilted to
   Utilities 14%, ~19% cash — a barbell of strong-trend cyclicals and defensives.
 - **Balanced Multi-strategy:** ~80% defensive multi-asset component, ~20% sector
   component.

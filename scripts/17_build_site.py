@@ -238,7 +238,7 @@ detection-and-optimisation methodology is proprietary. Full detail in the
 <table class="ptable"><thead><tr>
 <th>Strategy</th><th>Ann. Return</th><th>Sharpe</th><th>Max Drawdown</th><th>OOS Window</th>
 </tr></thead><tbody>
-<tr><td>US Sector Rotation</td><td>12.1%</td><td>0.61</td><td>&minus;17.6%</td><td>2004&ndash;2026</td></tr>
+<tr><td>Adaptive US Equity</td><td>12.1%</td><td>0.61</td><td>&minus;17.6%</td><td>2004&ndash;2026</td></tr>
 <tr><td>Balanced Multi-strategy</td><td>9.9%</td><td>0.51</td><td>&minus;15.6%</td><td>2007&ndash;2026</td></tr>
 <tr><td>Defensive Multi-asset</td><td>7.3%</td><td>0.31</td><td>&minus;17.6%</td><td>1998&ndash;2026</td></tr>
 <tr><td>S&amp;P 500 (reference)</td><td>8.3&ndash;10.2%</td><td>0.25&ndash;0.39</td><td>&minus;50.8%</td><td>same</td></tr>
@@ -450,8 +450,31 @@ padding:7px 22px;font-family:inherit;font-size:13px;font-weight:600;cursor:point
 .gloss{margin:0}
 .gloss dt{font-weight:600;font-size:14px;color:#0f62fe;margin-top:16px}
 .gloss dd{font-size:14px;color:#393939;margin:3px 0 0;max-width:900px}
-@media(max-width:820px){.grid{grid-template-columns:1fr}.hero h1{font-size:34px}
-.report{padding:24px}.metrics{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:820px){
+  .grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:repeat(2,1fr)!important}
+  .report{padding:28px 24px}
+  .hero{padding:52px 0 60px}.hero h1{font-size:34px}.lede{font-size:16.5px}
+}
+@media(max-width:560px){
+  .container{padding:0 16px}
+  .shell-in{padding:0 14px;gap:10px;height:auto;min-height:48px;flex-wrap:wrap}
+  .brand{font-size:13px}
+  nav{margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+  nav a{padding:0 11px;font-size:12.5px;white-space:nowrap;height:42px}
+  .hero{padding:34px 0 40px}.hero h1{font-size:25px;letter-spacing:-.3px}
+  .lede{font-size:14.5px}.asof{font-size:11px}
+  main{padding:36px 0 48px}.block{margin-bottom:40px}
+  .block>h2{font-size:12px}
+  .metrics{grid-template-columns:1fr 1fr!important}.mv{font-size:21px}
+  .tile{padding:6px}
+  .report{padding:20px 16px}.report h1{font-size:23px}.report h2{font-size:18px}
+  .report table,.report td,.report th{font-size:11.5px}
+  .report table{display:block;overflow-x:auto;white-space:nowrap}
+  .ptable{font-size:12px}.ptable th,.ptable td{padding:7px 8px}
+  .role-h{flex-direction:column;gap:2px}
+  .btn{padding:13px 24px;display:block;text-align:center}
+}
 """
 open(f"{DOCS}/style.css", "w", encoding="utf-8").write(CSS)
 print(f"Carbon site built -> {DOCS}  | regime={regime} | as-of {ASOF}")
