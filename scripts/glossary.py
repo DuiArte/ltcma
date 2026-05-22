@@ -6,6 +6,7 @@ and the currency badge. Imported by 17/18/19 so there is one source of truth.
 NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
        '<a href="portfolio.html">Portfolio</a>'
+       '<a href="strategies.html">Strategies</a>'
        '<a href="stocks.html">Stock Analysis</a>'
        '<a href="signals.html">Stock Signals</a>'
        '<a href="regime.html">Regime Tracker</a>'
