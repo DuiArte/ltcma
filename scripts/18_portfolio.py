@@ -160,23 +160,24 @@ _acd = _csnap.reindex(_daily).ffill()                    # avg cost as-of each d
 _px  = _hist.reindex(_daily).ffill() if "_hist" in dir() else pd.DataFrame(index=_daily)
 _epx = df.pivot_table(index="Fecha", columns="ticker", values="px_excel", aggfunc="last").reindex(_daily).ffill()  # Excel MXN price fallback (e.g. CCJ N)
 
-# trade markers from the blotter (date, ticker, shares, price, side)
-_tr = []
-for _f in sorted(_glob.glob("/mnt/c/Users/carlo/Downloads/GBM Transacciones Liquidacion*.csv")):
-    try:
-        _e = pd.read_csv(_f, dtype=str, keep_default_na=False)
-        for _, _r in _e.iterrows():
-            _dsc = str(_r.get("Descripción", ""))
-            if "Acciones" not in _dsc:
-                continue
-            _p = str(_r["Fecha"]).split("/")
-            _tr.append(dict(ticker=str(_r["Emisora"]).replace(" *", "").strip(),
-                            date=pd.Timestamp(int(_p[2]), _MES[_p[1].lower()[:3]], int(_p[0])),
-                            shares=_money(_r["Títulos"]), price=_money(_r["Precio"]),
-                            side="buy" if "Compra" in _dsc else "sell"))
-    except Exception:
-        pass
-_td = pd.DataFrame(_tr)
+# trade markers from the consolidated, de-duplicated blotter (operation dates).
+# Built by make_blotter.py from the full GBM export universe; aggregated to one
+# marker per day+side, with the hover listing the tickers traded that day.
+_td = pd.DataFrame(columns=["date", "side", "shares", "text"])
+try:
+    _bl = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
+    _bl = _bl[_bl["date"] >= _first]                     # only within the curve window
+    _rows = []
+    for (_d, _sd), _g in _bl.groupby(["date", "side"]):
+        _per = _g.groupby("ticker")["shares"].sum().sort_values(ascending=False)
+        _sg = "+" if _sd == "buy" else "-"
+        _lst = ", ".join(f"{_t} {_sg}{int(abs(_sh))}" for _t, _sh in _per.items())
+        _rows.append(dict(date=_d, side=_sd, shares=float(_g["shares"].sum()),
+                          text=f"{_d.strftime('%d %b %Y')} - {_sd.title()}: {_lst}"))
+    _td = pd.DataFrame(_rows)
+except Exception as _e:
+    print(f"  blotter markers unavailable: {_e}")
+print(f"  trade markers: {len(_td)} day-events from blotter_clean.csv")
 
 # daily market value and invested cost (scaled), then unrealized P&L
 _mv = pd.Series(0.0, index=_daily)
@@ -285,7 +286,7 @@ for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle
     _s = _td[_td["side"] == _side] if len(_td) else _td
     _x = list(_s["date"]) if len(_s) else []
     _y = [_eq_at(_d) for _d in _x]
-    _txt = [f"{r.side.title()} {int(r.shares)} {r.ticker} @ ${r.price:,.0f}" for r in _s.itertuples()] if len(_s) else []
+    _txt = list(_s["text"]) if len(_s) else []
     f1.add_scatter(x=_x, y=_y, mode="markers", name=f"{_side.title()}s",
                    marker=dict(color=_col, symbol=_sym, size=9, line=dict(width=1, color="white")),
                    text=_txt, hoverinfo="text")
