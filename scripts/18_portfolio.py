@@ -60,6 +60,8 @@ TICKER_MAP = {
     "IBM": "IBM.MX", "JPM": "JPM.MX", "MA": "MA.MX", "MELI N": "MELI.MX",
     "META": "META.MX", "MSFT": "MSFT.MX", "QQQ": "QQQ.MX", "SOXX": "SOXX.MX",
     "VGT": "VGT.MX", "VUG": "VUG.MX", "GMEXICO B": "GMEXICOB.MX",
+    "LMT": "LMT.MX", "AMAT": "AMAT.MX", "MCHI": "MCHI.MX",
+    # "CCJ N" has no Yahoo .MX listing -> priced from the Excel column (fallback below)
 }
 
 # ---------- load & clean ----------
@@ -69,6 +71,7 @@ for c in ["Títulos", "Costo promedio", "Precio mercado"]:
 df["Fecha"] = pd.to_datetime(df["Fecha"])
 df["ticker"] = df["Emisora/Fondo"].astype(str).str.replace(" *", "", regex=False).str.strip()
 df = df.dropna(subset=["Títulos", "Costo promedio", "Precio mercado"])
+df["px_excel"] = df["Precio mercado"].astype(float)  # raw Excel MXN price, kept for the Yahoo-unpriceable fallback
 
 # ---------- Yahoo-sourced market prices (historical + live) ----------
 # Every (date, holding) market price comes from Yahoo Finance via the BMV (.MX)
@@ -155,6 +158,7 @@ _daily = pd.date_range(_first.normalize(), pd.Timestamp.today().normalize(), fre
 _pos = _snap.reindex(_daily).ffill().fillna(0.0)         # positions truth; sells = drops
 _acd = _csnap.reindex(_daily).ffill()                    # avg cost as-of each date (truth)
 _px  = _hist.reindex(_daily).ffill() if "_hist" in dir() else pd.DataFrame(index=_daily)
+_epx = df.pivot_table(index="Fecha", columns="ticker", values="px_excel", aggfunc="last").reindex(_daily).ffill()  # Excel MXN price fallback (e.g. CCJ N)
 
 # trade markers from the blotter (date, ticker, shares, price, side)
 _tr = []
@@ -181,6 +185,8 @@ for _tk in _pos.columns:
     _yt = TICKER_MAP.get(_tk)
     if _yt and _yt in _px.columns:
         _mv += _pos[_tk] * SCALE * _px[_yt].ffill().fillna(0.0)
+    elif _tk in _epx.columns:
+        _mv += _pos[_tk] * SCALE * _epx[_tk].fillna(0.0)        # Yahoo-unpriceable -> Excel price
     if _tk in _acd.columns:
         _ic += _pos[_tk] * SCALE * _acd[_tk].ffill().fillna(0.0)
 _unreal = _mv - _ic
@@ -194,7 +200,12 @@ for _i in range(1, len(_sn)):
         _drop = float(_snap.loc[_sn[_i-1], _tk] - _snap.loc[_d1, _tk])
         if _drop > 0:
             _yt = TICKER_MAP.get(_tk)
-            _spx = float(_px.loc[_d1, _yt]) if (_yt and _yt in _px.columns and _d1 in _px.index and pd.notna(_px.loc[_d1, _yt])) else 0.0
+            if _yt and _yt in _px.columns and _d1 in _px.index and pd.notna(_px.loc[_d1, _yt]):
+                _spx = float(_px.loc[_d1, _yt])
+            elif _tk in _epx.columns and _d1 in _epx.index and pd.notna(_epx.loc[_d1, _tk]):
+                _spx = float(_epx.loc[_d1, _tk])
+            else:
+                _spx = 0.0
             _avc = float(_acd.loc[_d1, _tk]) if (_tk in _acd.columns and pd.notna(_acd.loc[_d1, _tk])) else 0.0
             _realized.loc[_d1] += _drop * SCALE * (_spx - _avc)
 _cumreal = _realized.cumsum().reindex(_daily).ffill().fillna(0.0)
