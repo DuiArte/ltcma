@@ -145,33 +145,67 @@ for _f in sorted(_glob.glob("/mnt/c/Users/carlo/Downloads/GBM Transacciones Liqu
         pass
 _ex = pd.DataFrame(_exrows, columns=["ticker", "date", "sh"])
 
-# Excel snapshot positions (raw shares) and average cost (truth)
+# Excel snapshots: positions + per-snapshot average cost (both truth)
+import glob as _glob
+BASELINE = 10_000_000.0          # starting capital (MXN)
 _snap = df.pivot_table(index="Fecha", columns="ticker", values="Títulos", aggfunc="sum").fillna(0.0).sort_index()
-_avgcost = df.sort_values("Fecha").groupby("ticker")["Costo promedio"].last().to_dict()
+_csnap = df.pivot_table(index="Fecha", columns="ticker", values="Costo promedio", aggfunc="last").sort_index()
 _first = _snap.index.min()
-_start = _first  # anchor to Excel snapshots (truth); blotter back-extension dropped (missing sells)
-_daily = pd.date_range(_start.normalize(), pd.Timestamp.today().normalize(), freq="D")
+_daily = pd.date_range(_first.normalize(), pd.Timestamp.today().normalize(), freq="D")
+_pos = _snap.reindex(_daily).ffill().fillna(0.0)         # positions truth; sells = drops
+_acd = _csnap.reindex(_daily).ffill()                    # avg cost as-of each date (truth)
+_px  = _hist.reindex(_daily).ffill() if "_hist" in dir() else pd.DataFrame(index=_daily)
 
-# positions: forward-fill snapshots; reverse-walk before the first snapshot
-_pos = _snap.reindex(_daily).ffill()
-_pos = _pos.fillna(0.0)  # positions = Excel snapshots forward-filled (sells = snapshot drops)
+# trade markers from the blotter (date, ticker, shares, price, side)
+_tr = []
+for _f in sorted(_glob.glob("/mnt/c/Users/carlo/Downloads/GBM Transacciones Liquidacion*.csv")):
+    try:
+        _e = pd.read_csv(_f, dtype=str, keep_default_na=False)
+        for _, _r in _e.iterrows():
+            _dsc = str(_r.get("Descripción", ""))
+            if "Acciones" not in _dsc:
+                continue
+            _p = str(_r["Fecha"]).split("/")
+            _tr.append(dict(ticker=str(_r["Emisora"]).replace(" *", "").strip(),
+                            date=pd.Timestamp(int(_p[2]), _MES[_p[1].lower()[:3]], int(_p[0])),
+                            shares=_money(_r["Títulos"]), price=_money(_r["Precio"]),
+                            side="buy" if "Compra" in _dsc else "sell"))
+    except Exception:
+        pass
+_td = pd.DataFrame(_tr)
 
-# daily Yahoo prices (reuse _hist; ffill across calendar days)
-_px = _hist.reindex(_daily).ffill() if "_hist" in dir() else pd.DataFrame(index=_daily)
-_val = pd.Series(0.0, index=_daily)
-_cost = pd.Series(0.0, index=_daily)
+# daily market value and invested cost (scaled), then unrealized P&L
+_mv = pd.Series(0.0, index=_daily)
+_ic = pd.Series(0.0, index=_daily)
 for _tk in _pos.columns:
     _yt = TICKER_MAP.get(_tk)
-    _ac = _avgcost.get(_tk, 0.0) or 0.0
     if _yt and _yt in _px.columns:
-        _val += _pos[_tk] * SCALE * _px[_yt].ffill().fillna(0.0)
-        _cost += _pos[_tk] * SCALE * _ac
-ts = pd.DataFrame({"value": _val, "cost": _cost})
-ts = ts[ts["value"] > 0]
-ts["ret"] = ts["value"] / ts["cost"].replace(0, pd.NA) - 1
+        _mv += _pos[_tk] * SCALE * _px[_yt].ffill().fillna(0.0)
+    if _tk in _acd.columns:
+        _ic += _pos[_tk] * SCALE * _acd[_tk].ffill().fillna(0.0)
+_unreal = _mv - _ic
+
+# realized P&L: positions dropping between snapshots, valued at Yahoo on the drop date
+_realized = pd.Series(0.0, index=_snap.index)
+_sn = list(_snap.index)
+for _i in range(1, len(_sn)):
+    _d1 = _sn[_i]
+    for _tk in _snap.columns:
+        _drop = float(_snap.loc[_sn[_i-1], _tk] - _snap.loc[_d1, _tk])
+        if _drop > 0:
+            _yt = TICKER_MAP.get(_tk)
+            _spx = float(_px.loc[_d1, _yt]) if (_yt and _yt in _px.columns and _d1 in _px.index and pd.notna(_px.loc[_d1, _yt])) else 0.0
+            _avc = float(_acd.loc[_d1, _tk]) if (_tk in _acd.columns and pd.notna(_acd.loc[_d1, _tk])) else 0.0
+            _realized.loc[_d1] += _drop * SCALE * (_spx - _avc)
+_cumreal = _realized.cumsum().reindex(_daily).ffill().fillna(0.0)
+
+equity = _mv                              # market value (mark-to-market)
+balance = _ic                             # cost basis (capital invested)
+ts = pd.DataFrame({"value": equity, "equity": equity, "balance": balance})
+ts = ts[ts["equity"] > 0]
 dates = ts.index
-print(f"  daily curve: {len(ts)} days {ts.index.min().date()}..{ts.index.max().date()} "
-      f"(positions back to {_start.date()} from Excel snapshots)")
+print(f"  equity/balance: {len(ts)} days | baseline {BASELINE:,.0f} | "
+      f"equity {equity.iloc[-1]:,.0f} balance {balance.iloc[-1]:,.0f}")
 
 # ---------- latest snapshot (with LIVE pricing override) ----------
 latest = df[df["Fecha"] == df["Fecha"].max()].copy()
@@ -219,20 +253,36 @@ latest = latest.sort_values("value", ascending=False)
 port_ret = tot_val / tot_cost - 1
 asof = priced_at or asof_excel
 
-# (daily value series already reaches today; live snapshot overrides current prices above)
+# refresh the last equity point with live prices (balance stays realized-based)
 if priced_at and len(ts):
-    ts.iloc[-1, ts.columns.get_loc("value")] = tot_val
-    ts.iloc[-1, ts.columns.get_loc("cost")] = tot_cost
+    _ul = tot_val - tot_cost
+    ts.iloc[-1, ts.columns.get_loc("equity")] = float(ts.iloc[-1]["balance"]) + _ul
+    ts.iloc[-1, ts.columns.get_loc("value")] = float(ts.iloc[-1]["equity"])
     dates = ts.index
 
 # ---------- charts ----------
 # 1. portfolio value over time (MXN base; USD array embedded for the toggle)
 f1 = go.Figure()
-f1.add_scatter(x=dates, y=ts["value"], mode="lines", name="Portfolio value",
-               line=dict(color=BLUE, width=3), fill="tozeroy",
-               fillcolor="rgba(15,98,254,0.08)")
-f1.update_layout(title="Portfolio market value over time (daily, scaled)",
-                 yaxis_title="MXN value (scaled)", xaxis_title="date")
+f1.add_scatter(x=dates, y=ts["equity"], mode="lines", name="Equity (mark-to-market)",
+               line=dict(color=BLUE, width=2.6))
+f1.add_scatter(x=dates, y=ts["balance"], mode="lines", name="Balance (cost + realized)",
+               line=dict(color=GREY, width=1.8, dash="dot"))
+def _eq_at(_dt):
+    _s = ts["equity"][ts.index <= _dt]
+    return float(_s.iloc[-1]) if len(_s) else None
+for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle-down")]:
+    _s = _td[_td["side"] == _side] if len(_td) else _td
+    _x = list(_s["date"]) if len(_s) else []
+    _y = [_eq_at(_d) for _d in _x]
+    _txt = [f"{r.side.title()} {int(r.shares)} {r.ticker} @ ${r.price:,.0f}" for r in _s.itertuples()] if len(_s) else []
+    f1.add_scatter(x=_x, y=_y, mode="markers", name=f"{_side.title()}s",
+                   marker=dict(color=_col, symbol=_sym, size=9, line=dict(width=1, color="white")),
+                   text=_txt, hoverinfo="text")
+f1.add_hline(y=BASELINE, line=dict(color=INK, width=1, dash="dot"),
+             annotation_text="10M baseline", annotation_position="bottom right")
+f1.update_layout(title="Equity & Balance vs 10M starting capital (daily, scaled)",
+                 yaxis_title="MXN (scaled)", xaxis_title="date",
+                 legend=dict(orientation="h", y=-0.18))
 
 # 2. per-holding return vs portfolio (currency-independent)
 lat = latest.sort_values("ret")
@@ -268,22 +318,35 @@ for _, r in latest.iterrows():
              f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
 
 # ---------- metrics ----------
-SNAP = [("Portfolio Value (scaled)", cval(tot_val)),
-        ("Unrealized P / M (scaled)", cval(latest["pm"].sum(), signed=True)),
-        ("Holdings", f"{len(latest)}"),
-        ("Portfolio Return", f"{port_ret*100:+.1f}%"),
-        ("Live Priced", asof),
-        ("Cost-Basis Date", asof_excel)]
+_eq_now = float(ts["equity"].iloc[-1]); _bal_now = float(ts["balance"].iloc[-1])
+SNAP = [("Equity (market value)", cval(_eq_now)),
+        ("Cost Basis", cval(_bal_now)),
+        ("Unrealized P / M", cval(latest["pm"].sum(), signed=True)),
+        ("Return on Cost", f"{port_ret*100:+.1f}%"),
+        ("vs 10M Capital", f"{(_eq_now/BASELINE-1)*100:+.1f}%"),
+        ("Live Priced", asof)]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for k, v in SNAP)
 
 # ---------- currency-toggle JavaScript ----------
-mxn_arr = ",".join(f"{v:.0f}" for v in ts["value"])
-usd_arr = ",".join(f"{v/RATE:.0f}" for v in ts["value"])
+def _arr(s): return ",".join(f"{v:.0f}" for v in s)
+def _mk_y(side):
+    _s = _td[_td["side"] == side] if len(_td) else _td
+    _o = []
+    for _d in (_s["date"] if len(_s) else []):
+        _ss = ts["equity"][ts.index <= _d]
+        _o.append(float(_ss.iloc[-1]) if len(_ss) else 0.0)
+    return _o
+_eqm = _arr(ts["equity"]); _equ = _arr(ts["equity"] / RATE)
+_balm = _arr(ts["balance"]); _balu = _arr(ts["balance"] / RATE)
+_by = _mk_y("buy"); _sy = _mk_y("sell")
+_bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v/RATE:.0f}" for v in _by)
+_sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v/RATE:.0f}" for v in _sy)
 JS = """
 <script>
-var PFV={mxn:[__MXN__],usd:[__USD__]};
+var EQ={mxn:[__EQM__],usd:[__EQU__]},BAL={mxn:[__BALM__],usd:[__BALU__]};
+var BUY={mxn:[__BYM__],usd:[__BYU__]},SEL={mxn:[__SYM__],usd:[__SYU__]};
 function setCurrency(c){
   document.querySelectorAll('.cval').forEach(function(e){e.textContent=e.dataset[c];});
   document.querySelectorAll('.ccy-toggle button').forEach(function(b){
@@ -292,13 +355,13 @@ function setCurrency(c){
   if(lbl) lbl.textContent=c.toUpperCase();
   var d=document.getElementById('pf-value');
   if(d&&window.Plotly){
-    Plotly.restyle(d,{y:[PFV[c]]});
-    Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' value (scaled)'});
+    Plotly.restyle(d,{y:[EQ[c],BAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
+    Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
   }
 }
 document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
 </script>
-""".replace("__MXN__", mxn_arr).replace("__USD__", usd_arr)
+""".replace("__EQM__", _eqm).replace("__EQU__", _equ).replace("__BALM__", _balm).replace("__BALU__", _balu).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
