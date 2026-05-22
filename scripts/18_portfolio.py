@@ -92,10 +92,12 @@ asof_excel = df["Fecha"].max().strftime("%d %b %Y")
 # Map portfolio tickers to yfinance symbols (US-listed = USD native;
 # .MX suffix = BMV-listed, MXN native).
 TICKER_MAP = {
-    "AMZN": "AMZN", "BA": "BA", "GLD": "GLD", "GOOGL": "GOOGL", "IBM": "IBM",
-    "JPM": "JPM", "MA": "MA", "MELI N": "MELI", "META": "META", "MSFT": "MSFT",
-    "QQQ": "QQQ", "SOXX": "SOXX", "VGT": "VGT", "VUG": "VUG",
-    "GMEXICO B": "GMEXICOB.MX",
+    # Priced from the public BMV exchange (SIC), MXN-native — matches how a GBM
+    # client actually holds these, eliminating the US-price x FX basis mismatch.
+    "AMZN": "AMZN.MX", "BA": "BA.MX", "GLD": "GLD.MX", "GOOGL": "GOOGL.MX",
+    "IBM": "IBM.MX", "JPM": "JPM.MX", "MA": "MA.MX", "MELI N": "MELI.MX",
+    "META": "META.MX", "MSFT": "MSFT.MX", "QQQ": "QQQ.MX", "SOXX": "SOXX.MX",
+    "VGT": "VGT.MX", "VUG": "VUG.MX", "GMEXICO B": "GMEXICOB.MX",
 }
 
 # refresh USDMXN to the live rate (falls back to FRED rate if yfinance fails)
