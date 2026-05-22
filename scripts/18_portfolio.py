@@ -74,7 +74,7 @@ df = df.dropna(subset=["Títulos", "Costo promedio", "Precio mercado"])
 # Every (date, holding) market price comes from Yahoo Finance via the BMV (.MX)
 # listing; the Excel supplies only share counts and cost basis. Falls back to the
 # Excel price for any ticker Yahoo can't price.
-_lo = (df["Fecha"].min() - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
+_lo = (df["Fecha"].min() - pd.Timedelta(days=70)).strftime("%Y-%m-%d")  # cover exec blotter
 _syms = sorted({TICKER_MAP[t] for t in df["ticker"].unique() if t in TICKER_MAP})
 try:
     _hist = yf.download(_syms, start=_lo, interval="1d",
@@ -115,11 +115,63 @@ if FILTER_ANOMALIES:
     bad_dates = set(bad["Fecha"])
     df = df.drop(bad.index)
 
-# ---------- portfolio value time series ----------
-ts = df.groupby("Fecha").agg(value=("value", "sum"), cost=("cost", "sum"))
-ts = ts[~ts.index.isin(bad_dates)]
-ts["ret"] = ts["value"] / ts["cost"] - 1
+# ---------- daily portfolio value (Excel positions = truth, Yahoo prices) ----------
+# Positions come from the Excel snapshots (the source of truth) forward-filled to
+# daily; sells are inferred where a position drops between snapshots. The series is
+# back-extended to the first stock execution via the GBM blotter (reverse-walked
+# from the first snapshot). Each day is priced from Yahoo (BMV .MX) and the cost
+# basis uses the Excel average cost.
+import glob as _glob
+_MES = dict(ene=1, feb=2, mar=3, abr=4, may=5, jun=6, jul=7, ago=8, sep=9, oct=10, nov=11, dic=12)
+def _money(x):
+    import re as _re
+    s = _re.sub(r"[^0-9.\-]", "", str(x)); return float(s) if s else 0.0
+
+# parse stock executions (buys/sells) from the Liquidacion blotter CSVs
+_exrows = []
+for _f in sorted(_glob.glob("/mnt/c/Users/carlo/Downloads/GBM Transacciones Liquidacion*.csv")):
+    try:
+        _e = pd.read_csv(_f, dtype=str, keep_default_na=False)
+        for _, _r in _e.iterrows():
+            _d = str(_r.get("Descripción", ""))
+            if "Acciones" not in _d:
+                continue
+            _t = str(_r["Emisora"]).replace(" *", "").strip()
+            _p = str(_r["Fecha"]).split("/")
+            _dt = pd.Timestamp(int(_p[2]), _MES[_p[1].lower()[:3]], int(_p[0]))
+            _sh = _money(_r["Títulos"])
+            _exrows.append((_t, _dt, _sh if "Compra" in _d else -_sh))
+    except Exception:
+        pass
+_ex = pd.DataFrame(_exrows, columns=["ticker", "date", "sh"])
+
+# Excel snapshot positions (raw shares) and average cost (truth)
+_snap = df.pivot_table(index="Fecha", columns="ticker", values="Títulos", aggfunc="sum").fillna(0.0).sort_index()
+_avgcost = df.sort_values("Fecha").groupby("ticker")["Costo promedio"].last().to_dict()
+_first = _snap.index.min()
+_start = _first  # anchor to Excel snapshots (truth); blotter back-extension dropped (missing sells)
+_daily = pd.date_range(_start.normalize(), pd.Timestamp.today().normalize(), freq="D")
+
+# positions: forward-fill snapshots; reverse-walk before the first snapshot
+_pos = _snap.reindex(_daily).ffill()
+_pos = _pos.fillna(0.0)  # positions = Excel snapshots forward-filled (sells = snapshot drops)
+
+# daily Yahoo prices (reuse _hist; ffill across calendar days)
+_px = _hist.reindex(_daily).ffill() if "_hist" in dir() else pd.DataFrame(index=_daily)
+_val = pd.Series(0.0, index=_daily)
+_cost = pd.Series(0.0, index=_daily)
+for _tk in _pos.columns:
+    _yt = TICKER_MAP.get(_tk)
+    _ac = _avgcost.get(_tk, 0.0) or 0.0
+    if _yt and _yt in _px.columns:
+        _val += _pos[_tk] * SCALE * _px[_yt].ffill().fillna(0.0)
+        _cost += _pos[_tk] * SCALE * _ac
+ts = pd.DataFrame({"value": _val, "cost": _cost})
+ts = ts[ts["value"] > 0]
+ts["ret"] = ts["value"] / ts["cost"].replace(0, pd.NA) - 1
 dates = ts.index
+print(f"  daily curve: {len(ts)} days {ts.index.min().date()}..{ts.index.max().date()} "
+      f"(positions back to {_start.date()} from Excel snapshots)")
 
 # ---------- latest snapshot (with LIVE pricing override) ----------
 latest = df[df["Fecha"] == df["Fecha"].max()].copy()
@@ -167,22 +219,20 @@ latest = latest.sort_values("value", ascending=False)
 port_ret = tot_val / tot_cost - 1
 asof = priced_at or asof_excel
 
-# Append today's live snapshot to the value time series
-if priced_at:
-    today_idx = pd.Timestamp(priced_at)
-    if today_idx > ts.index[-1]:
-        ts.loc[today_idx] = [tot_val, tot_cost, tot_val / tot_cost - 1]
-        ts = ts.sort_index()
-        dates = ts.index
+# (daily value series already reaches today; live snapshot overrides current prices above)
+if priced_at and len(ts):
+    ts.iloc[-1, ts.columns.get_loc("value")] = tot_val
+    ts.iloc[-1, ts.columns.get_loc("cost")] = tot_cost
+    dates = ts.index
 
 # ---------- charts ----------
 # 1. portfolio value over time (MXN base; USD array embedded for the toggle)
 f1 = go.Figure()
-f1.add_scatter(x=dates, y=ts["value"], mode="lines+markers", name="Portfolio value",
+f1.add_scatter(x=dates, y=ts["value"], mode="lines", name="Portfolio value",
                line=dict(color=BLUE, width=3), fill="tozeroy",
                fillcolor="rgba(15,98,254,0.08)")
-f1.update_layout(title="Portfolio market value over time (scaled)",
-                 yaxis_title="MXN value (scaled)", xaxis_title="snapshot date")
+f1.update_layout(title="Portfolio market value over time (daily, scaled)",
+                 yaxis_title="MXN value (scaled)", xaxis_title="date")
 
 # 2. per-holding return vs portfolio (currency-independent)
 lat = latest.sort_values("ret")
