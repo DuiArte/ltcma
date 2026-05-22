@@ -163,9 +163,20 @@ GLOSSARY = {
         ("Justified P/B",
          "The price-to-book ratio that a company's profitability and growth "
          "actually support. Computed as (ROE − g) / (r − g)."),
-        ("FCFE perpetuity",
-         "Values a share as the present value of all future free cash flow "
-         "available to equity holders, assuming steady-state growth forever."),
+        ("Two-stage DDM",
+         "Values a dividend-paying share assuming dividends grow at a high "
+         "rate (analyst-implied) for the next five years, then settle at a "
+         "sustainable terminal rate forever. Avoids the single-stage model's "
+         "pessimism on high-growth firms."),
+        ("Two-stage FCFE",
+         "Values a share as the present value of free cash flow to equity, "
+         "growing at the near-term rate for five years and then at a terminal "
+         "rate. The workhorse intrinsic-value model for firms with positive "
+         "but volatile cash flow, including most non-dividend payers."),
+        ("Stage-1 growth (g₁)",
+         "The high-growth rate assumed for years 1–5 in a two-stage model. "
+         "Sourced from analyst earnings-growth estimates and capped at 25% "
+         "to keep projections sensible."),
         ("Terminal growth",
          "The long-run growth rate a mature company can sustain — typically "
          "capped near long-run nominal GDP (around 4–5%)."),

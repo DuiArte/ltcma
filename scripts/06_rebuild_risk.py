@@ -12,6 +12,20 @@ LH = f"{D}/longhistory"
 
 # ---------- ETF monthly simple returns ----------
 px = pd.read_csv(f"{D}/prices_monthly.csv", index_col=0, parse_dates=True)
+
+# Merge real Mexico Govt Local bond series (synthetic USD total-return index built
+# from FRED Mexico 10Y yield + USDMXN by 05c_mexico_bond_series.py).
+# This replaces the EM_Local_Debt proxy used previously.
+_mex_path = f"{D}/mexico_bond_monthly.csv"
+if os.path.exists(_mex_path):
+    mex = pd.read_csv(_mex_path, index_col=0, parse_dates=True)
+    px = px.join(mex[["Mexico_Govt_Local"]], how="left")
+    _mex_n = mex["Mexico_Govt_Local"].dropna().shape[0]
+    print(f"Mexico_Govt_Local: loaded real series ({_mex_n} obs from {_mex_path})")
+else:
+    print(f"WARNING: {_mex_path} not found — run 05c_mexico_bond_series.py first. "
+          f"Mexico_Govt_Local will be proxied from EM_Local_Debt.")
+
 rets = px.pct_change().iloc[1:]
 common = rets.dropna()                       # common complete window, all assets
 print(f"Common ETF window: {common.index.min().date()}..{common.index.max().date()} "
@@ -65,12 +79,15 @@ for a, lv in long_vol.items():
     if a in vol_blend.index:
         vol_blend[a] = np.sqrt(0.5 * vol_short[a] ** 2 + 0.5 * lv ** 2)
 
-# Mexico_Govt_Local proxied from EM_Local_Debt
-PROXY = {"Mexico_Govt_Local": "EM_Local_Debt"}
-for tgt, src in PROXY.items():
-    vol_blend[tgt] = vol_blend[src]
-    vol_short[tgt] = vol_short[src]
-    corr[tgt] = corr[src]; corr.loc[tgt] = corr.loc[src]; corr.loc[tgt, tgt] = 1.0
+# Mexico_Govt_Local: real series loaded above from mexico_bond_monthly.csv.
+# Fallback proxy only if the file was not found at load time.
+if "Mexico_Govt_Local" not in vol_blend.index:
+    # File was missing — fall back to EM_Local_Debt proxy
+    for tgt, src in {"Mexico_Govt_Local": "EM_Local_Debt"}.items():
+        vol_blend[tgt] = vol_blend[src]
+        vol_short[tgt] = vol_short[src]
+        corr[tgt] = corr[src]; corr.loc[tgt] = corr.loc[src]; corr.loc[tgt, tgt] = 1.0
+    print("  Mexico_Govt_Local: using EM_Local_Debt proxy (fallback)")
 
 # ---------- final annualized covariance (LW corr scaled to blended vol) ----------
 assets = list(vol_blend.index)

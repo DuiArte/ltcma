@@ -188,7 +188,10 @@ EXPERIENCE = [
      "Design and validation of systematic and machine-learning strategies in FX, "
      "metals and equities; risk frameworks (position sizing, drawdown control); "
      "robust backtesting (stress tests, Monte Carlo, anti-overfitting controls) "
-     "and investment-memo documentation for investment committees."),
+     "and investment-memo documentation for investment committees; built an "
+     "end-to-end multi-strategy research platform (regime detection via Hidden "
+     "Markov Models with hmmlearn, Kalman-filtered expected returns, walk-forward "
+     "backtesting and live tracking) with AI-assisted development using Claude Code."),
     ("Hostpal Mexico", "Revenue Manager", "Aug 2023 – Feb 2025",
      "Dynamic pricing and demand-forecasting models for a multi-site portfolio; "
      "KPIs and Power BI dashboards that lifted target-achievement; standardized "
@@ -201,9 +204,10 @@ EXPERIENCE = [
      "Data pipelines from government APIs (SAT) to executive Power BI dashboards, "
      "with a focus on sensitive data, governance and audit traceability."),
 ]
-SKILLS = ["Python", "C++ / C#", "MQL5", "SQL", "Power BI / DAX", "ETL pipelines",
+SKILLS = ["Python", "C++ / C#", "MQL5", "SQL", "scikit-learn", "hmmlearn", "SciPy",
+          "Power BI / DAX", "ETL pipelines", "Hidden Markov Models", "Kalman filters",
           "Risk management", "Monte Carlo", "Backtesting", "Asset allocation",
-          "AWS S3", "Financial APIs (IBKR, FxPro, MT5)"]
+          "AWS S3", "Financial APIs (IBKR, FxPro, MT5)", "Claude Code (AI-assisted dev)"]
 CERTS = ["CFA — Level I Candidate (exam February 2026)",
          "AMIB Figure 3 — current securities-advisory license (renewed Nov 2025)",
          "B.S. Finance — Tecnológico de Monterrey (2019–2021)"]
@@ -224,6 +228,21 @@ exp = "".join(
     f'<div class="role-t">{t}</div><p>{desc}</p></div>'
     for co, t, d, desc in EXPERIENCE)
 skills = "".join(f'<span class="tag">{s}</span>' for s in SKILLS)
+STRATBT = """<section class="block"><h2>Systematic Strategy Backtests</h2>
+<p class="note">Out-of-sample (walk-forward) performance of three proprietary
+regime-adaptive strategies versus the S&amp;P 500. Each beats the index on
+risk-adjusted return with a fraction of the drawdown. Hypothetical results; the
+detection-and-optimisation methodology is proprietary. Full detail in the
+<a href="report.html">report</a> (Section 10).</p>
+<div class="tile" style="padding:4px 16px 10px;overflow-x:auto">
+<table class="ptable"><thead><tr>
+<th>Strategy</th><th>Ann. Return</th><th>Sharpe</th><th>Max Drawdown</th><th>OOS Window</th>
+</tr></thead><tbody>
+<tr><td>US Sector Rotation</td><td>12.1%</td><td>0.61</td><td>&minus;17.6%</td><td>2004&ndash;2026</td></tr>
+<tr><td>Balanced Multi-strategy</td><td>9.9%</td><td>0.51</td><td>&minus;15.6%</td><td>2007&ndash;2026</td></tr>
+<tr><td>Defensive Multi-asset</td><td>7.3%</td><td>0.31</td><td>&minus;17.6%</td><td>1998&ndash;2026</td></tr>
+<tr><td>S&amp;P 500 (reference)</td><td>8.3&ndash;10.2%</td><td>0.25&ndash;0.39</td><td>&minus;50.8%</td><td>same</td></tr>
+</tbody></table></div></section>"""
 certs = "".join(f"<li>{c}</li>" for c in CERTS)
 
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -252,6 +271,7 @@ GPR / EPU uncertainty indices). New to a term? See the
 <p class="note">Each chart below has a plain-language explanation; full
 definitions are in the <a href="glossary.html">Glossary</a>.</p>
 <div class="grid">{charts}</div></section>
+{STRATBT}
 <section class="block"><h2>Full Written Report</h2>
 <p>Complete analysis — methodology, macro backdrop, return tables, the
 strategic-edge scan, the methodology backtest and limitations.</p>

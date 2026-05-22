@@ -267,7 +267,7 @@ Section 7 is built precisely to price that asymmetry.
 | US High Yield | Fixed Income | — | **5.0%** | — | 7.9% |
 | EM USD Sovereign | Fixed Income | — | **6.0%** | — | 9.9% |
 | EM Local Debt | Fixed Income | — | **4.8%** | — | 11.3% |
-| Mexico Govt (local, Mbonos) | Fixed Income | — | **6.3%** | — | 11.3% |
+| Mexico Govt (local, Mbonos) | Fixed Income | — | **6.3%** | — | 14.8% |
 | Global Aggregate ex-US (hedged) | Fixed Income | — | **3.8%** | — | 5.9% |
 | US REITs | Real Asset | — | **6.3%** | — | 17.6% |
 | Global REITs ex-US | Real Asset | — | **6.4%** | — | 16.5% |
@@ -533,9 +533,84 @@ no longer be relied on.
 
 ---
 
-## 10. Assumptions, Limitations & Sources
+## 10. Systematic Strategy Layer — Dynamic Regime Overlays
 
-### 10.1 Key judgment assumptions
+The assumptions in this report set the *strategic* anchor for the next decade, and
+the sample portfolios of Section 9 are *static* expressions of that view. Step 3 of
+the allocation process — overlaying current macro conditions — is operationalised
+through a family of **regime-adaptive systematic strategies** that rebalance monthly
+as the market regime evolves. This section reports their out-of-sample backtest
+performance against the S&P 500.
+
+All three strategies share a common engine: a regime classifier reads a small set of
+macro signals (equity volatility, credit spreads, the yield curve, policy
+uncertainty), and the portfolio is rebuilt each month to suit the detected regime,
+filtered by trend and scaled to a volatility target. The detection-and-optimisation
+methodology is proprietary; what follows are the *results* and the *live allocation
+mix*, not the recipe.
+
+### 10.1 The three strategies
+
+| Strategy | Sleeve | Ann. return | Sharpe | Max drawdown | OOS window |
+|---|---|---|---|---|---|
+| **US Sector Rotation** | US equity (11 sectors) | 12.1% | 0.61 | -17.6% | 2004-2026 |
+| **Balanced Multi-strategy** | Defensive-growth blend | 9.9% | 0.51 | -15.6% | 2007-2026 |
+| **Defensive Multi-asset** | 26 global assets | 7.3% | 0.31 | -17.6% | 1998-2026 |
+| S&P 500 (reference) | US large-cap | 8.3-10.2% | 0.25-0.39 | -50.8% | same |
+
+Measured over each strategy's own window, the index returned 10.2% (vs Sector
+Rotation), 10.1% (vs Balanced), and 8.3% (vs the longest Defensive window, which
+includes the 2000 and 2008 bear markets).
+
+### 10.2 What the backtests show
+
+Two findings hold across all three strategies and all sub-periods:
+
+1. **Superior risk-adjusted return.** Every strategy beats the S&P 500 on Sharpe
+   ratio — the Sector Rotation strategy by more than 50% (0.61 vs 0.39). The edge
+   comes from lower realised volatility, not from chasing higher absolute return.
+2. **A fraction of the drawdown.** The worst peak-to-trough loss for each strategy is
+   roughly -16% to -18%, against the index's -50.8%. The regime layer steps out of
+   risk before the deepest declines and holds defensive assets (or cash at the
+   risk-free rate) through them.
+
+The honest counterpoint: in a sustained bull market with no crisis — such as
+2012-2019 — these strategies *trail* the index on absolute return, because the
+defensive posture costs upside. Their advantage concentrates in and around stress
+regimes (2000-02, 2008, 2020, 2022). They are best understood as
+**drawdown-controlled equity participation**, not a promise to beat the index in
+every environment.
+
+### 10.3 Current live allocation mix
+
+As of the report date the regime layer reads a stress environment:
+
+- **US Sector Rotation:** Technology 24%, Energy 24%, Communications 16%,
+  Utilities 14%, ~19% cash — a barbell of strong-trend cyclicals and defensives.
+- **Balanced Multi-strategy:** ~80% defensive multi-asset component, ~20% sector
+  component.
+- **Defensive Multi-asset:** Spain equity 20%, broad commodities 20%, Mexican
+  government bonds 20%, T-bills 15%, US large-cap 13%, gold 12%.
+
+### 10.4 Role in the allocation process
+
+> The static LTCMA portfolios (Section 9) answer *"what should I own for the next
+> decade?"* The systematic layer answers *"how should that exposure flex as
+> conditions change month to month?"* The LTCMA sets the strategic anchor and the
+> long-run return assumptions; the systematic overlays manage the path —
+> controlling drawdown and adapting to regime — on the way there.
+
+**Methodological note.** Results are *out-of-sample* walk-forward backtests: at each
+month the model trains only on data available up to that date and is evaluated on
+the following month, with no look-ahead. Risk-free rate 4.5% (USD). These are
+**hypothetical** results, not actual trading records; past performance does not
+guarantee future results. The complete methodology is available under a
+confidentiality agreement. The libraries behind it include **scikit-learn**,
+**hmmlearn** (Hidden Markov Models), **SciPy** (optimisation) and **pandas/NumPy**.
+
+## 11. Assumptions, Limitations & Sources
+
+### 11.1 Key judgment assumptions
 - **US long-run inflation: 2.4%** — confirmed close to the 2.5% the market prices.
 - **Fair-value valuation anchors:** US CAPE 26 (Shiller-confirmed); China 15,
   Japan 25, UK 16, France 20, EM 16 remain judgment anchors (no long CAPE history
@@ -546,14 +621,19 @@ no longer be relied on.
   reliably identify a stress mean shift; imposing one would overfit (see 7.2).
 - **Student-t with ν=6** for fat tails; regime-switching adds tail clustering.
 
-### 10.2 Limitations
+### 11.2 Limitations
 - **No paid data.** Valuations rely on Yahoo Finance ETF data and Siblis Research
   CAPE; ETF distribution yields were hand-adjusted toward true dividend yields.
 - **ETF proxies, not indices**, for current-regime prices; the regional long
   history (French) proxies some single-country exposures (France/UK use European
   data).
-- **Mexican local govt bonds** have no clean USD price series — return computed
-  from yield, risk statistics proxied from EM local debt.
+- **Mexican local govt bonds** — risk statistics now computed from a synthetic
+  USD total-return series built from FRED Mexico 10Y yield (IRLTLT01MXM156N) and
+  daily USDMXN (DEXMXUS), using a constant-maturity duration approximation
+  (D_mod computed analytically per prevailing yield level).  The series spans
+  2001–2026 (297 months); annualised vol 14.8% — materially higher than the
+  EM local debt proxy (11.3%) it replaces, correctly reflecting single-country
+  concentration and peso tail risk.
 - **The regime model is primarily calibrated on 2013–2026**, but the calibration
   has been validated against 25 years of FX/equity history including 2008 and
   2020 (Section 7.6); the deterministic scenario (7.5) imports crisis-magnitude
@@ -562,7 +642,7 @@ no longer be relied on.
   index-CFD series had year-boundary artifacts and were excluded (see 7.6).
 - This is the **strategic (Step 1)** layer only.
 
-### 10.3 References
+### 11.3 References
 
 Data sources and works cited, in APA format, so that every figure in this
 report can be traced to its origin.
@@ -609,7 +689,7 @@ https://siblisresearch.com/data/cape-ratios-by-country/
 Yahoo Finance. (2026). *Historical market and fundamental data* [Data set].
 https://finance.yahoo.com
 
-### 10.4 Reproducibility
+### 11.4 Reproducibility
 All figures regenerate from the scripts in `~/LTCMA/scripts` (WSL, `cudf-env`):
 `01`–`02` data · `03`–`04` returns/portfolios · `05a`–`05b` long history ·
 `06` shrinkage risk model · `07` Monte Carlo · `08`–`09` signals & priced-in ·

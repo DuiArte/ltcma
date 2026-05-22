@@ -93,16 +93,34 @@ def analyze(ticker):
     if g is not None:
         g = min(g, G_CAP, r - 0.005)
 
-    # --- justified multiples + Gordon DDM ---
-    ddm = just_pe = just_lpe = just_pb = None
+    # --- stage-1 growth (years 1-5): analyst earnings growth, capped at 25% ---
+    g1 = num(info.get("earningsGrowth")) or num(info.get("revenueGrowth"))
+    if g1 is not None:
+        g1 = max(min(g1, 0.25), 0.0)
+    else:
+        g1 = G_CAP
+
+    # --- justified multiples + two-stage models ---
+    ddm = fcfe_2s = just_pe = just_lpe = just_pb = None
     if g is not None and r > g:
-        if dy > 0:
-            ddm = price * dy * (1 + g) / (r - g)
         just_pe = payout * (1 + g) / (r - g)
         if payout > 0:
             just_lpe = payout / (r - g)
         if roe is not None and (roe - g) > 0:
             just_pb = (roe - g) / (r - g)
+
+    def two_stage(cf0, _g1=g1, _g2=G_CAP, _r=r, n=5):
+        """Two-stage DCF: cf0 grows at g1 for n years, then g2 perpetually."""
+        if cf0 is None or cf0 <= 0 or _r <= _g2:
+            return None
+        pv1 = sum(cf0 * (1 + _g1) ** t / (1 + _r) ** t for t in range(1, n + 1))
+        tv = cf0 * (1 + _g1) ** n * (1 + _g2) / (_r - _g2)
+        return pv1 + tv / (1 + _r) ** n
+
+    if dy > 0:                              # two-stage DDM (dividend payers)
+        ddm = two_stage(price * dy)
+    if fcfps:                               # two-stage FCFE
+        fcfe_2s = two_stage(fcfps)
 
     # --- CFA-framework target prices (multi-method) ---
     # Justified-P/E methods value only the dividend stream, so they make sense
@@ -117,9 +135,9 @@ def analyze(ticker):
     if just_pb and bvps:
         targets["Justified P/B"] = just_pb * bvps
     if ddm:
-        targets["Gordon DDM"] = ddm
-    if fcfps and g is not None and r > g and fcfps > 0:
-        targets["FCFE perpetuity"] = fcfps * (1 + g) / (r - g)
+        targets["Two-stage DDM"] = ddm
+    if fcfe_2s:
+        targets["Two-stage FCFE"] = fcfe_2s
     tgt = num(info.get("targetMeanPrice"))
     syn = sum(targets.values()) / len(targets) if targets else None
     upside = (syn / price - 1) if syn else None
@@ -232,12 +250,13 @@ def analyze(ticker):
 {ccy_badge("USD", "US-listed stock, figures in US dollars")}{snap}</section>
 <section class="block"><h2>Forecast &amp; Price Targets</h2>
 <p class="note">The applicable CFA valuation methods produce intrinsic-value
-estimates; the synthesized target is their average. Justified-P/E methods only
-apply to mature dividend payers (payout &ge; 30%); retention-heavy growth firms
-are valued via Justified P/B, FCFE perpetuity and (where relevant) Gordon DDM.
-The shaded band is the &plusmn;1 standard-deviation range
-(one-year realised vol ~{vol_a*100:.0f}%). Definitions in the
-<a href="glossary.html">Glossary</a>.</p>
+estimates; the synthesized target is their average. Dividend-discount and FCFE
+use a <b>two-stage growth model</b> &mdash; the analyst-implied near-term rate
+for five years, then a 4.5% terminal rate &mdash; which avoids the single-stage
+pessimism on high-growth firms. Justified-P/E methods are applied only for
+mature dividend payers (payout &ge; 30%). The shaded band is the &plusmn;1
+standard-deviation range (one-year realised vol ~{vol_a*100:.0f}%). Definitions
+in the <a href="glossary.html">Glossary</a>.</p>
 <div class="grid">
 <div class="tile chart"><div class="ch">{div(c_fc, ticker+'-fc')}</div></div>
 <div class="tile" style="padding:18px 22px">
@@ -245,7 +264,8 @@ The shaded band is the &plusmn;1 standard-deviation range
 <table class="ptable"><thead><tr><th>Method</th><th>Target</th><th>vs price</th></tr></thead>
 <tbody>{tr}</tbody></table>
 <p style="font-size:12px;color:#525252;margin-top:14px">
-CAPM r = {r*100:.1f}% &middot; sustainable g = {pct(g)} (capped at {G_CAP*100:.1f}%)
+CAPM r = {r*100:.1f}% &middot; stage-1 growth g&#8321; = {pct(g1)}
+(analyst, capped at 25%) &middot; terminal g&#8322; = {G_CAP*100:.1f}%
 &middot; payout {pct(payout)}.
 </p></div></div></section>
 <section class="block"><h2>Valuation Multiples</h2>

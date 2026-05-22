@@ -577,7 +577,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>6.3%</strong></td>
 <td>—</td>
-<td>11.3%</td>
+<td>14.8%</td>
 </tr>
 <tr>
 <td>Global Aggregate ex-US (hedged)</td>
@@ -1303,8 +1303,113 @@ report's standout fixed-income holding), EM USD sovereigns in place of US
 credit, and TIPS + gold for diversification when stock-bond correlation can
 no longer be relied on.</p>
 <hr />
-<h2>10. Assumptions, Limitations &amp; Sources</h2>
-<h3>10.1 Key judgment assumptions</h3>
+<h2>10. Systematic Strategy Layer — Dynamic Regime Overlays</h2>
+<p>The assumptions in this report set the <em>strategic</em> anchor for the next decade, and
+the sample portfolios of Section 9 are <em>static</em> expressions of that view. Step 3 of
+the allocation process — overlaying current macro conditions — is operationalised
+through a family of <strong>regime-adaptive systematic strategies</strong> that rebalance monthly
+as the market regime evolves. This section reports their out-of-sample backtest
+performance against the S&amp;P 500.</p>
+<p>All three strategies share a common engine: a regime classifier reads a small set of
+macro signals (equity volatility, credit spreads, the yield curve, policy
+uncertainty), and the portfolio is rebuilt each month to suit the detected regime,
+filtered by trend and scaled to a volatility target. The detection-and-optimisation
+methodology is proprietary; what follows are the <em>results</em> and the <em>live allocation
+mix</em>, not the recipe.</p>
+<h3>10.1 The three strategies</h3>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Sleeve</th>
+<th>Ann. return</th>
+<th>Sharpe</th>
+<th>Max drawdown</th>
+<th>OOS window</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>US Sector Rotation</strong></td>
+<td>US equity (11 sectors)</td>
+<td>12.1%</td>
+<td>0.61</td>
+<td>-17.6%</td>
+<td>2004-2026</td>
+</tr>
+<tr>
+<td><strong>Balanced Multi-strategy</strong></td>
+<td>Defensive-growth blend</td>
+<td>9.9%</td>
+<td>0.51</td>
+<td>-15.6%</td>
+<td>2007-2026</td>
+</tr>
+<tr>
+<td><strong>Defensive Multi-asset</strong></td>
+<td>26 global assets</td>
+<td>7.3%</td>
+<td>0.31</td>
+<td>-17.6%</td>
+<td>1998-2026</td>
+</tr>
+<tr>
+<td>S&amp;P 500 (reference)</td>
+<td>US large-cap</td>
+<td>8.3-10.2%</td>
+<td>0.25-0.39</td>
+<td>-50.8%</td>
+<td>same</td>
+</tr>
+</tbody>
+</table>
+<p>Measured over each strategy's own window, the index returned 10.2% (vs Sector
+Rotation), 10.1% (vs Balanced), and 8.3% (vs the longest Defensive window, which
+includes the 2000 and 2008 bear markets).</p>
+<h3>10.2 What the backtests show</h3>
+<p>Two findings hold across all three strategies and all sub-periods:</p>
+<ol>
+<li><strong>Superior risk-adjusted return.</strong> Every strategy beats the S&amp;P 500 on Sharpe
+   ratio — the Sector Rotation strategy by more than 50% (0.61 vs 0.39). The edge
+   comes from lower realised volatility, not from chasing higher absolute return.</li>
+<li><strong>A fraction of the drawdown.</strong> The worst peak-to-trough loss for each strategy is
+   roughly -16% to -18%, against the index's -50.8%. The regime layer steps out of
+   risk before the deepest declines and holds defensive assets (or cash at the
+   risk-free rate) through them.</li>
+</ol>
+<p>The honest counterpoint: in a sustained bull market with no crisis — such as
+2012-2019 — these strategies <em>trail</em> the index on absolute return, because the
+defensive posture costs upside. Their advantage concentrates in and around stress
+regimes (2000-02, 2008, 2020, 2022). They are best understood as
+<strong>drawdown-controlled equity participation</strong>, not a promise to beat the index in
+every environment.</p>
+<h3>10.3 Current live allocation mix</h3>
+<p>As of the report date the regime layer reads a stress environment:</p>
+<ul>
+<li><strong>US Sector Rotation:</strong> Technology 24%, Energy 24%, Communications 16%,
+  Utilities 14%, ~19% cash — a barbell of strong-trend cyclicals and defensives.</li>
+<li><strong>Balanced Multi-strategy:</strong> ~80% defensive multi-asset component, ~20% sector
+  component.</li>
+<li><strong>Defensive Multi-asset:</strong> Spain equity 20%, broad commodities 20%, Mexican
+  government bonds 20%, T-bills 15%, US large-cap 13%, gold 12%.</li>
+</ul>
+<h3>10.4 Role in the allocation process</h3>
+<blockquote>
+<p>The static LTCMA portfolios (Section 9) answer <em>"what should I own for the next
+decade?"</em> The systematic layer answers <em>"how should that exposure flex as
+conditions change month to month?"</em> The LTCMA sets the strategic anchor and the
+long-run return assumptions; the systematic overlays manage the path —
+controlling drawdown and adapting to regime — on the way there.</p>
+</blockquote>
+<p><strong>Methodological note.</strong> Results are <em>out-of-sample</em> walk-forward backtests: at each
+month the model trains only on data available up to that date and is evaluated on
+the following month, with no look-ahead. Risk-free rate 4.5% (USD). These are
+<strong>hypothetical</strong> results, not actual trading records; past performance does not
+guarantee future results. The complete methodology is available under a
+confidentiality agreement. The libraries behind it include <strong>scikit-learn</strong>,
+<strong>hmmlearn</strong> (Hidden Markov Models), <strong>SciPy</strong> (optimisation) and <strong>pandas/NumPy</strong>.</p>
+<h2>11. Assumptions, Limitations &amp; Sources</h2>
+<h3>11.1 Key judgment assumptions</h3>
 <ul>
 <li><strong>US long-run inflation: 2.4%</strong> — confirmed close to the 2.5% the market prices.</li>
 <li><strong>Fair-value valuation anchors:</strong> US CAPE 26 (Shiller-confirmed); China 15,
@@ -1316,15 +1421,20 @@ no longer be relied on.</p>
   reliably identify a stress mean shift; imposing one would overfit (see 7.2).</li>
 <li><strong>Student-t with ν=6</strong> for fat tails; regime-switching adds tail clustering.</li>
 </ul>
-<h3>10.2 Limitations</h3>
+<h3>11.2 Limitations</h3>
 <ul>
 <li><strong>No paid data.</strong> Valuations rely on Yahoo Finance ETF data and Siblis Research
   CAPE; ETF distribution yields were hand-adjusted toward true dividend yields.</li>
 <li><strong>ETF proxies, not indices</strong>, for current-regime prices; the regional long
   history (French) proxies some single-country exposures (France/UK use European
   data).</li>
-<li><strong>Mexican local govt bonds</strong> have no clean USD price series — return computed
-  from yield, risk statistics proxied from EM local debt.</li>
+<li><strong>Mexican local govt bonds</strong> — risk statistics now computed from a synthetic
+  USD total-return series built from FRED Mexico 10Y yield (IRLTLT01MXM156N) and
+  daily USDMXN (DEXMXUS), using a constant-maturity duration approximation
+  (D_mod computed analytically per prevailing yield level).  The series spans
+  2001–2026 (297 months); annualised vol 14.8% — materially higher than the
+  EM local debt proxy (11.3%) it replaces, correctly reflecting single-country
+  concentration and peso tail risk.</li>
 <li><strong>The regime model is primarily calibrated on 2013–2026</strong>, but the calibration
   has been validated against 25 years of FX/equity history including 2008 and
   2020 (Section 7.6); the deterministic scenario (7.5) imports crisis-magnitude
@@ -1333,7 +1443,7 @@ no longer be relied on.</p>
   index-CFD series had year-boundary artifacts and were excluded (see 7.6).</li>
 <li>This is the <strong>strategic (Step 1)</strong> layer only.</li>
 </ul>
-<h3>10.3 References</h3>
+<h3>11.3 References</h3>
 <p>Data sources and works cited, in APA format, so that every figure in this
 report can be traced to its origin.</p>
 <p>Baker, S. R., Bloom, N., &amp; Davis, S. J. (2016). Measuring economic policy
@@ -1365,7 +1475,7 @@ http://www.econ.yale.edu/~shiller/data.htm</p>
 https://siblisresearch.com/data/cape-ratios-by-country/</p>
 <p>Yahoo Finance. (2026). <em>Historical market and fundamental data</em> [Data set].
 https://finance.yahoo.com</p>
-<h3>10.4 Reproducibility</h3>
+<h3>11.4 Reproducibility</h3>
 <p>All figures regenerate from the scripts in <code>~/LTCMA/scripts</code> (WSL, <code>cudf-env</code>):
 <code>01</code>–<code>02</code> data · <code>03</code>–<code>04</code> returns/portfolios · <code>05a</code>–<code>05b</code> long history ·
 <code>06</code> shrinkage risk model · <code>07</code> Monte Carlo · <code>08</code>–<code>09</code> signals &amp; priced-in ·

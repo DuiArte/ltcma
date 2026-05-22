@@ -68,8 +68,9 @@ REAL_ASSETS = {
     "Gold":              (0.033, "inflation 2.4% + ~1% long-run real return"),
 }
 
-# vol/corr proxy: Mexico local govt has no clean USD price series -> proxy EMLC
-VOL_PROXY = {"Mexico_Govt_Local": "EM_Local_Debt"}
+# Mexico_Govt_Local: real series built by 05c_mexico_bond_series.py.
+# Proxy (EM_Local_Debt) used only as fallback if the file is missing.
+VOL_PROXY = {}   # no proxies needed when pipeline is fully run
 
 # ============================================================
 # 1. EXPECTED RETURNS
@@ -99,13 +100,30 @@ ret.to_csv(f"{DATA}/ltcma_returns.csv")
 # 2. VOLATILITY & CORRELATION  (trailing 15y monthly total returns)
 # ============================================================
 px = pd.read_csv(f"{DATA}/prices_monthly.csv", index_col=0, parse_dates=True)
+
+# Merge real Mexico Govt Local bond series if available
+import os as _os
+_mex_paths = [
+    _os.path.expanduser("~/LTCMA/data/mexico_bond_monthly.csv"),
+    r"C:\Users\carlo\LTCMA\data\mexico_bond_monthly.csv",
+]
+for _p in _mex_paths:
+    if _os.path.exists(_p):
+        _mex = pd.read_csv(_p, index_col=0, parse_dates=True)
+        px = px.join(_mex[["Mexico_Govt_Local"]], how="left")
+        print(f"Mexico_Govt_Local: loaded real series from {_p}")
+        break
+else:
+    print("WARNING: mexico_bond_monthly.csv not found — run 05c first; "
+          "Mexico_Govt_Local vol/corr will be absent from simple model.")
+
 rets = np.log(px / px.shift(1)).dropna(how="all")
 window = rets.loc[rets.index >= (rets.index.max() - pd.DateOffset(years=15))]
 
 vol = (window.std() * np.sqrt(12)).rename("annual_vol")
 corr = window.corr()
 
-# add Mexico_Govt_Local via proxy
+# Fallback proxy only if Mexico_Govt_Local still missing (file not found above)
 for tgt, src in VOL_PROXY.items():
     vol[tgt] = vol[src]
     corr[tgt] = corr[src]

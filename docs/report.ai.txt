@@ -1,0 +1,182 @@
+LTCMA 2026 — AI digest (low-token companion to the human HTML/PDF).
+format: numbered section map; tables pipe-compact; one lead sentence/section. full prose + charts live in report.html / LTCMA_2026.md.
+
+# CONTENTS
+- 1. Executive Summary
+- 2. Methodology
+- 3. Macro Backdrop & Fundamentals Grid
+- 4. Priced-In Indicators
+- 5. Expected Returns
+- 6. Risk — Volatility & Correlation
+- 7. News, Regimes & Monte Carlo Simulation
+- 8. Strategic-Edge Scan
+- 9. Sample Portfolios
+- 10. Systematic Strategy Layer — Dynamic Regime Overlays
+- 11. Assumptions, Limitations & Sources
+
+# SECTION LEADS
+[1. Executive Summary] After a long US-led bull market, the starting point for the next decade is one of extreme valuation dispersion.
+[2. Methodology] Every serious capital-market-assumptions publisher — J.P.
+[3. Macro Backdrop & Fundamentals Grid] Real yield = 10Y nominal − current inflation (approximate).
+[4. Priced-In Indicators] A capital-market assumption is only active where it disagrees with what the market already expects.
+[5. Expected Returns] ![Risk/return map of the 24-asset universe](figures/figreturnrisk.png)
+[6. Risk — Volatility & Correlation] Volatility blends a trailing window with multi-decade history; the covariance matrix is Ledoit-Wolf shrunk and positive semi-definite.
+[7. News, Regimes & Monte Carlo Simulation] Geopolitical and policy events enter the model through two text-based indices (see 2.5): GPR (geopolitical risk) and EPU (economic policy uncertainty).
+[8. Strategic-Edge Scan] Brazil 8.8% · Mexico & EM 8.0% · DM ex-US 7.7% · China 7.4% · UK 7.0%
+[9. Sample Portfolios] Three conventional risk-ladder portfolios plus an Edge-Tilted variant, each run through the regime-switching engine (annually rebalanced).
+[10. Systematic Strategy Layer — Dynamic Regime Overlays] The assumptions in this report set the strategic anchor for the next decade, and the sample portfolios of Section 9 are static expressions of that view.
+[11. Assumptions, Limitations & Sources] - US long-run inflation: 2.4% — confirmed close to the 2.5% the market prices.
+
+# TABLES (pipe-compact)
+## 1. Executive Summary
+|Point estimate|Simulated 12y median|Volatility
+US large-cap equity|6.6%|5.7%|13.6%
+EM equity|8.0%|6.4%|18.8%
+Brazil / Mexico equity|8.8% / 8.0%|4.1% / 5.7%|32.7% / 22.4%
+US Treasury / IG credit|4.5% – 5.0%|4.2% – 4.7%|7.6% – 8.0%
+EM USD sovereign / Mexican local govt|6.0% / 6.3%|5.5% / 5.7%|9.9% / 11.3%
+Cash (US T-bills)|3.3%|3.2%|3.4%
+
+## 2. Methodology
+λ|Meaning|Closest to the house view of
+**0.0**|No reversion — today's multiples persist|Momentum / regime views (Bridgewater-style)
+**0.5**|Partial normalization (**base case**)|J.P. Morgan, BlackRock, Vanguard, Northern Trust
+**1.0**|Full reversion to fair value|GMO, Research Affiliates, AQR
+
+## 3. Macro Backdrop & Fundamentals Grid
+Market|Policy rate|10Y nominal|10Y real*|Inflation|Trend real GDP|Equity valuation|Damodaran ERP
+**US**|~3.6%|4.59%|~1.9%|~2.7%|~1.9%|CAPE 34.7 — **rich**|4.46%
+**Mexico**|6.50%|8.88%|~4.4%|4.45%|~2.0%|P/E 13.0 — **cheap**|6.69%
+**Brazil**|14.50%|~13.5%|~9.0%|~4.5%|~2.0%|P/E 11.8 — **cheap**|7.47%
+**China**|~3.0% (LPR)|~1.8%|~1.3%|~0.5%|~4.0%|CAPE 17.7 — **cheap**|5.14%
+**Japan**|~0.75%|2.52%|~0.0%|~2.5%|~0.7%|CAPE 29.4 — **rich**|5.14%
+**UK**|~3.9%|4.82%|~1.8%|~3.0%|~1.3%|CAPE 20.2 — **fair**|5.01%
+**France**|~2.0% (ECB)|3.68%|~1.9%|~1.8%|~1.2%|CAPE ~21 — **fair**|5.01%
+
+## 4. Priced-In Indicators
+Period|Implied avg short rate
+Current fed funds (effective)|3.63%
+Next 12 months (1Y Treasury)|3.82%
+1–2 years forward|4.36%
+2–3 years forward|4.24%
+3–5 years forward|4.44%
+5–10 years forward|~4.9%
+
+## 4. Priced-In Indicators
+Signal|What the market prices|LTCMA assumption|Read
+**Rate path**|No cuts; 1–2y forward 4.4%|Cash 3.3%|Market more hawkish than the LTCMA's neutral-rate drift
+**Long-run inflation**|10y breakeven 2.48%, 5y5y forward 2.27%|2.40%|**Aligned** — LTCMA sits mid-range
+**US credit risk**|HY OAS 2.80% (~14th percentile — very tight)|HY 5.0%, tight-spread drag applied|**Agreement** — credit priced for perfection; LTCMA already cautious
+**Equity volatility**|VIX 18.4 (~historical median)|Equity vols 13–33%|Market calm; no near-term stress priced
+**Recession**|Yield curve 10Y–3M +0.93% (positive)|n/a|No recession priced in
+**Policy uncertainty**|EPU 212 (baseline ~100 — elevated)|n/a|**Complacency divergence** — see below
+
+## 5. Expected Returns
+Asset class|Type|ER λ=0|**ER base (λ=0.5)**|ER λ=1|Volatility
+US Large Cap|Equity|7.8%|**6.6%**|5.4%|13.6%
+US Small Cap|Equity|6.7%|**6.5%**|6.3%|19.6%
+Mexico Equity|Equity|7.4%|**8.0%**|8.6%|22.4%
+Brazil Equity|Equity|8.9%|**8.8%**|8.7%|32.7%
+China Equity|Equity|8.1%|**7.4%**|6.7%|23.1%
+Japan Equity|Equity|7.1%|**6.4%**|5.8%|16.7%
+UK Equity|Equity|8.0%|**7.0%**|6.1%|16.6%
+France Equity|Equity|7.4%|**7.2%**|7.0%|17.7%
+EM Equity (broad)|Equity|8.0%|**8.0%**|8.0%|18.8%
+DM ex-US Equity (broad)|Equity|7.5%|**7.7%**|8.0%|15.7%
+US Cash / T-Bills|Fixed Income|—|**3.3%**|—|3.4%
+US Treasury Intermediate|Fixed Income|—|**4.5%**|—|7.6%
+US Treasury Long|Fixed Income|—|**4.8%**|—|15.2%
+US TIPS|Fixed Income|—|**4.5%**|—|6.2%
+US IG Corporate|Fixed Income|—|**5.0%**|—|8.0%
+US High Yield|Fixed Income|—|**5.0%**|—|7.9%
+EM USD Sovereign|Fixed Income|—|**6.0%**|—|9.9%
+EM Local Debt|Fixed Income|—|**4.8%**|—|11.3%
+Mexico Govt (local, Mbonos)|Fixed Income|—|**6.3%**|—|14.8%
+Global Aggregate ex-US (hedged)|Fixed Income|—|**3.8%**|—|5.9%
+US REITs|Real Asset|—|**6.3%**|—|17.6%
+Global REITs ex-US|Real Asset|—|**6.4%**|—|16.5%
+Commodities (broad)|Real Asset|—|**3.5%**|—|17.2%
+Gold|Real Asset|—|**3.3%**|—|18.6%
+
+## 5. Expected Returns
+Market|Dividend|Buyback|Real EPS growth|US inflation|Valuation reversion|= ER
+US Large Cap|1.2%|1.7%|2.5%|2.4%|−1.2%|6.6%
+US Small Cap|1.3%|0.5%|2.5%|2.4%|−0.2%|6.5%
+Mexico|3.2%|0.0%|1.8%|2.4%|+0.6%|8.0%
+Brazil|4.5%|0.0%|2.0%|2.4%|−0.1%|8.8%
+China|2.2%|0.5%|3.0%|2.4%|−0.7%|7.4%
+Japan|2.2%|1.0%|1.5%|2.4%|−0.7%|6.4%
+UK|3.8%|0.5%|1.3%|2.4%|−1.0%|7.0%
+France|3.0%|0.5%|1.5%|2.4%|−0.2%|7.2%
+EM (broad)|2.8%|0.0%|2.8%|2.4%|0.0%|8.0%
+DM ex-US (broad)|3.2%|0.4%|1.5%|2.4%|+0.2%|7.7%
+
+## 6. Risk — Volatility & Correlation
+|US LC|EM Eq|Mexico|Japan|DM exUS|US Treas Long|US HY|EM USD Sov|Gold|Commod
+**US Large Cap**|1.00|0.71|0.61|0.69|0.83|−0.01|0.79|0.66|0.12|0.41
+**EM Equity**|0.71|1.00|0.67|0.70|0.83|0.00|0.70|0.72|0.38|0.49
+**Mexico Equity**|0.61|0.67|1.00|0.58|0.73|−0.04|0.66|0.65|0.27|0.44
+**Japan Equity**|0.69|0.70|0.58|1.00|0.83|0.03|0.61|0.58|0.13|0.31
+**US Treasury Long**|−0.01|0.00|−0.04|0.03|−0.01|1.00|0.13|0.36|0.27|−0.35
+**US High Yield**|0.79|0.70|0.66|0.61|0.78|0.13|1.00|0.81|0.27|0.45
+**Gold**|0.12|0.38|0.27|0.13|0.26|0.27|0.27|0.37|1.00|0.22
+**Commodities**|0.41|0.49|0.44|0.31|0.46|−0.35|0.45|0.33|0.22|1.00
+
+## 7. News, Regimes & Monte Carlo Simulation
+Behavior in stress months|Finding
+**Volatility**|Amplifies 1.2–2.2× (US equity 1.6×, high yield 2.1×, EM sovereign 2.2×; **gold least affected at 1.2×**)
+**Correlation**|Equity cross-correlation rises 0.66 → 0.74 — diversification weakens just when it is needed
+**Persistence**|Stress regimes last ~5.7 months on average (Markov: stress→stress 0.82)
+**Returns**|**No reliable drawdown.** Over 2013–2026, news-stress months did *not* systematically post lower returns — markets repeatedly "climbed the wall of worry"
+
+## 7. News, Regimes & Monte Carlo Simulation
+Portfolio|5th pct|**Median**|95th pct|Mean|CVaR (worst-5% avg)|P(loss)|P(< inflation)
+Conservative 30/70|1.7%|**5.0%**|8.5%|5.0%|+0.8%|1%|10%
+Moderate 60/40|1.1%|**5.7%**|10.6%|5.8%|−0.1%|2%|12%
+Growth 90/10|0.2%|**6.2%**|12.6%|6.3%|−1.4%|5%|15%
+**Edge-Tilted (moderate risk)**|**0.7%**|**5.8%**|**11.2%**|**5.9%**|**−0.6%**|**3%**|**14%**
+
+## 7. News, Regimes & Monte Carlo Simulation
+Portfolio|1-year impact
+Conservative 30/70|−8.8%
+Moderate 60/40|−18.0%
+Growth 90/10|−27.2%
+Edge-Tilted (moderate risk)|−20.2%
+
+## 7. News, Regimes & Monte Carlo Simulation
+Test|2013–26 window|2000–26 (incl. crises)|Verdict
+Equity stress/calm vol multiple|1.61×|1.51×|**Stable** — model not biased by the benign window
+MXN depreciation vs USD|2.5% assumed|**2.43% realized**|**Assumption confirmed**
+Worst equity month|—|Oct 2008 −20%, Mar 2020 −19%, Sep 2001 −11% (GPR spiked to 499)|Regime classifier catches real crises
+
+## 9. Sample Portfolios
+Portfolio|Mean|Median|5th–95th range|CVaR|Geopolitical scenario|P(< inflation)
+Conservative 30/70|5.0%|5.0%|1.7% – 8.5%|+0.8%|−8.8%|10%
+Moderate 60/40|5.8%|5.7%|1.1% – 10.6%|−0.1%|−18.0%|12%
+Growth 90/10|6.3%|6.2%|0.2% – 12.6%|−1.4%|−27.2%|15%
+**Edge-Tilted (moderate risk)**|**5.9%**|**5.8%**|**0.7% – 11.2%**|**−0.6%**|**−20.2%**|**14%**
+
+## 9. Sample Portfolios
+Asset class|Conservative 30/70|Moderate 60/40|Growth 90/10|**Edge-Tilted**
+US Large Cap|14%|30%|42%|**16%**
+DM ex-US Equity|8%|16%|26%|**14%**
+EM Equity|8%|14%|22%|**16%**
+Mexico Equity|—|—|—|**7%**
+Japan Equity|—|—|—|**7%**
+US Treasury Intermediate|25%|18%|5%|**7%**
+US IG Corporate|15%|10%|3%|—
+Global Aggregate ex-US|10%|6%|—|—
+US Cash / T-Bills|12%|—|—|**3%**
+US TIPS|—|—|—|**8%**
+US High Yield|4%|3%|—|—
+EM USD Sovereign|4%|3%|2%|**8%**
+Mexico Government Local (Mbonos)|—|—|—|**9%**
+Gold|—|—|—|**5%**
+**Total**|**100%**|**100%**|**100%**|**100%**
+
+## 10. Systematic Strategy Layer — Dynamic Regime Overlays
+Strategy|Sleeve|Ann. return|Sharpe|Max drawdown|OOS window
+**US Sector Rotation**|US equity (11 sectors)|12.1%|0.61|-17.6%|2004-2026
+**Balanced Multi-strategy**|Defensive-growth blend|9.9%|0.51|-15.6%|2007-2026
+**Defensive Multi-asset**|26 global assets|7.3%|0.31|-17.6%|1998-2026
+S&P 500 (reference)|US large-cap|8.3-10.2%|0.25-0.39|-50.8%|same
