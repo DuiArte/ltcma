@@ -272,15 +272,32 @@ if priced_at and len(ts):
     ts.iloc[-1, ts.columns.get_loc("value")] = float(ts.iloc[-1]["equity"])
     dates = ts.index
 
+# ---------- recycled-capital model (the capital that sold is the capital that buys again) ----------
+# Capital is a fixed pool: 10M REAL, shown x1.8 (=18M) to match the holdings
+# scaling. Selling returns cash to the pool, buying draws from it, so
+# total value = holdings market value + idle cash, and the curve only moves
+# with realized+unrealized P&L (no dip when capital is parked in cash).
+CAPITAL = BASELINE * SCALE                          # 10M real x1.8 = 18M (scaled display)
+try:
+    _blf = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
+    _blf["flow"] = _blf["shares"] * _blf["price"] * _blf["side"].map({"buy": 1.0, "sell": -1.0})
+    _ninv = (_blf.groupby("date")["flow"].sum().sort_index().cumsum() * SCALE)
+    _ninv = _ninv.reindex(ts.index, method="ffill").fillna(0.0)   # cumulative net invested (scaled)
+except Exception as _e:
+    print(f"  capital model: blotter unavailable ({_e})"); _ninv = pd.Series(0.0, index=ts.index)
+_idle = CAPITAL - _ninv                              # idle (recyclable) cash in the pool
+ts["total"] = ts["equity"] + _idle                   # total value = holdings + idle cash
+_total_now = float(ts["total"].iloc[-1]); _idle_now = float(_idle.iloc[-1])
+print(f"  capital pool {CAPITAL:,.0f} | net invested {float(_ninv.iloc[-1]):,.0f} | "
+      f"idle {_idle_now:,.0f} | total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.1f}%")
+
 # ---------- charts ----------
-# 1. portfolio value over time (MXN base; USD array embedded for the toggle)
+# 1. total value (holdings + recycled cash) vs the fixed capital pool
 f1 = go.Figure()
-f1.add_scatter(x=dates, y=ts["equity"], mode="lines", name="Equity (mark-to-market)",
+f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Total value (holdings + cash)",
                line=dict(color=BLUE, width=2.6))
-f1.add_scatter(x=dates, y=ts["balance"], mode="lines", name="Balance (cost + realized)",
-               line=dict(color=GREY, width=1.8, dash="dot"))
 def _eq_at(_dt):
-    _s = ts["equity"][ts.index <= _dt]
+    _s = ts["total"][ts.index <= _dt]
     return float(_s.iloc[-1]) if len(_s) else None
 for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle-down")]:
     _s = _td[_td["side"] == _side] if len(_td) else _td
@@ -290,9 +307,9 @@ for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle
     f1.add_scatter(x=_x, y=_y, mode="markers", name=f"{_side.title()}s",
                    marker=dict(color=_col, symbol=_sym, size=9, line=dict(width=1, color="white")),
                    text=_txt, hoverinfo="text")
-f1.add_hline(y=BASELINE, line=dict(color=INK, width=1, dash="dot"),
-             annotation_text="10M baseline", annotation_position="bottom right")
-f1.update_layout(title="Equity & Balance vs 10M starting capital (daily, scaled)",
+f1.add_hline(y=CAPITAL, line=dict(color=INK, width=1, dash="dot"),
+             annotation_text="Capital (10M, recycled)", annotation_position="bottom right")
+f1.update_layout(title="Total value vs capital \u2014 sells fund the next buys (daily, scaled)",
                  yaxis_title="MXN (scaled)", xaxis_title="date",
                  legend=dict(orientation="h", y=-0.18))
 
@@ -329,13 +346,13 @@ for _, r in latest.iterrows():
              f"<td class='{rc}'>{r['ret']*100:+.1f}%</td>"
              f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
 
-# ---------- metrics ----------
-_eq_now = float(ts["equity"].iloc[-1]); _bal_now = float(ts["balance"].iloc[-1])
-SNAP = [("Equity (market value)", cval(_eq_now)),
-        ("Cost Basis", cval(_bal_now)),
-        ("Unrealized P / M", cval(latest["pm"].sum(), signed=True)),
-        ("Return on Cost", f"{port_ret*100:+.1f}%"),
-        ("vs 10M Capital", f"{(_eq_now/BASELINE-1)*100:+.1f}%"),
+# ---------- metrics (recycled-capital basis) ----------
+_pnl_now = _total_now - CAPITAL
+SNAP = [("Total Value", cval(_total_now)),
+        ("Holdings Value", cval(tot_val)),
+        ("Idle Cash", cval(_idle_now)),
+        ("Total P / L", cval(_pnl_now, signed=True)),
+        ("Total Return", f"{(_total_now/CAPITAL-1)*100:+.1f}%"),
         ("Live Priced", asof)]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
@@ -347,17 +364,16 @@ def _mk_y(side):
     _s = _td[_td["side"] == side] if len(_td) else _td
     _o = []
     for _d in (_s["date"] if len(_s) else []):
-        _ss = ts["equity"][ts.index <= _d]
+        _ss = ts["total"][ts.index <= _d]
         _o.append(float(_ss.iloc[-1]) if len(_ss) else 0.0)
     return _o
-_eqm = _arr(ts["equity"]); _equ = _arr(ts["equity"] / RATE)
-_balm = _arr(ts["balance"]); _balu = _arr(ts["balance"] / RATE)
+_totm = _arr(ts["total"]); _totu = _arr(ts["total"] / RATE)
 _by = _mk_y("buy"); _sy = _mk_y("sell")
 _bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v/RATE:.0f}" for v in _by)
 _sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v/RATE:.0f}" for v in _sy)
 JS = """
 <script>
-var EQ={mxn:[__EQM__],usd:[__EQU__]},BAL={mxn:[__BALM__],usd:[__BALU__]};
+var TOT={mxn:[__TOTM__],usd:[__TOTU__]};
 var BUY={mxn:[__BYM__],usd:[__BYU__]},SEL={mxn:[__SYM__],usd:[__SYU__]};
 function setCurrency(c){
   document.querySelectorAll('.cval').forEach(function(e){e.textContent=e.dataset[c];});
@@ -367,13 +383,13 @@ function setCurrency(c){
   if(lbl) lbl.textContent=c.toUpperCase();
   var d=document.getElementById('pf-value');
   if(d&&window.Plotly){
-    Plotly.restyle(d,{y:[EQ[c],BAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
+    Plotly.restyle(d,{y:[TOT[c],BUY[c],SEL[c]]},[0,1,2]);
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
   }
 }
 document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
 </script>
-""".replace("__EQM__", _eqm).replace("__EQU__", _equ).replace("__BALM__", _balm).replace("__BALU__", _balu).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu)
+""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -407,7 +423,7 @@ filtered automatically.</div>
 read the same in either currency. Definitions in the
 <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
-<section class="block"><h2>Portfolio Value</h2>
+<section class="block"><h2>Total Value vs Capital</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
 <section class="block"><h2>Holdings</h2>
 <div class="tile" style="padding:0 16px 8px">
