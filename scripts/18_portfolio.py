@@ -286,16 +286,22 @@ try:
 except Exception as _e:
     print(f"  capital model: blotter unavailable ({_e})"); _ninv = pd.Series(0.0, index=ts.index)
 _idle = CAPITAL - _ninv                              # idle (recyclable) cash in the pool
-ts["total"] = ts["equity"] + _idle                   # total value = holdings + idle cash
+_real = ts["balance"] - _ninv                        # REALIZED P&L (cost basis - net cash invested)
+_unr  = ts["equity"] - ts["balance"]                 # UNREALIZED P&L (live on the last point)
+ts["realized_pool"] = CAPITAL + _real                # capital + locked-in realized gains
+ts["total"] = ts["realized_pool"] + _unr             # + current unrealized = total value
 _total_now = float(ts["total"].iloc[-1]); _idle_now = float(_idle.iloc[-1])
-print(f"  capital pool {CAPITAL:,.0f} | net invested {float(_ninv.iloc[-1]):,.0f} | "
-      f"idle {_idle_now:,.0f} | total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.1f}%")
+_real_now = float(_real.iloc[-1]); _unr_now = float(_unr.iloc[-1])
+print(f"  capital {CAPITAL:,.0f} | realized {_real_now:,.0f} | unrealized {_unr_now:,.0f} | "
+      f"total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.1f}%")
 
 # ---------- charts ----------
 # 1. total value (holdings + recycled cash) vs the fixed capital pool
 f1 = go.Figure()
-f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Total value (holdings + cash)",
+f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Total value (realized + unrealized)",
                line=dict(color=BLUE, width=2.6))
+f1.add_scatter(x=dates, y=ts["realized_pool"], mode="lines", name="Capital + realized (locked in)",
+               line=dict(color=GREEN, width=1.6, dash="dot"))
 def _eq_at(_dt):
     _s = ts["total"][ts.index <= _dt]
     return float(_s.iloc[-1]) if len(_s) else None
@@ -309,7 +315,7 @@ for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle
                    text=_txt, hoverinfo="text")
 f1.add_hline(y=CAPITAL, line=dict(color=INK, width=1, dash="dot"),
              annotation_text="Capital (10M, recycled)", annotation_position="bottom right")
-f1.update_layout(title="Total value vs capital \u2014 sells fund the next buys (daily, scaled)",
+f1.update_layout(title="Total value \u2014 realized (locked in) + unrealized vs 10M capital (daily, scaled)",
                  yaxis_title="MXN (scaled)", xaxis_title="date",
                  legend=dict(orientation="h", y=-0.18))
 
@@ -346,11 +352,11 @@ for _, r in latest.iterrows():
              f"<td class='{rc}'>{r['ret']*100:+.1f}%</td>"
              f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
 
-# ---------- metrics (recycled-capital basis) ----------
-_pnl_now = _total_now - CAPITAL
+# ---------- metrics (recycled capital; realized & unrealized kept separate) ----------
+_pnl_now = _real_now + _unr_now
 SNAP = [("Total Value", cval(_total_now)),
-        ("Holdings Value", cval(tot_val)),
-        ("Idle Cash", cval(_idle_now)),
+        ("Realized P / L", cval(_real_now, signed=True)),
+        ("Unrealized P / L", cval(_unr_now, signed=True)),
         ("Total P / L", cval(_pnl_now, signed=True)),
         ("Total Return", f"{(_total_now/CAPITAL-1)*100:+.1f}%"),
         ("Live Priced", asof)]
@@ -368,12 +374,13 @@ def _mk_y(side):
         _o.append(float(_ss.iloc[-1]) if len(_ss) else 0.0)
     return _o
 _totm = _arr(ts["total"]); _totu = _arr(ts["total"] / RATE)
+_ream = _arr(ts["realized_pool"]); _reau = _arr(ts["realized_pool"] / RATE)
 _by = _mk_y("buy"); _sy = _mk_y("sell")
 _bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v/RATE:.0f}" for v in _by)
 _sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v/RATE:.0f}" for v in _sy)
 JS = """
 <script>
-var TOT={mxn:[__TOTM__],usd:[__TOTU__]};
+var TOT={mxn:[__TOTM__],usd:[__TOTU__]},REAL={mxn:[__REAM__],usd:[__REAU__]};
 var BUY={mxn:[__BYM__],usd:[__BYU__]},SEL={mxn:[__SYM__],usd:[__SYU__]};
 function setCurrency(c){
   document.querySelectorAll('.cval').forEach(function(e){e.textContent=e.dataset[c];});
@@ -383,13 +390,13 @@ function setCurrency(c){
   if(lbl) lbl.textContent=c.toUpperCase();
   var d=document.getElementById('pf-value');
   if(d&&window.Plotly){
-    Plotly.restyle(d,{y:[TOT[c],BUY[c],SEL[c]]},[0,1,2]);
+    Plotly.restyle(d,{y:[TOT[c],REAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
   }
 }
 document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
 </script>
-""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu)
+""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
