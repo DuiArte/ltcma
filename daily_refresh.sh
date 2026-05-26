@@ -4,13 +4,13 @@
 #   1. refresh live public data (best-effort; failures don't abort)
 #   2. rebuild the site + low-token AI copies
 #   3. mirror a backup to C:\Users\carlo\Documents\CarlosDuarteWebsite
-#   4. stage a daily commit (push is left to the user unless AUTO_PUSH=1)
+#   4. commit and push the daily refresh (set AUTO_PUSH=0 to stage only)
 # Scheduled daily via Windows Task Scheduler -> wsl bash -lc this script.
 # ============================================================================
 export PATH=/home/carlos/.local/bin:$PATH
 REPO=/home/carlos/LTCMA
 BACKUP=/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite
-AUTO_PUSH=${AUTO_PUSH:-0}
+AUTO_PUSH=${AUTO_PUSH:-1}
 
 cd "$REPO" || exit 1
 mkdir -p logs
