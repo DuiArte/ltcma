@@ -375,14 +375,13 @@ def buffett_row(ticker):
     if fcf_y is not None: pillars.append(_clamp(fcf_y / 0.08))      # FCF yield 8%
     if gm is not None and gm > 0: pillars.append(_clamp(gm / 0.50)) # gross margin 50%
     if mos is not None:   pillars.append(_clamp(0.5 + mos / 0.80))  # +40% margin of safety
-    score = round(100 * sum(pillars) / len(pillars)) if pillars else None
+    # require >=3 data pillars for a meaningful score; sparse names (often banks/
+    # insurers with no gross margin or FCF) would otherwise rank on 1-2 noisy inputs
+    score = round(100 * sum(pillars) / len(pillars)) if len(pillars) >= 3 else None
     return {"ticker": ticker,
             "name": (info.get("shortName") or info.get("longName") or ticker),
             "roe": roe, "de": de, "fcf_y": fcf_y, "gm": (gm if gm else None),
             "mos": mos, "score": score, "np": len(pillars)}
-
-def _sgn_pct(x):
-    return f"{x*100:+.1f}%" if (isinstance(x, (int, float)) and x == x) else "n/a"
 
 def _mos_fmt(x):
     """Margin of safety, capped at +/-100% for display (the rough two-stage DCF
@@ -408,7 +407,7 @@ def screen_body(rows):
                 f"<span style='font-size:11px;color:#8d8d8d'>{r['name'][:26]}</span></td>"
                 f"<td>{pct(r['roe'])}</td><td>{rt(r['de'])}</td>"
                 f"<td>{pct(r['fcf_y'])}</td><td>{pct(r['gm'])}</td>"
-                f"<td class='{mos_cls}'>{_sgn_pct(mos)}</td>"
+                f"<td class='{mos_cls}'>{_mos_fmt(mos)}</td>"
                 f"<td class='{sc_cls}' style='font-weight:600'>"
                 f"{sc if sc is not None else 'n/a'}"
                 f"<span style='font-size:10px;color:#8d8d8d'> /{r['np']}p</span></td></tr>")
@@ -501,8 +500,10 @@ else:
           'yield 8%, gross margin 50% and &plus;40% margin of safety; the Buffett '
           'score is their average (0&ndash;100) over the pillars that have data &mdash; '
           'the <span style="font-size:11px;color:#8d8d8d">/Np</span> tag shows how '
-          'many. Financials (banks, insurers) lack a meaningful gross margin and '
-          'free cash flow, so they score on fewer pillars and are not directly '
+          'many. The margin of safety is a rough two-stage DCF and is shown capped '
+          'at &plusmn;100%; it is unreliable for holding companies and for '
+          'financials (banks, insurers), which also lack a meaningful gross margin '
+          'and free cash flow and so score on fewer pillars &mdash; not directly '
           'comparable to industrials. Free Yahoo Finance fundamentals are '
           'approximate; educational research, not investment advice.</p>'
         + _sec(f"S&amp;P 500 large-cap selection &mdash; {us_cov}/{len(US_SCREEN)} with data", us_rows)
