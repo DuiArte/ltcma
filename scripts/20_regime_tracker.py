@@ -6,7 +6,8 @@ the post-FOMC drift finding from the companion macro_event_study work).
 
 Output: docs/regime.html
 """
-import os
+import os, io
+import requests
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -53,6 +54,45 @@ comp["HY_OAS"] = hy_m.reindex(idx)
 comp["NegCurve"] = -curve_m.reindex(idx)        # inversion -> positive (stress)
 comp["EPU"] = epu_m.reindex(idx)
 comp["GPR"] = gpr.reindex(idx)
+
+# --- AI-cycle facet: semiconductor (PHLX SOX) drawdown from its trailing-12m high.
+# The semis cycle is the cleanest long-history proxy for the AI investment cycle;
+# a deep drawdown (dot-com 2000, 2008, the 2018 and 2022 chip corrections) reads
+# as cycle stress, consistent with the other "elevated = stress" inputs. ---
+try:
+    sox = yf.download("^SOX", period="max", interval="1mo",
+                      auto_adjust=True, progress=False)["Close"].dropna()
+    if hasattr(sox, "columns"):
+        sox = sox.iloc[:, 0]
+    sox.index = pd.to_datetime(sox.index).tz_localize(None) + pd.offsets.MonthEnd(0)
+    sox = sox.groupby(sox.index).last()
+    sox_dd = 1.0 - sox / sox.rolling(12, min_periods=3).max()   # 0..1; high = sell-off
+    comp["AICycle"] = sox_dd.reindex(idx)
+except Exception as e:
+    print(f"  (warn: AI-cycle ^SOX fetch failed: {e})")
+    comp["AICycle"] = np.nan
+
+# --- Environmental/energy facet: WTI crude price volatility (FRED, keyless CSV).
+# HONEST CAVEAT: there is no clean, free, long-history climate/disaster series, so
+# this captures ENERGY-PRICE stress (the energy-transition / commodity channel) via
+# oil-price volatility, not physical climate risk. Oil shocks in both directions
+# (2008 spike & crash, 2014-16 glut, 2020 negative prints, 2022 war spike) register. ---
+def _fred(series_id):
+    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
+    txt = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (research; LTCMA)"},
+                       timeout=30).text
+    d = pd.read_csv(io.StringIO(txt)); d.columns = ["Date", series_id]
+    d["Date"] = pd.to_datetime(d["Date"])
+    d[series_id] = pd.to_numeric(d[series_id], errors="coerce")
+    return d.set_index("Date")[series_id].dropna()
+try:
+    oil = _fred("DCOILWTICO").resample("ME").last()
+    oil_vol = oil.pct_change().rolling(6, min_periods=3).std() * np.sqrt(12)
+    comp["EnergyVol"] = oil_vol.reindex(idx)
+except Exception as e:
+    print(f"  (warn: oil DCOILWTICO fetch failed: {e})")
+    comp["EnergyVol"] = np.nan
+
 comp = comp.dropna(how="all")
 
 z = (comp - comp.mean()) / comp.std()
