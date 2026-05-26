@@ -9,7 +9,7 @@ Usage:
 Output: docs/stock_<TICKER>.html per stock, docs/stocks.html landing+methodology.
 Data: Yahoo Finance (free). CFA curriculum used as a methodology reference only.
 """
-import sys, os, glob, math
+import sys, os, glob, math, time
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -21,6 +21,23 @@ INK, BLUE, GOLD, GREEN, RED, GREY = "#161616", "#0f62fe", "#b28600", "#198038", 
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)
 DEFAULT = ["AMZN", "GOOGL", "MSFT", "META", "IBM", "BA", "NVDA", "AAPL"]
+# Buffett-style screener universes. The score uses ratios (ROE, D/E, FCF yield,
+# gross margin) that are currency-neutral, so US and Mexican names are comparable;
+# only the margin-of-safety needs the local-currency price, which cancels in the
+# intrinsic/price ratio. US list = a large-cap S&P 500 selection (screening all
+# 500 daily on free data is not feasible without throttling); IPC = the 35-name
+# S&P/BMV IPC.
+US_SCREEN = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "BRK-B", "JPM",
+             "V", "MA", "KO", "PEP", "PG", "JNJ", "UNH", "HD", "COST", "WMT",
+             "MCD", "AXP", "CVX", "XOM", "MMM", "CAT", "DE", "LMT", "CSCO",
+             "TXN", "ORCL", "IBM"]
+IPC_SCREEN = ["WALMEX.MX", "FEMSAUBD.MX", "GFNORTEO.MX", "GMEXICOB.MX", "AMXB.MX",
+              "CEMEXCPO.MX", "BIMBOA.MX", "ALFAA.MX", "KOFUBL.MX", "TLEVISACPO.MX",
+              "GAPB.MX", "ASURB.MX", "OMAB.MX", "KIMBERA.MX", "GRUMAB.MX", "AC.MX",
+              "ELEKTRA.MX", "GCARSOA1.MX", "ORBIA.MX", "PINFRA.MX", "MEGACPO.MX",
+              "LABB.MX", "GENTERA.MX", "Q.MX", "RA.MX", "BBAJIOO.MX", "VESTA.MX",
+              "CHDRAUIB.MX", "GFINBURO.MX", "BOLSAA.MX", "CUERVO.MX", "ALSEA.MX",
+              "PE&OLES.MX", "LIVEPOLC-1.MX", "GCC.MX"]
 # NAV imported from glossary module
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
@@ -300,6 +317,110 @@ CAPM r = {r*100:.1f}% &middot; stage-1 growth g&#8321; = {pct(g1)}
     return {"ticker": ticker, "name": name, "sector": info.get("sector", ""),
             "pe": pe, "roe": roe, "price": price, "target": syn}
 
+# ---------- Buffett-style value screener (lightweight: no per-stock page) ----------
+def _two_stage_iv(cf0, g1, r, g2=G_CAP, n=5):
+    if cf0 is None or cf0 <= 0 or r <= g2:
+        return None
+    pv1 = sum(cf0 * (1 + g1) ** k / (1 + r) ** k for k in range(1, n + 1))
+    tv = cf0 * (1 + g1) ** n * (1 + g2) / (r - g2)
+    return pv1 + tv / (1 + r) ** n
+
+def _intrinsic(info, price):
+    """Blend of two-stage FCFE/DDM and justified P/E — mirrors analyze().
+    The discount rate is floored so the terminal spread (r - g2) is at least 3%,
+    which avoids the Gordon-growth blow-up for low-beta names where r approaches
+    the terminal growth rate."""
+    beta = num(info.get("beta")) or 1.0
+    r = max(RF + beta * ERP, G_CAP + 0.03)
+    roe = num(info.get("returnOnEquity"))
+    payout = num(info.get("payoutRatio")) or 0.0
+    eps = num(info.get("trailingEps"))
+    fcf = num(info.get("freeCashflow")); sh = num(info.get("sharesOutstanding"))
+    fcfps = fcf / sh if (fcf and sh) else None
+    dy = num(info.get("dividendYield")); dy = dy / 100 if dy is not None else 0.0
+    g1 = num(info.get("earningsGrowth")) or num(info.get("revenueGrowth"))
+    g1 = max(min(g1, 0.25), 0.0) if g1 is not None else G_CAP
+    vals = []
+    if fcfps and fcfps > 0:
+        v = _two_stage_iv(fcfps, g1, r); vals += [v] if v else []
+    if dy > 0:
+        v = _two_stage_iv(price * dy, g1, r); vals += [v] if v else []
+    if roe is not None and eps and eps > 0 and payout > 0:
+        g = min(roe * (1 - payout), G_CAP, r - 0.005)
+        if r > g:
+            vals.append(payout * (1 + g) / (r - g) * eps)
+    return sum(vals) / len(vals) if vals else None
+
+def _clamp(x, lo=0.0, hi=1.0):
+    return max(lo, min(hi, x))
+
+def buffett_row(ticker):
+    try:
+        info = yf.Ticker(ticker).info or {}
+    except Exception:
+        return None
+    price = num(info.get("currentPrice")) or num(info.get("regularMarketPrice"))
+    if not price:
+        return None
+    roe = num(info.get("returnOnEquity"))
+    de = num(info.get("debtToEquity")); de = de / 100 if de is not None else None
+    gm = num(info.get("grossMargins"))
+    mcap = num(info.get("marketCap")); fcf = num(info.get("freeCashflow"))
+    fcf_y = (fcf / mcap) if (fcf and mcap) else None
+    iv = _intrinsic(info, price)
+    mos = (iv / price - 1) if iv else None
+    pillars = []                                            # each 0..1, full mark at:
+    if roe is not None:   pillars.append(_clamp(roe / 0.20))        # ROE 20%
+    if de is not None:    pillars.append(_clamp(1 - de))            # D/E 0 (>=1 -> 0)
+    if fcf_y is not None: pillars.append(_clamp(fcf_y / 0.08))      # FCF yield 8%
+    if gm is not None and gm > 0: pillars.append(_clamp(gm / 0.50)) # gross margin 50%
+    if mos is not None:   pillars.append(_clamp(0.5 + mos / 0.80))  # +40% margin of safety
+    score = round(100 * sum(pillars) / len(pillars)) if pillars else None
+    return {"ticker": ticker,
+            "name": (info.get("shortName") or info.get("longName") or ticker),
+            "roe": roe, "de": de, "fcf_y": fcf_y, "gm": (gm if gm else None),
+            "mos": mos, "score": score, "np": len(pillars)}
+
+def _sgn_pct(x):
+    return f"{x*100:+.1f}%" if (isinstance(x, (int, float)) and x == x) else "n/a"
+
+def _mos_fmt(x):
+    """Margin of safety, capped at +/-100% for display (the rough two-stage DCF
+    saturates for low-beta staples and holding companies)."""
+    if not (isinstance(x, (int, float)) and x == x):
+        return "n/a"
+    if x > 1.0:
+        return "&ge;&plus;100%"
+    if x < -0.9:
+        return "&le;&minus;90%"
+    return f"{x*100:+.1f}%"
+
+def screen_body(rows):
+    rows = [r for r in rows if r]
+    rows.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
+    out = ""
+    for r in rows:
+        sc = r["score"]
+        sc_cls = "pos" if (sc is not None and sc >= 70) else ("neg" if (sc is not None and sc < 45) else "")
+        mos = r["mos"]
+        mos_cls = "pos" if (mos is not None and mos > 0) else ("neg" if (mos is not None and mos < 0) else "")
+        out += (f"<tr><td><b>{r['ticker']}</b> "
+                f"<span style='font-size:11px;color:#8d8d8d'>{r['name'][:26]}</span></td>"
+                f"<td>{pct(r['roe'])}</td><td>{rt(r['de'])}</td>"
+                f"<td>{pct(r['fcf_y'])}</td><td>{pct(r['gm'])}</td>"
+                f"<td class='{mos_cls}'>{_sgn_pct(mos)}</td>"
+                f"<td class='{sc_cls}' style='font-weight:600'>"
+                f"{sc if sc is not None else 'n/a'}"
+                f"<span style='font-size:10px;color:#8d8d8d'> /{r['np']}p</span></td></tr>")
+    return out
+
+def screen_universe(tickers):
+    rows = []
+    for tk in tickers:
+        rows.append(buffett_row(tk))
+        time.sleep(0.2)
+    return rows
+
 # ---------- run ----------
 watch = [s.upper() for s in sys.argv[1:]] or DEFAULT
 print(f"Analyzing {len(watch)} stocks...")
@@ -350,6 +471,45 @@ single-stage DDM assumes constant growth, which suits mature firms better than
 high-growth ones. This is an educational framework, not investment advice.</p>
 </section>""" % (RF * 100, ERP * 100)
 
+# ---------- value-screener tables ----------
+if os.environ.get("SKIP_SCREEN") == "1":
+    SCREENER = ""
+    print("Screener skipped (SKIP_SCREEN=1)")
+else:
+    print(f"Screening {len(US_SCREEN)} US + {len(IPC_SCREEN)} IPC names...")
+    us_rows = screen_universe(US_SCREEN)
+    ipc_rows = screen_universe(IPC_SCREEN)
+    us_cov = sum(1 for r in us_rows if r)
+    ipc_cov = sum(1 for r in ipc_rows if r)
+
+    def _sec(title, rows):
+        return (f'<h3>{title}</h3>'
+                '<div class="tile" style="padding:0 16px 8px;margin-bottom:18px">'
+                '<table class="ptable"><thead><tr>'
+                '<th>Company</th><th>ROE</th><th>D/E</th><th>FCF yield</th>'
+                '<th>Gross margin</th><th>Margin of safety</th><th>Buffett score</th>'
+                f'</tr></thead><tbody>{screen_body(rows)}</tbody></table></div>')
+
+    SCREENER = (
+        '<section class="block"><h2>Buffett-style Value Screener</h2>'
+        + ccy_badge("USD", "ratios are currency-neutral; margin of safety uses each stock's local price")
+        + '<p class="note">A transparent five-pillar screen in the spirit of '
+          'quality-at-a-fair-price investing: durable <b>ROE</b>, low '
+          '<b>debt/equity</b>, strong <b>free-cash-flow yield</b>, fat <b>gross '
+          'margins</b> (a moat proxy) and a positive <b>margin of safety</b> versus '
+          'a two-stage DCF. Each pillar earns a full mark at ROE 20%, D/E 0, FCF '
+          'yield 8%, gross margin 50% and &plus;40% margin of safety; the Buffett '
+          'score is their average (0&ndash;100) over the pillars that have data &mdash; '
+          'the <span style="font-size:11px;color:#8d8d8d">/Np</span> tag shows how '
+          'many. Financials (banks, insurers) lack a meaningful gross margin and '
+          'free cash flow, so they score on fewer pillars and are not directly '
+          'comparable to industrials. Free Yahoo Finance fundamentals are '
+          'approximate; educational research, not investment advice.</p>'
+        + _sec(f"S&amp;P 500 large-cap selection &mdash; {us_cov}/{len(US_SCREEN)} with data", us_rows)
+        + _sec(f"Mexican IPC &mdash; {ipc_cov}/{len(IPC_SCREEN)} with data", ipc_rows)
+        + '</section>')
+    print(f"  screener coverage: US {us_cov}/{len(US_SCREEN)}, IPC {ipc_cov}/{len(IPC_SCREEN)}")
+
 land = f"""<section class="hero"><div class="container">
 <h1>Equity Research</h1>
 <p class="lede">CFA-framework analysis of individual stocks &mdash;
@@ -360,6 +520,7 @@ valuation. A reusable tool: run it on any ticker.</p>
 <section class="block"><h2>Companies</h2>
 {ccy_badge("USD", "all company figures in US dollars")}
 <div class="scards">{cards}</div></section>
+{SCREENER}
 {METHOD}</main>"""
 open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(
     page("Equity Research — CFA-style Stock Analysis", land))
