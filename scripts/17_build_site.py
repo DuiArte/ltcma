@@ -338,6 +338,7 @@ strategic-edge scan, the methodology backtest and limitations.</p>
 <p class="lede2">Financial advisor and systems engineer specialised in
 quantitative systems, risk management and data pipelines for financial
 applications. Mexico City &middot; CFA Level I Candidate.</p>
+<p class="contact"><a href="mailto:carlosduartem@hotmail.com">carlosduartem@hotmail.com</a> &middot; <a href="tel:+525525111070">+52 55 2511 1070</a></p>
 <h3>Professional Experience</h3>{exp}
 <h3>Credentials &amp; Education</h3><ul class="certs">{certs}</ul>
 <h3>Technical Skills</h3><div class="tags">{skills}</div></section>
@@ -443,6 +444,9 @@ box-shadow:0 1px 4px rgba(15,98,254,.3);transition:background .15s,box-shadow .1
 .btn:hover{background:#0353e9;box-shadow:0 3px 10px rgba(15,98,254,.35)}
 /* about / CV */
 .lede2{font-size:16px;font-weight:300;color:#393939;max-width:780px;margin-bottom:8px}
+.contact{font-family:'IBM Plex Mono',monospace;font-size:13px;color:#525252;margin:0 0 8px;letter-spacing:.2px}
+.contact a{color:#0f62fe;text-decoration:none}
+.contact a:hover{text-decoration:underline}
 .block h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.32px;
 color:#161616;margin:30px 0 14px}
 .role{border-left:3px solid #0f62fe;padding:2px 0 2px 18px;margin-bottom:22px}
