@@ -33,12 +33,6 @@
         "headline_config": "GOLD daily HTF, 3R target, + daily 200-EMA trend filter (507 trades, win 37%)"
       },
       "metrics_note": "This report predates the full standing protocol: it used walk-forward IS (2016-2022) / OOS (2023-2026) but did NOT compute Deflated Sharpe or PBO, hence DSR/PBO = n/a.",
-      "paths": {
-        "workspace": "C:\\Users\\carlo\\Downloads\\crt_backtest_2026-05-26",
-        "report_md": "C:\\Users\\carlo\\Downloads\\crt_backtest_2026-05-26\\REPORT.md",
-        "code": "C:\\Users\\carlo\\Downloads\\crt_backtest_2026-05-26\\code",
-        "outputs": "C:\\Users\\carlo\\Downloads\\crt_backtest_2026-05-26\\results + equity_curves"
-      },
       "report_html": "bt_crt.html"
     },
     {
@@ -71,12 +65,6 @@
         "headline_config": "EURUSD EUR-short, Frankfurt 10:00, 4h hold, ATR x2.5, news-skip (best of 5 pairs; still fails)"
       },
       "metrics_note": "Metrics are the EURUSD leg (the only pair with positive full-period Sharpe); the other four are negative even in-sample. DSR 0.000 because raw SR 0.45 << noise-expected SR0 2.29 over 3000 trials. Held-out 2025+ Sharpe -0.45 (reverses). S&P bar: CAGR 11.91%, Sharpe 0.74, maxDD -33.92%.",
-      "paths": {
-        "workspace": "C:\\Users\\carlo\\Downloads\\breedon_ranaldo_backtest_2026-05-26",
-        "report_md": "C:\\Users\\carlo\\Downloads\\breedon_ranaldo_backtest_2026-05-26\\REPORT.md",
-        "code": "C:\\Users\\carlo\\Downloads\\breedon_ranaldo_backtest_2026-05-26\\code",
-        "outputs": "C:\\Users\\carlo\\Downloads\\breedon_ranaldo_backtest_2026-05-26\\results + equity_curves + montecarlo"
-      },
       "report_html": "bt_breedon_ranaldo.html"
     },
     {
@@ -115,12 +103,6 @@
         "headline_config": "SPY flagship (DSR 0.80); robust survivors that beat S&P Calmar: EFA, QQQ, SPY. maxDD/CAGR shown @1% risk."
       },
       "metrics_note": "Metrics are the SPY selected config (highest DSR alongside QQQ). maxDD -4.3% and CAGR 2.9% are at 1% fixed-fractional risk (in cash most days); scaled to a 10% DD budget the SPY/QQQ/EFA ensemble earns ~10.1% CAGR. PBO range across instruments 0.37 (QQQ) to 0.85 (EWW). S&P full-window: CAGR 12.2%, maxDD -33.9%, Calmar 0.36.",
-      "paths": {
-        "workspace": "C:\\Users\\carlo\\Downloads\\buy_the_dip_backtest_2026-05-26",
-        "report_md": "C:\\Users\\carlo\\Downloads\\buy_the_dip_backtest_2026-05-26\\REPORT.md",
-        "code": "C:\\Users\\carlo\\Downloads\\buy_the_dip_backtest_2026-05-26\\code",
-        "outputs": "C:\\Users\\carlo\\Downloads\\buy_the_dip_backtest_2026-05-26\\results + equity_curves + montecarlo"
-      },
       "report_html": "bt_buy_the_dip.html"
     },
     {
@@ -156,13 +138,6 @@
         "headline_config": "Pool A: 6m lookback, top-3/8, monthly, abs-mom filter (best genuine rotation; still fails survival bar + fragile)"
       },
       "metrics_note": "Metrics are Pool A (best genuine rotation). DSR 0.91 is high only because the 216 grid configs are near-clones (mild deflation) - it means 'real positive-Sharpe portfolio', NOT 'rotation beats buy-and-hold'. PBO 0.30 full grid / 0.35 rotation subset. The deployable byproduct is the static SPY/IEF/GLD sleeve (Sharpe 1.00, DSR 0.96, maxDD -16.9%); keep the abs-momentum filter as a crash overlay. SPY buy&hold CAGR 14.2% (untouchable on raw return).",
-      "paths": {
-        "workspace": "C:\\Users\\carlo\\Downloads\\momentum_rotation_taa_backtest_2026-05-26",
-        "report_md": "C:\\Users\\carlo\\Downloads\\momentum_rotation_taa_backtest_2026-05-26\\REPORT.md",
-        "code": "C:\\Users\\carlo\\Downloads\\momentum_rotation_taa_backtest_2026-05-26\\code",
-        "outputs": "C:\\Users\\carlo\\Downloads\\momentum_rotation_taa_backtest_2026-05-26\\results + equity_curves + montecarlo",
-        "deployment_config": "C:\\Users\\carlo\\Downloads\\momentum_rotation_taa_backtest_2026-05-26\\deployment_config.md"
-      },
       "report_html": "bt_momentum_rotation_taa.html"
     }
   ]
