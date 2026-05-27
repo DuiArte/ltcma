@@ -2,7 +2,7 @@
 Plotly charts, fuller layout, live market snapshot, CV section, and the rendered
 full report. Output -> docs/ (served by Pages). Re-runnable by a scheduled Action.
 """
-import os, shutil
+import os, shutil, json
 import numpy as np
 import pandas as pd
 import markdown
@@ -303,6 +303,50 @@ STRATBT = (
     '</section>')
 certs = "".join(f"<li>{c}</li>" for c in CERTS)
 
+# ---------- daily recap (what changed since the previous update) ----------
+RECAP_PATH = f"{D}/recap_prev.json"
+def _prior(col):
+    s = sig[col].dropna()
+    return float(s.iloc[-2]) if len(s) > 1 else None
+# (label, current value, prior-observation fallback, unit, decimals)
+RECAP_SPEC = [
+    ("US 10Y",           float(last["UST_10Y"]),      _prior("UST_10Y"),      "%", 2),
+    ("Fed Funds",        float(last["FedFunds"]),      _prior("FedFunds"),     "%", 2),
+    ("10Y Breakeven",    float(last["Breakeven_10Y"]), _prior("Breakeven_10Y"),"%", 2),
+    ("VIX",              float(last["VIX"]),           _prior("VIX"),          "",  1),
+    ("HY credit spread", float(last["HY_OAS"]),        _prior("HY_OAS"),       "%", 2),
+    ("USD / MXN",        float(usdmxn),                _prior("USDMXN"),       "",  2),
+]
+try:
+    _prev_vals = json.load(open(RECAP_PATH)).get("values", {})
+except Exception:
+    _prev_vals = {}
+recap_tiles = ""
+for _lbl, _cur, _seed, _unit, _dec in RECAP_SPEC:
+    _base = _prev_vals.get(_lbl, _seed)          # last published value, else prior obs
+    _cur_s = f"{_cur:.{_dec}f}{_unit}"
+    if _base is None:
+        _sub = _lbl
+    else:
+        _d = _cur - _base
+        if abs(_d) < 0.5 * 10 ** (-_dec):
+            _sub = f"{_lbl} &middot; <span style='color:{GREY}'>&mdash; flat</span>"
+        else:
+            _arrow = "&#9650;" if _d > 0 else "&#9660;"   # neutral ▲ / ▼ (no good/bad)
+            _sub = (f"{_lbl} &middot; <span style='color:{INK};font-weight:600'>"
+                    f"{_arrow} {_d:+.{_dec}f}{_unit}</span>")
+    recap_tiles += (f'<div class="metric"><div class="mv">{_cur_s}</div>'
+                    f'<div class="mk">{_sub}</div></div>')
+json.dump({"date": ASOF, "values": {l: c for l, c, *_ in RECAP_SPEC}},
+          open(RECAP_PATH, "w"), indent=2)
+RECAP = (
+    '<section class="block"><h2>Daily Recap</h2>'
+    '<p class="note">Key market levels and how they have moved since the previous '
+    'update &mdash; a quick read on what changed. Arrows show direction only, not '
+    'good or bad.</p>'
+    f'<div class="metrics" style="grid-template-columns:repeat(3,1fr)">{recap_tiles}</div>'
+    '</section>')
+
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LTCMA 2026 — Capital Market Assumptions</title>
@@ -319,8 +363,9 @@ regime-switching GPU Monte Carlo engine.</p>
 <p class="asof">As of {ASOF} &middot; base currency USD &middot; built on free public data</p>
 </div></section>
 <main class="container">
+{RECAP}
 <section class="block"><h2>Live Market Snapshot</h2>{ccy_badge("USD")}
-<p class="note">Auto-refreshed weekly from public data (FRED, Yahoo Finance,
+<p class="note">Auto-refreshed daily from public data (FRED, Yahoo Finance,
 GPR / EPU uncertainty indices). New to a term? See the
 <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(4,1fr)">{snap}</div></section>
