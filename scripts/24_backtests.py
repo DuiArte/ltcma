@@ -212,10 +212,23 @@ def main():
     strats = data.get("strategies", [])
     asof = data.get("updated", "")
 
+    # The website is a curated showcase: only positive-verdict strategies
+    # (public:true) get a card and an on-site report page. Failures stay in the
+    # internal Trading_Index ledger, not on the public site.
+    public = [s for s in strats if s.get("public")]
+
     cards = ""
-    for s in strats:
+    for s in public:
         link = render_report_page(s)
         cards += card(s, link)
+
+    # keep docs/ in sync: a strategy flipped to non-public should not leave its
+    # report page publicly reachable (bounded to filenames declared in the JSON).
+    for s in strats:
+        if not s.get("public"):
+            stale = os.path.join(DOCS, s.get("report_html") or f"bt_{s['key']}.html")
+            if os.path.exists(stale):
+                os.remove(stale)
 
     method = (
         '<section class="block"><h2>Methodology</h2>'
@@ -244,11 +257,11 @@ window and an S&amp;P 500 gate &mdash; with the honest verdict for each.</p>
 </div></section>
 <main class="container">
 <section class="block"><h2>Completed Backtests</h2>
-<p class="bt-intro">Color shows the verdict: <b style="color:#198038">green</b> = deployable
-(clears the &lt;10% drawdown survival bar and beats the S&amp;P), <b style="color:#b28600">amber</b>
-= ensemble component (real edge, not standalone-worthy), <b style="color:#da1e28">red</b>
-= pass / no edge (failed the cost-adjusted tests). Metrics and verdicts are pulled
-verbatim from each backtest's report.</p>
+<p class="bt-intro">A curated view of the strategies that earned a positive verdict. Color shows the call:
+<b style="color:#198038">green</b> = deployable (survives the full protocol and beats the S&amp;P on
+risk-adjusted terms), <b style="color:#b28600">amber</b> = ensemble component (real edge, not
+standalone-worthy). Metrics and verdicts are pulled verbatim from each backtest's report; the
+full research ledger, including the ideas that failed, is kept internally.</p>
 <div class="btgrid">{cards}</div></section>
 {method}
 </main>"""
@@ -260,7 +273,7 @@ verbatim from each backtest's report.</p>
     with open(os.path.join(DOCS, "backtests.html"), "w", encoding="utf-8") as fh:
         fh.write(page)
 
-    print(f"  backtests.html  ({len(strats)} strategies, source: {src})")
+    print(f"  backtests.html  ({len(public)} public / {len(strats)} total, source: {src})")
 
 
 if __name__ == "__main__":
