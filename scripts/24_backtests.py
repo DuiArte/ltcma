@@ -13,6 +13,7 @@ rules are inlined here because 17_build_site.py owns (overwrites) style.css.
 Run from the scripts/ dir (the daily refresh does `cd scripts && python3 ...`).
 Failures are non-fatal to the pipeline: the daily refresh guards this with `|| echo`.
 """
+import copy
 import json
 import os
 import sys
@@ -95,10 +96,14 @@ def load_catalog():
         if os.path.exists(wp):
             with open(wp, encoding="utf-8") as fh:
                 data = json.load(fh)
-            try:  # refresh the committed fallback so a clean clone can rebuild
+            try:  # refresh the committed fallback (web-safe: drop local paths,
+                  # since this repo is public and the page never renders them)
+                safe = copy.deepcopy(data)
+                for s in safe.get("strategies", []):
+                    s.pop("paths", None)
                 os.makedirs(os.path.dirname(FALLBACK), exist_ok=True)
                 with open(FALLBACK, "w", encoding="utf-8") as out:
-                    json.dump(data, out, indent=2, ensure_ascii=False)
+                    json.dump(safe, out, indent=2, ensure_ascii=False)
             except OSError:
                 pass
             return data, hub
