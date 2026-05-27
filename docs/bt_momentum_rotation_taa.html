@@ -1,0 +1,186 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Momentum Rotation TAA — Backtest Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+</div></header>
+<main class="container"><article class="tile report"><a class="bt-back" href="backtests.html">&larr; All backtests</a><h1>Momentum Rotation / Tactical Asset Allocation — Backtest Report</h1>
+<p><strong>Window:</strong> 2011-01-01 → 2026-05-26 (15.4y, clears the ≥10y rule)
+<strong>Data:</strong> yfinance daily, total-return adjusted (<code>auto_adjust</code>). Monthly/weekly/quarterly rebalance.
+<strong>Cost:</strong> 0.10% per round-trip on one-way turnover (pessimistic retail-ETF catch-all). Tax drag NOT modeled.
+<strong>Search:</strong> full 216-config grid (the spec's discrete space is small enough to <em>exhaustively enumerate</em>) + 6,000 Optuna trials over expanded continuous ranges (987 distinct configs) for robustness mapping.</p>
+<hr />
+<h2>VERDICT (read the deflated line, not the top-line Sharpe)</h2>
+<p><strong>PASS on momentum rotation as a standalone alpha source. The only thing that survives deflation + robustness is plain diversification — a static equal-weight SPY/IEF/GLD sleeve — and that is <em>not</em> rotation.</strong></p>
+<p>Three things kill the rotation thesis over this universe/window:</p>
+<ol>
+<li><strong>The highest-Sharpe, most-robust config in the entire search holds all 3 assets of Pool C equal-weight and ignores the momentum signal entirely</strong> (Sharpe 1.00, maxDD −16.9%, turnover 0.35/yr, DSR ≈ 0.96, Sharpe identical across all rebalance days). Momentum ranking adds nothing on top of it.</li>
+<li><strong>The best <em>genuine</em> rotation (Pool A, top-3/8, monthly) has a headline inflated by month-end timing luck.</strong> Month-end is the single luckiest of 11 rebalance days tested: shift it ±1–5 days and Sharpe collapses 0.91 → 0.56–0.86 and maxDD blows out −18% → as bad as <strong>−36% (worse than SPY's −34%)</strong>.</li>
+<li><strong>Nothing clears the &lt;10% max-DD survival bar.</strong> Best genuine rotation: −13% to −18%. The sole config under −10% (−9.6%) is, again, a <em>no-rotation</em> static SPY/IEF/GLD with an absolute-momentum cash toggle — and it pays for it with a 5.7% CAGR.</li>
+</ol>
+<p><strong>Where rotation <em>does</em> earn its keep:</strong> in a <em>broad</em> pool with chronic laggards. Pool A rotating top-3/8 (Sharpe 0.89) beats holding all 8 equal-weight (Sharpe 0.68) — its real job is <em>avoiding</em> the persistent losers (DBC, EFA, EEM in 2011–2024), not catching leaders. In the <em>tight</em> Pool C of good diversifiers, rotation actively <em>hurts</em> (top-1/top-2 Sharpe 0.70/0.80 vs hold-all 1.00) — no duds to avoid, so concentration only adds risk.</p>
+<hr />
+<h2>Benchmark gate</h2>
+<p>Aligned 2011-01-01 → 2026-05-26:</p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>CAGR</th>
+<th>Sharpe</th>
+<th>maxDD</th>
+<th>Calmar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SPY buy &amp; hold</strong></td>
+<td><strong>14.2%</strong></td>
+<td>0.87</td>
+<td>−33.7%</td>
+<td>0.42</td>
+</tr>
+<tr>
+<td><strong>60/40 SPY/IEF</strong></td>
+<td>9.6%</td>
+<td>0.98</td>
+<td>−21.3%</td>
+<td>0.45</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Beat SPY on raw return?</strong> No — <em>nothing</em> did. SPY's 14.2% CAGR is untouchable over a US-equity-dominated window.</li>
+<li><strong>Beat SPY on a risk-adjusted axis?</strong> Yes. Pool A, Pool C-rotation and static SPY/IEF/GLD all beat SPY on <strong>maxDD + Calmar</strong> (and the static sleeve beats it on Sharpe too). Each clears the gate on the <em>"scalable lower-DD compounding"</em> axis: higher Sharpe + ~half the drawdown ⇒ leverage-to-match-DD would top SPY's return. <strong>But that gate is cleared by diversification, not by the momentum overlay.</strong></li>
+<li><strong>Beat 60/40?</strong> Roughly a wash. No config dominates 60/40 on all axes. Static SPY/IEF/GLD edges it on Sharpe/DD/Calmar (loses on CAGR); Pool A edges it on CAGR/DD/Calmar (loses on Sharpe). 60/40 remains the simplest thing that's hard to beat.</li>
+</ul>
+<hr />
+<h2>Per-pool results (aligned full window; OOS = 2025-01-01+ lockbox)</h2>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>CAGR</th>
+<th>Sharpe</th>
+<th>maxDD</th>
+<th>Calmar</th>
+<th>Turn/yr</th>
+<th>PSR</th>
+<th>DSR*</th>
+<th>OOS Sharpe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A</strong> — 6m, top-3/8, monthly, abs-mom</td>
+<td>10.0%</td>
+<td>0.91</td>
+<td>−18.3%</td>
+<td>0.55</td>
+<td>3.2</td>
+<td>1.00</td>
+<td>0.91</td>
+<td>2.36</td>
+</tr>
+<tr>
+<td><strong>B</strong> — 3m, top-3/7, monthly, abs-mom</td>
+<td>8.7%</td>
+<td>0.75</td>
+<td>−20.9%</td>
+<td>0.41</td>
+<td>4.3</td>
+<td>1.00</td>
+<td>0.66</td>
+<td>2.02</td>
+</tr>
+<tr>
+<td><strong>C</strong> — 6m, top-2/3, weekly, abs-mom</td>
+<td>7.3%</td>
+<td>0.82</td>
+<td>−13.3%</td>
+<td>0.55</td>
+<td>4.8</td>
+<td>1.00</td>
+<td>0.77</td>
+<td>1.64</td>
+</tr>
+<tr>
+<td><strong>Static SPY/IEF/GLD</strong> (no rotation)</td>
+<td>8.4%</td>
+<td>1.00</td>
+<td>−16.9%</td>
+<td>0.50</td>
+<td>0.35</td>
+<td>1.00</td>
+<td><strong>0.96</strong></td>
+<td>1.95</td>
+</tr>
+</tbody>
+</table>
+<p>*DSR deflated against an effective trial count of ~1,200 distinct configs (grid + Optuna). Note: cross-sectional Sharpe dispersion across the 216 grid configs is tiny (0.062 monthly) — the configs are near-clones, so the <em>effective</em> number of independent bets is far below 1,200 and the deflation penalty is genuinely mild. <strong>High DSR here means "this is a real positive-Sharpe diversified portfolio," NOT "rotation beats buy-and-hold."</strong></p>
+<ul>
+<li><strong>Pool A:</strong> Best genuine rotation. Marginal pass vs SPY on risk-adjusted, but <strong>fragile</strong> (rebalance-timing) and fails the survival bar.</li>
+<li><strong>Pool B (Carlos-relevant, EWW):</strong> Weakest pool. Adding EWW/Mexico did not help; DSR 0.66 is the lowest. Pass.</li>
+<li><strong>Pool C:</strong> Robust but low return. The <em>rotation</em> version is strictly worse than the <em>static</em> version — see verdict.</li>
+</ul>
+<p><strong>PBO (CSCV, 16 blocks):</strong> full grid <strong>0.30</strong>, rotation-only subset <strong>0.35</strong>. Moderate overfitting risk — the <em>specific</em> knob choice (which lookback/freq wins) is ~⅓ noise, even though the strategy <em>family</em> is sound.</p>
+<hr />
+<h2>Monte Carlo (100k block-bootstrap paths, block=6mo)</h2>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>CAGR p5/p50/p95</th>
+<th>maxDD p5/p50/p95</th>
+<th>Sharpe p5/p50/p95</th>
+<th>Cost +50%</th>
+<th>Rebal-day jitter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pool A rotation</td>
+<td>5.8 / 10.4 / 15.4</td>
+<td>−23.5 / −15.4 / −9.0</td>
+<td>0.62 / 1.05 / 1.50</td>
+<td>0.95→0.93</td>
+<td><strong>Sharpe→0.56, DD→−36%</strong> ⚠</td>
+</tr>
+<tr>
+<td>Pool C top-2 weekly</td>
+<td>4.2 / 7.9 / 12.1</td>
+<td>−20.4 / −12.9 / −8.2</td>
+<td>0.51 / 0.89 / 1.31</td>
+<td>0.88→0.85</td>
+<td>Sharpe 0.84–1.00 ✓</td>
+</tr>
+<tr>
+<td>Static SPY/IEF/GLD</td>
+<td>5.3 / 8.9 / 12.6</td>
+<td>−20.6 / −12.7 / −7.3</td>
+<td>0.66 / 1.07 / 1.52</td>
+<td>1.05→1.05</td>
+<td>Sharpe 1.05–1.06 ✓</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Cost is a non-issue</strong> — all configs are low-turnover; +50% costs barely move Sharpe.</li>
+<li><strong>Rebalance-day jitter is the differentiator.</strong> Monthly Pool A is timing-fragile; weekly Pool C and the static sleeve are timing-robust. Plots in <code>montecarlo/ci_*.png</code>, <code>equity_curves/*_vs_bench.png</code>.</li>
+</ul>
+<hr />
+<h2>Survival bar (10y backtest, max DD &lt; 10%)</h2>
+<p><strong>NOT MET for momentum rotation.</strong> Best genuine rotation reaches −13% (Pool C weekly) to −18% (Pool A). A monthly TAA holding equities through 2020 + 2022 structurally cannot stay inside −10%. The only config under −10% is a no-rotation static SPY/IEF/GLD with an absolute-momentum cash toggle (−9.6%, but CAGR just 5.7%).</p>
+<hr />
+<h2>Honest recommendation</h2>
+<p><strong>PASS</strong> on broad-pool momentum rotation as a standalone edge — it is a lower-return, lower-DD equity substitute that 60/40 or a static diversified sleeve matches <em>without</em> the month-end timing fragility, and it never beats SPY on return.</p>
+<p><strong>If you want a deployable artifact from this work, it's the static diversified sleeve, not rotation:</strong> equal-weight SPY/IEF/GLD, quarterly or monthly rebalance, abs-momentum cash filter optional. Highest Sharpe in the entire search (1.00), near-zero turnover, timing-robust, survives deflation (DSR 0.96), beats SPY on Sharpe/Calmar/DD and ties 60/40. See <code>deployment_config.md</code>.</p>
+<p><strong>ENSEMBLE, don't isolate:</strong> the one piece of the Antonacci machinery worth keeping is the <strong>absolute-momentum (trend) filter as a crash overlay</strong> — it trimmed DD a couple points and is the mechanism behind the sole survival-bar-clearing config. The <strong>relative-momentum ranking only helps inside a broad pool with chronic laggards to avoid</strong> (Pool A), and hurts in a clean diversifier pool (Pool C). If you deploy Pool A rotation anyway, run it <strong>weekly</strong> (kills the timing artifact) and size for a realistic −20%+ drawdown, not the −18% headline.</p>
+<hr />
+<p><em>Reproduce:</em> <code>code/fetch_data.py</code> → <code>code/run_sweep.py [n_trials]</code> → <code>code/validate.py</code> → <code>code/montecarlo.py</code> → <code>code/make_report.py</code>. Results in <code>results/</code>, plots in <code>equity_curves/</code> + <code>montecarlo/</code>.</p></article></main>
+<footer class="shell-foot"><div class="container"><p>Backtests run under a fixed
+validation protocol on pessimistic retail costs. Verdicts are research findings,
+not investment advice; past results do not guarantee future outcomes.</p></div></footer>
+</body></html>

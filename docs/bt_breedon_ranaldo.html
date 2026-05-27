@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Breedon &amp; Ranaldo Local-Hours FX Rotation — Backtest Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+</div></header>
+<main class="container"><article class="tile report"><a class="bt-back" href="backtests.html">&larr; All backtests</a><h1>Breedon &amp; Ranaldo Local-Hours FX Rotation — Backtest Report</h1>
+<p><em>Generated 2026-05-26 12:29. Data: FxPro M5 2014→2026, resampled H1. Costs: pessimistic retail (embedded per-bar spread + markup, floor, stop slippage). Accounting: 1% fixed-fractional, R-multiple. Sharpe/CAGR/maxDD on daily mark-to-exit returns (comparable to S&amp;P 500).</em></p>
+<h2>VERDICT</h2>
+<p><strong>NOT DEPLOYABLE.</strong> No pair survives the full standing protocol. The Breedon-Ranaldo local-hours pattern is detectable in the raw data (notably EUR depreciation during Frankfurt morning hours) but the edge is <strong>smaller than realistic retail round-trip costs</strong>. After costs every leg has negative expectancy; any positive in-sample configuration found by the search fails on the deflated Sharpe, the probability of backtest overfitting, the held-out 2025+ test, Monte-Carlo stress, or the S&amp;P gate — usually several at once.</p>
+<p><strong>S&amp;P 500 bar (matched full period):</strong> CAGR 11.91%, Sharpe 0.74, maxDD -33.92%, Calmar 0.35.</p>
+<table>
+<thead>
+<tr>
+<th>Pair</th>
+<th>Deployable?</th>
+<th>Full Sharpe</th>
+<th>CAGR%</th>
+<th>maxDD%</th>
+<th>DSR</th>
+<th>PBO</th>
+<th>Held-out Sharpe</th>
+<th>Beats S&amp;P (1×/scaled)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EURUSD</td>
+<td>NO</td>
+<td>0.37</td>
+<td>3.23</td>
+<td>-27.12</td>
+<td>0.000</td>
+<td>0.021</td>
+<td>-0.45</td>
+<td>n/n</td>
+</tr>
+<tr>
+<td>USDJPY</td>
+<td>NO</td>
+<td>-0.51</td>
+<td>-9.64</td>
+<td>-80.35</td>
+<td>0.000</td>
+<td>0.065</td>
+<td>-0.33</td>
+<td>n/n</td>
+</tr>
+<tr>
+<td>GBPUSD</td>
+<td>NO</td>
+<td>-0.41</td>
+<td>-15.05</td>
+<td>-87.43</td>
+<td>0.000</td>
+<td>0.106</td>
+<td>-2.21</td>
+<td>n/n</td>
+</tr>
+<tr>
+<td>EURJPY</td>
+<td>NO</td>
+<td>-0.41</td>
+<td>-7.66</td>
+<td>-73.84</td>
+<td>0.000</td>
+<td>0.569</td>
+<td>-1.34</td>
+<td>n/n</td>
+</tr>
+<tr>
+<td>GBPJPY</td>
+<td>NO</td>
+<td>-0.64</td>
+<td>-21.08</td>
+<td>-95.49</td>
+<td>0.000</td>
+<td>0.211</td>
+<td>-1.22</td>
+<td>n/n</td>
+</tr>
+</tbody>
+</table>
+<h2>Per-pair detail</h2>
+<h3>EURUSD</h3>
+<ul>
+<li><strong>Config:</strong> EUR_short(SHORT 10:00 Berlin, 4h) | ATR×2.5 | news-skip</li>
+<li><strong>Selection (2014–2024):</strong> Sharpe 0.45, CAGR 4.19%, maxDD -24.37%, trades 2845.0, win 50.9%, avgR 0.0185</li>
+<li><strong>Full (2014–2026-05-19):</strong> Sharpe 0.37, CAGR 3.23%, maxDD -27.12%, Calmar 0.12, net 50.2%</li>
+<li><strong>Held-out (2025+, never selected on):</strong> Sharpe -0.45, CAGR -4.20%, maxDD -14.26%, trades 356.0</li>
+<li><strong>Deflated Sharpe (DSR):</strong> 0.000  (raw ann SR 0.45, SR0 threshold 2.29, 3000 trials, 2868 daily obs)</li>
+<li><strong>PBO (CSCV):</strong> 0.021 over 50 configs</li>
+<li><strong>Monte Carlo (200k iid / 200k block):</strong> Sharpe 90% CI [-0.09, 0.84] iid / [-0.07, 0.81] block; CAGR 90% CI [-1.46%, 8.42%]; maxDD 90% CI [-41.93%, -15.58%]</li>
+<li><strong>Stress (entry ±5min, spread+≤50%, slip+≤50%, 300 runs):</strong> Sharpe median -0.15, p5 -0.28, worst -0.32; CAGR median -2.01%</li>
+<li><strong>S&amp;P gate (full, 1× risk):</strong> beats_any=False {'same_dd_better_return': False, 'same_return_lower_dd': False, 'scalable_calmar': False, 'beats_any': False}</li>
+<li><strong>S&amp;P gate (vol-scaled ×1.73 to 17.35% vol):</strong> CAGR 4.97%, maxDD -43.07%, Calmar 0.12 → beats_any=False</li>
+<li><strong>Equity curve:</strong> <code>equity_curves/EURUSD_vs_sp500.png</code> | <strong>MC:</strong> <code>montecarlo/EURUSD_mc.png</code></li>
+</ul>
+<h3>USDJPY</h3>
+<ul>
+<li><strong>Config:</strong> JPY_long(LONG 10:30 Tokyo, 8h) | ATR×1.5</li>
+<li><strong>Selection (2014–2024):</strong> Sharpe -0.54, CAGR -9.90%, maxDD -80.35%, trades 2843.0, win 45.6%, avgR -0.0362</li>
+<li><strong>Full (2014–2026-05-19):</strong> Sharpe -0.51, CAGR -9.64%, maxDD -80.35%, Calmar -0.12, net -72.7%</li>
+<li><strong>Held-out (2025+, never selected on):</strong> Sharpe -0.33, CAGR -7.52%, maxDD -17.37%, trades 355.0</li>
+<li><strong>Deflated Sharpe (DSR):</strong> 0.000  (raw ann SR -0.54, SR0 threshold 2.31, 3000 trials, 2868 daily obs)</li>
+<li><strong>PBO (CSCV):</strong> 0.065 over 48 configs</li>
+<li><strong>Monte Carlo (200k iid / 200k block):</strong> Sharpe 90% CI [-1.01, -0.05] iid / [-0.97, -0.09] block; CAGR 90% CI [-16.83%, -2.46%]; maxDD 90% CI [-91.25%, -53.45%]</li>
+<li><strong>Stress (entry ±5min, spread+≤50%, slip+≤50%, 300 runs):</strong> Sharpe median -0.58, p5 -0.65, worst -0.70; CAGR median -10.61%</li>
+<li><strong>S&amp;P gate (full, 1× risk):</strong> beats_any=False {'same_dd_better_return': False, 'same_return_lower_dd': False, 'scalable_calmar': False, 'beats_any': False}</li>
+<li><strong>S&amp;P gate (vol-scaled ×1.02 to 17.35% vol):</strong> CAGR -9.90%, maxDD -81.17%, Calmar -0.12 → beats_any=False</li>
+<li><strong>Equity curve:</strong> <code>equity_curves/USDJPY_vs_sp500.png</code> | <strong>MC:</strong> <code>montecarlo/USDJPY_mc.png</code></li>
+</ul>
+<h3>GBPUSD</h3>
+<ul>
+<li><strong>Config:</strong> GBP_short(SHORT 08:30 London, 8h) | ATR×1.1</li>
+<li><strong>Selection (2014–2024):</strong> Sharpe -0.23, CAGR -10.70%, maxDD -76.10%, trades 2853.0, win 28.6%, avgR -0.0277</li>
+<li><strong>Full (2014–2026-05-07):</strong> Sharpe -0.41, CAGR -15.05%, maxDD -87.43%, Calmar -0.17, net -87.6%</li>
+<li><strong>Held-out (2025+, never selected on):</strong> Sharpe -2.21, CAGR -43.52%, maxDD -58.88%, trades 349.0</li>
+<li><strong>Deflated Sharpe (DSR):</strong> 0.000  (raw ann SR -0.23, SR0 threshold 1.91, 3000 trials, 2868 daily obs)</li>
+<li><strong>PBO (CSCV):</strong> 0.106 over 48 configs</li>
+<li><strong>Monte Carlo (200k iid / 200k block):</strong> Sharpe 90% CI [-0.91, 0.05] iid / [-0.90, 0.04] block; CAGR 90% CI [-26.31%, -2.91%]; maxDD 90% CI [-98.25%, -70.86%]</li>
+<li><strong>Stress (entry ±5min, spread+≤50%, slip+≤50%, 300 runs):</strong> Sharpe median -0.60, p5 -0.73, worst -0.77; CAGR median -19.38%</li>
+<li><strong>S&amp;P gate (full, 1× risk):</strong> beats_any=False {'same_dd_better_return': False, 'same_return_lower_dd': False, 'scalable_calmar': False, 'beats_any': False}</li>
+<li><strong>S&amp;P gate (vol-scaled ×0.59 to 17.37% vol):</strong> CAGR -8.25%, maxDD -66.52%, Calmar -0.12 → beats_any=False</li>
+<li><strong>Equity curve:</strong> <code>equity_curves/GBPUSD_vs_sp500.png</code> | <strong>MC:</strong> <code>montecarlo/GBPUSD_mc.png</code></li>
+</ul>
+<h3>EURJPY</h3>
+<ul>
+<li><strong>Config:</strong> EUR_short(SHORT 08:30 Berlin, 8h) | ATR×2.3</li>
+<li><strong>Selection (2014–2024):</strong> Sharpe -0.33, CAGR -6.51%, maxDD -66.05%, trades 2853.0, win 44.7%, avgR -0.0215</li>
+<li><strong>Full (2014–2026-02-25):</strong> Sharpe -0.41, CAGR -7.66%, maxDD -73.84%, Calmar -0.10, net -63.3%</li>
+<li><strong>Held-out (2025+, never selected on):</strong> Sharpe -1.34, CAGR -18.00%, maxDD -33.81%, trades 297.0</li>
+<li><strong>Deflated Sharpe (DSR):</strong> 0.000  (raw ann SR -0.33, SR0 threshold 1.63, 1500 trials, 2868 daily obs)</li>
+<li><strong>PBO (CSCV):</strong> 0.569 over 46 configs</li>
+<li><strong>Monte Carlo (200k iid / 200k block):</strong> Sharpe 90% CI [-0.91, 0.06] iid / [-0.92, 0.07] block; CAGR 90% CI [-14.77%, -0.47%]; maxDD 90% CI [-87.83%, -45.57%]</li>
+<li><strong>Stress (entry ±5min, spread+≤50%, slip+≤50%, 300 runs):</strong> Sharpe median -0.56, p5 -0.69, worst -0.72; CAGR median -9.99%</li>
+<li><strong>S&amp;P gate (full, 1× risk):</strong> beats_any=False {'same_dd_better_return': False, 'same_return_lower_dd': False, 'scalable_calmar': False, 'beats_any': False}</li>
+<li><strong>S&amp;P gate (vol-scaled ×1.07 to 17.40% vol):</strong> CAGR -8.29%, maxDD -76.53%, Calmar -0.11 → beats_any=False</li>
+<li><strong>Equity curve:</strong> <code>equity_curves/EURJPY_vs_sp500.png</code> | <strong>MC:</strong> <code>montecarlo/EURJPY_mc.png</code></li>
+</ul>
+<h3>GBPJPY</h3>
+<ul>
+<li><strong>Config:</strong> GBP_short(SHORT 08:00 London, 6h) | ATR×0.8</li>
+<li><strong>Selection (2014–2024):</strong> Sharpe -0.59, CAGR -19.86%, maxDD -93.05%, trades 2853.0, win 27.1%, avgR -0.0706</li>
+<li><strong>Full (2014–2026-02-25):</strong> Sharpe -0.64, CAGR -21.08%, maxDD -95.49%, Calmar -0.22, net -94.9%</li>
+<li><strong>Held-out (2025+, never selected on):</strong> Sharpe -1.22, CAGR -31.94%, maxDD -52.92%, trades 297.0</li>
+<li><strong>Deflated Sharpe (DSR):</strong> 0.000  (raw ann SR -0.59, SR0 threshold 1.70, 1500 trials, 2868 daily obs)</li>
+<li><strong>PBO (CSCV):</strong> 0.211 over 50 configs</li>
+<li><strong>Monte Carlo (200k iid / 200k block):</strong> Sharpe 90% CI [-1.17, -0.17] iid / [-1.16, -0.18] block; CAGR 90% CI [-32.06%, -9.78%]; maxDD 90% CI [-99.27%, -83.62%]</li>
+<li><strong>Stress (entry ±5min, spread+≤50%, slip+≤50%, 300 runs):</strong> Sharpe median -0.83, p5 -1.16, worst -1.23; CAGR median -25.59%</li>
+<li><strong>S&amp;P gate (full, 1× risk):</strong> beats_any=False {'same_dd_better_return': False, 'same_return_lower_dd': False, 'scalable_calmar': False, 'beats_any': False}</li>
+<li><strong>S&amp;P gate (vol-scaled ×0.58 to 17.40% vol):</strong> CAGR -11.90%, maxDD -81.12%, Calmar -0.15 → beats_any=False</li>
+<li><strong>Equity curve:</strong> <code>equity_curves/GBPJPY_vs_sp500.png</code> | <strong>MC:</strong> <code>montecarlo/GBPJPY_mc.png</code></li>
+</ul>
+<h2>Method notes / honest caveats</h2>
+<ul>
+<li><strong>Directions are fixed by the paper's structural prior</strong> (a currency depreciates during its own local working hours); they were NOT searched, to avoid doubling the hypothesis space. Raw signed-edge diagnostics are in <code>results/sanity.txt</code>. Notably the USDJPY Tokyo/US legs did <strong>not</strong> behave paper-consistently over 2014–2026 (the Tokyo-hours JPY-depreciation leg lost).</li>
+<li><strong>Timezone</strong> of the FxPro feed was empirically established as Europe/Bucharest (EET/EEST) — see <code>code/TZ_FINDING.md</code>. Session windows use DST-correct local time.</li>
+<li><strong>News calendar is approximate &amp; offline</strong>: FOMC announcement dates (hardcoded) + NFP first-Friday. No live Forex-Factory feed was available; <code>news_skip</code> is a swept boolean built on this proxy. ECB/BoJ release-day skipping is NOT modelled.</li>
+<li><strong>Stop fills</strong> are detected on the M5 path within the holding window; intrabar high/low ordering is unknown so stop hits are taken at the level minus slippage.</li>
+<li><strong>Sharpe is sizing-invariant</strong> under R-multiple accounting, so position-sizing variants were evaluated via vol-scaling in the benchmark gate rather than in Optuna.</li>
+<li><strong>Deployable</strong> here = full Sharpe&gt;0 AND DSR&gt;0.95 AND PBO&lt;0.5 AND held-out Sharpe&gt;0 AND MC 5th-pct Sharpe&gt;0 AND beats S&amp;P on ≥1 axis.</li>
+</ul></article></main>
+<footer class="shell-foot"><div class="container"><p>Backtests run under a fixed
+validation protocol on pessimistic retail costs. Verdicts are research findings,
+not investment advice; past results do not guarantee future outcomes.</p></div></footer>
+</body></html>

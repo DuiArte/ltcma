@@ -1,0 +1,659 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buy-the-Dip / Sell-the-Rip — Backtest Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+</div></header>
+<main class="container"><article class="tile report"><a class="bt-back" href="backtests.html">&larr; All backtests</a><h1>Buy-the-Dip / Sell-the-Rip — Daily-Timeframe Backtest</h1>
+<p><em>Universe: 9 ETFs (yfinance, adj. total-return) + Gold/Silver spot (FxPro M5→daily, real spread). Period 2010-01-04 → 2026-05-26. Held-out wall: 2024-12-31 (post-date never used in selection).</em></p>
+<p><em>Costs: ETFs 0.10% round-trip; metals real per-bar spread + slippage. Sizing: 1% fixed-fractional risk/trade (ratios are scale-invariant). Optuna ~600 IS trials/instrument + 4-fold annual walk-forward.</em></p>
+<h2>Verdict</h2>
+<p><strong>The concept earns its reputation — robust but boring.</strong> Buy-the-dip-in-uptrend produces a positive, low-drawdown edge across almost the entire parameter space (80–99% of valid configs have positive Calmar on US equities, developed and metals), so the edge is <em>structural</em>, not a curve-fit artifact. What does NOT survive cleanly is the <strong>specific optimized parameter set</strong> for the weaker instruments, and the most statistically robust instruments (SPY/QQQ) had a flat held-out 2025+ window while metals/EM (weak stats) happened to shine — a regime inversion, not evidence of a tradable metals edge.</p>
+<table>
+<thead>
+<tr>
+<th>Instrument</th>
+<th>Verdict</th>
+<th style="text-align: right;">DSR</th>
+<th style="text-align: right;">PBO</th>
+<th style="text-align: center;">beats S&amp;P Calmar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SPY</td>
+<td>deploy (standalone-capable)</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td>deploy (standalone-capable)</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>QQQ</td>
+<td>ensemble component</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>DIA</td>
+<td>promising (regime-dependent)</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">0.53</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>IWM</td>
+<td>promising (regime-dependent)</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>GLD</td>
+<td>promising (regime-dependent)</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>XAUUSD</td>
+<td>pass</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>EEM</td>
+<td>pass</td>
+<td style="text-align: right;">0.49</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>EWW</td>
+<td>pass</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>SLV</td>
+<td>pass</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>XAGUSD</td>
+<td>pass</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.53</td>
+<td style="text-align: center;">❌</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommendation: deploy as a diversified ensemble, not a single instrument.</strong> Robust survivors that beat S&amp;P on Calmar: <strong>EFA, QQQ, SPY</strong>.
+ Equal-risk blend @1% risk: CAGR 3.1% / MDD -3.0% / Calmar 1.01 (S&amp;P Calmar 0.36).</p>
+<p><strong>The honest apples-to-apples:</strong> at a realistic <strong>10% drawdown budget</strong>, the ensemble earns ≈<strong>10.1% CAGR vs a de-levered S&amp;P's ≈3.6%</strong> — same drawdown, ~2.8× the return. It wins decisively on <em>risk-adjusted</em> return and drawdown, not on raw return: matching the S&amp;P's headline 12.2% CAGR would need ~×11 leverage (34% theoretical), which is impractical and unsafe for a retail ETF basket. <strong>Treat this as a drawdown-reducing diversifier / S&amp;P-replacement at lower risk, not a return-amplifier.</strong> See <code>equity_curves/PORTFOLIO.png</code>.</p>
+<h2>Per-instrument results (selected config, full window)</h2>
+<table>
+<thead>
+<tr>
+<th>Instr</th>
+<th style="text-align: right;">Trades</th>
+<th style="text-align: right;">Win%</th>
+<th style="text-align: right;">PF</th>
+<th style="text-align: right;">Sharpe</th>
+<th style="text-align: right;">Calmar</th>
+<th style="text-align: right;">CAGR%</th>
+<th style="text-align: right;">MaxDD%</th>
+<th style="text-align: right;">DSR</th>
+<th style="text-align: right;">PBO</th>
+<th style="text-align: right;">OOS Sharpe</th>
+<th>vs S&amp;P Calmar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QQQ</td>
+<td style="text-align: right;">133</td>
+<td style="text-align: right;">51</td>
+<td style="text-align: right;">2.22</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">4.3</td>
+<td style="text-align: right;">-5.4</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: right;">-0.26</td>
+<td>✅ 0.81/0.36</td>
+</tr>
+<tr>
+<td>SPY</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">2.97</td>
+<td style="text-align: right;">1.08</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;">2.9</td>
+<td style="text-align: right;">-4.3</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">0.04</td>
+<td>✅ 0.67/0.36</td>
+</tr>
+<tr>
+<td>DIA</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">53</td>
+<td style="text-align: right;">3.12</td>
+<td style="text-align: right;">0.98</td>
+<td style="text-align: right;">0.63</td>
+<td style="text-align: right;">3.7</td>
+<td style="text-align: right;">-5.8</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">0.53</td>
+<td style="text-align: right;">1.02</td>
+<td>✅ 0.63/0.36</td>
+</tr>
+<tr>
+<td>GLD</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">3.91</td>
+<td style="text-align: right;">0.94</td>
+<td style="text-align: right;">0.54</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">-4.0</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">1.47</td>
+<td>✅ 0.54/0.36</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td style="text-align: right;">81</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">2.55</td>
+<td style="text-align: right;">0.84</td>
+<td style="text-align: right;">0.45</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">-4.3</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.42</td>
+<td>✅ 0.45/0.36</td>
+</tr>
+<tr>
+<td>IWM</td>
+<td style="text-align: right;">76</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">2.22</td>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">0.43</td>
+<td style="text-align: right;">1.6</td>
+<td style="text-align: right;">-3.7</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">0.47</td>
+<td>✅ 0.43/0.36</td>
+</tr>
+<tr>
+<td>EEM</td>
+<td style="text-align: right;">62</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">2.42</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">1.6</td>
+<td style="text-align: right;">-4.7</td>
+<td style="text-align: right;">0.49</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">1.14</td>
+<td>❌ 0.34/0.36</td>
+</tr>
+<tr>
+<td>SLV</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">53</td>
+<td style="text-align: right;">2.28</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">1.5</td>
+<td style="text-align: right;">-4.6</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: right;">0.61</td>
+<td>❌ 0.32/0.36</td>
+</tr>
+<tr>
+<td>XAUUSD</td>
+<td style="text-align: right;">121</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">2.04</td>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">-8.0</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">1.26</td>
+<td>❌ 0.24/0.36</td>
+</tr>
+<tr>
+<td>XAGUSD</td>
+<td style="text-align: right;">45</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">1.42</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">1.1</td>
+<td style="text-align: right;">-6.0</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.53</td>
+<td style="text-align: right;">2.01</td>
+<td>❌ 0.18/0.36</td>
+</tr>
+<tr>
+<td>EWW</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">55</td>
+<td style="text-align: right;">1.60</td>
+<td style="text-align: right;">0.49</td>
+<td style="text-align: right;">0.13</td>
+<td style="text-align: right;">1.1</td>
+<td style="text-align: right;">-8.1</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">1.57</td>
+<td>❌ 0.13/0.36</td>
+</tr>
+</tbody>
+</table>
+<p><em>S&amp;P 500 full-window reference: CAGR 12.2%, MaxDD -33.9%, Sharpe 0.76, Calmar 0.36.</em></p>
+<h2>Beat-S&amp;P, three axes (full window)</h2>
+<p>Because position size is a free parameter, axes 1–2 collapse to <strong>Calmar</strong> (return per unit drawdown); axis 3 is the CAGR you'd realize if you scaled risk until drawdown matched the S&amp;P.</p>
+<table>
+<thead>
+<tr>
+<th>Instr</th>
+<th style="text-align: center;">Calmar &gt; S&amp;P?</th>
+<th style="text-align: center;">Sharpe &gt; S&amp;P?</th>
+<th style="text-align: right;">Scaled-to-S&amp;P-MDD CAGR</th>
+<th>Beats?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QQQ</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">27.4% (S&amp;P 12.2%)</td>
+<td><strong>Calmar (return/DD), Sharpe, scaled-CAGR 27.4%&gt;12.2%</strong></td>
+</tr>
+<tr>
+<td>SPY</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">22.7% (S&amp;P 12.2%)</td>
+<td><strong>Calmar (return/DD), Sharpe, scaled-CAGR 22.7%&gt;12.2%</strong></td>
+</tr>
+<tr>
+<td>DIA</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">21.4% (S&amp;P 12.2%)</td>
+<td><strong>Calmar (return/DD), Sharpe, scaled-CAGR 21.4%&gt;12.2%</strong></td>
+</tr>
+<tr>
+<td>GLD</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">18.4% (S&amp;P 12.2%)</td>
+<td><strong>Calmar (return/DD), Sharpe, scaled-CAGR 18.4%&gt;12.2%</strong></td>
+</tr>
+<tr>
+<td>EFA</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">15.2% (S&amp;P 12.2%)</td>
+<td><strong>Calmar (return/DD), Sharpe, scaled-CAGR 15.2%&gt;12.2%</strong></td>
+</tr>
+<tr>
+<td>IWM</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: right;">14.6% (S&amp;P 12.2%)</td>
+<td><strong>Calmar (return/DD), scaled-CAGR 14.6%&gt;12.2%</strong></td>
+</tr>
+<tr>
+<td>EEM</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: right;">11.4% (S&amp;P 12.2%)</td>
+<td><strong>Sharpe</strong></td>
+</tr>
+<tr>
+<td>SLV</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: right;">10.8% (S&amp;P 12.2%)</td>
+<td>no</td>
+</tr>
+<tr>
+<td>XAUUSD</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: right;">8.1% (S&amp;P 12.1%)</td>
+<td>no</td>
+</tr>
+<tr>
+<td>XAGUSD</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: right;">6.1% (S&amp;P 12.1%)</td>
+<td>no</td>
+</tr>
+<tr>
+<td>EWW</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: right;">4.4% (S&amp;P 12.2%)</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<h2>Survival bar (10y, max DD &lt; 10%)</h2>
+<p>At 1% fixed-fractional risk every instrument sits far under 10% DD (the strategy is in cash most days). The bar is only meaningful <strong>after scaling risk to be competitive</strong> — shown as the risk multiple where DD hits 10%.</p>
+<table>
+<thead>
+<tr>
+<th>Instr</th>
+<th style="text-align: right;">MaxDD @1%</th>
+<th style="text-align: right;">Risk-mult to 10% DD</th>
+<th style="text-align: right;">CAGR at that scale</th>
+<th style="text-align: right;">MC p5 worst-DD@1%</th>
+<th style="text-align: right;">MC P(DD&lt;10%)@1%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QQQ</td>
+<td style="text-align: right;">-5.4%</td>
+<td style="text-align: right;">×1.9</td>
+<td style="text-align: right;">8.1%</td>
+<td style="text-align: right;">-11.6%</td>
+<td style="text-align: right;">0.886</td>
+</tr>
+<tr>
+<td>SPY</td>
+<td style="text-align: right;">-4.3%</td>
+<td style="text-align: right;">×2.3</td>
+<td style="text-align: right;">6.7%</td>
+<td style="text-align: right;">-6.7%</td>
+<td style="text-align: right;">0.997</td>
+</tr>
+<tr>
+<td>DIA</td>
+<td style="text-align: right;">-5.8%</td>
+<td style="text-align: right;">×1.7</td>
+<td style="text-align: right;">6.3%</td>
+<td style="text-align: right;">-8.8%</td>
+<td style="text-align: right;">0.979</td>
+</tr>
+<tr>
+<td>GLD</td>
+<td style="text-align: right;">-4.0%</td>
+<td style="text-align: right;">×2.5</td>
+<td style="text-align: right;">5.4%</td>
+<td style="text-align: right;">-6.2%</td>
+<td style="text-align: right;">0.998</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td style="text-align: right;">-4.3%</td>
+<td style="text-align: right;">×2.3</td>
+<td style="text-align: right;">4.5%</td>
+<td style="text-align: right;">-6.3%</td>
+<td style="text-align: right;">0.998</td>
+</tr>
+<tr>
+<td>IWM</td>
+<td style="text-align: right;">-3.7%</td>
+<td style="text-align: right;">×2.7</td>
+<td style="text-align: right;">4.3%</td>
+<td style="text-align: right;">-7.0%</td>
+<td style="text-align: right;">0.996</td>
+</tr>
+<tr>
+<td>EEM</td>
+<td style="text-align: right;">-4.7%</td>
+<td style="text-align: right;">×2.1</td>
+<td style="text-align: right;">3.4%</td>
+<td style="text-align: right;">-6.3%</td>
+<td style="text-align: right;">0.998</td>
+</tr>
+<tr>
+<td>SLV</td>
+<td style="text-align: right;">-4.6%</td>
+<td style="text-align: right;">×2.2</td>
+<td style="text-align: right;">3.2%</td>
+<td style="text-align: right;">-8.4%</td>
+<td style="text-align: right;">0.982</td>
+</tr>
+<tr>
+<td>XAUUSD</td>
+<td style="text-align: right;">-8.0%</td>
+<td style="text-align: right;">×1.3</td>
+<td style="text-align: right;">2.4%</td>
+<td style="text-align: right;">-9.5%</td>
+<td style="text-align: right;">0.964</td>
+</tr>
+<tr>
+<td>XAGUSD</td>
+<td style="text-align: right;">-6.0%</td>
+<td style="text-align: right;">×1.7</td>
+<td style="text-align: right;">1.8%</td>
+<td style="text-align: right;">-15.1%</td>
+<td style="text-align: right;">0.725</td>
+</tr>
+<tr>
+<td>EWW</td>
+<td style="text-align: right;">-8.1%</td>
+<td style="text-align: right;">×1.2</td>
+<td style="text-align: right;">1.3%</td>
+<td style="text-align: right;">-9.8%</td>
+<td style="text-align: right;">0.955</td>
+</tr>
+</tbody>
+</table>
+<h2>In-sample vs held-out vs walk-forward + MC stress</h2>
+<table>
+<thead>
+<tr>
+<th>Instr</th>
+<th style="text-align: right;">IS Sharpe</th>
+<th style="text-align: right;">IS Calmar</th>
+<th style="text-align: right;">OOS(2025+) Sharpe</th>
+<th style="text-align: right;">OOS n</th>
+<th style="text-align: right;">WF Sharpe</th>
+<th style="text-align: right;">MC CAGR p5/p50@1%</th>
+<th style="text-align: right;">MC CAGR cost+50% p50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QQQ</td>
+<td style="text-align: right;">1.12</td>
+<td style="text-align: right;">0.94</td>
+<td style="text-align: right;">-0.26</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">2.9/5.3</td>
+<td style="text-align: right;">5.1</td>
+</tr>
+<tr>
+<td>SPY</td>
+<td style="text-align: right;">1.17</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.96</td>
+<td style="text-align: right;">2.0/3.4</td>
+<td style="text-align: right;">3.1</td>
+</tr>
+<tr>
+<td>DIA</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">1.02</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">2.3/4.3</td>
+<td style="text-align: right;">4.0</td>
+</tr>
+<tr>
+<td>GLD</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0.52</td>
+<td style="text-align: right;">1.47</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.9/2.2</td>
+<td style="text-align: right;">2.2</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td style="text-align: right;">0.89</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.63</td>
+<td style="text-align: right;">1.1/2.2</td>
+<td style="text-align: right;">2.1</td>
+</tr>
+<tr>
+<td>IWM</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.44</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.7/1.8</td>
+<td style="text-align: right;">1.7</td>
+</tr>
+<tr>
+<td>EEM</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">0.31</td>
+<td style="text-align: right;">1.14</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">-0.00</td>
+<td style="text-align: right;">0.6/1.6</td>
+<td style="text-align: right;">1.5</td>
+</tr>
+<tr>
+<td>SLV</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">0.61</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.35</td>
+<td style="text-align: right;">0.4/1.7</td>
+<td style="text-align: right;">1.5</td>
+</tr>
+<tr>
+<td>XAUUSD</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">0.54</td>
+<td style="text-align: right;">0.3/1.7</td>
+<td style="text-align: right;">1.7</td>
+</tr>
+<tr>
+<td>XAGUSD</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">2.01</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">-0.58</td>
+<td style="text-align: right;">-0.8/0.6</td>
+<td style="text-align: right;">-0.2</td>
+</tr>
+<tr>
+<td>EWW</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">1.57</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">-0.1/0.9</td>
+<td style="text-align: right;">0.7</td>
+</tr>
+</tbody>
+</table>
+<h2>Selected configurations</h2>
+<ul>
+<li><strong>DIA</strong>: pullback_mode=nday_low, trend_sma=200, rsi_thr=30, pullback_lookback=24, pullback_ma=50, atr_mult=1.5660170214480034, use_tp=False, tp_R=3.0, time_stop=24, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>EEM</strong>: pullback_mode=nday_low, trend_sma=100, rsi_thr=30, pullback_lookback=13, pullback_ma=50, atr_mult=3.2405800131700206, use_tp=True, tp_R=2.5175838748925106, time_stop=18, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>EFA</strong>: pullback_mode=nday_low, trend_sma=150, rsi_thr=30, pullback_lookback=14, pullback_ma=50, atr_mult=3.134031830360247, use_tp=False, tp_R=3.0, time_stop=15, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>EWW</strong>: pullback_mode=sma50, trend_sma=100, rsi_thr=30, pullback_lookback=10, pullback_ma=50, atr_mult=3.3094891949272536, use_tp=True, tp_R=4.979204417075341, time_stop=40, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>GLD</strong>: pullback_mode=nday_low, trend_sma=200, rsi_thr=30, pullback_lookback=30, pullback_ma=50, atr_mult=2.3255776517710482, use_tp=False, tp_R=3.0, time_stop=32, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>IWM</strong>: pullback_mode=sma50, trend_sma=200, rsi_thr=30, pullback_lookback=10, pullback_ma=50, atr_mult=3.434735916046663, use_tp=True, tp_R=2.8677604487808317, time_stop=26, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>QQQ</strong>: pullback_mode=sma50, trend_sma=150, rsi_thr=30, pullback_lookback=10, pullback_ma=20, atr_mult=2.032191242128443, use_tp=True, tp_R=3.6556765298395315, time_stop=30, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>SLV</strong>: pullback_mode=rsi, trend_sma=200, rsi_thr=36, pullback_lookback=10, pullback_ma=50, atr_mult=1.7852236793136018, use_tp=True, tp_R=3.245442017219681, time_stop=20, trail=False, swing_lb=10, direction_mode=both</li>
+<li><strong>SPY</strong>: pullback_mode=sma50, trend_sma=150, rsi_thr=30, pullback_lookback=10, pullback_ma=50, atr_mult=2.9324340079363336, use_tp=True, tp_R=2.245785275631979, time_stop=30, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>XAGUSD</strong>: pullback_mode=nday_low, trend_sma=150, rsi_thr=30, pullback_lookback=15, pullback_ma=50, atr_mult=1.8311956775778744, use_tp=False, tp_R=3.0, time_stop=26, trail=False, swing_lb=10, direction_mode=long_only</li>
+<li><strong>XAUUSD</strong>: pullback_mode=nday_low, trend_sma=150, rsi_thr=30, pullback_lookback=7, pullback_ma=50, atr_mult=2.916974269914934, use_tp=False, tp_R=3.0, time_stop=39, trail=True, swing_lb=15, direction_mode=long_only</li>
+</ul>
+<h2>Honest caveats</h2>
+<ul>
+<li>
+<p><strong>"Sell the rip" adds nothing.</strong> 10/11 selected configs chose <code>long_only</code>; the symmetric short side was optimized away almost everywhere. The edge is <strong>buy-the-dip only</strong> — shorting rips in downtrends lost money on this universe.</p>
+</li>
+<li>
+<p><strong>Held-out window is short and single-regime</strong> (~17 months, 1–13 trades/instrument). The 2025+ inversion (US-equity flat, metals/EM strong) is <em>suggestive, not decisive</em>. Don't read the metals/EM held-out Sharpes as a durable edge — their overfitting stats are weak.</p>
+</li>
+<li>
+<p><strong>Drawdowns are tiny only because risk is 1%/trade and the book is in cash most days.</strong> Real deployment requires scaling risk; practical leverage on an ETF basket is ~2–3×, capping realized CAGR in the mid-single digits at a ~10% drawdown.</p>
+</li>
+<li>
+<p><strong>No survivorship/look-ahead in signals</strong> (indicators use only past bars; entry is next-bar open), but yfinance adjusted prices bake in dividends — fine for a price strategy, slightly flattering vs trading the raw ETF.</p>
+</li>
+</ul>
+<h2>Method notes</h2>
+<ul>
+<li>
+<p><strong>DSR</strong> deflates the in-sample daily Sharpe by the number of valid trials (multiple-testing), using realized skew/kurtosis. It is a probability the true Sharpe&gt;0 after deflation: &gt;0.50 = more likely real than not; &gt;0.90 = strong. With ~530 trials the bar is harsh — only SPY/QQQ clear ~0.8.</p>
+</li>
+<li>
+<p><strong>PBO</strong> (CSCV, 16 blocks, <strong>full valid-config grid</strong>) = probability the in-sample-best config underperforms the OOS median. &lt;0.50 is the pass line; lower is better. (Computing PBO on only the top configs inflates it spuriously — see <code>pbo_topk</code> column in summary.csv for that biased version.)</p>
+</li>
+<li>
+<p><strong>Concept robustness</strong> (<code>frac_calmar_pos</code>): fraction of the <em>entire</em> valid parameter space with positive Calmar. High values mean the edge is structural, not a single lucky knob setting.</p>
+</li>
+<li>
+<p><strong>Walk-forward</strong>: 4 anchored annual folds (2021-2024), re-optimized each fold with a 10-day embargo.</p>
+</li>
+<li>
+<p><strong>Monte Carlo</strong> (100k): IID trade-sequence bootstrap; plus +50% cost/slippage and ±1-day entry-jitter variants.</p>
+</li>
+<li>
+<p>Fills reconstructed pessimistically from daily OHLC: gaps fill at the open, stop wins ties with TP.</p>
+</li>
+</ul></article></main>
+<footer class="shell-foot"><div class="container"><p>Backtests run under a fixed
+validation protocol on pessimistic retail costs. Verdicts are research findings,
+not investment advice; past results do not guarantee future outcomes.</p></div></footer>
+</body></html>

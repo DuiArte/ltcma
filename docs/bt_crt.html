@@ -1,0 +1,431 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Candle Range Theory (CRT) — Backtest Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+</div></header>
+<main class="container"><article class="tile report"><a class="bt-back" href="backtests.html">&larr; All backtests</a><h1>CRT (Candle Range Theory) Backtest — Report</h1>
+<p><strong>Date:</strong> 2026-05-26
+<strong>Author:</strong> Claude (Dispatch agent)
+<strong>For:</strong> Carlos Duarte
+<strong>Instruments:</strong> EURUSD, USDJPY, XAU/USD (Gold), XAG/USD (Silver) — FxPro M5 OHLC, 2016 → 2026-05-19
+<strong>Risk model:</strong> 1% of equity per trade. Walk-forward IS = 2016–2022; OOS = 2023-01-01 → 2026-05-19.
+<strong>Cost model:</strong> Per-bar broker spread from the FxPro CSVs (half spread on entry, half on exit) + fixed slippage on stop fills (3 points EURUSD/USDJPY, 10 GOLD, 20 SILVER).</p>
+<hr />
+<h2>⚠️ Caveat on strategy rules (read first)</h2>
+<p>The audio your partner sent (<code>4db4db10-Carloz.m4a</code>) <strong>was not on disk</strong> at backtest time. I searched the entire mount — uploads folder empty, no <code>.m4a/.mp3/.wav/.opus/.aac</code> anywhere with that name or any matching pattern. <strong>I did not fabricate a transcription.</strong></p>
+<p>I implemented the <strong>standard ICT 3-candle Candle Range Theory</strong> as the documented baseline:</p>
+<ol>
+<li><strong>C1</strong> (HTF candle): defines range <code>[LL, HH]</code>.</li>
+<li><strong>C2</strong> (next HTF candle): wicks beyond <code>HH</code> or <code>LL</code> but closes back <strong>inside</strong> <code>[LL, HH]</code> (the "manipulation" / liquidity sweep).</li>
+<li><strong>C3</strong> (entry candle): enter at C3 open <strong>opposite</strong> the sweep direction. Stop beyond the C2 wick. Configurable target (1R / 2R / 3R / opposite-range). Time stop after 4 HTF bars.</li>
+</ol>
+<p>If your partner's CRT differs (different timeframes, different filters, different "ranges" — e.g. session-based Asia/London/NY treating sessions as C1/C2/C3), <strong>re-send the audio and I'll re-run.</strong> The harness is parameterized — swapping the entry rule and re-running takes minutes.</p>
+<hr />
+<h2>TL;DR — honest verdict</h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Does <strong>vanilla CRT</strong> have post-cost edge?</td>
+<td><strong>No, for 99.3% of variations.</strong> 3 / 448 cleared both IS and OOS — all daily-HTF on Gold or USDJPY with 3R targets. PFs barely above 1.1. Marginal.</td>
+</tr>
+<tr>
+<td>Does <strong>CRT + regime/macro overlay</strong> (HTF-EMA200 trend alignment, ATR-regime, day-of-week) help?</td>
+<td><strong>Yes, materially.</strong> 74 / 384 regime variations cleared both IS and OOS (~19%). The lift comes almost entirely from <strong>trend alignment</strong> (only take CRT signals in the direction of the daily 200-EMA).</td>
+</tr>
+<tr>
+<td>Best overall variation, post-cost, 11-year span?</td>
+<td><strong>GOLD daily-3R with trend-with overlay.</strong> 507 trades, PF 1.22, win 37%, avg win 2.04R / avg loss -0.99R, CAGR 6.3%, MDD 19%, <strong>Sharpe 0.59</strong>, <strong>Calmar 0.33</strong>, IS +51% / OOS +24%.</td>
+</tr>
+<tr>
+<td>Is this worth trading live?</td>
+<td><strong>Probably not in isolation.</strong> Calmar 0.33 is below most decent systematic strategies. The OOS holds up but the 2026 YTD is mildly negative (−1.6 R over 18 trades). Same architectural pattern Carlos already uses (regime + walk-forward — see LTCMA / SARS / MARS) handles this kind of edge as one signal in a multi-strategy ensemble; CRT alone doesn't carry a portfolio.</td>
+</tr>
+<tr>
+<td>Edge on EURUSD?</td>
+<td><strong>No.</strong> Vanilla: worst-in-class, max -29%. Regime overlay: only 4 EURUSD variations clear both periods, all PF 1.07–1.14, weak.</td>
+</tr>
+<tr>
+<td>Edge on Silver?</td>
+<td><strong>Only with high-vol ATR regime + trend-with.</strong> PFs up to 1.75 on filtered subsets, but trade counts drop to 138–192 over 11 years → ~15-18 trades/year. Statistically thin.</td>
+</tr>
+<tr>
+<td>What does NOT work?</td>
+<td>(a) Intra-day CRT (1H / 4H HTF): all variations net-negative. (b) Session-filtered daily CRT (london/ny only) — daily candle opens at 00:00 broker time, so the filter excludes all entries. (c) <code>opp_range</code> target with daily HTF on EUR/USDJPY/Silver.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Brutal honest paragraph:</strong> Carlos asked for an honest verdict, not a curve-fit win. The pattern here is the same one you've seen before — a "system" that looks like a strategy is really a noisy edge that only becomes tradeable once you condition it on macro/regime context. CRT in isolation is a coin flip with worse-than-coin-flip win rate. The 3R asymmetric payoff drags performance positive on Gold and USDJPY at daily HTF, and trend alignment doubles that edge. None of the 384 regime variations cracked a Sharpe of 1. Your partner's CRT may have nuances I missed without the audio — but the standard 3-candle interpretation, on this data, with this cost model, <strong>does not beat your existing regime-adaptive multi-strategy work</strong>.</p>
+<hr />
+<h2>Method</h2>
+<h3>Data</h3>
+<ul>
+<li>FxPro M5 tab-separated CSVs, <code>Time / Open / High / Low / Close / TickVolume / RealVolume / Spread</code>.</li>
+<li>2016 onwards (~770k M5 bars per FX pair, ~720k for metals).</li>
+<li>Per-bar spread is in points; embedded directly in the cost model.</li>
+</ul>
+<h3>Strategy parameter grid (vanilla)</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTF</td>
+<td>1H, 4H, Daily</td>
+</tr>
+<tr>
+<td>Take-profit</td>
+<td>1R, 2R, 3R, opposite-range</td>
+</tr>
+<tr>
+<td>Session filter (C3 open hour)</td>
+<td>all, London (8–13), NY (13–20)</td>
+</tr>
+<tr>
+<td>HTF bias filter</td>
+<td>off, 200-EMA on HTF</td>
+</tr>
+<tr>
+<td>Min sweep depth (frac of C1 range)</td>
+<td>0.0, 0.1</td>
+</tr>
+<tr>
+<td>Time stop</td>
+<td>4 HTF bars</td>
+</tr>
+<tr>
+<td>Direction</td>
+<td>both</td>
+</tr>
+</tbody>
+</table>
+<p>= <strong>144 combos × 4 instruments = 576 runs</strong> (some 0-trade due to filter intersections → 448 evaluated).</p>
+<h3>Regime overlay grid (Layer 2)</h3>
+<p>Base: Daily HTF, 2R + 3R, with/without 200-EMA bias, with/without min-sweep.
+Overlay (post-hoc filter on base trades):</p>
+<table>
+<thead>
+<tr>
+<th>Overlay</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ATR regime</td>
+<td>any / low (ATR&lt;P50 of trailing 252d) / high (ATR≥P50)</td>
+</tr>
+<tr>
+<td>Trend regime</td>
+<td>any / with (entry direction matches daily 200-EMA)</td>
+</tr>
+<tr>
+<td>Drop Monday &amp; Friday entries</td>
+<td>off / on</td>
+</tr>
+</tbody>
+</table>
+<p>= <strong>24 overlays × 8 bases × 4 instruments = 768 runs</strong> (384 unique evaluated).</p>
+<h3>Risk + cost model</h3>
+<ul>
+<li><strong>Risk:</strong> 1% of running equity per trade. PnL multiplier <code>(1 + 0.01 × R)</code>. Compounding equity curve.</li>
+<li><strong>Spread:</strong> half spread (from FxPro <code>Spread</code> column at entry bar) subtracted from entry, half added back at exit.</li>
+<li><strong>Stop slippage:</strong> when stop is hit, fill is degraded by <code>slip_points × point</code> per instrument (3pt EURUSD/USDJPY, 10pt Gold, 20pt Silver). No slippage on TPs (limit fills).</li>
+<li><strong>No TP slippage assumed.</strong> Realistic for retail limit-order TPs but a tail-risk you should know about.</li>
+</ul>
+<h3>Walk-forward split</h3>
+<ul>
+<li><strong>IS:</strong> 2016 → 2022 (7 years).</li>
+<li><strong>OOS:</strong> 2023 → 2026-05-19 (~3.5 years).</li>
+</ul>
+<h3>Parallelism</h3>
+<ul>
+<li>2-core sandbox. Multiprocessing <code>Pool(2)</code> across instruments. Per-symbol HTF resamples cached. Total vanilla sweep: ~17s. Regime sweep: ~20s. Plenty of headroom for larger grids.</li>
+</ul>
+<hr />
+<h2>Headline results</h2>
+<h3>Vanilla CRT</h3>
+<ul>
+<li><strong>448 variations evaluated</strong> across 4 instruments × 144 param combos (some zeroed by session×HTF intersections).</li>
+<li><strong>Net% &gt; 0 over full period:</strong> 7 / 448 = 1.6%.</li>
+<li><strong>Net% &gt; 0 in BOTH IS and OOS:</strong> 3 / 448 = 0.7%.</li>
+<li>All 3 IS+OOS winners are Daily HTF, 3R target, on Gold or USDJPY.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>symbol</th>
+<th>variant</th>
+<th>n</th>
+<th>win%</th>
+<th>PF</th>
+<th>MDD</th>
+<th>CAGR</th>
+<th>net%</th>
+<th>IS net%</th>
+<th>OOS net%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOLD</td>
+<td>D_3R_all_bias</td>
+<td>495</td>
+<td>34.7</td>
+<td>1.10</td>
+<td>-24.6</td>
+<td>2.57</td>
+<td>+30.0</td>
+<td>+6.9</td>
+<td>+21.7</td>
+</tr>
+<tr>
+<td>GOLD</td>
+<td>D_3R_all_bias_ms0.1</td>
+<td>363</td>
+<td>35.0</td>
+<td>1.11</td>
+<td>-24.4</td>
+<td>1.97</td>
+<td>+22.3</td>
+<td>+8.4</td>
+<td>+12.9</td>
+</tr>
+<tr>
+<td>USDJPY</td>
+<td>D_3R_all_ms0.1</td>
+<td>703</td>
+<td>35.6</td>
+<td>1.07</td>
+<td>-26.3</td>
+<td>2.34</td>
+<td>+26.8</td>
+<td>+1.1</td>
+<td>+25.5</td>
+</tr>
+</tbody>
+</table>
+<p>Everything else either lost money in-sample or fell off the cliff out-of-sample. EURUSD and Silver were uniformly losers.</p>
+<h3>CRT + Regime overlay</h3>
+<ul>
+<li><strong>384 variations evaluated.</strong></li>
+<li><strong>Net% &gt; 0 over full period:</strong> 126 / 384 = 33%.</li>
+<li><strong>Net% &gt; 0 in BOTH IS and OOS:</strong> 74 / 384 = 19%.</li>
+<li>The dominant useful overlay is <strong><code>trend=with</code></strong> — only take CRT entries in the direction of the daily 200-EMA. It alone moves ~70% of GOLD and SILVER base variations from losing to winning.</li>
+<li>ATR-<code>high</code> regime helps on Silver specifically (where high-vol ranges are deeper); ATR-<code>low</code> helps on Gold for low-MDD subsets.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>symbol</th>
+<th>variant</th>
+<th>n</th>
+<th>win%</th>
+<th>PF</th>
+<th>MDD</th>
+<th>CAGR</th>
+<th>net%</th>
+<th>IS net%</th>
+<th>OOS net%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOLD</td>
+<td>D_3R_all + atrany_trendwith</td>
+<td>507</td>
+<td>37.3</td>
+<td>1.22</td>
+<td>-18.8</td>
+<td>6.28</td>
+<td>+87.7</td>
+<td>+51.1</td>
+<td>+24.2</td>
+</tr>
+<tr>
+<td>SILVER</td>
+<td>D_3R_all_ms0.1 + atrhigh_trendwith</td>
+<td>143</td>
+<td>49.7</td>
+<td>1.75</td>
+<td>-12.0</td>
+<td>6.57</td>
+<td>+72.6</td>
+<td>+24.8</td>
+<td>+38.3</td>
+</tr>
+<tr>
+<td>SILVER</td>
+<td>D_3R_all + atrhigh_trendwith</td>
+<td>192</td>
+<td>44.3</td>
+<td>1.46</td>
+<td>-11.9</td>
+<td>6.10</td>
+<td>+66.2</td>
+<td>+25.0</td>
+<td>+33.0</td>
+</tr>
+<tr>
+<td>GOLD</td>
+<td>D_3R_all + atrany_trendwith + mfDrop</td>
+<td>305</td>
+<td>38.4</td>
+<td>1.28</td>
+<td>-25.7</td>
+<td>4.68</td>
+<td>+60.5</td>
+<td>+41.4</td>
+<td>+13.5</td>
+</tr>
+<tr>
+<td>SILVER</td>
+<td>D_3R_all_bias_ms0.1 + atrhigh_trendwith</td>
+<td>138</td>
+<td>48.6</td>
+<td>1.66</td>
+<td>-13.4</td>
+<td>5.65</td>
+<td>+60.2</td>
+<td>+19.3</td>
+<td>+34.3</td>
+</tr>
+<tr>
+<td>GOLD</td>
+<td>D_3R_all + atrlow_trendwith</td>
+<td>208</td>
+<td>39.9</td>
+<td>1.39</td>
+<td>-9.6</td>
+<td>5.51</td>
+<td>+58.6</td>
+<td>+35.6</td>
+<td>+17.0</td>
+</tr>
+</tbody>
+</table>
+<h3>Per-symbol verdict</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Vanilla verdict</th>
+<th>Best regime verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>EURUSD</strong></td>
+<td>Dead. All 112 variations net-negative full period. Best -29%.</td>
+<td>Weak. 4 variations clear IS+OOS, max PF 1.14, max CAGR 1.3%. Not worth running.</td>
+</tr>
+<tr>
+<td><strong>USDJPY</strong></td>
+<td>2 of 112 cleared zero; OOS-only winners abundant.</td>
+<td>6 clear IS+OOS; best CAGR 2.3%. Marginal.</td>
+</tr>
+<tr>
+<td><strong>GOLD</strong></td>
+<td>5 of 112 cleared zero (best CAGR 2.6%, MDD 25%).</td>
+<td><strong>Strong.</strong> Best variation: 507 trades, PF 1.22, CAGR 6.3%, MDD 19%, IS +51% / OOS +24%.</td>
+</tr>
+<tr>
+<td><strong>SILVER</strong></td>
+<td>0 of 112 cleared zero net.</td>
+<td><strong>Strong but thin.</strong> Best PF 1.75 at 143 trades over 10y (~14/y). Statistically light; outsized R hits possible.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Sanity checks on the headline winner (GOLD D_3R_all + trendwith)</h2>
+<pre><code>Total trades:                    507  (49/year over 10.3 years)
+Date range:                      2016-01-14 → 2026-05-19
+Win rate:                        37.3%
+Avg win:                         +2.04 R   (3R targets, some at trail/time)
+Avg loss:                        -0.99 R   (stops + slippage)
+Max R / Min R:                   +3.00 / -1.22
+Exit reasons:                    299 stop / 104 tp / 104 time
+Cost drag per trade:             0.017 R   (~12% of avg edge of 0.137 R)
+Sharpe:                          0.59
+Calmar:                          0.33
+2017-2018:                       -8.7R, -5.3R (down years)
+2019-2025:                       all positive
+2026 YTD (5 mo):                 -1.6R (mildly negative)
+Direction split:                 382 long / 125 short (trend-up bias of gold)
+</code></pre>
+<p><strong>Spot-check concerns I'd flag</strong>:
+1. <strong>The 2016–2018 segment is mostly flat or down.</strong> The strategy made its money in the 2019–2024 gold bull. If gold transitions to a bear or sideways regime, the long-skewed trend filter will hurt.
+2. <strong>2026 YTD already mildly negative</strong> — early signal that regime conditions may be shifting.
+3. <strong>Sharpe 0.59, Calmar 0.33</strong> — below the threshold most quant shops use to commit capital (&gt;1 / &gt;0.5).
+4. <strong>Cost drag is real but small</strong> — 12% of edge eaten by spread+slippage. If your live broker spreads are wider than the FxPro historical median, this gets worse fast.
+5. <strong>Stop slippage on Gold:</strong> I assumed 10 points (~$0.10). If your live broker slips $0.30–$0.50 on volatile sessions, that doubles cost drag and might kill the edge.
+6. <strong>Silver winners have tiny n.</strong> 138–192 trades over 11 years is not enough to be confident the PF 1.5–1.7 is anything but lucky sampling. I'd require 500+ trades before deploying capital.</p>
+<hr />
+<h2>Files</h2>
+<pre><code>crt_backtest_2026-05-26/
+├── REPORT.md                            ← this file
+├── code/
+│   ├── crt_core.py                      (backtester core)
+│   ├── crt_regime.py                    (regime overlay layer)
+│   ├── sweep.py                         (param sweep harness)
+│   ├── sweep_one.py                     (per-symbol runner)
+│   └── smoke.py
+├── results/
+│   ├── all_vanilla_results.csv          (448 rows)
+│   ├── all_regime_results.csv           (384 rows)
+│   ├── {SYM}_results.csv                (per-symbol vanilla)
+│   ├── {SYM}_regime_results.csv         (per-symbol regime)
+│   ├── {SYM}_{variant}_trades.csv       (trade tapes for top-5 vanilla per symbol)
+│   ├── GOLD_HEADLINE_trades.csv         (trade tape for the headline winner)
+│   └── rankings.md                      (per-symbol top-10 tables)
+└── equity_curves/
+    ├── COMPOSITE_best_regime.png        ← read this first
+    ├── {SYM}_topbottom5.png             (vanilla top/bottom 5)
+    └── {SYM}_regime_top3.png            (regime top 3 per symbol)
+</code></pre>
+<hr />
+<h2>Recommendation</h2>
+<ol>
+<li><strong>Don't trade vanilla CRT.</strong> The data is unambiguous.</li>
+<li><strong>CRT-with-trend-filter on Gold</strong> is a real but thin edge — Calmar 0.33. Don't deploy as a standalone system. <strong>Consider as one alpha signal in the LTCMA / multi-strategy ensemble</strong> you already operate (per the SARS / DUO / MARS / BARS pattern in <code>23_strategies.py</code>) — it's exactly the kind of low-correlation, regime-conditioned signal that adds incremental Sharpe to a portfolio.</li>
+<li><strong>Get the partner's audio resent.</strong> If the actual CRT rules differ — different timeframes, different "range" definition (session-based?), different entry trigger — re-running on this harness is ~1 minute of compute.</li>
+<li><strong>EURUSD and intraday CRT are dead.</strong> Don't waste more cycles on those branches.</li>
+</ol>
+<hr />
+<h2>Next-up — Breedon &amp; Ranaldo (SNB WP 2011-04 / SSRN 2099321)</h2>
+<p>Per Dispatch instructions, queueing the Breedon-Ranaldo local-hours FX rotation as the next strategy to test on the same framework.</p>
+<p><strong>Reference paper:</strong> <em>"Intraday Patterns in FX Returns and Order Flow"</em> — Mark Breedon &amp; Angelo Ranaldo (SNB Working Paper 2011-04, also SSRN 2099321). Core finding: currencies tend to depreciate during their own country's trading hours and appreciate during foreign trading hours.</p>
+<p><strong>Implementation plan (same framework, ~1 day to build):</strong></p>
+<ol>
+<li><strong>Local-hours definition</strong> per currency:
+   - EUR: 07:00–17:00 GMT
+   - USD: 13:00–22:00 GMT
+   - JPY: 00:00–09:00 GMT
+   - GBP: 07:00–17:00 GMT</li>
+<li><strong>Signal:</strong> Short the currency during its local hours, long it during foreign hours.</li>
+<li><strong>Implementation on M5 data:</strong> Compute the intraday return of each currency-pair during the "local" hours of the base vs the quote. Trade direction = sign(quote-local-hours-return − base-local-hours-return).</li>
+<li><strong>Cost model:</strong> Identical to CRT — broker spread per bar from FxPro CSVs.</li>
+<li><strong>Variations to sweep:</strong> Hold periods (1h / 4h / 1d), with/without ATR regime, with/without trend filter, equal-weight vs return-weighted portfolio.</li>
+<li><strong>Universe:</strong> EURUSD, USDJPY, GBPUSD, EURJPY, EURGBP (need to add GBP M5 if not already present — confirmed yes in <code>fxpro_forex_m5/FxPro_M5_GBPUSD.csv</code>).</li>
+<li><strong>Walk-forward:</strong> Same IS 2016-2022 / OOS 2023-2026 split.</li>
+</ol>
+<p>Estimated runtime on this 2-core sandbox: under 5 minutes for the full sweep.</p>
+<p><strong>Status:</strong> Queued. Ready to spin up on your <code>go</code>.</p>
+<hr />
+<p><em>End of report.</em></p></article></main>
+<footer class="shell-foot"><div class="container"><p>Backtests run under a fixed
+validation protocol on pessimistic retail costs. Verdicts are research findings,
+not investment advice; past results do not guarantee future outcomes.</p></div></footer>
+</body></html>
