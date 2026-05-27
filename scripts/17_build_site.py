@@ -386,7 +386,9 @@ applications. Mexico City &middot; CFA Level I Candidate.</p>
 <p class="contact"><a href="mailto:carlosduartem@hotmail.com">carlosduartem@hotmail.com</a> &middot; <a href="tel:+525525111070">+52 55 2511 1070</a></p>
 <h3>Professional Experience</h3>{exp}
 <h3>Credentials &amp; Education</h3><ul class="certs">{certs}</ul>
-<h3>Technical Skills</h3><div class="tags">{skills}</div></section>
+<h3>Technical Skills</h3><div class="tags">{skills}</div>
+<h3>Open Source</h3>
+<p>Open-source: <a href="https://github.com/DuiArte/terse">Terse &mdash; token-efficient LLM language</a></p></section>
 </main>
 <footer class="shell-foot"><div class="container">
 <p>Built with free public data and open-source tools. Expected returns are
