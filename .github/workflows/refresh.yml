@@ -2,7 +2,7 @@ name: Refresh market data & rebuild site
 
 on:
   schedule:
-    - cron: '0 6 * * *'        # every day 06:00 UTC
+    - cron: '0 22 * * 1-5'     # weekdays 22:00 UTC (post US/BMV close); matches host scheduler
   workflow_dispatch:            # allow manual run from the Actions tab
 
 permissions:
