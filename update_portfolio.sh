@@ -8,13 +8,13 @@
 #
 #   Excel input : C:\Users\carlo\Downloads\Copy of Carteras DBE 2.xlsx
 #                 (update this file with new trades/holdings; the routine reads it)
-#   Deploy      : commits locally; set AUTO_PUSH=1 to also push to the live site.
+#   Deploy      : commits and pushes to the live site (set AUTO_PUSH=0 to stage only).
 # ============================================================================
 export PATH=/home/carlos/.local/bin:$PATH
 REPO=/home/carlos/LTCMA
 BACKUP=/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite
 XLSX="/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
-AUTO_PUSH=${AUTO_PUSH:-0}
+AUTO_PUSH=${AUTO_PUSH:-1}
 
 cd "$REPO" || exit 1
 mkdir -p logs
