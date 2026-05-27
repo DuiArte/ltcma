@@ -20,6 +20,17 @@ cd "$REPO" || exit 1
 mkdir -p logs
 LOG="logs/portfolio_$(date +%Y-%m-%d).log"
 
+# Abort if there is uncommitted work under scripts/ or docs/, so a scheduled run
+# never sweeps in-progress code into an auto-commit. Commit or stash, then re-run.
+DIRTY=$(git status --porcelain -- scripts docs)
+if [ -n "$DIRTY" ]; then
+  { echo "===== portfolio update $(date): ABORTED ====="
+    echo "Uncommitted changes under scripts/ or docs/ — skipping. Commit or stash,"
+    echo "then re-run:"
+    echo "$DIRTY"; } | tee -a "$LOG"
+  exit 1
+fi
+
 {
   echo "===== portfolio update $(date) ====="
   if [ ! -f "$XLSX" ]; then
