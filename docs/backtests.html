@@ -1,0 +1,69 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LTCMA 2026 — Strategy Backtests</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.bt-intro{color:#525252;font-size:14px;max-width:880px;margin:-6px 0 28px;line-height:1.6}
+.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+.btcard{background:#fff;border:1px solid #e0e0e0;border-top:4px solid #c6c6c6;
+padding:24px 24px 20px;box-shadow:0 1px 4px rgba(22,22,22,.06);display:flex;flex-direction:column;
+transition:box-shadow .18s}
+.btcard:hover{box-shadow:0 4px 16px rgba(22,22,22,.12)}
+.btcard.bt-green{border-top-color:#198038}
+.btcard.bt-yellow{border-top-color:#b28600}
+.btcard.bt-red{border-top-color:#da1e28}
+.bt-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.bt-badge{font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
+color:#fff;padding:5px 11px;border-radius:2px}
+.bt-badge.bt-green{background:#198038}
+.bt-badge.bt-yellow{background:#b28600}
+.bt-badge.bt-red{background:#da1e28}
+.bt-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8d8d8d}
+.bt-name{font-size:19px;font-weight:600;color:#161616;margin:0 0 6px;line-height:1.25}
+.bt-tests{font-size:13px;color:#525252;line-height:1.5;margin:0 0 16px}
+.bt-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#e0e0e0;
+border:1px solid #e0e0e0;margin-bottom:16px}
+.bt-m{background:#fafafa;padding:11px 8px;text-align:center}
+.bt-mv{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;color:#0f62fe;letter-spacing:-.3px}
+.bt-mv.neg{color:#da1e28}.bt-mv.na{color:#8d8d8d}
+.bt-mk{font-size:9.5px;color:#525252;margin-top:4px;letter-spacing:.2px;text-transform:uppercase}
+.bt-verdict{font-size:13.5px;color:#262626;line-height:1.55;margin:0 0 18px;flex:1}
+.bt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;
+border-top:1px solid #e0e0e0;padding-top:14px}
+.bt-span{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8d8d8d}
+.bt-link{color:#0f62fe;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap}
+.bt-link:hover{text-decoration:underline}
+.bt-method{background:#fff;border:1px solid #e0e0e0;border-left:4px solid #0f62fe;
+padding:22px 26px;margin-top:8px}
+.bt-method h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:#161616;margin:0 0 12px}
+.bt-method ol{margin:0 0 0 18px;padding:0}
+.bt-method li{font-size:13px;color:#393939;margin:5px 0;line-height:1.5}
+.bt-method p{font-size:12.5px;color:#525252;margin:12px 0 0;line-height:1.55}
+.report .bt-back{display:inline-block;margin-bottom:14px;color:#0f62fe;text-decoration:none;font-size:13px;font-weight:600}
+@media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}}
+</style></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+</div></header>
+<section class="hero"><div class="container">
+<h1>Strategy Backtests</h1>
+<p class="lede">Every completed strategy backtest, run under one fixed validation
+protocol &mdash; smart-search, walk-forward, deflated Sharpe, Monte Carlo, a held-out
+window and an S&amp;P 500 gate &mdash; with the honest verdict for each.</p>
+<p class="asof">As of 2026-05-26 &middot; pessimistic retail costs &middot; 1% fixed-fractional sizing</p>
+</div></section>
+<main class="container">
+<section class="block"><h2>Completed Backtests</h2>
+<p class="bt-intro">Color shows the verdict: <b style="color:#198038">green</b> = deployable
+(clears the &lt;10% drawdown survival bar and beats the S&amp;P), <b style="color:#b28600">amber</b>
+= ensemble component (real edge, not standalone-worthy), <b style="color:#da1e28">red</b>
+= pass / no edge (failed the cost-adjusted tests). Metrics and verdicts are pulled
+verbatim from each backtest's report.</p>
+<div class="btgrid"><article class="btcard bt-yellow"><div class="bt-head"><span class="bt-badge bt-yellow">Ensemble component</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Candle Range Theory (CRT)</h3><p class="bt-tests">ICT 3-candle range theory: candle 1 sets a range, candle 2 sweeps a side and closes back inside (liquidity grab), candle 3 enters the opposite way. Tested vanilla and with regime overlays (200-EMA trend alignment, ATR regime, day-of-week) on EURUSD, USDJPY, Gold and Silver.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">0.59</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv na">n/a</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv na">n/a</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-18.8%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+6.3%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">Vanilla CRT has no post-cost edge (only 3 of 448 variations cleared IS+OOS). CRT plus a daily-200EMA trend filter on Gold is a real but thin edge (Calmar 0.33) - usable only as one signal inside the regime-adaptive ensemble, never standalone.</p><div class="bt-foot"><span class="bt-span">2016 -&gt; 2026-05-19</span><a class="bt-link" href="bt_crt.html">Full report &rarr;</a></div></article><article class="btcard bt-red"><div class="bt-head"><span class="bt-badge bt-red">Pass / no edge</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Breedon &amp; Ranaldo Local-Hours FX Rotation</h3><p class="bt-tests">Published intraday FX pattern (SNB WP 2011-04): a currency tends to depreciate during its own country's trading hours and appreciate during foreign hours. Short/long each currency during its local session across EURUSD, USDJPY, GBPUSD, EURJPY, GBPJPY.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">0.37</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv ">0.00</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv ">0.02</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-27.1%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+3.2%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">NOT DEPLOYABLE on any of the 5 pairs. The structural effect is real but tiny (EUR depreciates in Frankfurt morning) and smaller than realistic retail round-trip cost; every positive in-sample config fails DSR, held-out 2025+, Monte Carlo and the S&amp;P gate. The intraday pattern appears largely decayed since its 2000s sample.</p><div class="bt-foot"><span class="bt-span">2014 -&gt; 2026</span><a class="bt-link" href="bt_breedon_ranaldo.html">Full report &rarr;</a></div></article><article class="btcard bt-green"><div class="bt-head"><span class="bt-badge bt-green">Deployable</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Buy-the-Dip / Sell-the-Rip</h3><p class="bt-tests">Daily-timeframe pullback-in-uptrend (systemic alpha): buy dips while price is above a long trend filter, optionally short rips in downtrends. Universe: SPY/QQQ/DIA/IWM/EFA/EEM/EWW/GLD/SLV ETFs plus Gold/Silver spot, 2010-2026.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">1.08</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv ">0.80</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv ">0.46</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-4.3%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+2.9%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">Robust but boring: 80-99% of the parameter space is positive-Calmar, so the edge is structural, not curve-fit. Deploy as a diversified SPY/QQQ/EFA ensemble, not a single name. It is a drawdown-reducer / S&amp;P-replacement-at-lower-risk, NOT a return amplifier: at a 10% DD budget the ensemble earns ~10.1% CAGR vs a de-levered S&amp;P's ~3.6%. 'Sell the rip' added nothing (10/11 configs went long-only).</p><div class="bt-foot"><span class="bt-span">2010-01-04 -&gt; 2026-05-26</span><a class="bt-link" href="bt_buy_the_dip.html">Full report &rarr;</a></div></article><article class="btcard bt-red"><div class="bt-head"><span class="bt-badge bt-red">Pass / no edge</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Momentum Rotation TAA</h3><p class="bt-tests">Antonacci/Faber-style tactical asset allocation: rank a pool of ETFs by trailing momentum, hold the top-N, with an absolute-momentum (trend) crash filter. Monthly/weekly/quarterly rebalance, 2011-2026.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">0.91</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv ">0.91</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv ">0.35</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-18.3%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+10.0%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">PASS on rotation as standalone alpha. The only thing that survives deflation is plain diversification - a static equal-weight SPY/IEF/GLD sleeve (Sharpe 1.00, DSR 0.96) - which is NOT rotation. Relative momentum only helps in a broad pool with chronic laggards to avoid; in a tight good-diversifier pool it hurts. Nothing clears the &lt;10% DD survival bar, and the best rotation's headline is a month-end timing artifact (jitter blows DD to -36%).</p><div class="bt-foot"><span class="bt-span">2011-01-01 -&gt; 2026-05-26</span><a class="bt-link" href="bt_momentum_rotation_taa.html">Full report &rarr;</a></div></article></div></section>
+<section class="block"><h2>Methodology</h2><div class="bt-method"><h3>The standing validation protocol</h3><ol><li><b>Optuna smart-search</b> &mdash; ~5k&ndash;20k informed evals; structural priors fixed, not searched.</li><li><b>Walk-forward + purged cross-validation</b> with embargoed gaps (Bailey/L&oacute;pez de Prado).</li><li><b>Deflated Sharpe Ratio (DSR)</b> reported alongside raw Sharpe (multiple-testing correction).</li><li><b>Monte Carlo 100k&ndash;500k</b> &mdash; trade-sequence bootstrap, entry jitter, +50% spread &amp; slippage.</li><li><b>Held-out test</b> on the most recent slice (post-2024), never touched during selection.</li><li><b>PBO</b> (Probability of Backtest Overfitting, CSCV) alongside DSR.</li><li><b>S&amp;P 500 gate</b> &mdash; must close-or-beat the index on at least one risk-adjusted axis.</li><li><b>Survival bar</b> &mdash; maximum drawdown under 10%.</li></ol><p>Cost model is pessimistic retail (FxPro embedded per-bar spread as the floor, plus markup and stop slippage). Sizing is 1% fixed-fractional; under R-multiple accounting the Sharpe ratio is sizing-invariant. "n/a" means the metric was not computed in that report &mdash; it is never guessed.</p></div></section>
+</main>
+<footer class="shell-foot"><div class="container"><p>Backtests run under a fixed
+validation protocol on pessimistic retail costs. Verdicts are research findings,
+not investment advice; past results do not guarantee future outcomes.</p></div></footer>
+</body></html>
