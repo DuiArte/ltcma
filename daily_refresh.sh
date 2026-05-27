@@ -38,6 +38,7 @@ run() { echo "-- $1"; python3 "$1" || echo "   (warn: $1 failed, continuing)"; }
   run scripts/09_priced_in.py
   run scripts/10_regimes.py
   run scripts/20_regime_tracker.py
+  run scripts/19_stock_analysis.py
 
   echo "[2/4] rebuilding site + AI copies"
   ( cd scripts && python3 17_build_site.py && python3 23_strategies.py && (python3 18_portfolio.py || echo "   (warn: portfolio tracker)") && python3 22_ai_copies.py && (python3 24_backtests.py || echo "   (warn: backtests page)") )
