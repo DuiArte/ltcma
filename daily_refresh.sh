@@ -16,6 +16,18 @@ cd "$REPO" || exit 1
 mkdir -p logs
 LOG="logs/daily_$(date +%Y-%m-%d).log"
 
+# Abort if there is uncommitted work under scripts/ or docs/. The auto-commit
+# (git add -A) would otherwise sweep in-progress code into a "Daily refresh"
+# commit (this happened once, see commit 1c116e1). Commit or stash, then re-run.
+DIRTY=$(git status --porcelain -- scripts docs)
+if [ -n "$DIRTY" ]; then
+  { echo "===== LTCMA daily refresh $(date): ABORTED ====="
+    echo "Uncommitted changes under scripts/ or docs/ — skipping so the refresh"
+    echo "does not auto-commit in-progress work. Commit or stash these, then re-run:"
+    echo "$DIRTY"; } | tee -a "$LOG"
+  exit 1
+fi
+
 run() { echo "-- $1"; python3 "$1" || echo "   (warn: $1 failed, continuing)"; }
 
 {
