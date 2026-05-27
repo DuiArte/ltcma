@@ -10,6 +10,9 @@ Output: docs/stock_<TICKER>.html per stock, docs/stocks.html landing+methodology
 Data: Yahoo Finance (free). CFA curriculum used as a methodology reference only.
 """
 import sys, os, glob, math, time
+from io import StringIO
+from concurrent.futures import ThreadPoolExecutor
+import requests
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -24,13 +27,31 @@ DEFAULT = ["AMZN", "GOOGL", "MSFT", "META", "IBM", "BA", "NVDA", "AAPL"]
 # Buffett-style screener universes. The score uses ratios (ROE, D/E, FCF yield,
 # gross margin) that are currency-neutral, so US and Mexican names are comparable;
 # only the margin-of-safety needs the local-currency price, which cancels in the
-# intrinsic/price ratio. US list = a large-cap S&P 500 selection (screening all
-# 500 daily on free data is not feasible without throttling); IPC = the 35-name
-# S&P/BMV IPC.
-US_SCREEN = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "BRK-B", "JPM",
-             "V", "MA", "KO", "PEP", "PG", "JNJ", "UNH", "HD", "COST", "WMT",
-             "MCD", "AXP", "CVX", "XOM", "MMM", "CAT", "DE", "LMT", "CSCO",
-             "TXN", "ORCL", "IBM"]
+# intrinsic/price ratio. The US universe is the full S&P 500 (fetched live from
+# Wikipedia, with this curated large-cap list as the offline fallback); IPC = the
+# 35-name S&P/BMV IPC.
+US_FALLBACK = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "BRK-B", "JPM",
+               "V", "MA", "KO", "PEP", "PG", "JNJ", "UNH", "HD", "COST", "WMT",
+               "MCD", "AXP", "CVX", "XOM", "MMM", "CAT", "DE", "LMT", "CSCO",
+               "TXN", "ORCL", "IBM"]
+
+def sp500_tickers():
+    """Current S&P 500 constituents from Wikipedia (Yahoo symbol format).
+    Falls back to the curated large-cap list if the fetch/parse fails."""
+    try:
+        html = requests.get(
+            "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+            headers={"User-Agent": "Mozilla/5.0 (research; LTCMA build)"},
+            timeout=30).text
+        syms = (pd.read_html(StringIO(html))[0]["Symbol"].astype(str)
+                .str.replace(".", "-", regex=False).str.strip().tolist())
+        if len(syms) > 400:
+            return syms
+        print(f"  (warn: S&P 500 list looked short ({len(syms)}); using fallback)")
+    except Exception as e:
+        print(f"  (warn: S&P 500 list fetch failed: {e}; using fallback)")
+    return US_FALLBACK
+
 IPC_SCREEN = ["WALMEX.MX", "FEMSAUBD.MX", "GFNORTEO.MX", "GMEXICOB.MX", "AMXB.MX",
               "CEMEXCPO.MX", "BIMBOA.MX", "ALFAA.MX", "KOFUBL.MX", "TLEVISACPO.MX",
               "GAPB.MX", "ASURB.MX", "OMAB.MX", "KIMBERA.MX", "GRUMAB.MX", "AC.MX",
@@ -354,10 +375,22 @@ def _intrinsic(info, price):
 def _clamp(x, lo=0.0, hi=1.0):
     return max(lo, min(hi, x))
 
+def _cap_tier(mcap):
+    if mcap is None:        return "&mdash;"
+    if mcap >= 200e9:       return "Mega"
+    if mcap >= 10e9:        return "Large"
+    if mcap >= 2e9:         return "Mid"
+    return "Small"
+
 def buffett_row(ticker):
-    try:
-        info = yf.Ticker(ticker).info or {}
-    except Exception:
+    info = None
+    for _ in range(2):                       # one retry; threaded fetch of ~500 names
+        try:
+            info = yf.Ticker(ticker).info or {}
+            break
+        except Exception:
+            time.sleep(0.4)
+    if info is None:
         return None
     price = num(info.get("currentPrice")) or num(info.get("regularMarketPrice"))
     if not price:
@@ -380,6 +413,7 @@ def buffett_row(ticker):
     score = round(100 * sum(pillars) / len(pillars)) if len(pillars) >= 3 else None
     return {"ticker": ticker,
             "name": (info.get("shortName") or info.get("longName") or ticker),
+            "tier": _cap_tier(mcap),
             "roe": roe, "de": de, "fcf_y": fcf_y, "gm": (gm if gm else None),
             "mos": mos, "score": score, "np": len(pillars)}
 
@@ -405,6 +439,7 @@ def screen_body(rows):
         mos_cls = "pos" if (mos is not None and mos > 0) else ("neg" if (mos is not None and mos < 0) else "")
         out += (f"<tr><td><b>{r['ticker']}</b> "
                 f"<span style='font-size:11px;color:#8d8d8d'>{r['name'][:26]}</span></td>"
+                f"<td><span style='font-size:11px;color:#525252'>{r.get('tier','&mdash;')}</span></td>"
                 f"<td>{pct(r['roe'])}</td><td>{rt(r['de'])}</td>"
                 f"<td>{pct(r['fcf_y'])}</td><td>{pct(r['gm'])}</td>"
                 f"<td class='{mos_cls}'>{_mos_fmt(mos)}</td>"
@@ -413,12 +448,10 @@ def screen_body(rows):
                 f"<span style='font-size:10px;color:#8d8d8d'> /{r['np']}p</span></td></tr>")
     return out
 
-def screen_universe(tickers):
-    rows = []
-    for tk in tickers:
-        rows.append(buffett_row(tk))
-        time.sleep(0.2)
-    return rows
+def screen_universe(tickers, workers=8):
+    # threaded .info fetch — ~500 names in well under a minute without throttling
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        return list(ex.map(buffett_row, tickers))
 
 # ---------- run ----------
 watch = [s.upper() for s in sys.argv[1:]] or DEFAULT
@@ -475,8 +508,9 @@ if os.environ.get("SKIP_SCREEN") == "1":
     SCREENER = ""
     print("Screener skipped (SKIP_SCREEN=1)")
 else:
-    print(f"Screening {len(US_SCREEN)} US + {len(IPC_SCREEN)} IPC names...")
-    us_rows = screen_universe(US_SCREEN)
+    US_UNIVERSE = sp500_tickers()
+    print(f"Screening {len(US_UNIVERSE)} US (S&P 500) + {len(IPC_SCREEN)} IPC names...")
+    us_rows = screen_universe(US_UNIVERSE)
     ipc_rows = screen_universe(IPC_SCREEN)
     us_cov = sum(1 for r in us_rows if r)
     ipc_cov = sum(1 for r in ipc_rows if r)
@@ -485,7 +519,7 @@ else:
         return (f'<h3>{title}</h3>'
                 '<div class="tile" style="padding:0 16px 8px;margin-bottom:18px">'
                 '<table class="ptable"><thead><tr>'
-                '<th>Company</th><th>ROE</th><th>D/E</th><th>FCF yield</th>'
+                '<th>Company</th><th>Tier</th><th>ROE</th><th>D/E</th><th>FCF yield</th>'
                 '<th>Gross margin</th><th>Margin of safety</th><th>Buffett score</th>'
                 f'</tr></thead><tbody>{screen_body(rows)}</tbody></table></div>')
 
@@ -500,16 +534,18 @@ else:
           'yield 8%, gross margin 50% and &plus;40% margin of safety; the Buffett '
           'score is their average (0&ndash;100) over the pillars that have data &mdash; '
           'the <span style="font-size:11px;color:#8d8d8d">/Np</span> tag shows how '
-          'many. The margin of safety is a rough two-stage DCF and is shown capped '
-          'at &plusmn;100%; it is unreliable for holding companies and for '
-          'financials (banks, insurers), which also lack a meaningful gross margin '
-          'and free cash flow and so score on fewer pillars &mdash; not directly '
-          'comparable to industrials. Free Yahoo Finance fundamentals are '
-          'approximate; educational research, not investment advice.</p>'
-        + _sec(f"S&amp;P 500 large-cap selection &mdash; {us_cov}/{len(US_SCREEN)} with data", us_rows)
+          'many. The <b>Tier</b> column flags market-cap size (Mega &ge;$200B, '
+          'Large &ge;$10B, Mid &ge;$2B). The margin of safety is a rough two-stage '
+          'DCF and is shown capped at &plusmn;100%; it is unreliable for holding '
+          'companies and for financials (banks, insurers), which also lack a '
+          'meaningful gross margin and free cash flow and so score on fewer pillars '
+          '&mdash; not directly comparable to industrials. Free Yahoo Finance '
+          'fundamentals are approximate; educational research, not investment advice.</p>'
+        + _sec(f"S&amp;P 500 &mdash; {us_cov}/{len(US_UNIVERSE)} constituents with data, "
+               "ranked by Buffett score", us_rows)
         + _sec(f"Mexican IPC &mdash; {ipc_cov}/{len(IPC_SCREEN)} with data", ipc_rows)
         + '</section>')
-    print(f"  screener coverage: US {us_cov}/{len(US_SCREEN)}, IPC {ipc_cov}/{len(IPC_SCREEN)}")
+    print(f"  screener coverage: US {us_cov}/{len(US_UNIVERSE)}, IPC {ipc_cov}/{len(IPC_SCREEN)}")
 
 land = f"""<section class="hero"><div class="container">
 <h1>Equity Research</h1>
