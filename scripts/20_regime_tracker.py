@@ -99,6 +99,33 @@ z = (comp - comp.mean()) / comp.std()
 comp["stress"] = z.mean(axis=1)
 comp["stress_smooth"] = comp["stress"].rolling(3, min_periods=1).mean()
 
+# ---------- facet sub-indices (mean standardised score within each facet) ----------
+FACETS = {"Economic": ["VIX", "HY_OAS", "NegCurve"],
+          "Political": ["EPU", "GPR"],
+          "AI-cycle": ["AICycle"],
+          "Environmental": ["EnergyVol"]}
+FACET_INPUTS = {"Economic": "VIX, HY spreads, yield-curve inversion",
+                "Political": "EPU, geopolitical risk (GPR)",
+                "AI-cycle": "semiconductor (PHLX SOX) drawdown",
+                "Environmental": "WTI crude-oil price volatility"}
+facet_now = {}
+for _fname, _cols in FACETS.items():
+    _cols = [c for c in _cols if c in z.columns]
+    _s = z[_cols].mean(axis=1).dropna() if _cols else pd.Series(dtype=float)
+    facet_now[_fname] = float(_s.iloc[-1]) if len(_s) else float("nan")
+
+def _facet_cell(v):
+    if v != v:       return ("n/a", GREY)
+    if v >= 0.5:     return (f"{v:+.2f}σ", RED)
+    if v <= -0.5:    return (f"{v:+.2f}σ", GREEN)
+    return (f"{v:+.2f}σ", GOLD)
+facet_rows = ""
+for _fname in FACETS:
+    _txt, _col = _facet_cell(facet_now[_fname])
+    facet_rows += (f"<tr><td><b>{_fname}</b></td>"
+                   f"<td style='font-size:12px;color:#525252'>{FACET_INPUTS[_fname]}</td>"
+                   f"<td style='color:{_col};font-weight:600'>{_txt}</td></tr>")
+
 # ---------- regime state + transitions ----------
 def state(x):
     if x >= 0.5: return "stress"
@@ -140,8 +167,9 @@ stress_runs = runs[runs["state"] == "stress"]
 for _, run in stress_runs.iterrows():
     fig.add_vrect(x0=run["from_d"], x1=run["to_d"],
                   fillcolor=RED, opacity=0.10, line_width=0)
-fig.update_layout(title="Composite stress index — z-score of (VIX, HY OAS, "
-                  "−Curve, EPU, GPR). Red bands = identified stress regimes.",
+fig.update_layout(title="Composite stress index — z-score across 4 facets "
+                  "(economic, political, AI-cycle, environmental). "
+                  "Red bands = identified stress regimes.",
                   yaxis_title="z-score (standardised)", xaxis_title="month")
 
 # ---------- VIX bucket forward returns (fresh from yfinance) ----------
@@ -217,18 +245,32 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 moving from calm to stress &mdash; or back again &mdash; in time to adjust the
 strategy. Combined with a near-term tactical overlay from event-study research.</p>
 <p class="asof">As of {comp.index[-1].strftime('%b %Y')} &middot;
-components: VIX, US HY spreads, US 10Y&minus;3M yield curve, EPU, GPR</p>
+4 facets: economic, political, AI-cycle, environmental</p>
 </div></section>
 <main class="container">
 <section class="block"><h2>Current State</h2>
 {ccy_badge("USD", "US-centred indicators")}
 <div class="metrics" style="grid-template-columns:repeat(4,1fr)">{snap_html}</div>
-<p class="note">The composite stress index is the z-scored average of five
-inputs. A reading above &plus;0.5 flags <b>stress</b>; below &minus;0.5 flags
+<p class="note">The composite stress index is the z-scored average of seven
+inputs spanning four facets (economic, political, AI-cycle, environmental).
+A reading above &plus;0.5 flags <b>stress</b>; below &minus;0.5 flags
 <b>calm</b>; in between is neutral. The stress-vol multiplier compares realised
 S&amp;P monthly vol in the identified stress regimes vs the calm ones &mdash; this
 cross-validates the &asymp;1.5&ndash;1.6&times; figure used in the LTCMA's regime-
 switching Monte Carlo.</p></section>
+
+<section class="block"><h2>Facet Breakdown</h2>
+<p class="note">The composite blends four facets so no single channel dominates.
+Each reading is the standardised (z-score) average of that facet's inputs &mdash;
+above &plus;0.5&sigma; is elevated (red), below &minus;0.5&sigma; is benign (green).
+The <b>environmental</b> facet is an energy-price stress proxy (WTI crude
+volatility): there is no clean, free, long-history climate or disaster series, so
+it captures the energy-transition / commodity-price channel, not physical climate
+risk. The <b>AI-cycle</b> facet reads the semiconductor sector's drawdown from its
+trailing-12-month high as a proxy for the AI investment cycle.</p>
+<div class="tile" style="padding:0 16px 8px"><table class="ptable">
+<thead><tr><th>Facet</th><th>Inputs</th><th>Current reading</th></tr></thead>
+<tbody>{facet_rows}</tbody></table></div></section>
 
 <section class="block"><h2>Composite Stress Index Over Time</h2>
 <div class="tile chart"><div class="ch">{div(fig, "regime-line")}</div></div>
