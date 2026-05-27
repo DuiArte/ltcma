@@ -174,6 +174,40 @@
       },
       "metrics_note": "Metrics are Pool A (best genuine rotation). DSR 0.91 is high only because the 216 grid configs are near-clones (mild deflation) - it means 'real positive-Sharpe portfolio', NOT 'rotation beats buy-and-hold'. PBO 0.30 full grid / 0.35 rotation subset. Run it weekly (not monthly) if deployed at all.",
       "report_html": "bt_momentum_rotation_taa.html"
+    },
+    {
+      "key": "cross_asset_relative_weakness",
+      "name": "Cross-Asset Relative-Weakness (Buy-the-Laggard)",
+      "short_name": "Relative-Weakness Pairs",
+      "public": false,
+      "what_it_tests": "Daily cross-sectional 'buy the day's laggard, bet it catches up' (optionally short the leader, dollar-neutral, corr-gated). Universes: SPY/QQQ, SPY/QQQ/IWM, SPY/QQQ/IWM/DIA, XLK/XLF. The dollar-neutral pair test isolates the signal from market beta. 2010-2026.",
+      "status": "tested",
+      "badge": "red",
+      "verdict": "Pass / no edge",
+      "verdict_line": "PASS on all 4 universes - not real alpha. The honest test (dollar-neutral long-laggard / short-leader pair) makes ~0% CAGR and goes flat-to-negative out-of-sample; the 1-day laggard buy is outright negative (Sharpe -0.4 to -3.7). It's relative MOMENTUM, not reversal - the laggard keeps lagging. Long-only configs look positive only as diluted long-equity beta (still below SPY); DSR ~0, PBO 0.81-0.99 = definitively overfit.",
+      "dates": {
+        "run": "2026-05-26",
+        "data_span": "2010-01-04 -> 2026-05-26"
+      },
+      "instruments": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "XLF"
+      ],
+      "key_metrics": {
+        "best_raw_sharpe": 0.6,
+        "dsr": 0.0,
+        "pbo": 0.81,
+        "max_dd_pct": -23.7,
+        "cagr_pct": 0.1,
+        "held_out_sharpe": -0.44,
+        "headline_config": "Isolated dollar-neutral pair, best of 4 universes (the honest test); long-only beta-proxy best Sharpe 0.74 but DSR 0.00 / PBO 0.91"
+      },
+      "metrics_note": "best_raw_sharpe and CAGR are the isolated dollar-neutral PAIR (the clean test with market beta removed): pair full Sharpe 0.19-0.60, CAGR ~0%, OOS -0.44 to +0.69 (noise). DSR 0.00-0.17, PBO 0.81-0.99 across universes - definitively overfit. The only positive curves are long-only = diluted long-equity beta, all below SPY buy-and-hold (Sharpe 0.86, CAGR 14.2%).",
+      "report_html": "bt_cross_asset_relative_weakness.html"
     }
   ]
 }
