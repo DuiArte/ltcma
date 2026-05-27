@@ -388,7 +388,7 @@ applications. Mexico City &middot; CFA Level I Candidate.</p>
 <h3>Credentials &amp; Education</h3><ul class="certs">{certs}</ul>
 <h3>Technical Skills</h3><div class="tags">{skills}</div>
 <h3>Open Source</h3>
-<p>Open-source: <a href="https://github.com/DuiArte/terse">Terse &mdash; token-efficient LLM language</a></p></section>
+<p>Open-source: <a href="https://github.com/DuiArte/terse">Terse &mdash; token-efficient LLM language</a> &middot; <a href="https://github.com/DuiArte/ilml">ILML &mdash; a language for AI-to-AI communication</a></p></section>
 </main>
 <footer class="shell-foot"><div class="container">
 <p>Built with free public data and open-source tools. Expected returns are
