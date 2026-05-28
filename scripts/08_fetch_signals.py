@@ -27,25 +27,63 @@ FRED = {
     "USDMXN": "DEXMXUS",
 }
 
+def fetch_fred(name, sid, attempts=4, timeout=60):
+    """FRED's fredgraph.csv throttles cloud IPs (GH Actions especially). Retry
+    with exponential backoff before giving up."""
+    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
+    last_err = None
+    for k in range(attempts):
+        try:
+            txt = requests.get(url, headers=HDR, timeout=timeout).text
+            df = pd.read_csv(io.StringIO(txt))
+            df.columns = ["Date", name]
+            df["Date"] = pd.to_datetime(df["Date"])
+            df[name] = pd.to_numeric(df[name], errors="coerce")
+            return df.set_index("Date")[name].dropna()
+        except Exception as e:
+            last_err = e
+            time.sleep(2 ** k)
+    raise last_err
+
 out = {}
 for name, sid in FRED.items():
     try:
-        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
-        txt = requests.get(url, headers=HDR, timeout=30).text
-        df = pd.read_csv(io.StringIO(txt))
-        df.columns = ["Date", name]
-        df["Date"] = pd.to_datetime(df["Date"])
-        df[name] = pd.to_numeric(df[name], errors="coerce")
-        s = df.set_index("Date")[name].dropna()
+        s = fetch_fred(name, sid)
         out[name] = s
         print(f"  {name:16s} ({sid:14s}) last={s.iloc[-1]:8.2f} @ {s.index[-1].date()}  n={len(s)}")
     except Exception as e:
         print(f"  {name:16s} ({sid}) FAILED: {e}")
     time.sleep(0.25)
 
-sig = pd.DataFrame(out)
-sig.to_csv(f"{D}/signals_fred.csv")
-print(f"\nsignals_fred.csv: {len(sig)} rows, {len(sig.columns)} cols")
+sig_new = pd.DataFrame(out)
+
+# Merge with the prior on-disk CSV so a partial/total fetch failure never
+# wipes out historical data. New values win where both exist.
+csv_path = f"{D}/signals_fred.csv"
+if os.path.exists(csv_path):
+    try:
+        sig_old = pd.read_csv(csv_path, index_col=0, parse_dates=True)
+    except Exception as e:
+        print(f"  WARN: could not read prior {csv_path}: {e}")
+        sig_old = pd.DataFrame()
+else:
+    sig_old = pd.DataFrame()
+
+if sig_new.empty and sig_old.empty:
+    raise RuntimeError("FRED fetch produced no data and no prior CSV exists")
+
+if sig_new.empty:
+    print(f"\nWARN: all FRED fetches failed — keeping prior signals_fred.csv intact")
+    sig = sig_old
+else:
+    sig = sig_old.combine_first(sig_new)  # union of dates+cols
+    for col in sig_new.columns:           # let fresh data overwrite stale
+        sig[col] = sig_new[col].combine_first(sig.get(col))
+    sig = sig.sort_index()
+
+sig.to_csv(csv_path)
+print(f"\nsignals_fred.csv: {len(sig)} rows, {len(sig.columns)} cols "
+      f"(new={sig_new.shape}, prior={sig_old.shape})")
 
 # ---- GPR / TPU (Caldara-Iacoviello) -- best effort, multiple URL fallbacks ----
 GPR_URLS = [
