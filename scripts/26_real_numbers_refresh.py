@@ -334,17 +334,8 @@ f3 = go.Figure(go.Bar(x=al["weight"] * 100, y=al["ticker"], orientation="h",
 f3.update_layout(title="Current allocation by holding",
                  xaxis_title="% of stock portfolio")
 
-# ---------- holdings table ----------
-rows = ""
-for _, r in latest.iterrows():
-    rc = "pos" if r["ret"] >= 0 else "neg"
-    pc = "pos" if r["pm"] >= 0 else "neg"
-    rows += (f"<tr><td>{r['ticker']}</td><td>{r['shares']:,.1f}</td>"
-             f"<td>{cval(r['Costo promedio'], 2)}</td>"
-             f"<td>{cval(r['Precio mercado'], 2)}</td>"
-             f"<td>{cval(r['value'])}</td><td>{r['weight']*100:.1f}%</td>"
-             f"<td class='{rc}'>{r['ret']*100:+.1f}%</td>"
-             f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
+# Holdings table is now rendered by the FX-attribution fragment further down,
+# with realized | unrealized | total cols + Mode toggle (Normal / FX Impact).
 
 # ---------- metrics ----------
 _pnl_now = _real_now + _unr_now
@@ -398,6 +389,8 @@ function setCurrency(c){
     Plotly.restyle(d,{y:[TOT[c],REAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (real)'});
   }
+  var fxBtn=document.querySelector('#fxa-ccy button[data-v="'+c.toUpperCase()+'"]');
+  if(fxBtn) fxBtn.click();
 }
 document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
 </script>
@@ -450,7 +443,7 @@ for r in ATTR["rows"]:
 # realized buckets unchanged: those sells happened at the historical X_sell.
 
 section = ms.build_section(ATTR, scale=1.0, prefix="fxa", theme="light",
-                           title="FX Attribution — Stock vs Peso")
+                           title="Holdings")
 assert section.startswith('<section id="fxa-root">'), "FXA section malformed"
 assert section.rstrip().endswith("</section>"), "FXA section not closed"
 
@@ -507,16 +500,12 @@ body_template = (
     "</section>\n"
     '<section class="block"><h2>Total Value vs Capital</h2>'
     f'<div class="tile chart"><div class="ch">{f1_div}</div></div></section>\n'
-    '<section class="block"><h2>Holdings</h2>'
-    '<div class="tile" style="padding:0 16px 8px">'
-    '<table class="ptable"><thead><tr><th>Holding</th><th>Shares</th>'
-    "<th>Avg Cost</th><th>Price</th><th>Value</th><th>Weight</th>"
-    f"<th>Return</th><th>P/M</th></tr></thead><tbody>{rows}</tbody></table></div>"
-    "</section>\n"
+    f"{section}\n"
+    "<script>(function(){var b=document.getElementById('fxa-ccy');"
+    "if(b&&b.parentElement)b.parentElement.style.display='none';})();</script>\n"
     '<section class="block"><h2>Portfolio vs Its Holdings</h2>'
     f'<div class="grid"><div class="tile chart"><div class="ch">{f2_div}</div></div>'
     f'<div class="tile chart"><div class="ch">{f3_div}</div></div></div></section>\n'
-    f"{section}\n"
     "</main>\n"
     '<footer class="shell-foot"><div class="container">'
     "<p>Figures scaled for confidentiality. Research and monitoring, "
