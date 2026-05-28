@@ -7,12 +7,20 @@ displayed magnitudes are not the real amounts. Source Excel is never modified.
 A MXN / USD currency toggle converts figures at the latest USDMXN rate.
 Refresh: update the Excel, re-run this script.
 """
+import json
 import os
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
+
+FXA = "/mnt/c/Users/carlo/Downloads/fx_attribution_2026-05-26/code"
+sys.path.insert(0, FXA)
+import make_section as ms
 
 XLSX = "/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
 DATA = os.path.expanduser("~/LTCMA/data")
@@ -233,6 +241,7 @@ except Exception:
 RATE = fx_live          # used by cval() for the MXN/USD toggle
 
 priced_at = None
+live_px = {}
 to_fetch = sorted({TICKER_MAP[t] for t in latest["ticker"] if t in TICKER_MAP})
 if to_fetch:
     try:
@@ -264,6 +273,58 @@ latest["weight"] = latest["value"] / tot_val
 latest = latest.sort_values("value", ascending=False)
 port_ret = tot_val / tot_cost - 1
 asof = priced_at or asof_excel
+
+# ---------- FX attribution: refresh x_now + per-ticker unrealized buckets ----------
+# Cached realized lots (from 2026-05-26 GBM snapshot) are kept as-is; unrealized
+# buckets are recomputed against today's USD prices + live USDMXN. Tickers may
+# lag the latest portfolio by N days when positions change.
+ATTR = json.loads((Path(FXA) / "_cache" / "attribution_data.json").read_text())
+try:
+    ATTR_DATE = pd.to_datetime(priced_at).strftime("%Y-%m-%d")
+except Exception:
+    ATTR_DATE = pd.Timestamp.today().strftime("%Y-%m-%d")
+ATTR["x_now"] = float(fx_live)
+ATTR["as_of"] = ATTR_DATE
+
+POS_KEY = {"GMEXICOB": "GMEXICO B", "CCJ": "CCJ N", "MELI": "MELI N"}
+for r in ATTR["rows"]:
+    pos_tk = POS_KEY.get(r["ticker"], r["ticker"])
+    u = r["unrealized"]
+    if r["native"]:
+        new_mxn_px = live_px.get(TICKER_MAP.get(pos_tk, ""))
+        if new_mxn_px:
+            u["stock"] = r["shares"] * new_mxn_px - u["mxn_cost"]
+            u["pnl"] = u["stock"]
+            u["x_val"] = 1.0
+        continue
+    yfs = TICKER_MAP.get(pos_tk)
+    if yfs is None:
+        continue
+    new_mxn_px = live_px.get(yfs)
+    if new_mxn_px is None:
+        continue
+    new_usd_px = new_mxn_px / fx_live
+    x_buy = u.get("x_buy")
+    mxn_cost = u.get("mxn_cost") or 0.0
+    if not x_buy or mxn_cost == 0:
+        continue
+    usd_cost = mxn_cost / x_buy
+    usd_val_now = r["shares"] * new_usd_px
+    u["x_val"] = float(fx_live)
+    u["stock"] = x_buy * (usd_val_now - usd_cost)
+    u["fx"] = usd_cost * (fx_live - x_buy)
+    u["interaction"] = (usd_val_now - usd_cost) * (fx_live - x_buy)
+    u["pnl"] = u["stock"] + u["fx"] + u["interaction"]
+
+fxa_section = ms.build_section(ATTR, scale=SCALE, prefix="fxa", theme="light",
+                               title="FX Attribution")
+# Workaround for upstream make_section.py bug: its CSS template runs
+# .replace("@P", prefix) before .replace("@PANEL", ...)/("@POS", ...), so
+# those two tokens get mangled to "fxaANEL" / "fxaOS". Patch them post-hoc.
+fxa_section = (fxa_section.replace("background:fxaANEL", "background:#fff")
+                          .replace("color:fxaOS", "color:#198038"))
+assert fxa_section.startswith('<section id="fxa-root">'), "FXA section malformed"
+assert "fxaANEL" not in fxa_section and "fxaOS" not in fxa_section
 
 # refresh the last equity point with live prices (balance stays realized-based)
 if priced_at and len(ts):
@@ -393,6 +454,8 @@ function setCurrency(c){
     Plotly.restyle(d,{y:[TOT[c],REAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
   }
+  var fxBtn=document.querySelector('#fxa-ccy button[data-v="'+c.toUpperCase()+'"]');
+  if(fxBtn) fxBtn.click();
 }
 document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
 </script>
@@ -432,6 +495,9 @@ read the same in either currency. Definitions in the
 <div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
 <section class="block"><h2>Total Value vs Capital</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
+{fxa_section}
+<script>(function(){{var b=document.getElementById('fxa-ccy');
+if(b&&b.parentElement)b.parentElement.style.display='none';}})();</script>
 <section class="block"><h2>Holdings</h2>
 <div class="tile" style="padding:0 16px 8px">
 <table class="ptable"><thead><tr><th>Holding</th><th>Shares</th>
