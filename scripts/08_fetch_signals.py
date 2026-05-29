@@ -86,18 +86,25 @@ print(f"\nsignals_fred.csv: {len(sig)} rows, {len(sig.columns)} cols "
       f"(new={sig_new.shape}, prior={sig_old.shape})")
 
 # ---- GPR / TPU (Caldara-Iacoviello) -- best effort, multiple URL fallbacks ----
+# Download to a *temp* path and only replace the real file once pandas confirms
+# the bytes are a real Excel workbook. Without this guard, a throttled/redirected
+# response (HTML body with 200 OK from a CDN) silently overwrites the on-disk
+# XLS with garbage, and the next step (17_build_site.py) crashes immediately
+# on pd.read_excel(). Seen on GitHub Actions runners; locally the URL works.
 GPR_URLS = [
     "https://www.matteoiacoviello.com/gpr_files/data_gpr_export.xls",
     "https://www.matteoiacoviello.com/gpr_files/gpr_web_latest.xls",
 ]
+final_path = f"{D}/signals_gpr_raw.xls"
+tmp_path = f"{D}/signals_gpr_raw.xls.tmp"
 for url in GPR_URLS:
     try:
         r = requests.get(url, headers=HDR, timeout=60)
         r.raise_for_status()
-        path = f"{D}/signals_gpr_raw.xls"
-        with open(path, "wb") as f:
+        with open(tmp_path, "wb") as f:
             f.write(r.content)
-        xl = pd.ExcelFile(path)
+        xl = pd.ExcelFile(tmp_path)          # validate BEFORE replacing
+        os.replace(tmp_path, final_path)     # atomic swap on success only
         print(f"\nGPR downloaded from {url}")
         print(f"  sheets: {xl.sheet_names}")
         df0 = xl.parse(xl.sheet_names[0], nrows=3)
@@ -105,3 +112,8 @@ for url in GPR_URLS:
         break
     except Exception as e:
         print(f"\nGPR url failed ({url}): {e}")
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+else:
+    print(f"\nGPR all URLs failed — keeping prior {final_path} intact "
+          f"(exists: {os.path.exists(final_path)})")
