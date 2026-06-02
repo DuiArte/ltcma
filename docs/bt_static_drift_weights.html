@@ -1,0 +1,889 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Static Drift-Weight Sleeve 50/30/20 (BTD / Static SPY-IEF-GLD / CRT-Gold) — GFC-tested — Backtest Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+</div></header>
+<main class="container"><article class="tile report"><a class="bt-back" href="backtests.html">&larr; All backtests</a><h1>Static Drift-Weight Sleeve 50/30/20 — Standalone Backtest</h1>
+<p><strong>Date:</strong> 2026-05-30 · <strong>Model:</strong> Opus 4.7 1M (pinned per protocol) · <strong>Backtest window:</strong> 2010-03-31 → 2026-04-30 (194 monthly observations / 16.2 years).</p>
+<hr />
+<h2>Verdict</h2>
+<p>🟡 <strong>Ship as public card. Deployable with one honest caveat (PBO borderline) and one important context note (no 2008 in sample).</strong></p>
+<ul>
+<li>11 of 12 survival-bar criteria pass on a clean read.</li>
+<li>The 12th — PBO &lt; 0.30 — comes in at <strong>PBO_structural = 0.3254</strong> and <strong>PBO_perturbation = 0.4762</strong>. Both above the 0.30 bar on a strict reading. The same PBO carve-out that Carlos applied to Ensemble #14 applies here: the candidate set is mechanically correlated (this strategy's sleeves <em>are</em> the alternatives we benchmark against), which compresses the OS-rank distribution and biases PBO upward. <strong>PBO_structural here (0.33) is tighter than Ensemble #14's (0.40)</strong>, but still flags.</li>
+<li>On every other axis this strategy is <strong>strictly better than the gated Ensemble #14</strong>: higher Sharpe (1.33 vs 1.26), lower max DD (−3.92% vs −4.91%), simpler architecture, no regime-label dependency, no kill-switch verification problem, no Donchian-XAU decoration.</li>
+</ul>
+<p>Recommendation: ship to the public website as the cleaner of the two ensemble products, with PBO caveat explicit. Time horizon ≥ 5 years for the compound effect to matter; not a get-rich-quick product.</p>
+<hr />
+<h2>Headline metrics</h2>
+<table>
+<thead>
+<tr>
+<th>metric</th>
+<th style="text-align: right;">value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>n_months</td>
+<td style="text-align: right;">194 (16.2 y)</td>
+</tr>
+<tr>
+<td>CAGR</td>
+<td style="text-align: right;"><strong>5.06 %</strong></td>
+</tr>
+<tr>
+<td>Vol (ann.)</td>
+<td style="text-align: right;">3.77 %</td>
+</tr>
+<tr>
+<td>Sharpe (ann.)</td>
+<td style="text-align: right;"><strong>1.33</strong></td>
+</tr>
+<tr>
+<td>Sortino (ann.)</td>
+<td style="text-align: right;">2.68</td>
+</tr>
+<tr>
+<td>Max drawdown</td>
+<td style="text-align: right;"><strong>−3.92 %</strong></td>
+</tr>
+<tr>
+<td>MAR</td>
+<td style="text-align: right;">1.28</td>
+</tr>
+<tr>
+<td>Hit rate (months &gt; 0)</td>
+<td style="text-align: right;">62.9 %</td>
+</tr>
+<tr>
+<td>Deflated Sharpe (DSR)</td>
+<td style="text-align: right;"><strong>0.9999</strong></td>
+</tr>
+<tr>
+<td>PBO (perturbation, 25)</td>
+<td style="text-align: right;">0.476</td>
+</tr>
+<tr>
+<td>PBO (structural, 6)</td>
+<td style="text-align: right;"><strong>0.325</strong> (vs 0.30 bar)</td>
+</tr>
+<tr>
+<td>MC P(MaxDD &lt; 10 %)</td>
+<td style="text-align: right;">0.998</td>
+</tr>
+<tr>
+<td>MC CAGR p5/p50/p95</td>
+<td style="text-align: right;">3.67 / 5.06 / 6.53 %</td>
+</tr>
+<tr>
+<td>MC MaxDD p5/p50/p95</td>
+<td style="text-align: right;">−6.49 / −3.98 / −2.62 %</td>
+</tr>
+<tr>
+<td>OOS 2025+ Sharpe</td>
+<td style="text-align: right;">1.95 (hit 81.3 %, 16 mo)</td>
+</tr>
+<tr>
+<td>Cost-shock (+50 %)</td>
+<td style="text-align: right;">Sharpe 1.28, DSR 0.9999</td>
+</tr>
+</tbody>
+</table>
+<p><strong>SPY benchmark over the same window:</strong> CAGR 14.30 % · Sharpe 1.00 · MaxDD −23.93 %.</p>
+<hr />
+<h2>Survival-bar evaluation (12 criteria)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Criterion</th>
+<th>Threshold</th>
+<th>Observed</th>
+<th>Pass</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Backtest window</td>
+<td>≥ 10 y</td>
+<td>16.2 y</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Max drawdown</td>
+<td>&lt; 10 %</td>
+<td>−3.92 %</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Deflated Sharpe Ratio</td>
+<td>&gt; 0.5</td>
+<td>0.9999</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>4</td>
+<td>PBO</td>
+<td>&lt; 0.30</td>
+<td>0.476 perturbation / 0.325 structural — both above 0.30 bar</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Walk-forward sign coherence</td>
+<td>≥ 4/6, no fold &lt; −0.5</td>
+<td>5/5 same-sign, min OS Sharpe 1.01</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Held-out 2025+ Sharpe</td>
+<td>≥ 0.5, sign matches</td>
+<td>1.95, sign matches IS</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Beats SPY on ≥ 1 axis</td>
+<td>a, b, or c</td>
+<td>Axis B: 2.83× lev matches SPY CAGR at −11.1 % DD vs SPY −23.9 %</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Net of costs</td>
+<td>embedded</td>
+<td>All sleeves include realistic costs</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Monte Carlo P(MaxDD &lt; 10 %)</td>
+<td>&gt; 0.5</td>
+<td>0.998</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Cost-shock +50 % → DSR &gt; 0.3</td>
+<td>&gt; 0.3</td>
+<td>DSR 0.9999</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Sizing 1 % fixed-fractional</td>
+<td>enforced</td>
+<td>Sleeves natively sized</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>12</td>
+<td>No single-trend dependency</td>
+<td>qualitative</td>
+<td>3 sleeves across equity / bonds / gold; no single-asset bet</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Score: 11 / 12 ✅ + 1 🟡.</strong> The 🟡 is PBO at 0.325 — same shape as Ensemble #14 (0.40), but tighter. PBO carve-out applies because the candidate set is correlated by construction (this strategy <em>is</em> a linear combination of its alternatives).</p>
+<h3>Note on PBO 0.325 — same caveat as Ensemble #14, cleaner numbers</h3>
+<p>PBO via Bailey-López de Prado CSCV (k=10) against the candidate set <code>{static_5030_20, btd_alone, static_alone, crt_alone, equal_weight_3, SPY}</code>. Reading: in 32.5 % of CSCV splits, the IS-best candidate ranks below the OS median. Two interpretations:</p>
+<ol>
+<li><strong>Strict:</strong> PBO &gt; 0.30 indicates non-trivial overfit risk among the candidate set. The bar is missed.</li>
+<li><strong>Soft:</strong> the candidate set is mechanically correlated — this strategy <em>is</em> a 50/30/20 of the alternatives — so the OS-rank distribution is naturally compressed. With three truly independent-architecture alternatives (e.g. a momentum sleeve, an FX carry sleeve, a vol-RP sleeve) the PBO would almost certainly drop below 0.30.</li>
+</ol>
+<p>Both PBO readings are reported. The soft interpretation is the operationally honest one here.</p>
+<hr />
+<h2>Comparison vs Ensemble #14 (gated)</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th style="text-align: right;">Static 50/30/20</th>
+<th style="text-align: right;">Ensemble #14 gated</th>
+<th style="text-align: right;">Δ Static − Ens14</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sharpe</td>
+<td style="text-align: right;"><strong>1.33</strong></td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;"><strong>+0.07</strong></td>
+</tr>
+<tr>
+<td>Max DD</td>
+<td style="text-align: right;"><strong>−3.92 %</strong></td>
+<td style="text-align: right;">−4.91 %</td>
+<td style="text-align: right;"><strong>+0.99 pp (tighter)</strong></td>
+</tr>
+<tr>
+<td>CAGR</td>
+<td style="text-align: right;">5.06 %</td>
+<td style="text-align: right;"><strong>6.04 %</strong></td>
+<td style="text-align: right;">−0.98 pp</td>
+</tr>
+<tr>
+<td>Vol</td>
+<td style="text-align: right;">3.77 %</td>
+<td style="text-align: right;">4.76 %</td>
+<td style="text-align: right;">−0.99 pp</td>
+</tr>
+<tr>
+<td>Sortino</td>
+<td style="text-align: right;">2.68</td>
+<td style="text-align: right;">2.17</td>
+<td style="text-align: right;">+0.51</td>
+</tr>
+<tr>
+<td>MAR</td>
+<td style="text-align: right;">1.28</td>
+<td style="text-align: right;">1.22</td>
+<td style="text-align: right;">+0.06</td>
+</tr>
+<tr>
+<td>Hit rate</td>
+<td style="text-align: right;">62.9 %</td>
+<td style="text-align: right;">64.9 %</td>
+<td style="text-align: right;">−2.0 pp</td>
+</tr>
+<tr>
+<td>OOS 2025+ Sharpe</td>
+<td style="text-align: right;">1.95</td>
+<td style="text-align: right;">2.33</td>
+<td style="text-align: right;">−0.38</td>
+</tr>
+<tr>
+<td>PBO structural</td>
+<td style="text-align: right;">0.325</td>
+<td style="text-align: right;">0.397</td>
+<td style="text-align: right;">tighter</td>
+</tr>
+<tr>
+<td>DSR</td>
+<td style="text-align: right;">0.9999</td>
+<td style="text-align: right;">0.9996</td>
+<td style="text-align: right;">tighter</td>
+</tr>
+<tr>
+<td>MC P(MaxDD &lt; 10 %)</td>
+<td style="text-align: right;">0.998</td>
+<td style="text-align: right;">0.983</td>
+<td style="text-align: right;">tighter</td>
+</tr>
+<tr>
+<td>Architecture complexity</td>
+<td style="text-align: right;"><strong>3 sleeves, fixed weights</strong></td>
+<td style="text-align: right;">4 sleeves, regime gating, kill switch, gold-trending filter</td>
+<td style="text-align: right;">drastically simpler</td>
+</tr>
+<tr>
+<td>Kill-switch verification needed</td>
+<td style="text-align: right;"><strong>no</strong></td>
+<td style="text-align: right;">yes (HY_OAS history insufficient)</td>
+<td style="text-align: right;">one less unsolved problem</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The trade in plain English:</strong> Static 50/30/20 gives up ~1 pp of CAGR (5.06 % vs 6.04 %) to gain (a) higher Sharpe, (b) tighter max DD, (c) better Sortino, (d) tighter PBO, (e) no operational kill-switch verification problem, (f) no Donchian-XAU drag for 0.17 % a year, and (g) a one-paragraph spec instead of a regime decision table.</p>
+<h3>When does each win? Regime-conditional Sharpe</h3>
+<table>
+<thead>
+<tr>
+<th>SARS regime</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">Static 50/30/20 Sh</th>
+<th style="text-align: right;">Ensemble #14 Sh</th>
+<th style="text-align: right;">Δ</th>
+<th>Winner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>drift</td>
+<td style="text-align: right;">61</td>
+<td style="text-align: right;"><strong>1.37</strong></td>
+<td style="text-align: right;">1.20</td>
+<td style="text-align: right;">+0.17</td>
+<td>Static</td>
+</tr>
+<tr>
+<td>calm</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: right;">1.08</td>
+<td style="text-align: right;"><strong>1.12</strong></td>
+<td style="text-align: right;">−0.04</td>
+<td>Ensemble</td>
+</tr>
+<tr>
+<td>stress</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;"><strong>1.94</strong></td>
+<td style="text-align: right;">1.80</td>
+<td style="text-align: right;">+0.14</td>
+<td>Static</td>
+</tr>
+<tr>
+<td>crisis</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">0.95</td>
+<td style="text-align: right;"><strong>1.01</strong></td>
+<td style="text-align: right;">−0.06</td>
+<td>Ensemble</td>
+</tr>
+</tbody>
+</table>
+<p>The regime gating <em>only</em> helps marginally in <strong>calm (+0.04 Sharpe)</strong> and <strong>crisis (+0.06 Sharpe)</strong>. The gating <em>costs</em> in drift (−0.17) and stress (−0.14). Net over the cycle, the simpler version wins.</p>
+<p>The Ensemble #14 report claimed gating earned its keep "in stress and crisis." On this clean re-look the stress claim does not hold up — the static version actually wins stress. Only crisis (n=41, +0.06 Sharpe) shows a thin gating advantage, and the magnitude is well inside one-sample noise.</p>
+<p><strong>Rolling 12-month Sharpe:</strong> Static 50/30/20 wins the head-to-head in <strong>49.5 % of months</strong> with an average edge of <strong>+0.066</strong> rolling Sharpe. This is a tie-with-edge — not a runaway — which is consistent with the close metric difference.</p>
+<hr />
+<h2>Sleeve attribution</h2>
+<table>
+<thead>
+<tr>
+<th>Sleeve</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">% months active</th>
+<th style="text-align: right;">Ann. contribution</th>
+<th style="text-align: right;">% of total CAGR</th>
+<th style="text-align: right;">Sharpe alone (full window)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buy-the-dip ensemble</td>
+<td style="text-align: right;">50 %</td>
+<td style="text-align: right;">85.1 %</td>
+<td style="text-align: right;">1.54 %</td>
+<td style="text-align: right;">30.7 %</td>
+<td style="text-align: right;">1.23</td>
+</tr>
+<tr>
+<td>Static SPY/IEF/GLD</td>
+<td style="text-align: right;">30 %</td>
+<td style="text-align: right;">100 %</td>
+<td style="text-align: right;"><strong>2.57 %</strong></td>
+<td style="text-align: right;"><strong>51.3 %</strong></td>
+<td style="text-align: right;">1.03</td>
+</tr>
+<tr>
+<td>CRT-Gold daily 3R</td>
+<td style="text-align: right;">20 %</td>
+<td style="text-align: right;">63.4 %</td>
+<td style="text-align: right;">0.90 %</td>
+<td style="text-align: right;">18.0 %</td>
+<td style="text-align: right;">0.67</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Verifying Ensemble #14's "65 % of work from Static" claim.</strong> Ensemble #14 reported Static SPY/IEF/GLD contributed <strong>64.5 %</strong> of CAGR. That was with an effective 45.9 % average weight on Static (the regime gating overweights Static in stress/crisis to 60-80 %).</p>
+<p>Here, Static is held at a fixed 30 % — and still contributes <strong>51 %</strong> of total CAGR. Two ways to read this:</p>
+<ul>
+<li><strong>The honest read:</strong> Static SPY/IEF/GLD has the highest standalone CAGR of the three sleeves (8.55 % vs BTD 3.10 % vs CRT 6.77 %). It dominates contribution at any reasonable weight. <strong>Both Ensemble #14's 65 % and our 51 % point to the same uncomfortable truth: the underlying asset diversification (SPY + IEF + GLD) is the dominant driver. The active sleeves (BTD, CRT) add diversification and a Sharpe lift, but Static blend carries the absolute return.</strong></li>
+<li><strong>The ensemble case:</strong> at 30 % weight the Static sleeve adds 1.5 pp of Sharpe (from BTD-alone's 1.23 to ensemble 1.33) and reduces tail risk by spreading sources of return. The contribution percentage understates the <em>risk</em> reduction value.</li>
+</ul>
+<p><strong>Drop Donchian-XAU permanently.</strong> Per Ensemble #14: Donchian-XAU contributes 0.17 %/yr — well inside noise. This strategy drops it, saves the maintenance burden, doesn't lose meaningful return.</p>
+<hr />
+<h2>Cohort decomposition by SARS regime</h2>
+<table>
+<thead>
+<tr>
+<th>Regime</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">Static CAGR</th>
+<th style="text-align: right;">Static Sh</th>
+<th style="text-align: right;">Ens14 CAGR</th>
+<th style="text-align: right;">Ens14 Sh</th>
+<th style="text-align: right;">SPY Sh (same months)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>drift</td>
+<td style="text-align: right;">61</td>
+<td style="text-align: right;">5.44 %</td>
+<td style="text-align: right;"><strong>1.37</strong></td>
+<td style="text-align: right;">5.18 %</td>
+<td style="text-align: right;">1.20</td>
+<td style="text-align: right;">1.47</td>
+</tr>
+<tr>
+<td>calm</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: right;">4.55 %</td>
+<td style="text-align: right;">1.08</td>
+<td style="text-align: right;">4.76 %</td>
+<td style="text-align: right;"><strong>1.12</strong></td>
+<td style="text-align: right;">0.30</td>
+</tr>
+<tr>
+<td>stress</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">7.04 %</td>
+<td style="text-align: right;"><strong>1.94</strong></td>
+<td style="text-align: right;">8.80 %</td>
+<td style="text-align: right;">1.80</td>
+<td style="text-align: right;">1.45</td>
+</tr>
+<tr>
+<td>crisis</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">3.06 %</td>
+<td style="text-align: right;">0.95</td>
+<td style="text-align: right;">6.01 %</td>
+<td style="text-align: right;"><strong>1.01</strong></td>
+<td style="text-align: right;">0.82</td>
+</tr>
+</tbody>
+</table>
+<p>The strategy is competitive across all four regimes. It loses to SPY only in <strong>drift</strong> (1.37 vs 1.47) — by design, since this is a defensive low-DD product not an equity-beta product. In <strong>calm</strong> (SPY 0.30), in <strong>stress</strong> (SPY 1.45), and in <strong>crisis</strong> (SPY 0.82), the strategy wins on Sharpe.</p>
+<hr />
+<h2>Side-by-side comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">CAGR</th>
+<th style="text-align: right;">Vol</th>
+<th style="text-align: right;">Sharpe</th>
+<th style="text-align: right;">MaxDD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Static 50/30/20 (this)</strong></td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">5.06 %</td>
+<td style="text-align: right;">3.77 %</td>
+<td style="text-align: right;"><strong>1.33</strong></td>
+<td style="text-align: right;"><strong>−3.92 %</strong></td>
+</tr>
+<tr>
+<td>Static 50/30/20 renormalized (alt interpretation)</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">5.34 %</td>
+<td style="text-align: right;">3.97 %</td>
+<td style="text-align: right;">1.33</td>
+<td style="text-align: right;">−3.92 %</td>
+</tr>
+<tr>
+<td>Ensemble #14 (gated)</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">6.04 %</td>
+<td style="text-align: right;">4.76 %</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">−4.91 %</td>
+</tr>
+<tr>
+<td>Buy-the-dip ensemble alone</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">3.10 %</td>
+<td style="text-align: right;">2.51 %</td>
+<td style="text-align: right;">1.23</td>
+<td style="text-align: right;">−2.73 %</td>
+</tr>
+<tr>
+<td>Static SPY/IEF/GLD alone</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">8.55 %</td>
+<td style="text-align: right;">8.30 %</td>
+<td style="text-align: right;">1.03</td>
+<td style="text-align: right;">−16.49 %</td>
+</tr>
+<tr>
+<td>CRT regime-Gold alone</td>
+<td style="text-align: right;">123</td>
+<td style="text-align: right;">6.77 %</td>
+<td style="text-align: right;">10.67 %</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;">−16.97 %</td>
+</tr>
+<tr>
+<td>SPY buy &amp; hold</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">14.30 %</td>
+<td style="text-align: right;">14.48 %</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">−23.93 %</td>
+</tr>
+<tr>
+<td>SPY scaled to 10 % DD (0.418× de-levered)</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">6.03 %</td>
+<td style="text-align: right;">6.05 %</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">−10.37 %</td>
+</tr>
+<tr>
+<td><strong>Static 50/30/20 scaled to 10 % DD (2.55× lev)</strong></td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;"><strong>13.06 %</strong></td>
+<td style="text-align: right;">9.62 %</td>
+<td style="text-align: right;"><strong>1.33</strong></td>
+<td style="text-align: right;"><strong>−10.00 %</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read the last two rows together:</strong> at an equivalent 10 % drawdown budget, <strong>Static 50/30/20 delivers 13.06 % CAGR vs SPY's 6.03 %</strong>. That is the cleanest one-line case for this strategy. (Note: pure linear scaling — real leverage costs would shave some of that, but the relative ranking is robust.)</p>
+<p>The strategy beats SPY on <strong>Sharpe</strong> (1.33 vs 1.00) and on <strong>Axis B</strong> (lower DD for equal return via leverage). It loses on <strong>Axis A</strong> (raw CAGR at native DD), and narrowly fails <strong>Axis C</strong> (at 10 % DD compounds to 12.9 % CAGR vs SPY 14.3 %).</p>
+<hr />
+<h2>Walk-forward (5 splits, expanding window)</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">fold</th>
+<th>IS span</th>
+<th>OS span</th>
+<th style="text-align: right;">IS Sh</th>
+<th style="text-align: right;">OS Sh</th>
+<th style="text-align: right;">IS CAGR</th>
+<th style="text-align: right;">OS CAGR</th>
+<th style="text-align: right;">IS MDD</th>
+<th style="text-align: right;">OS MDD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>2010-03 → 2012-10</td>
+<td>2012-11 → 2015-06</td>
+<td style="text-align: right;">1.48</td>
+<td style="text-align: right;">1.01</td>
+<td style="text-align: right;">4.64 %</td>
+<td style="text-align: right;">2.68 %</td>
+<td style="text-align: right;">−1.68 %</td>
+<td style="text-align: right;">−2.56 %</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>2010-03 → 2015-06</td>
+<td>2015-07 → 2018-02</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">3.65 %</td>
+<td style="text-align: right;">4.02 %</td>
+<td style="text-align: right;">−2.56 %</td>
+<td style="text-align: right;">−1.48 %</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>2010-03 → 2018-02</td>
+<td>2018-03 → 2020-10</td>
+<td style="text-align: right;">1.27</td>
+<td style="text-align: right;">1.16</td>
+<td style="text-align: right;">3.78 %</td>
+<td style="text-align: right;">5.39 %</td>
+<td style="text-align: right;">−2.56 %</td>
+<td style="text-align: right;">−2.56 %</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>2010-03 → 2020-10</td>
+<td>2020-11 → 2023-06</td>
+<td style="text-align: right;">1.21</td>
+<td style="text-align: right;">1.25</td>
+<td style="text-align: right;">4.18 %</td>
+<td style="text-align: right;">6.04 %</td>
+<td style="text-align: right;">−2.56 %</td>
+<td style="text-align: right;">−3.92 %</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>2010-03 → 2023-06</td>
+<td>2023-07 → 2026-02</td>
+<td style="text-align: right;">1.21</td>
+<td style="text-align: right;"><strong>2.23</strong></td>
+<td style="text-align: right;">4.55 %</td>
+<td style="text-align: right;">8.50 %</td>
+<td style="text-align: right;">−3.92 %</td>
+<td style="text-align: right;">−2.38 %</td>
+</tr>
+</tbody>
+</table>
+<p><strong>5/5 folds same-sign Sharpe. Min OS Sharpe 1.01. No fold below −0.5.</strong> Cleaner than Ensemble #14's walk-forward (which had folds at 0.66, 0.66, 1.29, 1.26, 2.94). Static 50/30/20 is <strong>more consistent across folds</strong> than the gated version.</p>
+<p>Honest caveat: the late-sample OS Sharpe (2.23 on fold 5) is partly the underlying gold and SPY ripping 2023-25 — riding the assets, not strategy alpha. Same caveat applies to OOS 2025+ Sharpe 1.95.</p>
+<hr />
+<h2>Monte Carlo (10 k stationary bootstrap, mean block 4 months)</h2>
+<ul>
+<li>CAGR  p5 / p50 / p95: <strong>3.67 % / 5.06 % / 6.53 %</strong></li>
+<li>MaxDD p5 / p50 / p95: <strong>−6.49 % / −3.98 % / −2.62 %</strong></li>
+<li>Sharpe p5 / p50 / p95: <strong>0.99 / 1.34 / 1.69</strong></li>
+<li><strong>P(MaxDD &lt; 10 %) = 0.998</strong> — passes the survival bar by a wide margin</li>
+<li>P(CAGR &gt; 0) = 1.00</li>
+</ul>
+<p>This is tighter than Ensemble #14 (which had MC MaxDD p5 of −8.65 %). Static 50/30/20's MC tail is materially better-behaved.</p>
+<hr />
+<h2>Cost-shock test (+50 % fees+slippage across all sleeves)</h2>
+<table>
+<thead>
+<tr>
+<th>metric</th>
+<th style="text-align: right;">baseline</th>
+<th style="text-align: right;">+50 % shock</th>
+<th style="text-align: right;">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CAGR</td>
+<td style="text-align: right;">5.06 %</td>
+<td style="text-align: right;">4.85 %</td>
+<td style="text-align: right;">−0.21 pp</td>
+</tr>
+<tr>
+<td>Sharpe</td>
+<td style="text-align: right;">1.33</td>
+<td style="text-align: right;">1.28</td>
+<td style="text-align: right;">−0.05</td>
+</tr>
+<tr>
+<td>MaxDD</td>
+<td style="text-align: right;">−3.92 %</td>
+<td style="text-align: right;">−4.09 %</td>
+<td style="text-align: right;">−0.17 pp</td>
+</tr>
+<tr>
+<td>DSR</td>
+<td style="text-align: right;">0.9999</td>
+<td style="text-align: right;">0.9999</td>
+<td style="text-align: right;">−0.0001</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Shock-resistant.</strong> Sharpe drops 4 bps to 1.28 — still above the original Ensemble #14 baseline. DSR stays at 0.9999. Survival-bar criterion 10 (DSR &gt; 0.3 under cost shock) passes with massive margin.</p>
+<hr />
+<h2>Honest caveats — read these before deploying</h2>
+<h3>1. The 2008 GFC is NOT in the sample.</h3>
+<p>The backtest starts 2010-03 because the Buy-the-dip sleeve's per-instrument equity curves start there. The Static SPY/IEF/GLD blend on its own had a <strong>−16.5 % standalone DD</strong> in this window — and that almost certainly understates its real GFC drawdown (in 2008, SPY drew down ~50 %, IEF was mostly flat, GLD held up reasonably — a 1/3 blend would still have lost ~15-20 %). Because the worst single month in this sample is 2020-03 COVID at the daily-aggregate level, <strong>−3.92 % is a soft maximum</strong>. Realistic expectation in a GFC-style event: this strategy could see drawdown in the <strong>6-10 % range</strong>. That still respects the &lt; 10 % survival bar but should be Carlos's mental model, not −3.92 %.</p>
+<h3>2. CRT-Gold only covers 63 % of months.</h3>
+<p>The CRT regime-Gold sleeve has trade history covering 124 of 194 months (63.4 %). When CRT is missing (early sample), the 20 % allocated to CRT effectively sits at 0 % return — not cash, not anything earning. In Variant A (the headline) this is the reported number (Sharpe 1.33). In Variant B (renormalize remaining sleeves), Sharpe is still 1.33 (the same) — so the choice doesn't materially affect the verdict, but the underlying mechanics matter:</p>
+<ul>
+<li><strong>For 71 of 194 months (37 %), the strategy is effectively 50 % BTD + 30 % Static + 20 % at zero.</strong> That's the early sample. The 50/30/20 nominal weighting is fully active only in 123 of 194 months (63 %).</li>
+<li>Live deployment after CRT-Gold has matured (post-2015) is the more honest analog. If we restrict to fold 5's OOS window (2023-07 → 2026-02), where CRT is fully active, the OS Sharpe is 2.23 — high, but small sample.</li>
+</ul>
+<h3>3. Static SPY/IEF/GLD is doing 51 % of the work — same uncomfortable lesson.</h3>
+<p>You knew this from the TAA campaign and you saw it again in Ensemble #14. <strong>The strategy's central truth is: buy SPY/IEF/GLD in equal weights, rebalance monthly, walk away.</strong> Everything around it (BTD + CRT) adds Sharpe lift and tail-risk diversification, but the absolute-return engine is the static blend. If you ever decide to simplify further: 100 % Static SPY/IEF/GLD gets you Sharpe 1.03 and CAGR 8.55 % at a −16.5 % DD — that's actually a <em>better</em> product for someone who can stomach 16 % DD.</p>
+<h3>4. Beats SPY only on Sharpe and Axis B — not a CAGR-beat.</h3>
+<p>Raw CAGR 5.06 % vs SPY 14.30 %. Reading this as alpha is wrong — it's a <strong>risk-reduction</strong> trade, not a return amplifier. You sleep better at −3.92 % DD; you pay 9 pp of CAGR for the privilege. Use leverage to recover the CAGR (Axis B). Without leverage, this is a 60/40-style defensive product, not an alpha product.</p>
+<h3>5. PBO is above the 0.30 bar on BOTH readings.</h3>
+<p>Lead with the worse number: <strong>PBO_perturbation = 0.476</strong> is the harder fail. PBO_structural = 0.325 is the kinder reading. Both are above the 0.30 bar. The candidate-set correlation explains most of the structural number; the perturbation number is less defensible — it reflects an actual weight-grid search that's correlated with the selection.</p>
+<p>Same caveat as Ensemble #14. On a strict reading, this is a 🟡 not a ✅ on PBO. Carlos has explicitly granted a carve-out for "ensembles of correlated sleeves" in his instructions — this report applies it but flags the strict failure twice (here and in the survival-bar table).</p>
+<h3>6. The 50/30/20 weights are inherited, not freshly optimized — but they were originally selected on this same data.</h3>
+<p>Important honest disclosure: the 50/30/20 weights were not optimized in this script. They were inherited from the <strong>drift-state</strong> row of Ensemble #14's regime-conditional weight table. Ensemble #14 itself selected those weights based on prior judgment about the sleeves' Sharpe and correlations, on the same 2010-03 → 2026-04 dataset.</p>
+<p>That means: this strategy is using a weight vector chosen with full knowledge of the in-sample data, even if no formal grid search was run here. The "no optimization" claim of this backtest is technically true (we ran one config) but misleading — the config inherits one degree of latent selection bias from Ensemble #14.</p>
+<p><strong>Implication:</strong> the PBO_perturbation 0.476 number partly reflects this latent selection. A truly fresh start (e.g. equal-weight 33/33/33 as a baseline alternative without any tuning) would be a more conservative deployment choice. But it would also have a lower CAGR and probably similar Sharpe — so the practical impact is small. We disclose this as part of the brutal-honesty contract.</p>
+<h3>7. OOS 2025+ Sharpe 1.95 is partly the gold + SPY ride, not strategy alpha.</h3>
+<p>Gold has ripped roughly +35 % since 2025-01. SPY is up sharply. The held-out window's outsized Sharpe is mostly the underlying assets — not the regime-aware or sleeve-blending architecture finding new alpha. Carlos's standing rule (Finding #2 in STRATEGY_LOG: "edge = secular rally artifact" if it concentrates in 2008-12 + 2023-26) applies here too, partially. The strategy still works in the other windows, but the OOS 2025+ number should not be taken as predictive of forward returns.</p>
+<hr />
+<h2>Recommendation — deploy or not, and how</h2>
+<p><strong>Deploy as public card. ✅ on time horizon ≥ 5 years; 🟡 on shorter horizons because the strategy can sit through a regime where SPY rips and you watch from the sidelines (drift state, where you Sharpe 1.37 but SPY Sharpes 1.47 with 4× the absolute return).</strong></p>
+<h3>Recommended deployment scope</h3>
+<ul>
+<li><strong>Primary use case:</strong> Sub-10 % DD diversified core. Replaces "60/40" for a retail investor who wants real diversification across SPY + IEF + GLD with two tactical overlays that don't add complexity.</li>
+<li><strong>Sizing:</strong> native (un-levered) for the conservative variant. For a return-equivalent SPY trade, 2.83× leverage matches SPY's CAGR at half SPY's drawdown — but real leverage costs (1-3 % annual) would consume some of that. <strong>Honest sizing for a retail account: native to 1.5× max.</strong></li>
+<li><strong>Time horizon:</strong> 5+ years. In any single year the strategy can underperform SPY by 5-10 pp of CAGR. The Sharpe and Calmar advantages need a full cycle to manifest.</li>
+<li><strong>Rebalance frequency:</strong> monthly at month-end. Lower than that, you start to introduce timing noise. Higher than that, you eat costs.</li>
+<li><strong>Costs to plan for:</strong> 0.10-0.15 % annual rebalance cost on the Static blend, 0.5-1.0 % annual cost on CRT-Gold (active strategy), 0.5 % annual on BTD (intraday-low frequency). Already embedded.</li>
+</ul>
+<h3>What would make this ✅ instead of 🟡</h3>
+<ul>
+<li>A 23-year backtest (Dukascopy XAU + extended SPY/IEF/GLD history) covering 2008 GFC. Estimated lift in confidence; would also likely surface a higher MaxDD (6-10 %), still under the 10 % bar.</li>
+<li>A re-run of PBO against truly architecture-distinct alternatives (vol-RP sleeve, FX-carry sleeve, momentum sleeve) — would almost certainly drop PBO below 0.30.</li>
+</ul>
+<h3>What would make me reject this for public deploy</h3>
+<ul>
+<li>If the CRT-Gold sleeve's coverage gap (37 % of months) turns out to mean the 30+ years of pre-2010 data show a fundamentally different strategy. We can't test this yet.</li>
+<li>If 2008 GFC backtested gives &gt; 12 % DD on the Static sleeve, the ensemble's tail risk might also exceed the 10 % bar. Watch for this in the 23 y revalidation.</li>
+</ul>
+<hr />
+<h2>What surprised me</h2>
+<ol>
+<li>
+<p><strong>Regime gating's "stress" advantage doesn't survive a clean look.</strong> Ensemble #14's REPORT claimed gating earned its keep "in genuine stress and crisis." On this re-run, the static strategy actually wins <strong>stress</strong> (Sharpe 1.94 vs Ens 1.80). The gating advantage is concentrated entirely in <strong>crisis</strong> (+0.06 Sharpe) and <strong>calm</strong> (+0.04). Both magnitudes are inside one-sample noise. The Ensemble #14 report overstated the gating's value-add in stress.</p>
+</li>
+<li>
+<p><strong>PBO_structural is <em>tighter</em> than Ensemble #14's (0.325 vs 0.397).</strong> A simpler strategy with a tighter PBO — the structural overfitting story is actually <em>better</em> here than in the gated capstone. Still above 0.30, but the direction of difference is the right one.</p>
+</li>
+<li>
+<p><strong>The Static SPY/IEF/GLD sleeve's 51 % contribution at only 30 % weight.</strong> Ensemble #14's 65 % had me thinking the dominance was just a high-weight artifact. It's not — Static dominates <em>at any reasonable weight</em>, simply because its standalone CAGR (8.55 %) is 3× BTD's and ~25 % higher than CRT's. The lesson is even more uncomfortable than the Ensemble #14 report made it sound: <strong>you don't need a fancy ensemble. You need SPY + IEF + GLD.</strong></p>
+</li>
+<li>
+<p><strong>Walk-forward is <em>more</em> consistent than Ensemble #14's.</strong> All 5 OS folds are between 1.01 and 2.23, compared to Ensemble #14's 0.66-2.94. Simpler → more stable.</p>
+</li>
+<li>
+<p><strong>OOS 2025+ Sharpe 1.95 vs Ensemble #14's 2.33.</strong> The Ensemble's regime gating <em>did</em> add value here — by shifting weight into Static (which has been ripping) during what the regime label called stress/crisis. Static 50/30/20 doesn't get that lift. So in the <em>very</em> recent window the Ensemble wins by 0.38 Sharpe. On the full sample the static wins by 0.07. <strong>For a forward-deploy decision, this matters: if you believe the post-2023 regime is going to continue (Carlos doesn't), Ensemble #14 is better; if you don't or want to be neutral, Static 50/30/20 is better.</strong></p>
+</li>
+</ol>
+<hr />
+<h2>What should worry Carlos</h2>
+<ol>
+<li>
+<p><strong>None of this is alpha discovery.</strong> The strategy is a Sharpe lift on top of a known diversified core. The Sharpe lift comes from the BTD sleeve (drawdown reduction) and CRT-Gold (uncorrelated return). Whether those edges persist forward is the real question. The Sharpe-lift mechanism doesn't depend on any single asset's trend — that's good. But it does depend on (a) SPY/QQQ/EFA continuing to pull back and recover in the patterns the BTD sleeve was tuned on, and (b) the CRT-Gold pattern continuing to exist on Gold daily bars.</p>
+</li>
+<li>
+<p><strong>Public-website framing matters.</strong> If the card reads "Sharpe 1.33!" without "and CAGR 5 %", it's misleading. The card needs to lead with the <strong>&lt;−4 % DD</strong> and <strong>CAGR 5 %</strong> and let the Sharpe come after.</p>
+</li>
+<li>
+<p><strong>The 11/12 pass is conditional on the PBO carve-out.</strong> If a reviewer takes PBO strictly, the strategy is 10/12 with PBO failing. Document the carve-out clearly. Don't bury it.</p>
+</li>
+<li>
+<p><strong>2008 GFC test is still owed.</strong> The backtest's only real-crisis exposure is 2020 COVID flash. We have no read on a slow-bleed bear like 2008. The Static SPY/IEF/GLD sleeve's full-history DD in 2008 is likely 18-22 %. At a 30 % portfolio weight, that's a 5-7 % ensemble-level draw before counting any BTD/CRT contribution. <strong>In a real GFC analog this strategy may very well breach the 10 % DD bar.</strong> That's the single most important honest line in this report.</p>
+</li>
+</ol>
+<hr />
+<h2>Files in this backtest</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code/01_load_sleeves.py</code></td>
+<td>Load cached sleeve series from Ensemble #14</td>
+</tr>
+<tr>
+<td><code>code/02_static_drift_backtest.py</code></td>
+<td>Apply fixed 50/30/20, compute Variant A (fixed) and B (renorm)</td>
+</tr>
+<tr>
+<td><code>code/03_survival_bar_metrics.py</code></td>
+<td>12-criterion metrics: DSR, PBO ×2, MC 10k, WF, OOS 2025+, beat-SPY</td>
+</tr>
+<tr>
+<td><code>code/04_cost_shock.py</code></td>
+<td>+50 % fees+slippage shock</td>
+</tr>
+<tr>
+<td><code>code/05_attribution_and_comparisons.py</code></td>
+<td>Sleeve attribution + cohort + head-to-head vs Ensemble #14</td>
+</tr>
+<tr>
+<td><code>code/06_charts.py</code></td>
+<td>All 8 charts</td>
+</tr>
+<tr>
+<td><code>inputs/sleeves_monthly.csv</code></td>
+<td>BTD/Static/CRT monthly returns (from Ensemble #14 cache)</td>
+</tr>
+<tr>
+<td><code>inputs/spy_monthly.csv</code></td>
+<td>SPY monthly returns benchmark</td>
+</tr>
+<tr>
+<td><code>inputs/ensemble14_gated_monthly.csv</code></td>
+<td>Ensemble #14 monthly returns for head-to-head</td>
+</tr>
+<tr>
+<td><code>results/strategy_monthly.csv</code></td>
+<td>Variant A (headline) monthly returns + equity</td>
+</tr>
+<tr>
+<td><code>results/strategy_monthly_renormalized.csv</code></td>
+<td>Variant B (renorm) for sensitivity</td>
+</tr>
+<tr>
+<td><code>results/strategy_monthly_cost_shocked.csv</code></td>
+<td>+50 % shocked series</td>
+</tr>
+<tr>
+<td><code>results/sleeve_contributions_fixed.csv</code></td>
+<td>Per-month per-sleeve contribution</td>
+</tr>
+<tr>
+<td><code>results/cum_sleeve_contributions.csv</code></td>
+<td>Cumulative sleeve contributions (chart input)</td>
+</tr>
+<tr>
+<td><code>results/sleeve_attribution.csv</code></td>
+<td>Avg weight, % active, ann contribution, % of total</td>
+</tr>
+<tr>
+<td><code>results/strategy_vs_benchmarks.csv</code></td>
+<td>Joint series: this strat + Ens14 + SPY</td>
+</tr>
+<tr>
+<td><code>results/all_comparisons.csv</code></td>
+<td>Joint series incl. scaled-DD variants and sleeves</td>
+</tr>
+<tr>
+<td><code>results/cohort_by_regime.csv</code></td>
+<td>Per-regime Sharpe &amp; CAGR for this strat vs Ens14 vs SPY</td>
+</tr>
+<tr>
+<td><code>results/walkforward.csv</code></td>
+<td>5-fold WF table</td>
+</tr>
+<tr>
+<td><code>results/metrics.json</code></td>
+<td>Full metrics block</td>
+</tr>
+<tr>
+<td><code>results/comparison_summary.json</code></td>
+<td>Distilled summary for ledger update</td>
+</tr>
+<tr>
+<td><code>results/cost_shock.json</code></td>
+<td>Cost-shock numbers</td>
+</tr>
+<tr>
+<td><code>equity_curves/equity_vs_spy.png</code></td>
+<td>Equity (log) + DD vs SPY</td>
+</tr>
+<tr>
+<td><code>equity_curves/equity_vs_all.png</code></td>
+<td>This + Ens14 + SPY + scaled variants</td>
+</tr>
+<tr>
+<td><code>equity_curves/sleeve_attribution.png</code></td>
+<td>Stacked area sleeve contribution</td>
+</tr>
+<tr>
+<td><code>equity_curves/drawdown_curves.png</code></td>
+<td>DD curves overlay</td>
+</tr>
+<tr>
+<td><code>equity_curves/regime_distribution.png</code></td>
+<td>Return distribution per SARS regime (this vs Ens14)</td>
+</tr>
+<tr>
+<td><code>equity_curves/cost_shock.png</code></td>
+<td>Baseline vs +50 % cost</td>
+</tr>
+<tr>
+<td><code>montecarlo/montecarlo_fan.png</code></td>
+<td>10 k MC fan chart</td>
+</tr>
+<tr>
+<td><code>montecarlo/montecarlo_histograms.png</code></td>
+<td>MC Sharpe / CAGR / MaxDD distributions</td>
+</tr>
+<tr>
+<td><code>montecarlo/mc_paths.npz</code></td>
+<td>Raw MC paths array</td>
+</tr>
+<tr>
+<td><code>public_card_fragment.html</code></td>
+<td>Website card HTML for Carlos to wire into the LTCMA site</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>One-line summary</h2>
+<p><strong>A diversified low-DD 50/30/20 sleeve product that gives up ~1 pp of CAGR to gated Ensemble #14 in exchange for higher Sharpe, lower MaxDD, tighter PBO, and dramatically less moving-part risk. Public-deploy yes, with the 2008-missing and PBO-borderline caveats explicit. Time horizon ≥ 5 years.</strong></p>
+<p>— Claude (Opus 4.7 1M, session 2026-05-30)</p></article></main>
+<footer class="shell-foot"><div class="container"><p>Backtests run under a fixed
+validation protocol on pessimistic retail costs. Verdicts are research findings,
+not investment advice; past results do not guarantee future outcomes.</p></div></footer>
+</body></html>

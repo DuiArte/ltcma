@@ -90,10 +90,25 @@ def win_to_wsl(p):
     return p.replace("\\", "/")
 
 
+def resolve_path(p):
+    """First existing form of p, trying the raw path (native Windows) then the
+    WSL-mapped form (/mnt/c under WSL). Returns None if neither exists.
+
+    win_to_wsl alone breaks on native Windows: it rewrites C:\\... into /mnt/c/...
+    which does not exist outside WSL, so trying the raw path first is what lets
+    the hub (and each REPORT.md) be found in both environments."""
+    if not p:
+        return None
+    for cand in (p, win_to_wsl(p)):
+        if cand and os.path.exists(cand):
+            return cand
+    return None
+
+
 def load_catalog():
     for hub in HUB_CANDIDATES:
-        wp = win_to_wsl(hub)
-        if os.path.exists(wp):
+        wp = resolve_path(hub)
+        if wp:
             with open(wp, encoding="utf-8") as fh:
                 data = json.load(fh)
             try:  # refresh the committed fallback (web-safe: drop local paths,
@@ -106,7 +121,7 @@ def load_catalog():
                     json.dump(safe, out, indent=2, ensure_ascii=False)
             except OSError:
                 pass
-            return data, hub
+            return data, wp
     if os.path.exists(FALLBACK):
         with open(FALLBACK, encoding="utf-8") as fh:
             return json.load(fh), FALLBACK
@@ -158,9 +173,9 @@ not investment advice; past results do not guarantee future outcomes.</p></div><
 def render_report_page(strat):
     """Convert a strategy's REPORT.md to docs/bt_<key>.html. Returns the
     filename if written, else None."""
-    md_path = win_to_wsl((strat.get("paths") or {}).get("report_md"))
+    md_path = resolve_path((strat.get("paths") or {}).get("report_md"))
     out_name = strat.get("report_html") or f"bt_{strat['key']}.html"
-    if not md_path or not os.path.exists(md_path):
+    if not md_path:
         return None
     try:
         import markdown
