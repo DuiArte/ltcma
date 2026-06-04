@@ -566,11 +566,101 @@ def _km_get(km, k):
     return km.get(alt) if alt else None
 
 
+# ── confidentiality discipline (public site) ────────────────────────────────
+# Performance metrics are scale-invariant and publishable (Sharpe/DSR/PBO/DD/CAGR);
+# tickers, asset universes, entry/exit logic, parameter values and internal paths
+# are NOT. Card titles + descriptions for the public entries are curated below;
+# anything not curated falls through the regex redactor as a backstop so a future
+# public entry can never leak verbatim. (Carlos, 2026-06-04 — same restraint as the
+# x1.8 portfolio scaling.) The allowed exception is the headline weight ratio
+# (e.g. "50/30/20"), which Carlos has cleared for display.
+import re as _re
+
+_BT_TICKERS = (r"SPY|QQQ|IEF|GLD|XAUUSD|XAGUSD|EURUSD|USDJPY|GBPUSD|EURJPY|GBPJPY|"
+               r"EFA|EEM|DIA|IWM|EWW|DBC|XLK|XLF|SLV|NAFTRAC|SOXX|VGT|VUG|DBMF|IShares")
+_BT_REDACT = [
+    # ticker runs (SPY/QQQ/EFA, SPY+QQQ+EFA, "SPY, IEF, GLD") -> [assets]
+    (_re.compile(r"\b(?:%s)(?:\s*[/+,&-]\s*(?:%s))*\b" % (_BT_TICKERS, _BT_TICKERS)),
+     "[assets]"),
+    (_re.compile(r"\b\d{2,3}-?\s?EMA\b|\bSMA-?\d{2,3}\b"), "[trend filter]"),
+    (_re.compile(r"\b\d+(?:\.\d+)?\s?sigma\b|\bATR\s?[x×]?\s?\d+(?:\.\d+)?\b"), "[threshold]"),
+    (_re.compile(r"\b\d+R\b"), "[target]"),
+    (_re.compile(r"\b[a-z_]{3,}\s?=\s?-?\d+(?:\.\d+)?\b"), "[param]"),
+    (_re.compile(r"\b\d+m lookback\b|\blookback[ =]\d+\b", _re.I), "[lookback]"),
+    (_re.compile(r"Trading_Index|SignalLib|/home/\S+|[Cc]:\\\\Users\S*|Downloads\S*|"
+                 r"/mnt/\S+|REPORT\.md", _re.I), "[internal]"),
+]
+
+
+def _bt_redact(text):
+    """Backstop redactor for any non-curated public text (defence in depth)."""
+    if not text:
+        return text
+    for rx, repl in _BT_REDACT:
+        text = rx.sub(repl, text)
+    return _re.sub(r"\[assets\](?:\s*[/+,&-]?\s*\[assets\])+", "[assets]", text)
+
+
+# Curated public-safe (name, what_it_tests, verdict) for each public entry. Keeps
+# the thesis, verdict and all performance metrics; drops tickers, universe lists,
+# entry/exit mechanics, sleeve compositions and parameter values.
+_BT_PUBLIC = {
+    "buy_the_dip": (
+        "Buy-the-Dip / Sell-the-Rip",
+        "Daily pullback-in-uptrend: buy weakness while a long-term trend filter is "
+        "positive, optionally fade rips in downtrends, across a broad diversified "
+        "index-ETF universe. 2010–2026.",
+        "Robust, low-drawdown S&P replacement — the edge is structural (positive across "
+        "most of the parameter space), not curve-fit. Deploy as a diversified ensemble: "
+        "a low-drawdown core, not a return amplifier. DSR 0.60–0.80, PBO 0.37–0.48; "
+        "roughly 2× the S&P's Calmar at a fraction of its drawdown."),
+    "static_diversification": (
+        "Static Multi-Asset Diversification",
+        "An equal-weight, low-turnover blend across three asset classes (equity, "
+        "intermediate government bonds, gold), rebalanced periodically, with an optional "
+        "trend-based cash filter. 2011–2026.",
+        "The static blend beat every rotation variant tested: Sharpe 1.00, DSR 0.96, "
+        "near-zero turnover, and it beats the S&P on Sharpe, Calmar and drawdown. Deploy "
+        "as a low-cost diversified core; the trend filter is an optional crash overlay."),
+    "crt": (
+        "Candle Range Theory (CRT) + Regime Filter",
+        "A three-candle range-reversal pattern gated by a daily long-term trend filter, "
+        "tested vanilla and with regime overlays across several FX and metals markets. "
+        "2016–2026.",
+        "A thin but real edge once trend-gated — PF 1.22, Sharpe 0.59, Calmar 0.33 — "
+        "usable as one signal inside the regime-adaptive ensemble, never standalone. "
+        "(Ungated it had no post-cost edge.)"),
+    "static_drift_weights": (
+        "Static Drift-Weight 50/30/20 — GFC-tested",
+        "Fixed 50/30/20 allocation across three validated sleeves (an equity trend "
+        "ensemble / a static multi-asset blend / a regime overlay), rebalanced monthly, "
+        "with no regime gating and no kill switch. Packaged after the gated capstone "
+        "showed this simpler version dominates it.",
+        "Deployable — GFC-tested. Sharpe 1.33, MaxDD -3.92%, CAGR 5.06% over 194 months "
+        "(16.2y). Extended 21-year test including the 2008 GFC passes the 10% drawdown bar "
+        "at -9.85% with headroom. Beats the S&P on Sharpe (1.33 vs 1.00) and at matched "
+        "risk. Held-out 2025+ Sharpe 1.95; a +50% cost shock only trims Sharpe to 1.28. "
+        "A sleep-better risk-reduction product, not an alpha amplifier."),
+}
+
+
+def _bt_public(strat):
+    """Return confidentiality-safe (name, what_it_tests, verdict_line) for a card."""
+    cur = _BT_PUBLIC.get(strat.get("key"))
+    if cur:
+        return cur
+    return (_bt_redact(strat.get("short_name") or strat.get("name", "")),
+            _bt_redact(strat.get("what_it_tests", "")),
+            _bt_redact(strat.get("verdict_line", "")))
+
+
 def bt_card(strat, report_link=None, xref=""):
     """Render one strategy as a card. report_link -> "Full report" anchor;
-    xref -> an optional cross-reference line (e.g. deployment status / sibling page)."""
+    xref -> an optional cross-reference line (e.g. deployment status / sibling page).
+    Name/description/verdict are routed through the confidentiality filter."""
     badge = strat.get("badge", "red")
     label = strat.get("verdict") or BT_BADGE.get(badge, ("", ""))[0]
+    pname, ptests, pverd = _bt_public(strat)
     km = strat.get("key_metrics", {})
     tiles = ""
     for k, lbl in _BT_ROW:
@@ -584,12 +674,12 @@ def bt_card(strat, report_link=None, xref=""):
     xr = f'<p class="bt-xref">{xref}</p>' if xref else ""
     return (
         f'<article class="btcard bt-{badge}">'
-        f'<div class="bt-head"><span class="bt-badge bt-{badge}">{_bt_esc(label)}</span>'
+        f'<div class="bt-head"><span class="bt-badge bt-{badge}">{_bt_esc(_bt_redact(label))}</span>'
         f'<span class="bt-date">{_bt_esc(run)}</span></div>'
-        f'<h3 class="bt-name">{_bt_esc(strat["name"])}</h3>'
-        f'<p class="bt-tests">{_bt_esc(strat.get("what_it_tests",""))}</p>'
+        f'<h3 class="bt-name">{_bt_esc(pname)}</h3>'
+        f'<p class="bt-tests">{_bt_esc(ptests)}</p>'
         f'<div class="bt-metrics">{tiles}</div>'
-        f'<p class="bt-verdict">{_bt_esc(strat.get("verdict_line",""))}</p>'
+        f'<p class="bt-verdict">{_bt_esc(pverd)}</p>'
         f'{xr}'
         f'<div class="bt-foot"><span class="bt-span">{_bt_esc(span)}</span>{link}</div>'
         f'</article>')
