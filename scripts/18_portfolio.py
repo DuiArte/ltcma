@@ -53,13 +53,10 @@ def div(fig, name):
 def fmt(x, dec=0):
     return f"{x:,.{dec}f}"
 
-def fmt_sh(x):                            # share counts: integer when whole,
-    """Share count: drop the decimal for whole-share holdings; otherwise show
-    up to 2 dp with trailing zeros trimmed. The x1.8 scaling leaves whole
-    holdings as e.g. 360.0 (-> "360") and fractional ones as 266.4 (-> "266.4")."""
-    if abs(x - round(x)) < 1e-6:
-        return f"{round(x):,d}"
-    return f"{x:,.2f}".rstrip("0").rstrip(".")
+def fmt_sh(x):                            # share counts: always integer display
+    """Share count: always rounded to a whole share for display. The underlying
+    JSON DATA blob keeps full precision; only the rendered string rounds."""
+    return f"{round(x):,d}"
 
 def fmts(x, dec=0):                       # signed
     return f"{x:+,.{dec}f}"
