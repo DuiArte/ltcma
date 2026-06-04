@@ -53,6 +53,14 @@ def div(fig, name):
 def fmt(x, dec=0):
     return f"{x:,.{dec}f}"
 
+def fmt_sh(x):                            # share counts: integer when whole,
+    """Share count: drop the decimal for whole-share holdings; otherwise show
+    up to 2 dp with trailing zeros trimmed. The x1.8 scaling leaves whole
+    holdings as e.g. 360.0 (-> "360") and fractional ones as 266.4 (-> "266.4")."""
+    if abs(x - round(x)) < 1e-6:
+        return f"{round(x):,d}"
+    return f"{x:,.2f}".rstrip("0").rstrip(".")
+
 def fmts(x, dec=0):                       # signed
     return f"{x:+,.{dec}f}"
 
@@ -229,7 +237,7 @@ print(f"  equity/balance: {len(ts)} days | baseline {BASELINE:,.0f} | "
 
 # ---------- latest snapshot (with LIVE pricing override) ----------
 latest = df[df["Fecha"] == df["Fecha"].max()].copy()
-asof_excel = df["Fecha"].max().strftime("%d %b %Y")
+asof_excel = df["Fecha"].max().strftime("%Y-%m-%d")
 
 # (TICKER_MAP defined above — BMV .MX listings)
 
@@ -251,7 +259,7 @@ if to_fetch:
             ld = ld.to_frame(name=to_fetch[0])
         live_px = {c: float(ld[c].dropna().iloc[-1]) for c in ld.columns
                    if ld[c].dropna().size}
-        priced_at = ld.dropna(how="all").index[-1].strftime("%d %b %Y")
+        priced_at = ld.dropna(how="all").index[-1].strftime("%Y-%m-%d")
         for idx, row in latest.iterrows():
             yt = TICKER_MAP.get(row["ticker"])
             if not yt or yt not in live_px:
@@ -385,10 +393,10 @@ lat = latest.sort_values("ret")
 colors = [GREEN if r >= 0 else RED for r in lat["ret"]]
 f2 = go.Figure(go.Bar(x=lat["ret"] * 100, y=lat["ticker"], orientation="h",
                       marker_color=colors,
-                      text=[f"{r*100:+.1f}%" for r in lat["ret"]],
+                      text=[f"{r*100:+.2f}%" for r in lat["ret"]],
                       textposition="outside"))
 f2.add_vline(x=port_ret * 100, line=dict(color=INK, dash="dash"),
-             annotation_text=f"portfolio {port_ret*100:+.1f}%")
+             annotation_text=f"portfolio {port_ret*100:+.2f}%")
 f2.update_layout(title="Holding return vs the portfolio (dashed = portfolio total)",
                  xaxis_title="return since cost (%)")
 
@@ -396,7 +404,7 @@ f2.update_layout(title="Holding return vs the portfolio (dashed = portfolio tota
 al = latest.sort_values("weight")
 f3 = go.Figure(go.Bar(x=al["weight"] * 100, y=al["ticker"], orientation="h",
                       marker_color=BLUE,
-                      text=[f"{w*100:.1f}%" for w in al["weight"]],
+                      text=[f"{w*100:.2f}%" for w in al["weight"]],
                       textposition="outside"))
 f3.update_layout(title="Current allocation by holding",
                  xaxis_title="% of stock portfolio")
@@ -406,11 +414,11 @@ rows = ""
 for _, r in latest.iterrows():
     rc = "pos" if r["ret"] >= 0 else "neg"
     pc = "pos" if r["pm"] >= 0 else "neg"
-    rows += (f"<tr><td>{r['ticker']}</td><td>{r['shares']:,.1f}</td>"
+    rows += (f"<tr><td>{r['ticker']}</td><td>{fmt_sh(r['shares'])}</td>"
              f"<td>{cval(r['Costo promedio'], 2)}</td>"
              f"<td>{cval(r['Precio mercado'], 2)}</td>"
-             f"<td>{cval(r['value'])}</td><td>{r['weight']*100:.1f}%</td>"
-             f"<td class='{rc}'>{r['ret']*100:+.1f}%</td>"
+             f"<td>{cval(r['value'])}</td><td>{r['weight']*100:.2f}%</td>"
+             f"<td class='{rc}'>{r['ret']*100:+.2f}%</td>"
              f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
 
 # ---------- metrics (recycled capital; realized & unrealized kept separate) ----------
@@ -419,7 +427,7 @@ SNAP = [("Total Value", cval(_total_now)),
         ("Realized P / L", cval(_real_now, signed=True)),
         ("Unrealized P / L", cval(_unr_now, signed=True)),
         ("Total P / L", cval(_pnl_now, signed=True)),
-        ("Total Return", f"{(_total_now/CAPITAL-1)*100:+.1f}%"),
+        ("Total Return", f"{(_total_now/CAPITAL-1)*100:+.2f}%"),
         ("Live Priced", asof)]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
@@ -477,7 +485,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 measured against its cost basis and against the portfolio as a whole.
 Figures convert between Mexican pesos and US dollars at the current rate.</p>
 <p class="asof">As of {asof} &middot; GBM equity holdings &middot;
-USD/MXN {RATE:.2f}</p>
+USD/MXN {RATE:.4f}</p>
 </div></section>
 <main class="container">
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
