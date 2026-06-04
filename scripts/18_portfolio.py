@@ -346,6 +346,47 @@ ATTR["x_now"] = float(fx_live)
 ATTR["as_of"] = ATTR_DATE
 
 POS_KEY = {"GMEXICOB": "GMEXICO B", "CCJ": "CCJ N", "MELI": "MELI N"}
+
+# ---------- reconcile FX-attribution rows against the live broker snapshot ----------
+# attribution_data.json is frozen at its build date and only carries the tickers held
+# then. Holdings, by contrast, is rebuilt live from the latest GBM "Detalle de
+# Portafolio", so a position opened after the cache was built (e.g. ASTS) silently
+# never reaches this panel, and share-count changes (e.g. GOOGL/MSFT adds) go stale.
+# Rather than hand-maintain a ticker list, derive inclusion dynamically: every holding
+# in the broker snapshot gets an attribution row, with shares + open MXN cost taken
+# straight from the broker file. Tickers with no cached lot history inherit the
+# portfolio-blended buy-FX (the same proxy run_attribution.py uses for no-tx names).
+# The per-row recompute loop below then fills the USD/FX/interaction buckets live.
+INV_POS = {v: k for k, v in POS_KEY.items()}           # broker name -> cache ticker
+PORT_XBUY = float(ATTR.get("port_xbuy") or fx_live)
+_attr_by_tk = {r["ticker"]: r for r in ATTR["rows"]}
+for _, b in _bdf.iterrows():
+    bname = str(b["ticker"]).strip()                   # e.g. "ASTS", "GOOGL", "GMEXICO B"
+    if bname not in TICKER_MAP:
+        continue                                       # unmapped/cash sleeve — can't price
+    ctk = INV_POS.get(bname, bname)                    # cache-style ticker, e.g. "GMEXICOB"
+    shares_raw = float(b["Títulos"])
+    mxn_cost_raw = float(b["imp_cto_broker"])          # Imp X Cto. = Títulos x Costo promedio
+    native = ctk == "GMEXICOB"                          # only GMEXICO B is peso-native (no FX leg)
+    row = _attr_by_tk.get(ctk)
+    if row is None:                                    # position opened after the cache was built
+        row = dict(ticker=ctk, shares=shares_raw, method="approx_no_tx",
+                   native=native, approx=True,
+                   realized=dict(stock=0.0, fx=0.0, interaction=0.0, pnl=0.0,
+                                 mxn_cost=0.0, x_buy=None, x_val=None),
+                   unrealized=dict(stock=0.0, fx=0.0, interaction=0.0, pnl=0.0,
+                                   mxn_cost=mxn_cost_raw,
+                                   x_buy=(1.0 if native else PORT_XBUY),
+                                   x_val=float(fx_live)))
+        ATTR["rows"].append(row)
+        _attr_by_tk[ctk] = row
+        print(f"  FXA: added missing holding {ctk} "
+              f"({shares_raw:g} sh, MXN cost {mxn_cost_raw:,.0f})")
+    elif abs(float(row.get("shares") or 0.0) - shares_raw) > 1e-6:   # share count drifted
+        print(f"  FXA: refreshed {ctk} shares {row['shares']:g} -> {shares_raw:g}")
+        row["shares"] = shares_raw
+        row["unrealized"]["mxn_cost"] = mxn_cost_raw
+
 for r in ATTR["rows"]:
     pos_tk = POS_KEY.get(r["ticker"], r["ticker"])
     u = r["unrealized"]
