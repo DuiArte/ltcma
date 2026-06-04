@@ -209,7 +209,7 @@ SKILLS = ["Python", "C++ / C#", "MQL5", "SQL", "scikit-learn", "hmmlearn", "SciP
           "Power BI / DAX", "ETL pipelines", "Hidden Markov Models", "Kalman filters",
           "Risk management", "Monte Carlo", "Backtesting", "Asset allocation",
           "AWS S3", "Financial APIs (IBKR, FxPro, MT5)", "Claude Code (AI-assisted dev)"]
-CERTS = ["CFA — Level I Candidate (exam February 2026)",
+CERTS = ["CFA — Level I Candidate (exam May 2026)",
          "AMIB Figure 3 — current securities-advisory license (renewed Nov 2025)",
          "B.S. Finance — Tecnológico de Monterrey (2019–2021)"]
 
