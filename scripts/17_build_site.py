@@ -453,29 +453,29 @@ _OCTO = ('<svg class="gh-mark" viewBox="0 0 16 16" width="20" height="20" '
          '8c0-4.42-3.58-8-8-8Z"></path></svg>')
 # (name, repo_handle, url, description, status, live?)
 PROJECTS = [
-    ("LTCMA Methodology", "duiarte/ltcma-methodology",
-     "https://github.com/duiarte/ltcma-methodology",
+    ("LTCMA Methodology", "DuiArte/ltcma-methodology",
+     "https://github.com/DuiArte/ltcma-methodology",
      "Long-term capital market assumptions &mdash; building-block expected returns, "
-     "Ledoit-Wolf risk, regime-switching Monte Carlo.", "Research", False),
-    ("Static Drift-Weight 50/30/20", "duiarte/static-drift-weight",
-     "https://github.com/duiarte/static-drift-weight",
+     "Ledoit-Wolf risk, regime-switching Monte Carlo.", "Research", True),
+    ("Static Drift-Weight 50/30/20", "DuiArte/static-drift-weight",
+     "https://github.com/DuiArte/static-drift-weight",
      "The deployed core sleeve &mdash; SPY/IEF/GLD drift-weighted, no gating. "
-     "Sharpe 1.33, GFC-stress-tested to a sub-10% monthly drawdown.", "Deployed", False),
-    ("SignalLib Framework", "duiarte/signallib-framework",
-     "https://github.com/duiarte/signallib-framework",
+     "Sharpe 1.33, GFC-stress-tested to a sub-10% monthly drawdown.", "Deployed", True),
+    ("SignalLib Framework", "DuiArte/signallib-framework",
+     "https://github.com/DuiArte/signallib-framework",
      "Signal-discovery rig &mdash; many uncorrelated weak signals over static "
-     "weights, with deflated-Sharpe and PBO gates baked in.", "Research", False),
+     "weights, with deflated-Sharpe and PBO gates baked in.", "Research", True),
     ("Terse", "DuiArte/terse", "https://github.com/DuiArte/terse",
      "A token-efficient language for compressing instructions and documents "
      "before they reach an LLM.", "Tooling", True),
-    ("AI Procedures (Quant)", "duiarte/ai-procedures-quant",
-     "https://github.com/duiarte/ai-procedures-quant",
+    ("AI Procedures (Quant)", "DuiArte/ai-procedures-quant",
+     "https://github.com/DuiArte/ai-procedures-quant",
      "The runbooks and automated daily-refresh infrastructure that keep this "
-     "research lab current.", "Tooling", False),
-    ("Backtests Archive", "duiarte/backtests-archive",
-     "https://github.com/duiarte/backtests-archive",
+     "research lab current.", "Tooling", True),
+    ("Backtests Archive", "DuiArte/backtests-archive",
+     "https://github.com/DuiArte/backtests-archive",
      "Selected backtest reports &mdash; methodology and headline results; the live "
-     "parameters stay private.", "Research", False),
+     "parameters stay private.", "Research", True),
 ]
 _BADGE = {"Deployed": "badge-deployed", "Research": "badge-research", "Tooling": "badge-tooling"}
 proj_cards = ""
