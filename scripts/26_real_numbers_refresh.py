@@ -475,7 +475,7 @@ f3_div = divhtml(f3, "pf-alloc")
 
 body_template = (
     '<body><header class="shell"><div class="shell-in">'
-    '<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>__NAV__'
+    '<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>__NAV__'
     "</div></header>\n"
     '<section class="hero"><div class="container">'
     "<h1>Stock Portfolio Tracker</h1>"

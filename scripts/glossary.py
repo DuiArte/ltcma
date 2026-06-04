@@ -11,6 +11,7 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="stocks.html">Stock Analysis</a>'
        '<a href="signals.html">Stock Signals</a>'
        '<a href="regime.html">Regime Tracker</a>'
+       '<a href="projects.html">Projects</a>'
        '<a href="glossary.html">Glossary</a>'
        '<a href="index.html#about">About</a></nav>')
 
@@ -24,6 +25,33 @@ def ccy_badge(currency, note=""):
 # --- glossary: plain-language definitions, grouped by area ---
 # Each entry: (term, plain-English explanation -- no math, no jargon).
 GLOSSARY = {
+    "Portfolio Accounting & FX": [
+        ("Recycled $10M base",
+         "The equity book is measured against a fixed $10,000,000 MXN starting "
+         "pool, with capital recycled through it. Total Return = (today's total "
+         "value &minus; $10M) &divide; $10M &mdash; not against the running cost of "
+         "what we currently hold."),
+        ("GBMF2 cash sleeve",
+         "Cash from equity sales parks in the GBMF2 fund between trades, so it is "
+         "counted as the equity book's cash: Total Value = holdings at market price "
+         "+ GBMF2 cash. We use the real broker balance, never a reconstructed guess."),
+        ("Undocumented MORE shares = a BUY",
+         "If a holding grows with no matching trade ticket, we treat the extra "
+         "shares as a purchase at the price implied by the broker's cost-basis "
+         "column. It raises cost basis; it never counts as profit."),
+        ("Undocumented FEWER shares = a SELL",
+         "If a holding shrinks with no matching ticket, we treat the missing shares "
+         "as a sale and book the gain or loss into Realized P/L, at the price "
+         "implied by the change in the cost-basis column."),
+        ("Realized vs Unrealized P/L",
+         "Unrealized = how much our current holdings are worth above (or below) "
+         "what we paid for them. Realized = gains already locked in as cash. "
+         "Together they make total profit."),
+        ("FX conversion",
+         "One source for USD/MXN &mdash; Yahoo Finance's close on the as-of date "
+         "&mdash; used identically everywhere on a page and shown to four decimals "
+         "(e.g. 17.3201). Internal math keeps full precision."),
+    ],
     "Returns & Valuation": [
         ("Expected return",
          "Our best estimate of how much an investment earns per year, on "

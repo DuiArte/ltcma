@@ -123,7 +123,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>{NAV}
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
 <section class="hero"><div class="container">
 <h1>Stock Signals</h1>

@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
 </div></header>
 <main class="container"><article class="tile report"><a class="bt-back" href="backtests.html">&larr; All backtests</a><h1>Static Drift-Weight Sleeve 50/30/20 — Standalone Backtest</h1>
 <p><strong>Date:</strong> 2026-05-30 · <strong>Model:</strong> Opus 4.7 1M (pinned per protocol) · <strong>Backtest window:</strong> 2010-03-31 → 2026-04-30 (194 monthly observations / 16.2 years).</p>
@@ -621,6 +621,16 @@
 <li>P(CAGR &gt; 0) = 1.00</li>
 </ul>
 <p>This is tighter than Ensemble #14 (which had MC MaxDD p5 of −8.65 %). Static 50/30/20's MC tail is materially better-behaved.</p>
+<blockquote>
+<p><strong>Kronos synthetic-path MC — attempted 2026-06-03, NOT usable (no change to this verdict).</strong> SignalLib
+v0.7 thread 1 tried re-stressing this strategy on Kronos-small-generated 252d alternate-history paths.
+The generator is degenerate at long horizon (terminal-return vol collapsed 2–11× vs real; every path the
+same one-sided macro regime — equities bleed, gold/bonds drift up; no crash/rally/dollar-strength paths).
+The resulting strategy MC is non-informative (self-contradicting: P(MaxDD&lt;10%)=1.00 trivially because vol
+is too low to form a drawdown, yet median Sharpe 0.04 from spurious drift). <strong>This 10k stationary
+bootstrap above remains the valid MC stress test.</strong> Do not re-run Kronos-MC with Kronos-small. Full
+evidence: <code>SignalLib\scenarios\kronos_mc_v0.7_report.md</code>.</p>
+</blockquote>
 <hr />
 <h2>Cost-shock test (+50 % fees+slippage across all sleeves)</h2>
 <table>
