@@ -276,7 +276,9 @@ risk-adjusted terms), <b style="color:#6b7280">amber</b> = ensemble component (r
 standalone-worthy). Metrics and verdicts are pulled verbatim from each backtest's report; the
 full research ledger, including the ideas that failed, is kept internally. The deployable results
 here are the validated building blocks behind the live book on the
-<a href="strategies.html">Strategies</a> page.</p>
+<a href="strategies.html">Strategies</a> page. Performance metrics shown are real
+and scale-invariant; strategy parameters, asset universes and entry/exit rules are
+redacted for confidentiality.</p>
 <div class="btgrid">{cards}</div></section>
 {method}
 </main>"""

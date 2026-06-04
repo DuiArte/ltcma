@@ -167,7 +167,9 @@ BT_SECTION = (
     '&rarr; held-out window &rarr; S&amp;P&nbsp;500 gate &rarr; sub-10% drawdown bar). The flagship '
     '<b>Static Drift-Weight 50/30/20</b> (Sharpe&nbsp;1.33, GFC-tested) leads. Same canonical '
     'source as the <a href="backtests.html">Backtests</a> page &mdash; shown here too so the '
-    'deployable results sit alongside the live strategies.</p>'
+    'deployable results sit alongside the live strategies. Performance metrics shown are real '
+    'and scale-invariant; strategy parameters, asset universes and entry/exit rules are redacted '
+    'for confidentiality.</p>'
     f'<div class="btgrid">{_bt_cards}</div></section>')
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
