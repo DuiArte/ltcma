@@ -1,50 +1,50 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LTCMA 2026 — Strategy Backtests</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css">
 <style>
-.bt-intro{color:#525252;font-size:14px;max-width:880px;margin:-6px 0 28px;line-height:1.6}
-.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
-.btcard{background:#fff;border:1px solid #e0e0e0;border-top:4px solid #c6c6c6;
-padding:24px 24px 20px;box-shadow:0 1px 4px rgba(22,22,22,.06);display:flex;flex-direction:column;
-transition:box-shadow .18s}
-.btcard:hover{box-shadow:0 4px 16px rgba(22,22,22,.12)}
-.btcard.bt-green{border-top-color:#198038}
-.btcard.bt-yellow{border-top-color:#b28600}
-.btcard.bt-red{border-top-color:#da1e28}
+.bt-intro{color:#555;font-size:14px;max-width:880px;margin:-6px 0 28px;line-height:1.6}
+.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem}
+.btcard{background:#fff;border:1px solid #e5e5e5;border-top:3px solid #d4d4d4;
+padding:24px 24px 20px;box-shadow:none;display:flex;flex-direction:column;transition:background .15s ease-out}
+.btcard:hover{background:rgba(10,37,64,.045)}
+.btcard.bt-green{border-top-color:#0a5d3a}
+.btcard.bt-yellow{border-top-color:#6b7280}
+.btcard.bt-red{border-top-color:#7c2d12}
 .bt-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
-.bt-badge{font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
-color:#fff;padding:5px 11px;border-radius:2px}
-.bt-badge.bt-green{background:#198038}
-.bt-badge.bt-yellow{background:#b28600}
-.bt-badge.bt-red{background:#da1e28}
-.bt-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8d8d8d}
-.bt-name{font-size:19px;font-weight:600;color:#161616;margin:0 0 6px;line-height:1.25}
-.bt-tests{font-size:13px;color:#525252;line-height:1.5;margin:0 0 16px}
-.bt-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#e0e0e0;
-border:1px solid #e0e0e0;margin-bottom:16px}
-.bt-m{background:#fafafa;padding:11px 8px;text-align:center}
-.bt-mv{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;color:#0f62fe;letter-spacing:-.3px}
-.bt-mv.neg{color:#da1e28}.bt-mv.na{color:#8d8d8d}
-.bt-mk{font-size:9.5px;color:#525252;margin-top:4px;letter-spacing:.2px;text-transform:uppercase}
-.bt-verdict{font-size:13.5px;color:#262626;line-height:1.55;margin:0 0 18px;flex:1}
+.bt-badge{font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+color:#fff;padding:4px 10px;border-radius:0}
+.bt-badge.bt-green{background:#0a5d3a}
+.bt-badge.bt-yellow{background:#6b7280}
+.bt-badge.bt-red{background:#7c2d12}
+.bt-date{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11.5px;color:#888}
+.bt-name{font-family:'Spectral',Georgia,serif;font-size:19px;font-weight:500;color:#111;margin:0 0 6px;line-height:1.25}
+.bt-tests{font-size:13px;color:#555;line-height:1.5;margin:0 0 16px}
+.bt-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:0;background:none;
+border:1px solid #e5e5e5;margin-bottom:16px}
+.bt-m{background:#fff;padding:11px 8px;text-align:center;border-right:1px solid #e5e5e5}
+.bt-m:last-child{border-right:0}
+.bt-mv{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:#111;letter-spacing:-.01em}
+.bt-mv.neg{color:#7c2d12}.bt-mv.na{color:#888}
+.bt-mk{font-size:9.5px;color:#888;margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.bt-verdict{font-size:13.5px;color:#333;line-height:1.55;margin:0 0 18px;flex:1}
 .bt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;
-border-top:1px solid #e0e0e0;padding-top:14px}
-.bt-span{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8d8d8d}
-.bt-link{color:#0f62fe;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap}
+border-top:1px solid #e5e5e5;padding-top:14px}
+.bt-span{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11px;color:#888}
+.bt-link{color:#0a2540;text-decoration:none;font-size:13px;font-weight:500;white-space:nowrap}
 .bt-link:hover{text-decoration:underline}
-.bt-method{background:#fff;border:1px solid #e0e0e0;border-left:4px solid #0f62fe;
+.bt-method{background:none;border:1px solid #e5e5e5;border-left:2px solid rgba(10,37,64,.20);
 padding:22px 26px;margin-top:8px}
-.bt-method h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:#161616;margin:0 0 12px}
+.bt-method h3{font-family:'Spectral',Georgia,serif;font-size:16px;font-weight:500;text-transform:none;letter-spacing:0;color:#111;margin:0 0 12px}
 .bt-method ol{margin:0 0 0 18px;padding:0}
-.bt-method li{font-size:13px;color:#393939;margin:5px 0;line-height:1.5}
-.bt-method p{font-size:12.5px;color:#525252;margin:12px 0 0;line-height:1.55}
-.report .bt-back{display:inline-block;margin-bottom:14px;color:#0f62fe;text-decoration:none;font-size:13px;font-weight:600}
-@media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}}
+.bt-method li{font-size:13px;color:#555;margin:5px 0;line-height:1.5}
+.bt-method p{font-size:12.5px;color:#888;margin:12px 0 0;line-height:1.55}
+.report .bt-back{display:inline-block;margin-bottom:14px;color:#0a2540;text-decoration:none;font-size:13px;font-weight:500}
+@media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}.bt-m:nth-child(3n){border-right:0}}
 </style></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});});</script>
 </div></header>
 <section class="hero"><div class="container">
 <h1>Strategy Backtests</h1>
@@ -56,8 +56,8 @@ window and an S&amp;P 500 gate &mdash; with the honest verdict for each.</p>
 <main class="container">
 <section class="block"><h2>Completed Backtests</h2>
 <p class="bt-intro">A curated view of the strategies that earned a positive verdict. Color shows the call:
-<b style="color:#198038">green</b> = deployable (survives the full protocol and beats the S&amp;P on
-risk-adjusted terms), <b style="color:#b28600">amber</b> = ensemble component (real edge, not
+<b style="color:#0a5d3a">green</b> = deployable (survives the full protocol and beats the S&amp;P on
+risk-adjusted terms), <b style="color:#6b7280">amber</b> = ensemble component (real edge, not
 standalone-worthy). Metrics and verdicts are pulled verbatim from each backtest's report; the
 full research ledger, including the ideas that failed, is kept internally.</p>
 <div class="btgrid"><article class="btcard bt-green"><div class="bt-head"><span class="bt-badge bt-green">Deployable</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Buy-the-Dip / Sell-the-Rip</h3><p class="bt-tests">Daily-timeframe pullback-in-uptrend (systemic alpha): buy dips while price is above a long trend filter, optionally short rips in downtrends. Universe: SPY/QQQ/DIA/IWM/EFA/EEM/EWW/GLD/SLV ETFs plus Gold/Silver spot, 2010-2026.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">1.08</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv ">0.80</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv ">0.46</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-4.3%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+2.9%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">Robust but boring: 80-99% of the parameter space is positive-Calmar, so the edge is structural, not curve-fit. Deploy as a diversified SPY/QQQ/EFA ensemble (DSR 0.60-0.80, PBO 0.37-0.48), not a single name. Lead with the caveat: it is a low-drawdown S&amp;P-replacement (~2x the S&amp;P's Calmar at ~1/8 the drawdown), NOT a return amplifier - at a 10% DD budget it earns ~10.1% CAGR vs a de-levered S&amp;P's ~3.6%.</p><div class="bt-foot"><span class="bt-span">2010-01-04 -&gt; 2026-05-26</span><a class="bt-link" href="bt_buy_the_dip.html">Full report &rarr;</a></div></article><article class="btcard bt-green"><div class="bt-head"><span class="bt-badge bt-green">Deployable</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Static SPY / IEF / GLD Diversification</h3><p class="bt-tests">The deployable finding from the tactical-asset-allocation study: an equal-weight, low-turnover blend of US equity (SPY), 7-10y Treasuries (IEF) and gold (GLD), rebalanced monthly/quarterly, with an optional absolute-momentum cash filter. 2011-2026.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">1.00</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv ">0.96</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv ">0.30</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-16.9%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+8.4%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">The momentum rotation didn't help - but the static equal-weight SPY/IEF/GLD blend beat every rotation variant tested: Sharpe 1.00, DSR 0.96, near-zero turnover, and it beats the S&amp;P on Sharpe, Calmar and drawdown. Deploy as a low-cost diversified core (a 60/40-style -16.9% drawdown profile, not a sub-10%-DD product); the absolute-momentum filter is an optional crash overlay.</p><div class="bt-foot"><span class="bt-span">2011-01-01 -&gt; 2026-05-26</span><a class="bt-link" href="bt_static_diversification.html">Full report &rarr;</a></div></article><article class="btcard bt-yellow"><div class="bt-head"><span class="bt-badge bt-yellow">Ensemble component</span><span class="bt-date">2026-05-26</span></div><h3 class="bt-name">Candle Range Theory (CRT) + Regime Filter</h3><p class="bt-tests">ICT 3-candle range theory (C1 range -&gt; C2 sweep+close-back-inside -&gt; C3 reverse), gated by a daily 200-EMA trend filter on Gold. Tested vanilla and with regime overlays (trend alignment, ATR regime, day-of-week) on Gold, Silver, EURUSD, USDJPY. Span 2016 -&gt; 2026-05-19.</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv ">0.59</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv na">n/a</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv na">n/a</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-18.8%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+6.3%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">CRT gated by a daily 200-EMA trend filter on Gold is a thin but real edge - PF 1.22, Sharpe 0.59, Calmar 0.33 - usable as one signal inside the regime-adaptive ensemble, never standalone. (Vanilla CRT, with no regime filter, had no post-cost edge - which is why this is an ensemble component, not a deployable system.)</p><div class="bt-foot"><span class="bt-span">2016 -&gt; 2026-05-19</span><a class="bt-link" href="bt_crt.html">Full report &rarr;</a></div></article><article class="btcard bt-green"><div class="bt-head"><span class="bt-badge bt-green">Deployable — GFC-tested (cleaner than the now-demoted Ensemble #14)</span><span class="bt-date">2026-05-30</span></div><h3 class="bt-name">Static Drift-Weight Sleeve 50/30/20 (BTD / Static SPY-IEF-GLD / CRT-Gold) — GFC-tested</h3><p class="bt-tests">Fixed 50/30/20 allocation across Buy-the-dip ensemble (SPY+QQQ+EFA) / Static SPY-IEF-GLD blend / CRT regime-Gold daily 3R, monthly rebalance, no regime gating, no kill switch. Packaged as a standalone backtest after Ensemble #14 revealed this simpler version strictly dominates the gated capstone on Sharpe and MaxDD. Vindicated 2026-05-31 by the real-sleeves 21y extended GFC analog test (passed 10% bar at -9.85% monthly with 15 bps headroom).</p><div class="bt-metrics"><div class="bt-m"><div class="bt-mv na">n/a</div><div class="bt-mk">Raw Sharpe</div></div><div class="bt-m"><div class="bt-mv ">1.00</div><div class="bt-mk">DSR</div></div><div class="bt-m"><div class="bt-mv na">n/a</div><div class="bt-mk">PBO</div></div><div class="bt-m"><div class="bt-mv neg">-3.9%</div><div class="bt-mk">Max DD</div></div><div class="bt-m"><div class="bt-mv ">+5.1%</div><div class="bt-mk">CAGR</div></div></div><p class="bt-verdict">Sharpe 1.33, MaxDD -3.92%, CAGR 5.06% over 194 months (16.2y, post-2010). Extended 21y test (2005-2026) including real 2008 GFC: GFC monthly MaxDD -9.85% PASSES 10% bar with 15 bps headroom; -9.81% daily with M5-vol-matched CRT-Gold passes both. Strictly dominates Ensemble #14 (which fails the same GFC test at -13.59% monthly) on risk-adjusted return AND drawdown AND PBO tightness AND Monte Carlo robustness AND GFC survival. Beats SPY on Sharpe (1.33 vs 1.00) and Axis B (2.83x leverage matches SPY CAGR at -11.1% DD vs SPY -23.9% DD). Held-out 2025+ Sharpe 1.95. Cost-shock +50% only drops Sharpe to 1.28. 5/5 walk-forward folds same-sign with min OS Sharpe 1.01. Deploy on time horizon &gt;= 5 years for the compounding effect to matter.</p><div class="bt-foot"><span class="bt-span">2010-03-31 -&gt; 2026-04-30</span><a class="bt-link" href="bt_static_drift_weights.html">Full report &rarr;</a></div></article></div></section>

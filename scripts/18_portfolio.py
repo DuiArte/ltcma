@@ -27,8 +27,8 @@ DATA = os.path.expanduser("~/LTCMA/data")
 DOCS = os.path.expanduser("~/LTCMA/docs")
 SCALE = 1.8                       # holdings scaling constant (obfuscation)
 FILTER_ANOMALIES = True           # drop rows with impossible returns (bad data)
-INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
-RED, GREY = "#da1e28", "#8d8d8d"
+INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
+RED, GREY = "#7c2d12", "#888888"
 
 # latest USDMXN rate for the currency toggle
 sig = pd.read_csv(f"{DATA}/signals_fred.csv", index_col=0)
@@ -39,7 +39,7 @@ LAYOUT = dict(template="plotly_white",
               title_font=dict(color=INK, size=15), dragmode=False,
               margin=dict(l=64, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
+              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
 
 def div(fig, name):
     fig.update_layout(**LAYOUT)
@@ -384,7 +384,7 @@ fxa_section = ms.build_section(ATTR, scale=SCALE, prefix="fxa", theme="light",
 # .replace("@P", prefix) before .replace("@PANEL", ...)/("@POS", ...), so
 # those two tokens get mangled to "fxaANEL" / "fxaOS". Patch them post-hoc.
 fxa_section = (fxa_section.replace("background:fxaANEL", "background:#fff")
-                          .replace("color:fxaOS", "color:#198038"))
+                          .replace("color:fxaOS", "color:#0a5d3a"))
 assert fxa_section.startswith('<section id="fxa-root">'), "FXA section malformed"
 assert "fxaANEL" not in fxa_section and "fxaOS" not in fxa_section
 
@@ -545,7 +545,7 @@ PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stock Portfolio Tracker</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}

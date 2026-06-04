@@ -31,53 +31,53 @@ sys.path.insert(0, HERE)
 from glossary import NAV  # noqa: E402
 
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
-         'family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">')
+         'family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">')
 
 BADGE = {  # badge key -> (label fallback, accent colour)
-    "green":  ("Deployable",        "#198038"),
-    "yellow": ("Ensemble component", "#b28600"),
-    "red":    ("Pass / no edge",     "#da1e28"),
+    "green":  ("Deployable",        "#0a5d3a"),
+    "yellow": ("Ensemble component", "#6b7280"),
+    "red":    ("Pass / no edge",     "#7c2d12"),
 }
 
-PAGE_CSS = """
-.bt-intro{color:#525252;font-size:14px;max-width:880px;margin:-6px 0 28px;line-height:1.6}
-.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
-.btcard{background:#fff;border:1px solid #e0e0e0;border-top:4px solid #c6c6c6;
-padding:24px 24px 20px;box-shadow:0 1px 4px rgba(22,22,22,.06);display:flex;flex-direction:column;
-transition:box-shadow .18s}
-.btcard:hover{box-shadow:0 4px 16px rgba(22,22,22,.12)}
-.btcard.bt-green{border-top-color:#198038}
-.btcard.bt-yellow{border-top-color:#b28600}
-.btcard.bt-red{border-top-color:#da1e28}
+PAGE_CSS = r"""
+.bt-intro{color:#555;font-size:14px;max-width:880px;margin:-6px 0 28px;line-height:1.6}
+.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem}
+.btcard{background:#fff;border:1px solid #e5e5e5;border-top:3px solid #d4d4d4;
+padding:24px 24px 20px;box-shadow:none;display:flex;flex-direction:column;transition:background .15s ease-out}
+.btcard:hover{background:rgba(10,37,64,.045)}
+.btcard.bt-green{border-top-color:#0a5d3a}
+.btcard.bt-yellow{border-top-color:#6b7280}
+.btcard.bt-red{border-top-color:#7c2d12}
 .bt-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
-.bt-badge{font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
-color:#fff;padding:5px 11px;border-radius:2px}
-.bt-badge.bt-green{background:#198038}
-.bt-badge.bt-yellow{background:#b28600}
-.bt-badge.bt-red{background:#da1e28}
-.bt-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8d8d8d}
-.bt-name{font-size:19px;font-weight:600;color:#161616;margin:0 0 6px;line-height:1.25}
-.bt-tests{font-size:13px;color:#525252;line-height:1.5;margin:0 0 16px}
-.bt-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#e0e0e0;
-border:1px solid #e0e0e0;margin-bottom:16px}
-.bt-m{background:#fafafa;padding:11px 8px;text-align:center}
-.bt-mv{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;color:#0f62fe;letter-spacing:-.3px}
-.bt-mv.neg{color:#da1e28}.bt-mv.na{color:#8d8d8d}
-.bt-mk{font-size:9.5px;color:#525252;margin-top:4px;letter-spacing:.2px;text-transform:uppercase}
-.bt-verdict{font-size:13.5px;color:#262626;line-height:1.55;margin:0 0 18px;flex:1}
+.bt-badge{font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+color:#fff;padding:4px 10px;border-radius:0}
+.bt-badge.bt-green{background:#0a5d3a}
+.bt-badge.bt-yellow{background:#6b7280}
+.bt-badge.bt-red{background:#7c2d12}
+.bt-date{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11.5px;color:#888}
+.bt-name{font-family:'Spectral',Georgia,serif;font-size:19px;font-weight:500;color:#111;margin:0 0 6px;line-height:1.25}
+.bt-tests{font-size:13px;color:#555;line-height:1.5;margin:0 0 16px}
+.bt-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:0;background:none;
+border:1px solid #e5e5e5;margin-bottom:16px}
+.bt-m{background:#fff;padding:11px 8px;text-align:center;border-right:1px solid #e5e5e5}
+.bt-m:last-child{border-right:0}
+.bt-mv{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:#111;letter-spacing:-.01em}
+.bt-mv.neg{color:#7c2d12}.bt-mv.na{color:#888}
+.bt-mk{font-size:9.5px;color:#888;margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.bt-verdict{font-size:13.5px;color:#333;line-height:1.55;margin:0 0 18px;flex:1}
 .bt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;
-border-top:1px solid #e0e0e0;padding-top:14px}
-.bt-span{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8d8d8d}
-.bt-link{color:#0f62fe;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap}
+border-top:1px solid #e5e5e5;padding-top:14px}
+.bt-span{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11px;color:#888}
+.bt-link{color:#0a2540;text-decoration:none;font-size:13px;font-weight:500;white-space:nowrap}
 .bt-link:hover{text-decoration:underline}
-.bt-method{background:#fff;border:1px solid #e0e0e0;border-left:4px solid #0f62fe;
+.bt-method{background:none;border:1px solid #e5e5e5;border-left:2px solid rgba(10,37,64,.20);
 padding:22px 26px;margin-top:8px}
-.bt-method h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:#161616;margin:0 0 12px}
+.bt-method h3{font-family:'Spectral',Georgia,serif;font-size:16px;font-weight:500;text-transform:none;letter-spacing:0;color:#111;margin:0 0 12px}
 .bt-method ol{margin:0 0 0 18px;padding:0}
-.bt-method li{font-size:13px;color:#393939;margin:5px 0;line-height:1.5}
-.bt-method p{font-size:12.5px;color:#525252;margin:12px 0 0;line-height:1.55}
-.report .bt-back{display:inline-block;margin-bottom:14px;color:#0f62fe;text-decoration:none;font-size:13px;font-weight:600}
-@media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}}
+.bt-method li{font-size:13px;color:#555;margin:5px 0;line-height:1.5}
+.bt-method p{font-size:12.5px;color:#888;margin:12px 0 0;line-height:1.55}
+.report .bt-back{display:inline-block;margin-bottom:14px;color:#0a2540;text-decoration:none;font-size:13px;font-weight:500}
+@media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}.bt-m:nth-child(3n){border-right:0}}
 """
 
 
@@ -273,8 +273,8 @@ window and an S&amp;P 500 gate &mdash; with the honest verdict for each.</p>
 <main class="container">
 <section class="block"><h2>Completed Backtests</h2>
 <p class="bt-intro">A curated view of the strategies that earned a positive verdict. Color shows the call:
-<b style="color:#198038">green</b> = deployable (survives the full protocol and beats the S&amp;P on
-risk-adjusted terms), <b style="color:#b28600">amber</b> = ensemble component (real edge, not
+<b style="color:#0a5d3a">green</b> = deployable (survives the full protocol and beats the S&amp;P on
+risk-adjusted terms), <b style="color:#6b7280">amber</b> = ensemble component (real edge, not
 standalone-worthy). Metrics and verdicts are pulled verbatim from each backtest's report; the
 full research ledger, including the ideas that failed, is kept internally.</p>
 <div class="btgrid">{cards}</div></section>

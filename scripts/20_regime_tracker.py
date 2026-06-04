@@ -16,7 +16,7 @@ from glossary import NAV, ccy_badge
 
 DATA = os.path.expanduser("~/LTCMA/data")
 DOCS = os.path.expanduser("~/LTCMA/docs")
-INK, BLUE, GOLD, GREEN, RED, GREY = "#161616", "#0f62fe", "#b28600", "#198038", "#da1e28", "#8d8d8d"
+INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 LAYOUT = dict(template="plotly_white",
@@ -24,7 +24,7 @@ LAYOUT = dict(template="plotly_white",
               title_font=dict(color=INK, size=15), dragmode=False,
               margin=dict(l=58, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
+              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
 
 def div(fig, name):
     fig.update_layout(**LAYOUT)
@@ -123,7 +123,7 @@ facet_rows = ""
 for _fname in FACETS:
     _txt, _col = _facet_cell(facet_now[_fname])
     facet_rows += (f"<tr><td><b>{_fname}</b></td>"
-                   f"<td style='font-size:12px;color:#525252'>{FACET_INPUTS[_fname]}</td>"
+                   f"<td style='font-size:12px;color:#555555'>{FACET_INPUTS[_fname]}</td>"
                    f"<td style='color:{_col};font-weight:600'>{_txt}</td></tr>")
 
 # ---------- regime state + transitions ----------
@@ -214,7 +214,7 @@ tr_rows = ""
 for _, row in transitions.iterrows():
     badge = ({"stress": RED, "calm": GREEN, "neutral": GREY}.get(row["state"], GREY))
     tr_rows += (f"<tr><td>{row['from_d'].strftime('%b %Y')}</td>"
-                f"<td>{row['prev_state'] or '—'} <span style='color:#8d8d8d'>&rarr;</span> "
+                f"<td>{row['prev_state'] or '—'} <span style='color:#888888'>&rarr;</span> "
                 f"<b style='color:{badge}'>{row['state']}</b></td>"
                 f"<td>{row['months']} mo</td></tr>")
 
@@ -234,7 +234,7 @@ snap_html = "".join(
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Regime Tracker — when to adjust the strategy</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}

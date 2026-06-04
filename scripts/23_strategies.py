@@ -12,8 +12,8 @@ from glossary import NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
 import pandas as pd
-INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
-RED, GREY, PURPLE = "#da1e28", "#8d8d8d", "#8a3ffc"
+INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
+RED, GREY, PURPLE = "#7c2d12", "#888888", "#8a3ffc"
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -22,7 +22,7 @@ LAYOUT = dict(template="plotly_white",
               title_font=dict(color=INK, size=15), dragmode=False,
               margin=dict(l=60, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
+              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
 
 
 def div(fig, name):
@@ -102,7 +102,7 @@ GROUPS = [
 ]
 ROWKEYS = [key for _, items in GROUPS for _, key in items]
 
-head = "".join(f"<th>{data[k]['name']}<br><span style='font-weight:400;color:#8d8d8d'>"
+head = "".join(f"<th>{data[k]['name']}<br><span style='font-weight:400;color:#888888'>"
                f"vs {data[k]['bn']}</span></th>" for k in order)
 body = ""
 for gname, items in GROUPS:
@@ -140,7 +140,7 @@ bt_script = ('<script>window.BT_DATA=' + json.dumps(data, separators=(",", ":"))
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Systematic Strategies</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}

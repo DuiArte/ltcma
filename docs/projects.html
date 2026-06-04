@@ -2,31 +2,31 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Projects</title>
 <meta name="description" content="A portfolio of quantitative-research projects by Carlos Duarte — methodology, deployed strategies and tooling, each linking to its own GitHub repository.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css">
 <style>
-.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:8px}
-.proj-card{display:block;background:#fff;border:1px solid #d0d7de;border-radius:10px;
-padding:18px 20px;text-decoration:none;color:#161616;transition:border-color .15s,box-shadow .15s,transform .15s}
-.proj-card:hover{border-color:#0969da;box-shadow:0 6px 20px rgba(9,105,218,.12);transform:translateY(-2px)}
-.proj-soon{opacity:.72}
-.proj-top{display:flex;align-items:center;gap:8px;color:#161616;margin-bottom:10px}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem;margin-top:8px}
+.proj-card{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:0;
+padding:20px 22px;text-decoration:none;color:#111;transition:background .15s ease-out,border-color .15s ease-out}
+.proj-card:hover{border-color:#d4d4d4;background:rgba(10,37,64,.045)}
+.proj-soon{opacity:.7}
+.proj-top{display:flex;align-items:center;gap:8px;color:#111;margin-bottom:10px}
 .gh-mark{flex:none}
-.proj-handle{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace;font-size:13px;
-color:#0969da;font-weight:500;word-break:break-all}
-.proj-name{font-size:17px;font-weight:600;margin-bottom:6px}
-.proj-desc{font-size:14px;color:#57606a;margin:0 0 16px;line-height:1.5}
+.proj-handle{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;font-size:13px;
+color:#0a2540;font-weight:500;word-break:break-all}
+.proj-name{font-family:'Spectral',Georgia,serif;font-size:18px;font-weight:500;margin-bottom:6px}
+.proj-desc{font-size:14px;color:#555;margin:0 0 16px;line-height:1.55}
 .proj-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pbadge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;letter-spacing:.2px}
-.badge-deployed{background:#dafbe1;color:#1a7f37}
-.badge-research{background:#ddf4ff;color:#0969da}
-.badge-tooling{background:#fbefff;color:#8250df}
-.badge-soon{background:#eaeef2;color:#656d76}
-.proj-cta{margin-left:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;
-font-size:12px;font-weight:500;color:#0969da}
+.pbadge{font-size:10.5px;font-weight:500;padding:3px 9px;border-radius:0;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent}
+.badge-deployed{background:none;color:#0a5d3a;border-color:rgba(10,93,58,.35)}
+.badge-research{background:none;color:#1e3a8a;border-color:rgba(30,58,138,.35)}
+.badge-tooling{background:none;color:#5b21b6;border-color:rgba(91,33,182,.35)}
+.badge-soon{background:none;color:#6b7280;border-color:#e5e5e5}
+.proj-cta{margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;
+font-size:12px;font-weight:500;color:#0a2540}
 </style></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav>
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="backtests.html">Backtests</a><a href="stocks.html">Stock Analysis</a><a href="signals.html">Stock Signals</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});});</script>
 </div></header>
 <section class="hero"><div class="container"><h1>Projects</h1>
 <p class="lede">A portfolio of related research projects. Each repository holds the
