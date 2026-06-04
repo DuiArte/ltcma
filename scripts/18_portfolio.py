@@ -77,8 +77,48 @@ TICKER_MAP = {
     "META": "META.MX", "MSFT": "MSFT.MX", "QQQ": "QQQ.MX", "SOXX": "SOXX.MX",
     "VGT": "VGT.MX", "VUG": "VUG.MX", "GMEXICO B": "GMEXICOB.MX",
     "LMT": "LMT.MX", "AMAT": "AMAT.MX", "MCHI": "MCHI.MX",
-    # "CCJ N" has no Yahoo .MX listing -> priced from the Excel column (fallback below)
+    "ASTS": "ASTS.MX", "XLE": "XLE.MX",
+    # "CCJ N" has no Yahoo .MX listing -> priced from the broker column (fallback below)
 }
+
+# ---------- broker source of truth: GBM "Detalle de Portafolio" export ----------
+# Carlos's authoritative position file in Downloads. Supersedes the (stale) Excel
+# for the *current* snapshot: real share counts, broker cost basis, and the GBMF2
+# cash sleeve. Sections are single-column header rows; the equity book = "Mercado
+# de Capitales Nacional" + "Mercado de Capitales Global (SIC)". The "GBMF2 BM" line
+# under "Fondos de Inversion Deuda" is the equity-sleeve cash (Rule 3 — settled MXN
+# parks here between trades; it is the cash account for the equity book).
+import csv as _csv, re as _re2, glob as _g2
+def _bmoney(x):
+    s = _re2.sub(r"[^0-9.\-]", "", str(x)); return float(s) if s else 0.0
+def load_broker_snapshot():
+    def _ts(p):                                          # the 13-digit Unix-ms stamp, ignoring " (1)" etc.
+        m = _re2.search(r"(\d{13})", os.path.basename(p))
+        return int(m.group(1)) if m else 0
+    files = sorted(_g2.glob("/mnt/c/Users/carlo/Downloads/GBM_Homebroker_Detalle_de_Portafolio_*.csv"), key=_ts)
+    if not files:
+        return None, None, None
+    path = files[-1]
+    ms_ts = _ts(path)
+    snap_date = pd.to_datetime(ms_ts, unit="ms") if ms_ts else pd.Timestamp.today()
+    sect = None; eq = []; cash = None
+    with open(path, encoding="utf-8-sig", errors="replace") as fh:
+        for parts in _csv.reader(fh):
+            if not parts:
+                continue
+            if len(parts) == 1:                         # section header row
+                sect = parts[0].strip(); continue
+            if parts[0].strip() == "Emisora/Fondo":     # column header row
+                continue
+            name = parts[0].replace("*", "").strip()
+            if sect in ("Mercado de Capitales Nacional", "Mercado de Capitales Global (SIC)"):
+                eq.append({"ticker": name, "Títulos": _bmoney(parts[1]),
+                           "Costo promedio": _bmoney(parts[2]),
+                           "Precio mercado": _bmoney(parts[3]),
+                           "valor_broker": _bmoney(parts[5]), "imp_cto_broker": _bmoney(parts[9])})
+            elif name == "GBMF2 BM":
+                cash = _bmoney(parts[5])                # Valor mercado of the cash sleeve
+    return pd.DataFrame(eq), cash, snap_date
 
 # ---------- load & clean ----------
 df = pd.read_excel(XLSX, "DBE Acciones", header=0)
@@ -235,9 +275,23 @@ dates = ts.index
 print(f"  equity/balance: {len(ts)} days | baseline {BASELINE:,.0f} | "
       f"equity {equity.iloc[-1]:,.0f} balance {balance.iloc[-1]:,.0f}")
 
-# ---------- latest snapshot (with LIVE pricing override) ----------
-latest = df[df["Fecha"] == df["Fecha"].max()].copy()
-asof_excel = df["Fecha"].max().strftime("%Y-%m-%d")
+# ---------- latest snapshot: BROKER source of truth (with LIVE pricing override) ----------
+# The current holdings, cost basis, and cash come from the GBM "Detalle de
+# Portafolio" export (authoritative), NOT the stale Excel. The Excel still drives
+# the historical curve above; the broker file drives every headline KPI and the
+# holdings table so the numbers match the account exactly.
+_bdf, BROKER_CASH, _bsnap = load_broker_snapshot()
+if _bdf is None or _bdf.empty:
+    raise SystemExit("FATAL: no GBM Detalle de Portafolio CSV found in Downloads — cannot build canonical snapshot")
+latest = _bdf.copy()
+latest["shares"] = latest["Títulos"] * SCALE
+latest["cost"] = latest["shares"] * latest["Costo promedio"]
+latest["value"] = latest["shares"] * latest["Precio mercado"]   # broker mark; live-overridden below
+latest["pm"] = latest["value"] - latest["cost"]
+latest["ret"] = latest["Precio mercado"] / latest["Costo promedio"] - 1
+latest["px_excel"] = latest["Precio mercado"].astype(float)     # broker price = Yahoo-unpriceable fallback
+asof_excel = _bsnap.strftime("%Y-%m-%d")
+print(f"  broker snapshot: {len(latest)} equity positions @ {asof_excel} | GBMF2 cash {BROKER_CASH:,.2f}")
 
 # (TICKER_MAP defined above — BMV .MX listings)
 
@@ -334,35 +388,52 @@ fxa_section = (fxa_section.replace("background:fxaANEL", "background:#fff")
 assert fxa_section.startswith('<section id="fxa-root">'), "FXA section malformed"
 assert "fxaANEL" not in fxa_section and "fxaOS" not in fxa_section
 
-# refresh the last equity point with live prices (balance stays realized-based)
-if priced_at and len(ts):
-    _ul = tot_val - tot_cost
-    ts.iloc[-1, ts.columns.get_loc("equity")] = float(ts.iloc[-1]["balance"]) + _ul
-    ts.iloc[-1, ts.columns.get_loc("value")] = float(ts.iloc[-1]["equity"])
-    dates = ts.index
-
-# ---------- recycled-capital model (the capital that sold is the capital that buys again) ----------
-# Capital is a fixed pool: 10M REAL, shown x1.8 (=18M) to match the holdings
-# scaling. Selling returns cash to the pool, buying draws from it, so
-# total value = holdings market value + idle cash, and the curve only moves
-# with realized+unrealized P&L (no dip when capital is parked in cash).
+# ---------- canonical equity-book accounting (recycled $10M base + GBMF2 cash sleeve) ----------
+# Source of truth: the broker "Detalle de Portafolio" snapshot (positions + cost
+# basis + GBMF2 cash), re-priced live from Yahoo. The book is measured against a
+# fixed $10M MXN base with capital recycled through it (Rule 1).
+#
+#   Total value    = equity market value + GBMF2 cash sleeve       (Rule 3)
+#   Unrealized P/L = market value - broker cost basis              (live mark)
+#   Realized  P/L  = (cost basis + cash) - $10M base               (capital recovered
+#                                                                    beyond the base)
+#   Total Return   = (Total value - base) / base
+#
+# This decomposition is BLOTTER-FREE on purpose. The previous model defined
+# realized = (snapshot cost basis) - (blotter net-invested), which fabricated
+# profit whenever the broker's shares disagreed with the blotter — e.g. XLE
+# (105 sh, zero recorded trades) booked its entire cost basis as "realized"
+# (the XLE anti-pattern, Rule 2). Undocumented adds are buys: they raise cost
+# basis only, never P/L.
 CAPITAL = BASELINE * SCALE                          # 10M real x1.8 = 18M (scaled display)
+GBMF2_CASH = (BROKER_CASH or 0.0) * SCALE           # equity-sleeve cash, scaled to match
+_unr_now   = float(tot_val - tot_cost)              # unrealized = MV - cost basis
+_real_now  = float(tot_cost + GBMF2_CASH - CAPITAL) # realized = (cost + cash) - base
+_total_now = float(tot_val + GBMF2_CASH)            # total value = MV + cash sleeve
+_idle_now  = GBMF2_CASH
+print(f"  CANONICAL capital {CAPITAL:,.0f} | cost {tot_cost:,.0f} | cash {GBMF2_CASH:,.0f} | "
+      f"MV {tot_val:,.0f} | realized {_real_now:,.0f} | unrealized {_unr_now:,.0f} | "
+      f"total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.2f}%")
+
+# historical curve: keep the blotter-driven daily SHAPE, but pin the live endpoint
+# to the canonical realized/total so the chart agrees with the headline KPI.
 try:
     _blf = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
     _blf["flow"] = _blf["shares"] * _blf["price"] * _blf["side"].map({"buy": 1.0, "sell": -1.0})
     _ninv = (_blf.groupby("date")["flow"].sum().sort_index().cumsum() * SCALE)
-    _ninv = _ninv.reindex(ts.index, method="ffill").fillna(0.0)   # cumulative net invested (scaled)
+    _ninv = _ninv.reindex(ts.index, method="ffill").fillna(0.0)
 except Exception as _e:
     print(f"  capital model: blotter unavailable ({_e})"); _ninv = pd.Series(0.0, index=ts.index)
-_idle = CAPITAL - _ninv                              # idle (recyclable) cash in the pool
-_real = ts["balance"] - _ninv                        # REALIZED P&L (cost basis - net cash invested)
-_unr  = ts["equity"] - ts["balance"]                 # UNREALIZED P&L (live on the last point)
-ts["realized_pool"] = CAPITAL + _real                # capital + locked-in realized gains
-ts["total"] = ts["realized_pool"] + _unr             # + current unrealized = total value
-_total_now = float(ts["total"].iloc[-1]); _idle_now = float(_idle.iloc[-1])
-_real_now = float(_real.iloc[-1]); _unr_now = float(_unr.iloc[-1])
-print(f"  capital {CAPITAL:,.0f} | realized {_real_now:,.0f} | unrealized {_unr_now:,.0f} | "
-      f"total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.1f}%")
+_real_raw = ts["balance"] - _ninv                   # blotter-residual realized — SHAPE only
+_pin = _real_now - float(_real_raw.iloc[-1])        # shift the whole series so endpoint = canonical
+_real_series = _real_raw + _pin
+_unr_series = (ts["equity"] - ts["balance"]).astype(float)
+_unr_series.iloc[-1] = _unr_now                     # canonical unrealized at the live point
+ts["realized_pool"] = CAPITAL + _real_series
+ts["total"] = ts["realized_pool"] + _unr_series
+ts.iloc[-1, ts.columns.get_loc("total")] = _total_now
+ts.iloc[-1, ts.columns.get_loc("realized_pool")] = CAPITAL + _real_now
+dates = ts.index
 
 # ---------- charts ----------
 # 1. total value (holdings + recycled cash) vs the fixed capital pool
@@ -490,16 +561,22 @@ USD/MXN {RATE:.4f}</p>
 <main class="container">
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
-amounts; prices, returns and weights are exact. FX positions and non-GBM cash
-are excluded; rows with impossible returns (e.g. unadjusted stock splits) are
-filtered automatically.</div>
+amounts; prices, returns and weights are exact. Positions, cost basis and the
+GBMF2 cash sleeve come from the broker statement (source of truth), re-priced
+live. <b>Accounting:</b> the equity book is measured against a fixed $10M&nbsp;MXN
+base (recycled capital); Total&nbsp;Value = holdings market value + GBMF2 cash
+sleeve; Unrealized&nbsp;P/L = market value &minus; cost basis; Realized&nbsp;P/L =
+(cost basis + cash) &minus; base. Undocumented share adds are treated as buys
+(they raise cost basis, never P/L). FX positions and non-GBM bank cash are
+excluded.</div>
 <section class="block"><h2>Snapshot</h2>
 <div class="ccy-toggle">
 <button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
 <button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
 <p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns and weights
-read the same in either currency. Definitions in the
-<a href="glossary.html">Glossary</a>.</p>
+read the same in either currency. Total Return is measured against the recycled
+$10M&nbsp;MXN base and includes the GBMF2 cash sleeve ({cval(GBMF2_CASH)}).
+Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
 <section class="block"><h2>Total Value vs Capital</h2>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
