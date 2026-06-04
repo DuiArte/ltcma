@@ -487,3 +487,148 @@ BT_JS = r"""(function(){
   }
   if(document.readyState!=="loading")init();else document.addEventListener("DOMContentLoaded",init);
 })();"""
+
+
+# ============================================================================
+# Shared backtest-catalog card renderer.
+# Single source of truth for the strategy cards shown on BOTH backtests.html
+# (24_backtests.py — full curated showcase) and strategies.html (23_strategies.py
+# — the validated building blocks behind the live regime-adaptive book). Both
+# read the same canonical catalog (Trading_Index hub -> committed repo fallback)
+# and the same card markup, so a metric only ever lives in one place.
+# ============================================================================
+_BT_HUB = ["/mnt/c/Users/carlo/Trading_Index/strategies.json",
+           r"C:\Users\carlo\Trading_Index\strategies.json"]
+
+
+def _bt_resolve(p):
+    """First existing form of a path: raw (native Windows) then /mnt-mapped (WSL)."""
+    import os
+    if not p:
+        return None
+    if len(p) > 2 and p[1] == ":" and p[2] in "\\/":
+        alt = "/mnt/" + p[0].lower() + "/" + p[3:].replace("\\", "/")
+    else:
+        alt = p.replace("\\", "/")
+    for cand in (p, alt):
+        if cand and os.path.exists(cand):
+            return cand
+    return None
+
+
+def bt_catalog():
+    """Load the canonical backtest catalog: Trading_Index hub first (where Carlos
+    edits), else the committed repo fallback so a clean clone / CI still builds."""
+    import os
+    import json
+    here = os.path.dirname(os.path.abspath(__file__))
+    fb = os.path.join(os.path.dirname(here), "data", "backtests_strategies.json")
+    for cand in _BT_HUB + [fb]:
+        rp = _bt_resolve(cand)
+        if rp:
+            with open(rp, encoding="utf-8") as fh:
+                return json.load(fh)
+    return {"strategies": []}
+
+
+BT_BADGE = {"green": ("Deployable", "#0a5d3a"),
+            "yellow": ("Ensemble component", "#6b7280"),
+            "red": ("Pass / no edge", "#7c2d12")}
+
+_BT_ROW = [("best_raw_sharpe", "Raw Sharpe"), ("dsr", "DSR"), ("pbo", "PBO"),
+           ("max_dd_pct", "Max DD"), ("cagr_pct", "CAGR")]
+
+
+def _bt_esc(s):
+    return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _bt_fmt(key, val):
+    if val is None:
+        return "n/a", "na"
+    if isinstance(val, str):
+        return val, ("na" if val.strip().lower() in ("n/a", "na", "") else "")
+    if key in ("max_dd_pct", "cagr_pct"):
+        return f"{val:+.1f}%", ("neg" if val < 0 else "")
+    return f"{val:.2f}", ("neg" if isinstance(val, (int, float)) and val < 0 else "")
+
+
+# Some entries (ensembles) store the headline Sharpe/PBO under richer keys
+# (e.g. static_drift_weights: sharpe / pbo_structural) rather than the single-
+# strategy fields, so the card falls back to those before showing "n/a".
+_BT_ALT = {"best_raw_sharpe": "sharpe", "pbo": "pbo_structural"}
+
+
+def _km_get(km, k):
+    if k in km:
+        return km[k]
+    alt = _BT_ALT.get(k)
+    return km.get(alt) if alt else None
+
+
+def bt_card(strat, report_link=None, xref=""):
+    """Render one strategy as a card. report_link -> "Full report" anchor;
+    xref -> an optional cross-reference line (e.g. deployment status / sibling page)."""
+    badge = strat.get("badge", "red")
+    label = strat.get("verdict") or BT_BADGE.get(badge, ("", ""))[0]
+    km = strat.get("key_metrics", {})
+    tiles = ""
+    for k, lbl in _BT_ROW:
+        txt, cls = _bt_fmt(k, _km_get(km, k))
+        tiles += (f'<div class="bt-m"><div class="bt-mv {cls}">{_bt_esc(txt)}</div>'
+                  f'<div class="bt-mk">{lbl}</div></div>')
+    dates = strat.get("dates", {})
+    run, span = dates.get("run", ""), dates.get("data_span", "")
+    link = (f'<a class="bt-link" href="{report_link}">Full report &rarr;</a>'
+            if report_link else '<span class="bt-span">report on local disk</span>')
+    xr = f'<p class="bt-xref">{xref}</p>' if xref else ""
+    return (
+        f'<article class="btcard bt-{badge}">'
+        f'<div class="bt-head"><span class="bt-badge bt-{badge}">{_bt_esc(label)}</span>'
+        f'<span class="bt-date">{_bt_esc(run)}</span></div>'
+        f'<h3 class="bt-name">{_bt_esc(strat["name"])}</h3>'
+        f'<p class="bt-tests">{_bt_esc(strat.get("what_it_tests",""))}</p>'
+        f'<div class="bt-metrics">{tiles}</div>'
+        f'<p class="bt-verdict">{_bt_esc(strat.get("verdict_line",""))}</p>'
+        f'{xr}'
+        f'<div class="bt-foot"><span class="bt-span">{_bt_esc(span)}</span>{link}</div>'
+        f'</article>')
+
+
+# Card/badge/grid CSS — shared so both pages render identical cards. (Page-layout
+# CSS like the methodology box stays local to 24_backtests.py.)
+BT_CARD_CSS = r"""
+.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem}
+.btcard{background:#fff;border:1px solid #e5e5e5;border-top:3px solid #d4d4d4;
+padding:24px 24px 20px;box-shadow:none;display:flex;flex-direction:column;transition:background .15s ease-out}
+.btcard:hover{background:rgba(10,37,64,.045)}
+.btcard.bt-green{border-top-color:#0a5d3a}
+.btcard.bt-yellow{border-top-color:#6b7280}
+.btcard.bt-red{border-top-color:#7c2d12}
+.bt-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.bt-badge{font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+color:#fff;padding:4px 10px;border-radius:0}
+.bt-badge.bt-green{background:#0a5d3a}
+.bt-badge.bt-yellow{background:#6b7280}
+.bt-badge.bt-red{background:#7c2d12}
+.bt-date{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11.5px;color:#888}
+.bt-name{font-family:'Spectral',Georgia,serif;font-size:19px;font-weight:500;color:#111;margin:0 0 6px;line-height:1.25}
+.bt-tests{font-size:13px;color:#555;line-height:1.5;margin:0 0 16px}
+.bt-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:0;background:none;
+border:1px solid #e5e5e5;margin-bottom:16px}
+.bt-m{background:#fff;padding:11px 8px;text-align:center;border-right:1px solid #e5e5e5}
+.bt-m:last-child{border-right:0}
+.bt-mv{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:#111;letter-spacing:-.01em}
+.bt-mv.neg{color:#7c2d12}.bt-mv.na{color:#888}
+.bt-mk{font-size:9.5px;color:#888;margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.bt-verdict{font-size:13.5px;color:#333;line-height:1.55;margin:0 0 18px;flex:1}
+.bt-xref{font-size:12.5px;color:#0a2540;line-height:1.5;margin:0 0 14px;
+border-left:2px solid rgba(10,37,64,.20);padding-left:12px}
+.bt-xref a{color:#0a2540;font-weight:500}
+.bt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;
+border-top:1px solid #e5e5e5;padding-top:14px}
+.bt-span{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11px;color:#888}
+.bt-link{color:#0a2540;text-decoration:none;font-size:13px;font-weight:500;white-space:nowrap}
+.bt-link:hover{text-decoration:underline}
+@media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}.bt-m:nth-child(3n){border-right:0}}
+"""

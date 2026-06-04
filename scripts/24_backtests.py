@@ -28,7 +28,7 @@ HUB_CANDIDATES = [
 ]
 
 sys.path.insert(0, HERE)
-from glossary import NAV  # noqa: E402
+from glossary import NAV, bt_card  # noqa: E402
 
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
          'family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">')
@@ -65,6 +65,9 @@ border:1px solid #e5e5e5;margin-bottom:16px}
 .bt-mv.neg{color:#7c2d12}.bt-mv.na{color:#888}
 .bt-mk{font-size:9.5px;color:#888;margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
 .bt-verdict{font-size:13.5px;color:#333;line-height:1.55;margin:0 0 18px;flex:1}
+.bt-xref{font-size:12.5px;color:#0a2540;line-height:1.5;margin:0 0 14px;
+border-left:2px solid rgba(10,37,64,.20);padding-left:12px}
+.bt-xref a{color:#0a2540;font-weight:500}
 .bt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;
 border-top:1px solid #e5e5e5;padding-top:14px}
 .bt-span{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11px;color:#888}
@@ -194,32 +197,27 @@ def render_report_page(strat):
     return out_name
 
 
-def card(strat, report_link):
+def _xref(strat):
+    """Cross-reference each card to its deployment status on the Strategies page,
+    so every successful backtest also points at the live systematic book."""
     badge = strat.get("badge", "red")
-    label = strat.get("verdict") or BADGE.get(badge, ("", ""))[0]
-    km = strat.get("key_metrics", {})
-    tiles = ""
-    for k, lbl in METRIC_ROW:
-        txt, cls = fmt(k, km.get(k))
-        tiles += (f'<div class="bt-m"><div class="bt-mv {cls}">{esc(txt)}</div>'
-                  f'<div class="bt-mk">{lbl}</div></div>')
-    dates = strat.get("dates", {})
-    run = dates.get("run", "")
-    span = dates.get("data_span", "")
-    if report_link:
-        link = f'<a class="bt-link" href="{report_link}">Full report &rarr;</a>'
-    else:
-        link = '<span class="bt-span">report on local disk</span>'
-    return (
-        f'<article class="btcard bt-{badge}">'
-        f'<div class="bt-head"><span class="bt-badge bt-{badge}">{esc(label)}</span>'
-        f'<span class="bt-date">{esc(run)}</span></div>'
-        f'<h3 class="bt-name">{esc(strat["name"])}</h3>'
-        f'<p class="bt-tests">{esc(strat.get("what_it_tests",""))}</p>'
-        f'<div class="bt-metrics">{tiles}</div>'
-        f'<p class="bt-verdict">{esc(strat.get("verdict_line",""))}</p>'
-        f'<div class="bt-foot"><span class="bt-span">{esc(span)}</span>{link}</div>'
-        f'</article>')
+    if strat.get("gfc_test_passed"):
+        return ('<b>Deployable, GFC-tested</b> — a validated building block of the live '
+                'regime-adaptive book; also surfaced on the '
+                '<a href="strategies.html">Strategies</a> page.')
+    if badge == "green":
+        return ('Deployable — a validated building block behind the live book; see the '
+                '<a href="strategies.html">Strategies</a> page.')
+    if badge == "yellow":
+        return ('Ensemble component — used as one signal inside the live book; see the '
+                '<a href="strategies.html">Strategies</a> page.')
+    return ""
+
+
+def card(strat, report_link):
+    # Delegates to the shared glossary renderer (single source of truth for the
+    # card markup) and adds the deployment cross-reference line.
+    return bt_card(strat, report_link, _xref(strat))
 
 
 def main():
@@ -276,7 +274,9 @@ window and an S&amp;P 500 gate &mdash; with the honest verdict for each.</p>
 <b style="color:#0a5d3a">green</b> = deployable (survives the full protocol and beats the S&amp;P on
 risk-adjusted terms), <b style="color:#6b7280">amber</b> = ensemble component (real edge, not
 standalone-worthy). Metrics and verdicts are pulled verbatim from each backtest's report; the
-full research ledger, including the ideas that failed, is kept internally.</p>
+full research ledger, including the ideas that failed, is kept internally. The deployable results
+here are the validated building blocks behind the live book on the
+<a href="strategies.html">Strategies</a> page.</p>
 <div class="btgrid">{cards}</div></section>
 {method}
 </main>"""
