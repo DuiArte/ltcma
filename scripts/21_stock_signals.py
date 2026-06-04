@@ -14,18 +14,18 @@ from glossary import NAV
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
 ANA = "/home/carlos/capstone/data/analytics"
-INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
-RED, GREY = "#da1e28", "#8d8d8d"
+INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
+RED, GREY = "#7c2d12", "#888888"
 
 SECTOR_C = {
-    "Technology": "#0f62fe",
-    "Consumer Cyclical": "#b28600",
+    "Technology": "#0a2540",
+    "Consumer Cyclical": "#6b7280",
     "Communication Services": "#8a3ffc",
-    "Healthcare": "#198038",
+    "Healthcare": "#0a5d3a",
     "Financial Services": "#009d9a",
     "Consumer Defensive": "#fa4d56",
-    "Energy": "#da1e28",
-    "Industrials": "#525252",
+    "Energy": "#7c2d12",
+    "Industrials": "#555555",
 }
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
@@ -34,7 +34,7 @@ LAYOUT = dict(template="plotly_white", dragmode=False,
               title_font=dict(color=INK, size=15),
               margin=dict(l=58, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
+              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
 
 def div(fig, name):
     fig.update_layout(**LAYOUT)
@@ -56,7 +56,7 @@ def cell_beta(beta, t):
     cls = "pos" if beta > 0 else ("neg" if beta < 0 else "")
     bold = "font-weight:600" if abs(t) > 2 else ""
     return (f'<td class="{cls}" style="{bold}">{beta:+.3f}'
-            f'<br><span style="color:#8d8d8d;font-size:11px">t={t:+.1f}</span></td>')
+            f'<br><span style="color:#888888;font-size:11px">t={t:+.1f}</span></td>')
 
 # ---------- sensitivities table ----------
 sens_rows = ""
@@ -107,9 +107,9 @@ for tk in pivot.index:
             n = int(counts.loc[tk, dec])
             cls = "pos" if v >= 0 else "neg"
             cells.append(f'<td class="{cls}">{v*100:+.2f}%'
-                         f'<br><span style="color:#8d8d8d;font-size:11px">n={n}</span></td>')
+                         f'<br><span style="color:#888888;font-size:11px">n={n}</span></td>')
         else:
-            cells.append('<td style="color:#8d8d8d">—</td>')
+            cells.append('<td style="color:#888888">—</td>')
     o = overall[tk]
     cls_o = "pos" if o >= 0 else "neg"
     cells.append(f'<td class="{cls_o}" style="font-weight:600">{o*100:+.2f}%</td>')
@@ -120,7 +120,7 @@ asof = pd.Timestamp.today().strftime("%d %b %Y")
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stock Signals — macro sensitivities & FOMC reactions</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}

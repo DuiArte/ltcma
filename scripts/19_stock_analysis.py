@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
-INK, BLUE, GOLD, GREEN, RED, GREY = "#161616", "#0f62fe", "#b28600", "#198038", "#da1e28", "#8d8d8d"
+INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)
 DEFAULT = ["AMZN", "GOOGL", "MSFT", "META", "IBM", "BA", "NVDA", "AAPL"]
@@ -62,12 +62,12 @@ IPC_SCREEN = ["WALMEX.MX", "FEMSAUBD.MX", "GFNORTEO.MX", "GMEXICOB.MX", "AMXB.MX
 # NAV imported from glossary module
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
-         'family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">')
+         'family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">')
 LAYOUT = dict(template="plotly_white", dragmode=False,
               font=dict(family="IBM Plex Sans, sans-serif", size=12, color=INK),
               title_font=dict(color=INK, size=14), margin=dict(l=55, r=20, t=46, b=42),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
+              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
 
 def div(fig, name):
     fig.update_layout(**LAYOUT)
@@ -92,7 +92,7 @@ def page(title, body):
             f'<title>{title}</title>{FONTS}<link rel="stylesheet" href="style.css">'
             f'<script src="{PLOTLY}"></script></head><body>'
             f'<header class="shell"><div class="shell-in">'
-            f'<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>Equity Research</b>'
+            f'<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b>'
             f'</span>{NAV}</div></header>{body}'
             f'<footer class="shell-foot"><div class="container"><p>CFA-framework '
             f'analysis on free Yahoo Finance data. Educational research, not '
@@ -267,7 +267,7 @@ def analyze(ticker):
     if syn:
         cls_up = "pos" if upside >= 0 else "neg"
         syn_line = (f"<b>Synthesized 12-month target</b> "
-                    f"<span style='color:#0f62fe;font-size:20px;font-weight:600'>"
+                    f"<span style='color:#0a2540;font-size:20px;font-weight:600'>"
                     f"${syn:,.2f}</span> <span class='{cls_up}' "
                     f"style='font-weight:600'>{upside*100:+.1f}%</span>")
     else:
@@ -280,7 +280,7 @@ def analyze(ticker):
     val_rows = "".join(
         f"<tr><td>{k}</td><td>{rt(v)}</td></tr>" for k, v in mult)
     body = f"""<section class="hero"><div class="container">
-<h1>{name} <span style="color:#8d8d8d">({ticker})</span></h1>
+<h1>{name} <span style="color:#888888">({ticker})</span></h1>
 <p class="lede">{info.get('sector','')} &middot; {info.get('industry','')}</p>
 <p class="asof">CFA-framework equity analysis &middot; data: Yahoo Finance</p>
 </div></section><main class="container">
@@ -301,7 +301,7 @@ in the <a href="glossary.html">Glossary</a>.</p>
 <p style="margin-bottom:14px">{syn_line}</p>
 <table class="ptable"><thead><tr><th>Method</th><th>Target</th><th>vs price</th></tr></thead>
 <tbody>{tr}</tbody></table>
-<p style="font-size:12px;color:#525252;margin-top:14px">
+<p style="font-size:12px;color:#555555;margin-top:14px">
 CAPM r = {r*100:.1f}% &middot; stage-1 growth g&#8321; = {pct(g1)}
 (analyst, capped at 25%) &middot; terminal g&#8322; = {G_CAP*100:.1f}%
 &middot; payout {pct(payout)}.
@@ -329,7 +329,7 @@ CAPM r = {r*100:.1f}% &middot; stage-1 growth g&#8321; = {pct(g1)}
   ("Revenue Growth", pct(info.get('revenueGrowth'))),
   ("Earnings Growth", pct(info.get('earningsGrowth')))])}</section>
 <section class="block"><h2>CFA View</h2>
-<div class="scaled-note" style="border-left-color:#0f62fe">{verdict}</div></section>
+<div class="scaled-note" style="border-left-color:#0a2540">{verdict}</div></section>
 </main>"""
     open(f"{DOCS}/stock_{ticker}.html", "w", encoding="utf-8").write(
         page(f"{ticker} — Equity Analysis", body))
@@ -438,14 +438,14 @@ def screen_body(rows):
         mos = r["mos"]
         mos_cls = "pos" if (mos is not None and mos > 0) else ("neg" if (mos is not None and mos < 0) else "")
         out += (f"<tr><td><b>{r['ticker']}</b> "
-                f"<span style='font-size:11px;color:#8d8d8d'>{r['name'][:26]}</span></td>"
-                f"<td><span style='font-size:11px;color:#525252'>{r.get('tier','&mdash;')}</span></td>"
+                f"<span style='font-size:11px;color:#888888'>{r['name'][:26]}</span></td>"
+                f"<td><span style='font-size:11px;color:#555555'>{r.get('tier','&mdash;')}</span></td>"
                 f"<td>{pct(r['roe'])}</td><td>{rt(r['de'])}</td>"
                 f"<td>{pct(r['fcf_y'])}</td><td>{pct(r['gm'])}</td>"
                 f"<td class='{mos_cls}'>{_mos_fmt(mos)}</td>"
                 f"<td class='{sc_cls}' style='font-weight:600'>"
                 f"{sc if sc is not None else 'n/a'}"
-                f"<span style='font-size:10px;color:#8d8d8d'> /{r['np']}p</span></td></tr>")
+                f"<span style='font-size:10px;color:#888888'> /{r['np']}p</span></td></tr>")
     return out
 
 def screen_universe(tickers, workers=8):
@@ -533,7 +533,7 @@ else:
           'a two-stage DCF. Each pillar earns a full mark at ROE 20%, D/E 0, FCF '
           'yield 8%, gross margin 50% and &plus;40% margin of safety; the Buffett '
           'score is their average (0&ndash;100) over the pillars that have data &mdash; '
-          'the <span style="font-size:11px;color:#8d8d8d">/Np</span> tag shows how '
+          'the <span style="font-size:11px;color:#888888">/Np</span> tag shows how '
           'many. The <b>Tier</b> column flags market-cap size (Mega &ge;$200B, '
           'Large &ge;$10B, Mid &ge;$2B). The margin of safety is a rough two-stage '
           'DCF and is shown capped at &plusmn;100%; it is unreliable for holding '

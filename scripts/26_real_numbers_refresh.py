@@ -35,8 +35,8 @@ CSS = (REAL / "style.css").read_text(encoding="utf-8")
 
 SCALE = 1.0
 FILTER_ANOMALIES = True
-INK, BLUE, GOLD, GREEN = "#161616", "#0f62fe", "#b28600", "#198038"
-RED, GREY = "#da1e28", "#8d8d8d"
+INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
+RED, GREY = "#7c2d12", "#888888"
 
 sig = pd.read_csv(f"{DATA}/signals_fred.csv", index_col=0)
 RATE = float(pd.to_numeric(sig["USDMXN"], errors="coerce").dropna().iloc[-1])
@@ -46,7 +46,7 @@ LAYOUT = dict(template="plotly_white",
               title_font=dict(color=INK, size=15), dragmode=False,
               margin=dict(l=64, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e0e0e0"), yaxis=dict(gridcolor="#e0e0e0"))
+              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
 
 
 def divhtml(fig, name):

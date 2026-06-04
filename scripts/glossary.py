@@ -13,7 +13,8 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="regime.html">Regime Tracker</a>'
        '<a href="projects.html">Projects</a>'
        '<a href="glossary.html">Glossary</a>'
-       '<a href="index.html#about">About</a></nav>')
+       '<a href="index.html#about">About</a></nav>'
+       """<script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});});</script>""")
 
 
 def ccy_badge(currency, note=""):
@@ -245,13 +246,13 @@ def bt_load():
     import pandas as pd
     H = os.path.expanduser("~")
     DEFS = {
-        "SARS": ("Adaptive US Equity", "#0f62fe", 0.045, "S&P 500",
+        "SARS": ("Adaptive US Equity", "#0a2540", 0.045, "S&P 500",
                  f"{H}/SARS/data/backtest/backtest_returns.csv", "SARS", "SP500"),
         "DUO":  ("Balanced Multi-strategy", "#8a3ffc", 0.045, "S&P 500",
                  f"{H}/DUO/data/duo_returns.csv", "DUO", "SPY"),
-        "MARS": ("Defensive Multi-asset", "#b28600", 0.045, "S&P 500",
+        "MARS": ("Defensive Multi-asset", "#6b7280", 0.045, "S&P 500",
                  f"{H}/MARS/data/backtest/backtest_returns.csv", "MARS", "SP500"),
-        "BARS": ("Mexican Equity Rotation", "#198038", 0.09, "IPC",
+        "BARS": ("Mexican Equity Rotation", "#0a5d3a", 0.09, "IPC",
                  f"{H}/BARS/data/backtest/backtest_returns.csv", "BARS", "IPC"),
     }
     data = {}
