@@ -8,7 +8,8 @@ import os
 import json
 import numpy as np
 import plotly.graph_objects as go
-from glossary import NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS
+from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS,
+                      bt_catalog, bt_card, BT_CARD_CSS)
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
 import pandas as pd
@@ -137,11 +138,43 @@ bt_script = ('<script>window.BT_DATA=' + json.dumps(data, separators=(",", ":"))
              ';window.BT_CFG=' + cfg + ';</script>\n<script>' + BT_JS + '</script>')
 
 
+# ── validated backtest building blocks (same canonical catalog as backtests.html) ─
+# Carlos asked that the successful strategies appear on BOTH the Backtests page and
+# the Systematic Strategies page; this renders the public catalog cards here too,
+# cross-linked to the full backtest archive. The flagship (GFC-tested) leads.
+_cat = bt_catalog()
+_pub = [s for s in _cat.get("strategies", []) if s.get("public")]
+_rank = {"green": 0, "yellow": 1, "red": 2}
+_pub.sort(key=lambda s: (0 if s.get("gfc_test_passed") else 1,
+                         _rank.get(s.get("badge"), 3), s.get("short_name", "")))
+_bt_cards = ""
+for s in _pub:
+    rl = s.get("report_html") or f"bt_{s['key']}.html"
+    if s.get("gfc_test_passed"):
+        xref = ('<b>Flagship deployable strategy</b> — full backtest detail and the GFC '
+                'stress test on the <a href="backtests.html">Backtests</a> page.')
+    elif s.get("badge") == "green":
+        xref = ('Deployable building block — full archive on the '
+                '<a href="backtests.html">Backtests</a> page.')
+    else:
+        xref = ('Ensemble component — context on the '
+                '<a href="backtests.html">Backtests</a> page.')
+    _bt_cards += bt_card(s, rl, xref)
+BT_SECTION = (
+    '<section class="block"><h2>Validated Strategy Backtests</h2>'
+    '<p class="note">The research-validated strategies behind the live book, run under one '
+    'fixed protocol (smart-search &rarr; walk-forward &rarr; deflated Sharpe &rarr; Monte Carlo '
+    '&rarr; held-out window &rarr; S&amp;P&nbsp;500 gate &rarr; sub-10% drawdown bar). The flagship '
+    '<b>Static Drift-Weight 50/30/20</b> (Sharpe&nbsp;1.33, GFC-tested) leads. Same canonical '
+    'source as the <a href="backtests.html">Backtests</a> page &mdash; shown here too so the '
+    'deployable results sit alongside the live strategies.</p>'
+    f'<div class="btgrid">{_bt_cards}</div></section>')
+
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Systematic Strategies</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
+<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}</style><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -149,7 +182,9 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <h1>Systematic Strategies</h1>
 <p class="lede">Four regime-adaptive strategies, walk-forward out-of-sample, benchmarked
 against the S&amp;P 500 (and the IPC for Mexican equity). Equity curves, drawdowns and a
-full indicator set. Results only — the detection-and-optimisation methodology is proprietary.</p>
+full indicator set. Results only — the detection-and-optimisation methodology is proprietary.
+The research-validated backtests behind these building blocks are catalogued below and on the
+<a href="backtests.html">Backtests</a> page.</p>
 <p class="asof">As of {ASOF} &middot; out-of-sample &middot; hypothetical, not actual trading results</p>
 </div></section>
 <main class="container">
@@ -175,6 +210,7 @@ with materially lower drawdowns than the index (below).</p></section>
 capture ratios computed vs each strategy's benchmark; VaR/CVaR are monthly at 95%;
 skew and excess kurtosis are population moments. Out-of-sample walk-forward;
 hypothetical results, past performance does not guarantee future results.</p></section>
+{BT_SECTION}
 </main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment advice.
 Backtested results are hypothetical and do not represent actual trading.</p></div></footer>
