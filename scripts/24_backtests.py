@@ -161,7 +161,7 @@ def shell(title, body, plot=False):
 {FONTS}
 <link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>{NAV}
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
 {body}
 <footer class="shell-foot"><div class="container"><p>Backtests run under a fixed

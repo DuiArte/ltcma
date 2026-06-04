@@ -71,7 +71,7 @@ SNAP = [("US 10Y Treasury", f"{last['UST_10Y']:.2f}%"),
 # ---------- 1. priced-in rate path ----------
 TEN = {"UST_3M": .25, "UST_6M": .5, "UST_1Y": 1, "UST_2Y": 2, "UST_3Y": 3,
        "UST_5Y": 5, "UST_7Y": 7, "UST_10Y": 10}
-y = {t: last[k] / 100 for k, t in TEN.items()}
+y = {t: last[k] / 100 for k, t in TEN.items() if k in last and pd.notna(last[k])}  # tolerate tenors FRED drops (e.g. UST_6M)
 ts = sorted(y)
 fwx, fwy = [], []
 for a, b in zip(ts[:-1], ts[1:]):
@@ -349,11 +349,11 @@ RECAP = (
 
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LTCMA 2026 — Capital Market Assumptions</title>
+<title>Carlos Duarte — Capital Market Assumptions</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>{NAV}
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
 <section class="hero"><div class="container">
 <h1>Long-Term Capital Market Assumptions</h1>
@@ -404,11 +404,11 @@ body = markdown.markdown(open(f"{REP}/LTCMA_2026.md", encoding="utf-8").read(),
                          extensions=["tables", "fenced_code", "sane_lists"])
 REPORT = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LTCMA 2026 — Full Report</title>
+<title>Carlos Duarte — Full Report</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>{NAV}
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
 <main class="container"><article class="tile report">{body}</article></main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment
@@ -423,11 +423,11 @@ for cat, items in GLOSSARY.items():
                    f'<dl class="gloss">{rows}</dl></section>')
 GLOSSARY_PAGE = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LTCMA 2026 — Glossary</title>
+<title>Carlos Duarte — Glossary</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;/&nbsp;<b>LTCMA&nbsp;2026</b></span>{NAV}
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
 <section class="hero"><div class="container"><h1>Glossary</h1>
 <p class="lede">Plain-language explanations of every concept used across this
@@ -437,6 +437,102 @@ site — no math, no jargon. If a term on any page is unclear, it is defined her
 <footer class="shell-foot"><div class="container"><p>Research, not investment
 advice.</p></div></footer></body></html>"""
 open(f"{DOCS}/glossary.html", "w", encoding="utf-8").write(GLOSSARY_PAGE)
+
+# ---------- projects.html (GitHub-style repo cards) ----------
+# Each project links to its own repo. Placeholder repos render "Coming soon"
+# (faded) until created; the operating edge stays private by design.
+_OCTO = ('<svg class="gh-mark" viewBox="0 0 16 16" width="20" height="20" '
+         'aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 '
+         '3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37'
+         '-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 '
+         '1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64'
+         '-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 '
+         '2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 '
+         '1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54'
+         '.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 '
+         '8c0-4.42-3.58-8-8-8Z"></path></svg>')
+# (name, repo_handle, url, description, status, live?)
+PROJECTS = [
+    ("LTCMA Methodology", "duiarte/ltcma-methodology",
+     "https://github.com/duiarte/ltcma-methodology",
+     "Long-term capital market assumptions &mdash; building-block expected returns, "
+     "Ledoit-Wolf risk, regime-switching Monte Carlo.", "Research", False),
+    ("Static Drift-Weight 50/30/20", "duiarte/static-drift-weight",
+     "https://github.com/duiarte/static-drift-weight",
+     "The deployed core sleeve &mdash; SPY/IEF/GLD drift-weighted, no gating. "
+     "Sharpe 1.33, GFC-stress-tested to a sub-10% monthly drawdown.", "Deployed", False),
+    ("SignalLib Framework", "duiarte/signallib-framework",
+     "https://github.com/duiarte/signallib-framework",
+     "Signal-discovery rig &mdash; many uncorrelated weak signals over static "
+     "weights, with deflated-Sharpe and PBO gates baked in.", "Research", False),
+    ("Terse", "DuiArte/terse", "https://github.com/DuiArte/terse",
+     "A token-efficient language for compressing instructions and documents "
+     "before they reach an LLM.", "Tooling", True),
+    ("AI Procedures (Quant)", "duiarte/ai-procedures-quant",
+     "https://github.com/duiarte/ai-procedures-quant",
+     "The runbooks and automated daily-refresh infrastructure that keep this "
+     "research lab current.", "Tooling", False),
+    ("Backtests Archive", "duiarte/backtests-archive",
+     "https://github.com/duiarte/backtests-archive",
+     "Selected backtest reports &mdash; methodology and headline results; the live "
+     "parameters stay private.", "Research", False),
+]
+_BADGE = {"Deployed": "badge-deployed", "Research": "badge-research", "Tooling": "badge-tooling"}
+proj_cards = ""
+for name, handle, url, desc, status, live in PROJECTS:
+    klass = "proj-card" + ("" if live else " proj-soon")
+    badges = f'<span class="pbadge {_BADGE[status]}">{status}</span>'
+    if not live:
+        badges += '<span class="pbadge badge-soon">Coming soon</span>'
+    proj_cards += (
+        f'<a class="{klass}" href="{url}" target="_blank" rel="noopener noreferrer">'
+        f'<div class="proj-top">{_OCTO}<span class="proj-handle">{handle}</span></div>'
+        f'<div class="proj-name">{name}</div>'
+        f'<p class="proj-desc">{desc}</p>'
+        f'<div class="proj-foot">{badges}'
+        f'<span class="proj-cta">View on GitHub &#8599;</span></div></a>')
+
+PROJECTS_PAGE = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carlos Duarte — Projects</title>
+<meta name="description" content="A portfolio of quantitative-research projects by Carlos Duarte — methodology, deployed strategies and tooling, each linking to its own GitHub repository.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.proj-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:8px}}
+.proj-card{{display:block;background:#fff;border:1px solid #d0d7de;border-radius:10px;
+padding:18px 20px;text-decoration:none;color:#161616;transition:border-color .15s,box-shadow .15s,transform .15s}}
+.proj-card:hover{{border-color:#0969da;box-shadow:0 6px 20px rgba(9,105,218,.12);transform:translateY(-2px)}}
+.proj-soon{{opacity:.72}}
+.proj-top{{display:flex;align-items:center;gap:8px;color:#161616;margin-bottom:10px}}
+.gh-mark{{flex:none}}
+.proj-handle{{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace;font-size:13px;
+color:#0969da;font-weight:500;word-break:break-all}}
+.proj-name{{font-size:17px;font-weight:600;margin-bottom:6px}}
+.proj-desc{{font-size:14px;color:#57606a;margin:0 0 16px;line-height:1.5}}
+.proj-foot{{display:flex;align-items:center;gap:8px;flex-wrap:wrap}}
+.pbadge{{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;letter-spacing:.2px}}
+.badge-deployed{{background:#dafbe1;color:#1a7f37}}
+.badge-research{{background:#ddf4ff;color:#0969da}}
+.badge-tooling{{background:#fbefff;color:#8250df}}
+.badge-soon{{background:#eaeef2;color:#656d76}}
+.proj-cta{{margin-left:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;
+font-size:12px;font-weight:500;color:#0969da}}
+</style></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
+</div></header>
+<section class="hero"><div class="container"><h1>Projects</h1>
+<p class="lede">A portfolio of related research projects. Each repository holds the
+public-facing methodology and selected artifacts &mdash; the operating edge stays
+private. Restraint is deliberate: enough to build on, not enough to copy.</p>
+</div></section>
+<main class="container"><section class="block">
+<div class="proj-grid">{proj_cards}</div></section></main>
+<footer class="shell-foot"><div class="container"><p>Each link opens the project's
+GitHub repository. Research and monitoring, not investment advice.</p></div></footer>
+</body></html>"""
+open(f"{DOCS}/projects.html", "w", encoding="utf-8").write(PROJECTS_PAGE)
 
 # ---------- Carbon-style CSS ----------
 CSS = """
