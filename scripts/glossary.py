@@ -241,7 +241,15 @@ GLOSSARY = {
 
 def bt_load():
     """Load the four strategies' monthly OOS return series. Returns a dict keyed
-    by code; each value has name/color/rf/bn plus aligned dates/s(trategy)/b(ench)."""
+    by code; each value has name/color/rf/bn plus aligned dates/s(trategy)/b(ench).
+
+    The raw series live in Carlos's private host strategy repos (~/SARS, ~/DUO, …),
+    which are absent on a clean clone or the GitHub Actions runner. When the host
+    CSVs are present (local builds) we read them; when they're absent (CI) we fall
+    back to the series already embedded as window.BT_DATA in the previously-built,
+    already-public docs/index.html. That keeps host + CI builds identical without
+    committing any new data — the growth-of-100 series are public on the live site
+    by design; tickers, logic and parameters never leave the host."""
     import os
     import pandas as pd
     H = os.path.expanduser("~")
@@ -255,17 +263,31 @@ def bt_load():
         "BARS": ("Mexican Equity Rotation", "#0a5d3a", 0.09, "IPC",
                  f"{H}/BARS/data/backtest/backtest_returns.csv", "BARS", "IPC"),
     }
-    data = {}
-    for k, (name, color, rf, bn, path, col, bcol) in DEFS.items():
-        df = pd.read_csv(path, index_col=0, parse_dates=True)
-        s = df[col].dropna()
-        b = df[bcol].dropna()
-        idx = s.index.intersection(b.index).sort_values()
-        data[k] = dict(name=name, color=color, rf=rf, bn=bn,
-                       dates=[d.strftime("%Y-%m-%d") for d in idx],
-                       s=[round(float(x), 8) for x in s.reindex(idx)],
-                       b=[round(float(x), 8) for x in b.reindex(idx)])
-    return data
+    try:
+        data = {}
+        for k, (name, color, rf, bn, path, col, bcol) in DEFS.items():
+            df = pd.read_csv(path, index_col=0, parse_dates=True)
+            s = df[col].dropna()
+            b = df[bcol].dropna()
+            idx = s.index.intersection(b.index).sort_values()
+            data[k] = dict(name=name, color=color, rf=rf, bn=bn,
+                           dates=[d.strftime("%Y-%m-%d") for d in idx],
+                           s=[round(float(x), 8) for x in s.reindex(idx)],
+                           b=[round(float(x), 8) for x in b.reindex(idx)])
+        return data
+    except (FileNotFoundError, OSError, KeyError):
+        # CI / clean clone: private strategy repos absent. Recover the series from
+        # the already-public docs/index.html (window.BT_DATA), built by the host.
+        import re
+        import json
+        here = os.path.dirname(os.path.abspath(__file__))
+        idx = os.path.join(os.path.dirname(here), "docs", "index.html")
+        html = open(idx, encoding="utf-8").read()
+        m = re.search(r"window\.BT_DATA=(\{.*?\});window\.BT_CFG=", html, re.S)
+        if not m:
+            raise RuntimeError("bt_load: no host series and no BT_DATA in docs/index.html")
+        bt = json.loads(m.group(1))
+        return {k: bt[k] for k in DEFS if k in bt}
 
 
 def bt_common(data, keys=("SARS", "DUO", "MARS")):

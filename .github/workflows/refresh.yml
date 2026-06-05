@@ -8,9 +8,15 @@ on:
 permissions:
   contents: write
 
+# never let two refreshes overlap (a hung run + the next cron, or a manual re-run)
+concurrency:
+  group: refresh-site
+  cancel-in-progress: true
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 15        # backstop: a daily refresh must never run for hours
     steps:
       - uses: actions/checkout@v4
 
@@ -36,5 +42,8 @@ jobs:
           git config user.name  "ltcma-refresh-bot"
           git config user.email "actions@users.noreply.github.com"
           git add -A
-          git diff --staged --quiet || git commit -m "Auto-refresh: market data & site ($(date -u +%Y-%m-%d))"
+          git diff --staged --quiet && { echo "no changes to commit"; exit 0; }
+          git commit -m "Auto-refresh: market data & site ($(date -u +%Y-%m-%d))"
+          # host scheduler may have pushed during the run — rebase before pushing
+          git pull --rebase --autostash origin main || true
           git push

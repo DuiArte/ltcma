@@ -27,9 +27,16 @@ FRED = {
     "USDMXN": "DEXMXUS",
 }
 
-def fetch_fred(name, sid, attempts=4, timeout=60):
-    """FRED's fredgraph.csv throttles cloud IPs (GH Actions especially). Retry
-    with exponential backoff before giving up."""
+# Fail-fast budget. FRED's fredgraph.csv blocks/throttles cloud IPs (GitHub
+# Actions especially): connections hang until the timeout, every time. With a
+# 60s timeout x4 retries x ~25 series that burned ~1h45m of CI before failing.
+# A (connect, read) tuple kills a hung connect in 6s, 2 attempts cap per series,
+# and FRED_DEADLINE caps the whole loop — once blocked, we skip the rest and fall
+# back to the committed signals_fred.csv (which the host scheduler keeps fresh).
+CONNECT_TO, READ_TO, ATTEMPTS = 6, 25, 2
+FRED_DEADLINE = 300  # seconds for the entire FRED loop, then skip remaining
+
+def fetch_fred(name, sid, attempts=ATTEMPTS, timeout=(CONNECT_TO, READ_TO)):
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
     last_err = None
     for k in range(attempts):
@@ -42,18 +49,27 @@ def fetch_fred(name, sid, attempts=4, timeout=60):
             return df.set_index("Date")[name].dropna()
         except Exception as e:
             last_err = e
-            time.sleep(2 ** k)
+            if k + 1 < attempts:
+                time.sleep(2 ** k)
     raise last_err
 
 out = {}
+_t0 = time.monotonic()
+_skipped = 0
 for name, sid in FRED.items():
+    if time.monotonic() - _t0 > FRED_DEADLINE:
+        _skipped += 1
+        continue
     try:
         s = fetch_fred(name, sid)
         out[name] = s
         print(f"  {name:16s} ({sid:14s}) last={s.iloc[-1]:8.2f} @ {s.index[-1].date()}  n={len(s)}")
     except Exception as e:
         print(f"  {name:16s} ({sid}) FAILED: {e}")
-    time.sleep(0.25)
+    time.sleep(0.1)
+if _skipped:
+    print(f"  ...FRED_DEADLINE ({FRED_DEADLINE}s) hit — skipped {_skipped} series, "
+          f"using prior values from disk")
 
 sig_new = pd.DataFrame(out)
 
@@ -99,7 +115,7 @@ final_path = f"{D}/signals_gpr_raw.xls"
 tmp_path = f"{D}/signals_gpr_raw.xls.tmp"
 for url in GPR_URLS:
     try:
-        r = requests.get(url, headers=HDR, timeout=60)
+        r = requests.get(url, headers=HDR, timeout=(CONNECT_TO, READ_TO))
         r.raise_for_status()
         with open(tmp_path, "wb") as f:
             f.write(r.content)
