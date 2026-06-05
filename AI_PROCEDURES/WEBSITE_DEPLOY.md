@@ -81,3 +81,37 @@ backstop. Re-grep rendered HTML before every push (see "Sanity scan").
 paths; real positions. Any hit (other than the allowed `50/30/20`, the viewport
 `initial-scale=1`, JS slider vars, and metric-label fragments in `.ai.txt`) →
 redact in `_BT_PUBLIC` / `_bt_redact` and rebuild.
+
+## CI failure playbook — `.github/workflows/refresh.yml`
+
+GitHub Actions runs the same daily refresh (cron `0 22 * * 1-5` + manual). The
+**host Task Scheduler is primary**; the Action is a redundant cloud rebuild. It
+only runs `08_fetch_signals.py` + `17_build_site.py` (deps: `requirements.txt`).
+
+**Where to look** (no `gh` installed; repo is public — use the API):
+- Runs: `curl -s "https://api.github.com/repos/DuiArte/ltcma/actions/workflows/refresh.yml/runs?per_page=5"`
+- Step timing / which step failed: `.../actions/runs/<id>/jobs` → `jobs[0].steps[]`
+  (each has `started_at`/`completed_at`/`conclusion`). Job logs need admin auth (403 public).
+- Manual trigger: POST `.../actions/workflows/refresh.yml/dispatches` `{"ref":"main"}`
+  with a token (HTTP 204 = accepted). Token via `git credential fill` — never echo it.
+
+**Reproduce a GH-only crash locally** (the runner has neither the private host
+strategy repos nor working FRED): run the script through an `os.path.expanduser`
+shim that maps `~/LTCMA`→repo and `~`→an empty dir, with `requests.get` monkey-
+patched to raise. If it passes locally but fails on CI, the cause is a host-only
+path or a blocked endpoint.
+
+**Common failure modes**
+- **Multi-hour runtime then exit 1** = a fetch with no/loose timeout hammering a
+  blocked endpoint. FRED (`fred.stlouisfed.org`) and Yahoo block cloud IPs. Fix:
+  `(connect, read)` tuple timeout, ≤2 attempts, and a wall-clock `FRED_DEADLINE`
+  that skips the rest and keeps prior on-disk values. (Fixed 2026-06-04: was 60s×4
+  ×25 series ≈ 1h45m.) Backstop: job `timeout-minutes: 15`.
+- **~3s crash in `17_build_site.py`** = it imported a host-only artifact. `bt_load()`
+  reads `~/{SARS,DUO,MARS,BARS}/...` CSVs that don't exist on CI → `FileNotFoundError`.
+  It now falls back to the series already in the public `docs/index.html`
+  (`window.BT_DATA`). Never commit private-repo CSVs to fix this — reuse public output.
+- **Push fails (non-fast-forward)** = host scheduler pushed during the run. The
+  commit step does `git pull --rebase --autostash` first; `concurrency` cancels overlaps.
+- **Node 20 deprecation warning** = `actions/checkout@v4`/`setup-python@v5` (Node 20).
+  Warning only, not a failure. Deferred: bump to `@v5`/`@v6` when convenient.
