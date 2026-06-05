@@ -283,14 +283,25 @@ redacted for confidentiality.</p>
 {method}
 </main>"""
 
-    page = shell("LTCMA 2026 — Strategy Backtests", body)
-    # inject page-specific CSS right before </head>
-    page = page.replace('<link rel="stylesheet" href="style.css"></head>',
-                        f'<link rel="stylesheet" href="style.css">\n<style>{PAGE_CSS}</style></head>')
+    # backtests.html is MERGED into strategies.html (Carlos, 2026-06-04). This
+    # script still renders the per-strategy bt_<key>.html report pages (linked from
+    # the Strategies cards) and keeps the committed catalog fallback in sync, but the
+    # landing page is now a meta-refresh redirect so existing links keep working.
+    _unused = (body, PAGE_CSS, shell)  # retained for the report-page machinery above
+    redirect = (
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<meta http-equiv="refresh" content="0; url=strategies.html#backtests">'
+        '<link rel="canonical" href="strategies.html">'
+        '<title>Backtests have moved to Strategies</title>'
+        '<meta name="robots" content="noindex"></head><body>'
+        '<p style="font-family:sans-serif;margin:3rem">The Backtests page has merged '
+        'into <a href="strategies.html#backtests">Strategies</a>. Redirecting…</p>'
+        '</body></html>')
     with open(os.path.join(DOCS, "backtests.html"), "w", encoding="utf-8") as fh:
-        fh.write(page)
+        fh.write(redirect)
 
-    print(f"  backtests.html  ({len(public)} public / {len(strats)} total, source: {src})")
+    print(f"  backtests.html -> redirect to strategies.html ; "
+          f"{len(public)} report pages refreshed ({len(strats)} total, source: {src})")
 
 
 if __name__ == "__main__":

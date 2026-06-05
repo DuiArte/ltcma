@@ -7,9 +7,7 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
        '<a href="portfolio.html">Portfolio</a>'
        '<a href="strategies.html">Strategies</a>'
-       '<a href="backtests.html">Backtests</a>'
-       '<a href="stocks.html">Stock Analysis</a>'
-       '<a href="signals.html">Stock Signals</a>'
+       '<a href="stocks.html">Stock Research</a>'
        '<a href="regime.html">Regime Tracker</a>'
        '<a href="projects.html">Projects</a>'
        '<a href="glossary.html">Glossary</a>'
@@ -609,6 +607,10 @@ _BT_REDACT = [
     (_re.compile(r"\b\d+R\b"), "[target]"),
     (_re.compile(r"\b[a-z_]{3,}\s?=\s?-?\d+(?:\.\d+)?\b"), "[param]"),
     (_re.compile(r"\b\d+m lookback\b|\blookback[ =]\d+\b", _re.I), "[lookback]"),
+    # bar-window lookback params: "30/60/120-bar", "150-bar", "20-day" sign filter
+    (_re.compile(r"\b\d{1,3}(?:/\d{1,3})+-?\s?(?:bar|day|d)\b", _re.I), "[lookback]"),
+    (_re.compile(r"\b\d{2,3}-?\s?(?:bar|day)\s?(?:sign|sma|ema|filter|window|lookback)\b", _re.I),
+     "[lookback]"),
     (_re.compile(r"Trading_Index|SignalLib|/home/\S+|[Cc]:\\\\Users\S*|Downloads\S*|"
                  r"/mnt/\S+|REPORT\.md", _re.I), "[internal]"),
 ]

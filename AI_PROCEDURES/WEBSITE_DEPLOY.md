@@ -1,23 +1,62 @@
 # WEBSITE_DEPLOY — page visibility rules (Terse)
 
 Source of truth for strategy cards: `Trading_Index/strategies.json` (hub) → repo
-fallback `data/backtests_strategies.json`. Both pages read it via
-`glossary.bt_catalog()` and render with `glossary.bt_card()` (one card markup,
-one CSS block `glossary.BT_CARD_CSS`). A metric lives in exactly one place.
+fallback `data/backtests_strategies.json`. Read via `glossary.bt_catalog()`,
+rendered with `glossary.bt_card()` (one card markup, one CSS block
+`glossary.BT_CARD_CSS`). A metric lives in exactly one place.
 
-## Visibility rule
+## Page inventory (2026-06-04 — two merges, N→N-2)
 
-- **Backtests** (`backtests.html`, `24_backtests.py`): curated showcase — renders
-  `public:true` entries (the winners). Failures stay internal in the JSON, not on
-  the public site. Each card cross-links to deployment status on Strategies.
+Two structural merges (Carlos: "merge the backtest and the strategies windows,
+also merge the stock picks and stock signals"):
+- **`backtests.html` → MERGED into `strategies.html`.** `24_backtests.py` now writes
+  a meta-refresh redirect (`→ strategies.html#backtests`) and still renders the
+  per-strategy `bt_<key>.html` report pages + syncs the JSON fallback.
+- **`signals.html` → MERGED into `stocks.html`.** `21_stock_signals.py` now writes a
+  meta-refresh redirect (`→ stocks.html#signals`). The macro-β / FOMC content moved
+  into `25_stock_picks.py`.
+- Nav (`glossary.NAV`) dropped "Backtests" and "Stock Signals"; "Stock Analysis"
+  renamed "Stock Research". Live page count 11 → 9.
+
+## Visibility rule (post-merge)
+
 - **Strategies** (`strategies.html`, `23_strategies.py`): the live regime-adaptive
-  book (SARS/DUO/MARS/BARS, own return CSVs) **plus** a "Validated Strategy
-  Backtests" section rendering the same `public:true` cards, cross-linked to the
-  Backtests archive. Flagship (`gfc_test_passed:true`) sorts first.
-- **Overlap**: every deployable backtest appears on BOTH pages (Carlos, 2026-06-04
-  — "successful strategies in the backtest section as well as the systematic
-  strategies section"). Reverse not required: a failed backtest never reaches
-  either public page.
+  book (SARS/DUO/MARS/BARS, own return CSVs) **plus** one merged feed rendering
+  **every** catalog entry as a status-tagged card with client-side filter pills
+  (All · Deployed · Research (passed) · Failed/archived) and the critical-findings
+  research notes (#9/#10/#11). Status: green badge → Deployed (flagship
+  `gfc_test_passed` first), yellow → Research/ensemble, red → Failed/archived with
+  the **lesson learned shown** (Carlos, 2026-06-04 — failures now surface, reversing
+  the prior "failures off-site" choice). Confidentiality preserved: any **non-public**
+  entry has its raw thesis replaced by a generic line (parameters/universe stay
+  private, rule 4/7); name + verdict + lesson route through `_bt_public`/`_bt_redact`.
+- **Stocks** (`stocks.html`, `25_stock_picks.py`): composite-picker-led research page
+  (see methodology below) + the former signals macro-β/FOMC tables + per-company CFA
+  report links. `19_stock_analysis.py` still builds the `stock_<TICKER>.html` pages
+  and runs first in the daily chain; `25_stock_picks.py` runs after it and owns
+  `stocks.html`.
+
+## Composite picker methodology (`picker.py` + `25_stock_picks.py`)
+
+Reproducible from public data + this formula (no model judgement on which names):
+1. **Universe** = macro-signal coverage set (40 names carrying BOTH fundamental and
+   signal variables): `stock_sensitivities.parquet` ∩ live yfinance fundamentals.
+2. **Variables** (every numeric var from both pipelines): fundamentals — ROE, gross/
+   net margin, FCF yield, margin-of-safety, Buffett score, rev/EPS growth, low-
+   leverage `1/(1+D/E)`, 12-1 momentum; signals — earnings yield `1/PE`, fwd earnings
+   yield, β to rates/dollar/CAD, macro R².
+3. **z-score** each var cross-sectionally; missing → 0 (neutral).
+4. **Weights** = each var's Pearson corr with realised forward returns (mean post-FOMC
+   5-day drift per ticker from `stock_fomc_reaction.parquet`), normalised so Σ|w|=1;
+   **corr sign sets direction** — nothing hand-picked. Equal-weight fallback if the
+   forward-return history is absent (documented on the build).
+5. **Composite** = Σ w_v·z_v. Rank desc; **top 20 = picks**. Buy candidate = composite>0.
+6. **Confidentiality:** weight VALUES stay in `picker.py`, never rendered (rule 4). The
+   page shows the ranked result + each pick's variable contributions (direction +
+   relative bar) + a deterministic 1-line commentary. Picker output is PUBLIC research
+   over the full investable universe (not Carlos's positions).
+- **Validation (each build prints):** sector distribution of top-20, single-variable
+  variance share (flag if >80%), and overlap vs a naive 12-1-momentum baseline.
 
 ## Card metric fallbacks (`glossary._BT_ALT`)
 
