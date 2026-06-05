@@ -1,5 +1,5 @@
 LTCMA SYSTEMATIC STRATEGIES — AI COPY (low-token)
-asof=04 Jun 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
+asof=05 Jun 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
 names public-safe (no mechanism exposed); rf USD=4.5% BARS=9%
 interactive: site lets reader re-base start date; values below = full window
 fields: code|name|bench|window|metrics...
