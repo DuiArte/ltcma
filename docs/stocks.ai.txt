@@ -1,0 +1,24 @@
+STOCK COMPOSITE PICKS — AI COPY (low-token)
+asof=04 Jun 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+composite=sum(corr-derived-weight*zscore); weights private; top20=picks
+fields: rank|ticker|sector|price|composite|dominant_var
+1|SMCI|Technology|46.90|+0.890|Revenue growth
+2|LLY|Healthcare|1125.27|+0.726|CAD beta
+3|PLTR|Technology|141.70|+0.672|Earnings growth
+4|COST|Consumer Defensive|972.35|+0.490|Gross margin
+5|NVDA|Technology|218.66|+0.472|Revenue growth
+6|WMT|Consumer Defensive|117.74|+0.362|CAD beta
+7|HD|Consumer Cyclical|309.95|+0.326|ROE
+8|NVO|Healthcare|43.75|+0.324|CAD beta
+9|KO|Consumer Defensive|76.82|+0.237|CAD beta
+10|AAPL|Technology|311.23|+0.205|ROE
+11|NFLX|Communication Services|81.56|+0.205|CAD beta
+12|ORCL|Technology|236.34|+0.146|CAD beta
+13|AMZN|Consumer Cyclical|253.79|+0.090|CAD beta
+14|DDOG|Technology|243.60|+0.089|Rate beta
+15|NET|Technology|268.64|+0.075|Rate beta
+16|UNH|Healthcare|396.47|+0.065|Gross margin
+17|GOOGL|Communication Services|372.19|+0.019|12-1 momentum
+18|SNOW|Technology|244.18|+0.004|Rate beta
+19|SHOP|Technology|116.04|-0.011|CAD beta
+20|MSFT|Technology|428.05|-0.028|Net margin

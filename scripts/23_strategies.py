@@ -9,7 +9,7 @@ import json
 import numpy as np
 import plotly.graph_objects as go
 from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS,
-                      bt_catalog, bt_card, BT_CARD_CSS)
+                      bt_catalog, bt_card, BT_CARD_CSS, _bt_redact)
 
 DOCS = os.path.expanduser("~/LTCMA/docs")
 import pandas as pd
@@ -138,45 +138,161 @@ bt_script = ('<script>window.BT_DATA=' + json.dumps(data, separators=(",", ":"))
              ';window.BT_CFG=' + cfg + ';</script>\n<script>' + BT_JS + '</script>')
 
 
-# ── validated backtest building blocks (same canonical catalog as backtests.html) ─
-# Carlos asked that the successful strategies appear on BOTH the Backtests page and
-# the Systematic Strategies page; this renders the public catalog cards here too,
-# cross-linked to the full backtest archive. The flagship (GFC-tested) leads.
+# ── merged backtest + strategies feed (backtests.html folded in here) ─────────
+# Carlos (2026-06-04): merge the Backtests and Strategies pages into one. Every
+# strategy in the canonical catalog renders here as a status-tagged card —
+# deployed/deployable (green), research-passed/ensemble (blue), failed/archived
+# (gray, lesson visible). Status filter pills are client-side. Failed cards still
+# route name/thesis/verdict/lesson through the confidentiality filter (bt_card →
+# _bt_public/_bt_redact), so parameters/tickers/universe stay redacted (rule 7).
 _cat = bt_catalog()
-_pub = [s for s in _cat.get("strategies", []) if s.get("public")]
+_strats = _cat.get("strategies", [])
 _rank = {"green": 0, "yellow": 1, "red": 2}
-_pub.sort(key=lambda s: (0 if s.get("gfc_test_passed") else 1,
-                         _rank.get(s.get("badge"), 3), s.get("short_name", "")))
+
+
+def _status(s):
+    """Map a catalog entry to (key, pill-label) for the merged feed."""
+    if s.get("badge") == "green":
+        return "deployed", ("Deployed · GFC-tested" if s.get("gfc_test_passed")
+                            else "Deployable")
+    if s.get("badge") == "yellow":
+        return "research", "Research · ensemble"
+    return "archived", "Failed / archived"
+
+
+def _lesson(s):
+    """Short lesson line for archived/failed cards (redacted backstop applies)."""
+    txt = s.get("failure_reason") or s.get("verdict_line") or ""
+    txt = txt.split(". ")[0].strip()
+    return (txt[:240] + "…") if len(txt) > 240 else txt
+
+
+_order = sorted(_strats, key=lambda s: (
+    {"deployed": 0, "research": 1, "archived": 2}[_status(s)[0]],
+    0 if s.get("gfc_test_passed") else 1, _rank.get(s.get("badge"), 3),
+    s.get("short_name", "")))
+
+import copy as _copy
 _bt_cards = ""
-for s in _pub:
-    rl = s.get("report_html") or f"bt_{s['key']}.html"
-    if s.get("gfc_test_passed"):
-        xref = ('<b>Flagship deployable strategy</b> — full backtest detail and the GFC '
-                'stress test on the <a href="backtests.html">Backtests</a> page.')
-    elif s.get("badge") == "green":
-        xref = ('Deployable building block — full archive on the '
-                '<a href="backtests.html">Backtests</a> page.')
+for s in _order:
+    st, label = _status(s)
+    rl = (s.get("report_html") or f"bt_{s['key']}.html") if s.get("public") else None
+    if not s.get("public"):
+        # Only the curated public:true entries have a vetted public thesis. For every
+        # other entry (non-public research + failures) the raw thesis enumerates exact
+        # parameter sets / asset universes (rule 4/7) — replace it with a safe generic
+        # line so no parameter values reach the public card. Metrics + redacted verdict
+        # + lesson still render.
+        s = _copy.deepcopy(s)
+        s["what_it_tests"] = ("Research backtest — thesis, parameters and asset "
+                              "universe held internal. The headline verdict and lesson "
+                              "are shown.")
+    if st == "deployed":
+        xref = ('<b>Flagship deployable strategy</b> — a validated building block of the '
+                'live regime-adaptive book above.' if s.get("gfc_test_passed")
+                else 'Deployable building block behind the live book above.')
+    elif st == "research":
+        xref = 'Ensemble component — used as one signal inside the live book.'
     else:
-        xref = ('Ensemble component — context on the '
-                '<a href="backtests.html">Backtests</a> page.')
-    _bt_cards += bt_card(s, rl, xref)
+        les = _lesson(s)
+        xref = (f'<b>Lesson learned:</b> {_bt_redact(les)}' if les
+                else 'Archived — no deployable edge.')
+    card = bt_card(s, rl, xref)
+    card = card.replace('<article class="btcard ',
+                        f'<article data-status="{st}" class="btcard st-{st} ', 1)
+    _bt_cards += card
+
+# ── critical findings as research-note cards (publishable per WEBSITE_DEPLOY #6) ─
+_FINDINGS = [
+    ("#9", "External regime-gating harms self-defended sleeves",
+     "When a sleeve already carries an internal trend/regime filter, layering an "
+     "external regime-conditional weight that down-weights it in stress is "
+     "architecturally inverted — it pulls weight away precisely when the internal "
+     "filter is doing the most defending. The ungated allocation strictly "
+     "dominated the gated one in an extended GFC analog (passing the sub-10% "
+     "drawdown bar where the gated version failed). Generalizes the signal-level "
+     "double-gating result to the portfolio-weighting level."),
+    ("#10", "Macro state shows no usable directional form on this data",
+     "A single risk-on/off macro orientation cannot fit a heterogeneous cross-"
+     "section (the same state implies opposite correct signs across instruments), "
+     "and as a conditioner it adds no information either. Across eight macro / "
+     "cross-asset features none cleared the discovery bar — macro variables are "
+     "conditioner axes, not standalone signals, and conditioning also fails."),
+    ("#11", "At daily-bar granularity, 5-day mean-reversion is the lone single-name edge",
+     "Three independent new weak-signal families (cross-sectional rank momentum, "
+     "calendar/seasonal, daily-bar microstructure) were tested for a broadly-"
+     "replicating edge uncorrelated to the known mean-reversion survivor. None "
+     "passed: the genuinely-new axes have no edge, and the only edge-ish streams "
+     "are mean-reversion re-expressed. The honest reading: this dataset + daily "
+     "horizon are exhausted for single-name directional alpha — the next move is a "
+     "horizon change (intraday), not another feature batch."),
+]
+_find_cards = ""
+for num, title, txt in _FINDINGS:
+    _find_cards += (
+        f'<article data-status="research" class="btcard st-research note-card">'
+        f'<div class="bt-head"><span class="bt-badge note-badge">Research note {num}</span></div>'
+        f'<h3 class="bt-name">{title}</h3>'
+        f'<p class="bt-tests">{txt}</p>'
+        f'<div class="bt-foot"><span class="bt-span">Critical finding — observation, '
+        f'not actionable IP</span></div></article>')
+
+_PILLS = (
+    '<div class="pills" data-group="strat">'
+    '<button class="pill on" data-f="all">All</button>'
+    '<button class="pill" data-f="deployed">Deployed</button>'
+    '<button class="pill" data-f="research">Research (passed)</button>'
+    '<button class="pill" data-f="archived">Failed / archived</button>'
+    '</div>')
+
 BT_SECTION = (
-    '<section class="block"><h2>Validated Strategy Backtests</h2>'
-    '<p class="note">The research-validated strategies behind the live book, run under one '
-    'fixed protocol (smart-search &rarr; walk-forward &rarr; deflated Sharpe &rarr; Monte Carlo '
-    '&rarr; held-out window &rarr; S&amp;P&nbsp;500 gate &rarr; sub-10% drawdown bar). The flagship '
-    '<b>Static Drift-Weight 50/30/20</b> (Sharpe&nbsp;1.33, GFC-tested) leads. Same canonical '
-    'source as the <a href="backtests.html">Backtests</a> page &mdash; shown here too so the '
-    'deployable results sit alongside the live strategies. Performance metrics shown are real '
-    'and scale-invariant; strategy parameters, asset universes and entry/exit rules are redacted '
-    'for confidentiality.</p>'
-    f'<div class="btgrid">{_bt_cards}</div></section>')
+    '<section class="block" id="backtests"><h2>Strategy Backtests &amp; Research</h2>'
+    '<p class="note">Every completed strategy backtest, run under one fixed protocol '
+    '(smart-search &rarr; walk-forward &rarr; deflated Sharpe &rarr; Monte Carlo &rarr; '
+    'held-out window &rarr; S&amp;P&nbsp;500 gate &rarr; sub-10% drawdown bar), folded in '
+    'with the research notes. The flagship <b>Static Drift-Weight 50/30/20</b> '
+    '(Sharpe&nbsp;1.33, GFC-tested) leads. <span style="color:#0a5d3a;font-weight:600">'
+    'Green</span> = deployed/deployable, <span style="color:#0a2540;font-weight:600">'
+    'blue</span> = research-passed ensemble component, <span style="color:#9ca3af;'
+    'font-weight:600">gray</span> = failed/archived with the lesson learned shown. '
+    'Performance metrics are real and scale-invariant; parameters, asset universes and '
+    'entry/exit rules are redacted for confidentiality.</p>'
+    f'{_PILLS}'
+    f'<div class="btgrid">{_bt_cards}{_find_cards}</div></section>')
+
+STRAT_CSS = r"""
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 22px}
+.pill{font:500 12px 'Inter',sans-serif;letter-spacing:.02em;color:#0a2540;background:#fff;
+border:1px solid #d4d4d4;padding:6px 14px;cursor:pointer;transition:all .12s}
+.pill:hover{background:rgba(10,37,64,.05)}
+.pill.on{background:#0a2540;color:#fff;border-color:#0a2540}
+.btcard.st-deployed{border-top-color:#0a5d3a}
+.btcard.st-research{border-top-color:#0a2540}
+.btcard.st-archived{border-top-color:#9ca3af;background:#fcfcfc}
+.btcard.st-archived .bt-name{color:#555}
+.note-card{border-top-color:#0a2540}
+.note-badge{background:#0a2540}
+"""
+
+STRAT_FILTER_JS = r"""<script>
+document.querySelectorAll('.pills').forEach(function(grp){
+  grp.querySelectorAll('.pill').forEach(function(b){
+    b.addEventListener('click',function(){
+      grp.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');var f=b.getAttribute('data-f');
+      document.querySelectorAll('.btgrid .btcard').forEach(function(c){
+        c.style.display=(f==='all'||c.getAttribute('data-status')===f)?'':'none';
+      });
+    });
+  });
+});
+</script>"""
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Systematic Strategies</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}</style><script src="{PLOTLY}"></script></head>
+<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}{STRAT_CSS}</style><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -185,8 +301,8 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <p class="lede">Four regime-adaptive strategies, walk-forward out-of-sample, benchmarked
 against the S&amp;P 500 (and the IPC for Mexican equity). Equity curves, drawdowns and a
 full indicator set. Results only — the detection-and-optimisation methodology is proprietary.
-The research-validated backtests behind these building blocks are catalogued below and on the
-<a href="backtests.html">Backtests</a> page.</p>
+Every validated and archived backtest behind these building blocks is catalogued below
+(the former Backtests page, now merged in) with status filters.</p>
 <p class="asof">As of {ASOF} &middot; out-of-sample &middot; hypothetical, not actual trading results</p>
 </div></section>
 <main class="container">
@@ -217,6 +333,7 @@ hypothetical results, past performance does not guarantee future results.</p></s
 <footer class="shell-foot"><div class="container"><p>Research, not investment advice.
 Backtested results are hypothetical and do not represent actual trading.</p></div></footer>
 {bt_script}
+{STRAT_FILTER_JS}
 </body></html>"""
 
 open(f"{DOCS}/strategies.html", "w", encoding="utf-8").write(HTML)
