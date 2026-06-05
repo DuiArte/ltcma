@@ -64,6 +64,32 @@ Ensemble entries store headline under richer keys. Card falls back:
 `best_raw_sharpe → sharpe`, `pbo → pbo_structural`. Keeps the flagship Static
 Drift-Weight 50/30/20 showing Sharpe **1.33** / PBO **0.33** (not `n/a`).
 
+## Portfolio equity curve methodology (`18_portfolio.py` → `docs/portfolio.html`)
+
+The Total-value curve MUST be flow-immune. Construct it as
+`total = CAPITAL + (MV − cost) + realized`, all from the Excel snapshot spine
+(positions + avg cost) priced on Yahoo (BMV `.MX`). A buy and an *undocumented
+add* both raise MV and cost equally, so they cancel — capital moving between the
+GBMF2 cash sleeve and equities never reads as performance. Realized P/L = snapshot
+position-drops valued at Yahoo. **Never** derive the cash sleeve from a blotter
+residual (`blotter_clean.csv`): broker shares with no recorded trade (the XLE
+anti-pattern) then move MV without the offset → phantom ±20–45% day swings
+(the "−20% drawdown then spontaneous recovery" bug, fixed 2026-06-05).
+
+Two daily price hygiene steps feed the curve (snapshot-row anomaly filtering is
+NOT enough — it never touches the daily price series that draws the line):
+- **De-spike** isolated bad prints (one-day spike/dip that reverts → carry prior).
+- **Split reconciliation:** a BMV split re-bases the Yahoo price on the split day
+  but the snapshot share count only catches up at the next snapshot (VGT 8:1,
+  VUG 6:1: price 04-20 vs shares 04-24) → MV craters ~8× then snaps back. Detect
+  the split from the **avg-cost** series (re-bases only at a split, not at a sell),
+  confirm via a matching price re-basing, then put price/shares/avg-cost on one
+  continuous basis. Keying off share counts is wrong — a half-position sell looks
+  like a 1:2 split.
+
+Endpoint is pinned to the canonical broker KPIs so the chart == the headline.
+Sanity gate: max single-day curve move should be low single digits (≈3%), not 40%.
+
 ## Build / deploy
 
 Run in WSL (`~/LTCMA`, where the SARS/DUO/MARS/BARS CSVs live):
