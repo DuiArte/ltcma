@@ -244,7 +244,8 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <p class="lede">A composite monthly stress index for spotting when markets are
 moving from calm to stress &mdash; or back again &mdash; in time to adjust the
 strategy. Combined with a near-term tactical overlay from event-study research.</p>
-<p class="asof">As of {comp.index[-1].strftime('%b %Y')} &middot;
+<p class="asof">As of {pd.Timestamp.now().strftime('%d %b %Y')} &middot;
+monthly composite through {comp.index[-1].strftime('%b %Y')} &middot;
 4 facets: economic, political, AI-cycle, environmental</p>
 </div></section>
 <main class="container">
