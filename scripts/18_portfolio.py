@@ -211,6 +211,55 @@ _daily = pd.date_range(_first.normalize(), pd.Timestamp.today().normalize(), fre
 _pos = _snap.reindex(_daily).ffill().fillna(0.0)         # positions truth; sells = drops
 _acd = _csnap.reindex(_daily).ffill()                    # avg cost as-of each date (truth)
 _px  = _hist.reindex(_daily).ffill() if "_hist" in dir() else pd.DataFrame(index=_daily)
+# screen the DAILY price series for isolated bad prints (e.g. the unadjusted split
+# ticks VGT/VUG 2026-04-21, ret -86%/-82%) that the snapshot-row anomaly filter does
+# NOT reach: a one-day spike/dip that reverts is replaced with the prior valid price,
+# so it can never inject a phantom dip-and-recover into the equity curve. A genuine
+# split or trend shifts the level permanently (the next day does NOT revert) and is
+# left untouched.
+def _despike(s, tol=0.35):
+    v = s.astype(float).copy(); prev = v.shift(1); nxt = v.shift(-1)
+    isolated = ((v - prev) * (v - nxt)) > 0                  # local extremum (above/below both)
+    bad = isolated & ((v / prev - 1).abs() > tol) & ((v / nxt - 1).abs() > tol)
+    v[bad.fillna(False)] = float("nan")
+    return v.ffill()
+if not _px.empty:
+    _px = _px.apply(_despike).ffill()
+
+# split reconciliation: a BMV (.MX) split re-bases the Yahoo price on the split day,
+# but the Excel snapshot share count only catches up at the NEXT snapshot (e.g. VGT 8:1
+# and VUG 6:1: price re-based 2026-04-20, shares not until 04-24). In that gap the curve
+# multiplied pre-split shares by post-split prices and the MV cratered ~8x then snapped
+# back. Put price, shares and avg-cost on one continuous (post-split) basis -- but ONLY
+# when a price re-basing is CONFIRMED by a matching reciprocal share jump, so a genuine
+# one-day crash (price down, shares unchanged) is left completely alone.
+def _cumfac(s, lo=0.55, hi=1.80):
+    v = s.astype(float); fac = [1.0] * len(v); f = 1.0
+    for i in range(len(v) - 1, 0, -1):
+        a, b = v.iloc[i - 1], v.iloc[i]
+        if pd.notna(a) and pd.notna(b) and a > 0 and b > 0:
+            r = b / a
+            if r < lo or r > hi:
+                f *= r
+        fac[i - 1] = f
+    return pd.Series(fac, index=v.index)
+for _tk in _pos.columns:
+    _yt = TICKER_MAP.get(_tk)
+    if not (_yt and _yt in _px.columns) or _tk not in _acd.columns:
+        continue
+    # The split signal is the AVERAGE COST series: it only re-bases at a split (a sell
+    # leaves avg cost unchanged; a buy nudges it). Share counts are NOT a reliable signal
+    # -- a routine half-position sell (816->416) looks just like a 1:2 split. Confirm the
+    # split by requiring the Yahoo PRICE to re-base by the SAME factor (a genuine crash
+    # moves price but not avg cost, so price/cost factors disagree -> left untouched).
+    _af = _cumfac(_acd[_tk]); _pf = _cumfac(_px[_yt])
+    _af0, _pf0 = float(_af.iloc[0]), float(_pf.iloc[0])
+    if abs(_af0 - 1) > 0.1 and abs(_pf0 - 1) > 0.1 and abs(_pf0 / _af0 - 1) < 0.15:
+        _px[_yt]  = _px[_yt]  * _pf      # prices -> continuous post-split basis
+        _acd[_tk] = _acd[_tk] * _af      # avg cost -> continuous post-split basis
+        _pos[_tk] = _pos[_tk] / _af      # shares move inverse to avg cost (cost invariant)
+        print(f"  split-reconciled {_tk}: factor x{_af0:.4f} (price x{_pf0:.4f})")
+
 _epx = df.pivot_table(index="Fecha", columns="ticker", values="px_excel", aggfunc="last").reindex(_daily).ffill()  # Excel MXN price fallback (e.g. CCJ N)
 
 # trade markers from the consolidated, de-duplicated blotter (operation dates).
@@ -453,24 +502,22 @@ print(f"  CANONICAL capital {CAPITAL:,.0f} | cost {tot_cost:,.0f} | cash {GBMF2_
       f"MV {tot_val:,.0f} | realized {_real_now:,.0f} | unrealized {_unr_now:,.0f} | "
       f"total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.2f}%")
 
-# historical curve: keep the blotter-driven daily SHAPE, but pin the live endpoint
-# to the canonical realized/total so the chart agrees with the headline KPI.
-try:
-    _blf = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
-    _blf["flow"] = _blf["shares"] * _blf["price"] * _blf["side"].map({"buy": 1.0, "sell": -1.0})
-    _ninv = (_blf.groupby("date")["flow"].sum().sort_index().cumsum() * SCALE)
-    _ninv = _ninv.reindex(ts.index, method="ffill").fillna(0.0)
-except Exception as _e:
-    print(f"  capital model: blotter unavailable ({_e})"); _ninv = pd.Series(0.0, index=ts.index)
-_real_raw = ts["balance"] - _ninv                   # blotter-residual realized — SHAPE only
-_pin = _real_now - float(_real_raw.iloc[-1])        # shift the whole series so endpoint = canonical
-_real_series = _real_raw + _pin
-_unr_series = (ts["equity"] - ts["balance"]).astype(float)
-_unr_series.iloc[-1] = _unr_now                     # canonical unrealized at the live point
-ts["realized_pool"] = CAPITAL + _real_series
-ts["total"] = ts["realized_pool"] + _unr_series
-ts.iloc[-1, ts.columns.get_loc("total")] = _total_now
-ts.iloc[-1, ts.columns.get_loc("realized_pool")] = CAPITAL + _real_now
+# historical curve: BLOTTER-FREE, flow-immune decomposition (fixes the XLE anti-pattern).
+# The recycled-$10M base splits into deployed cost basis + idle GBMF2 cash, so the cash
+# sleeve at any date is the residual  cash_t = CAPITAL - cost_basis_t. Total book value is
+# therefore  equity MV + cash sleeve = CAPITAL + (MV - cost) + realized.  A buy (cost up,
+# MV up) and an UNDOCUMENTED add (cost up, MV up) both net to ZERO on the total line, so
+# reallocations between the cash and equity sleeves no longer read as +/-20-40% phantom
+# "performance" swings. Realized P/L is the snapshot position-drops valued at Yahoo
+# (_cumreal), NEVER the blotter: it was the blotter-vs-snapshot disagreement (shares the
+# broker holds with no recorded trade) that injected the spurious jumps into the old curve.
+# The endpoint is pinned to the canonical broker KPIs so the chart matches the headline.
+_unr_series  = _unreal.reindex(ts.index).ffill().fillna(0.0).astype(float)    # MV - cost basis, daily
+_real_series = _cumreal.reindex(ts.index).ffill().fillna(0.0).astype(float)   # realized from snapshot drops
+_unr_series.iloc[-1]  = _unr_now                    # canonical unrealized at the live point
+_real_series.iloc[-1] = _real_now                   # canonical realized   at the live point
+ts["realized_pool"] = CAPITAL + _real_series        # capital + locked-in realized
+ts["total"] = ts["realized_pool"] + _unr_series     # total book value (flow-immune)
 dates = ts.index
 
 # ---------- charts ----------
