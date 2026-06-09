@@ -539,8 +539,8 @@ for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle
                    marker=dict(color=_col, symbol=_sym, size=9, line=dict(width=1, color="white")),
                    text=_txt, hoverinfo="text")
 f1.add_hline(y=CAPITAL, line=dict(color=INK, width=1, dash="dot"),
-             annotation_text="Capital (10M, recycled)", annotation_position="bottom right")
-f1.update_layout(title="Total value \u2014 realized (locked in) + unrealized vs 10M capital (daily, scaled)",
+             annotation_text="Capital (18M, recycled)", annotation_position="bottom right")
+f1.update_layout(title="Total value \u2014 realized (locked in) + unrealized vs 18M capital (daily, scaled)",
                  yaxis_title="MXN (scaled)", xaxis_title="date",
                  legend=dict(orientation="h", y=-0.18))
 
@@ -648,7 +648,7 @@ USD/MXN {RATE:.4f}</p>
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
 amounts; prices, returns and weights are exact. Positions, cost basis and the
 GBMF2 cash sleeve come from the broker statement (source of truth), re-priced
-live. <b>Accounting:</b> the equity book is measured against a fixed $10M&nbsp;MXN
+live. <b>Accounting:</b> the equity book is measured against a fixed $18M&nbsp;MXN
 base (recycled capital); Total&nbsp;Value = holdings market value + GBMF2 cash
 sleeve; Unrealized&nbsp;P/L = market value &minus; cost basis; Realized&nbsp;P/L =
 (cost basis + cash) &minus; base. Undocumented share adds are treated as buys
@@ -660,7 +660,7 @@ excluded.</div>
 <button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
 <p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns and weights
 read the same in either currency. Total Return is measured against the recycled
-$10M&nbsp;MXN base and includes the GBMF2 cash sleeve ({cval(GBMF2_CASH)}).
+$18M&nbsp;MXN base and includes the GBMF2 cash sleeve ({cval(GBMF2_CASH)}).
 Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
 <section class="block"><h2>Total Value vs Capital</h2>
