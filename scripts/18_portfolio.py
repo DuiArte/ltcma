@@ -520,6 +520,38 @@ ts["realized_pool"] = CAPITAL + _real_series        # capital + locked-in realiz
 ts["total"] = ts["realized_pool"] + _unr_series     # total book value (flow-immune)
 dates = ts.index
 
+# ---------- authoritative offline sidecar override (broker-book curve) ----------
+# The private clean-rebuilder (real_curve_generator.py) emits a per-date JSON sidecar
+# carrying the LEDGER-reconciled, flow-immune equity-only curve of the REAL broker book
+# (equity_only_mxn = base + realized_pnl_cum + unrealized_pnl). When that sidecar is
+# present, it REPLACES the Excel/Yahoo-derived curve above so the public chart matches
+# the offline Portfolio_REAL_equity_only curve to the cent, re-scaled by the same x1.8
+# obfuscation constant used everywhere else on this page. Falls back GRACEFULLY to the
+# computed curve if the sidecar is absent or unreadable (the daily refresh never breaks).
+# The headline KPI tiles stay live-broker-priced (untouched) — the snapshot-spine curve
+# and the daily KPI carry an inherent ~2pt price-source gap by design.
+_SIDECAR = "/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite/real_numbers/real_curve_series.json"
+try:
+    _sc = json.loads(Path(_SIDECAR).read_text())
+    _scpts = _sc.get("points", [])
+    if _scpts:
+        _base = float(_sc.get("base_mxn", BASELINE))
+        _sidx = pd.to_datetime([p["date"] for p in _scpts])
+        _stot = pd.Series([float(p["equity_only_mxn"]) for p in _scpts], index=_sidx).sort_index()
+        _srea = pd.Series([_base + float(p["realized_pnl_cum"]) for p in _scpts], index=_sidx).sort_index()
+        # forward-fill each snapshot value across the daily grid, back-fill the head, scale x1.8
+        ts["total"] = (_stot.reindex(ts.index, method="ffill").bfill() * SCALE)
+        ts["realized_pool"] = (_srea.reindex(ts.index, method="ffill").bfill() * SCALE)
+        print(f"  curve: consuming offline sidecar (as_of {_sc.get('as_of')}, "
+              f"{len(_scpts)} pts) x{SCALE} -> public broker-book curve "
+              f"[end total {ts['total'].iloc[-1]:,.0f}]")
+    else:
+        print("  curve: sidecar present but has no points -> keeping computed curve")
+except FileNotFoundError:
+    print(f"  curve: no sidecar ({_SIDECAR}) -> keeping computed (Excel/Yahoo) curve")
+except Exception as _scerr:
+    print(f"  curve: sidecar read failed ({_scerr}) -> keeping computed curve")
+
 # ---------- charts ----------
 # 1. total value (holdings + recycled cash) vs the fixed capital pool
 f1 = go.Figure()
