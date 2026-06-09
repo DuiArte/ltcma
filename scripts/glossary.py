@@ -25,10 +25,10 @@ def ccy_badge(currency, note=""):
 # Each entry: (term, plain-English explanation -- no math, no jargon).
 GLOSSARY = {
     "Portfolio Accounting & FX": [
-        ("Recycled $10M base",
-         "The equity book is measured against a fixed $10,000,000 MXN starting "
+        ("Recycled 8M base",
+         "The equity book is measured against a fixed $18,000,000 MXN starting "
          "pool, with capital recycled through it. Total Return = (today's total "
-         "value &minus; $10M) &divide; $10M &mdash; not against the running cost of "
+         "value &minus; 8M) &divide; 8M &mdash; not against the running cost of "
          "what we currently hold."),
         ("GBMF2 cash sleeve",
          "Cash from equity sales parks in the GBMF2 fund between trades, so it is "
