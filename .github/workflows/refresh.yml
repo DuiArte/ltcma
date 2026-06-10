@@ -17,6 +17,12 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 15        # backstop: a daily refresh must never run for hours
+    env:
+      # api.stlouisfed.org works from Actions runners (the keyless fredgraph.csv
+      # scrape never did — it throttles cloud IPs into 60s-timeout chains).
+      # scripts/fred_api.py reads this; without it, the keyless fallback +
+      # FRED_DEADLINE skip-and-use-prior behavior still applies.
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 

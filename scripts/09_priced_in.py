@@ -13,8 +13,17 @@ last = sig.ffill().iloc[-1]
 
 # ---------- 1. PRICED-IN POLICY-RATE PATH (Treasury forward rates) ----------
 # par yields treated as zero rates (indicator-grade approximation)
-TEN = {"UST_3M": .25, "UST_6M": .5, "UST_1Y": 1, "UST_2Y": 2, "UST_3Y": 3,
-       "UST_5Y": 5, "UST_7Y": 7, "UST_10Y": 10}
+# Tolerate missing tenors (same fix as 17_build_site): a FRED outage that
+# deadline-skips a series must degrade the curve, not crash the whole page.
+TEN_ALL = {"UST_3M": .25, "UST_6M": .5, "UST_1Y": 1, "UST_2Y": 2, "UST_3Y": 3,
+           "UST_5Y": 5, "UST_7Y": 7, "UST_10Y": 10}
+TEN = {k: t for k, t in TEN_ALL.items()
+       if k in last.index and pd.notna(last[k])}
+_missing = [k for k in TEN_ALL if k not in TEN]
+if _missing:
+    print(f"  (warn: missing UST tenors {_missing} — building curve from {len(TEN)})")
+if len(TEN) < 4 or "UST_1Y" not in TEN:
+    raise SystemExit("priced_in: too few UST tenors in signals_fred.csv to build the path")
 y = {t: last[k] / 100 for k, t in TEN.items()}
 funds = last["FedFunds"] / 100
 
