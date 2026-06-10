@@ -13,3 +13,7 @@ bin/
 *fxpro_forex_m5*
 FxPro_M5_*.csv
 logs/
+
+# local scratch/diagnostic files must never trip the dirty-tree guard or get committed
+scripts/_scratch_*
+_scratch_*

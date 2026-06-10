@@ -52,10 +52,12 @@ def sp500_tickers():
         print(f"  (warn: S&P 500 list fetch failed: {e}; using fallback)")
     return US_FALLBACK
 
+# ALFAA.MX + ELEKTRA.MX removed 2026-06-10: both 404 on Yahoo every run
+# (Elektra delisted from BMV; Alfa restructuring retired the A-share symbol).
 IPC_SCREEN = ["WALMEX.MX", "FEMSAUBD.MX", "GFNORTEO.MX", "GMEXICOB.MX", "AMXB.MX",
-              "CEMEXCPO.MX", "BIMBOA.MX", "ALFAA.MX", "KOFUBL.MX", "TLEVISACPO.MX",
+              "CEMEXCPO.MX", "BIMBOA.MX", "KOFUBL.MX", "TLEVISACPO.MX",
               "GAPB.MX", "ASURB.MX", "OMAB.MX", "KIMBERA.MX", "GRUMAB.MX", "AC.MX",
-              "ELEKTRA.MX", "GCARSOA1.MX", "ORBIA.MX", "PINFRA.MX", "MEGACPO.MX",
+              "GCARSOA1.MX", "ORBIA.MX", "PINFRA.MX", "MEGACPO.MX",
               "LABB.MX", "GENTERA.MX", "Q.MX", "RA.MX", "BBAJIOO.MX", "VESTA.MX",
               "CHDRAUIB.MX", "GFINBURO.MX", "BOLSAA.MX", "CUERVO.MX", "ALSEA.MX",
               "PE&OLES.MX", "LIVEPOLC-1.MX", "GCC.MX"]

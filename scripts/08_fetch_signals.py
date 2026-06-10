@@ -37,21 +37,11 @@ CONNECT_TO, READ_TO, ATTEMPTS = 6, 25, 2
 FRED_DEADLINE = 300  # seconds for the entire FRED loop, then skip remaining
 
 def fetch_fred(name, sid, attempts=ATTEMPTS, timeout=(CONNECT_TO, READ_TO)):
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
-    last_err = None
-    for k in range(attempts):
-        try:
-            txt = requests.get(url, headers=HDR, timeout=timeout).text
-            df = pd.read_csv(io.StringIO(txt))
-            df.columns = ["Date", name]
-            df["Date"] = pd.to_datetime(df["Date"])
-            df[name] = pd.to_numeric(df[name], errors="coerce")
-            return df.set_index("Date")[name].dropna()
-        except Exception as e:
-            last_err = e
-            if k + 1 < attempts:
-                time.sleep(2 ** k)
-    raise last_err
+    # Shared helper: api.stlouisfed.org with FRED_API_KEY (env or dotfile),
+    # keyless fredgraph fallback. The keyless scrape froze signals_fred.csv
+    # for 2 weeks (2026-05-27..06-09) when FRED started timing this host out.
+    from fred_api import fred_series
+    return fred_series(sid, name=name, timeout=timeout, attempts=attempts)
 
 out = {}
 _t0 = time.monotonic()

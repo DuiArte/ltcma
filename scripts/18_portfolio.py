@@ -88,34 +88,59 @@ TICKER_MAP = {
 import csv as _csv, re as _re2, glob as _g2
 def _bmoney(x):
     s = _re2.sub(r"[^0-9.\-]", "", str(x)); return float(s) if s else 0.0
+# Snapshot search spans BOTH the raw Downloads drop AND the canonical archive
+# (Rule 4: Documents\GBM_Account_Archive\portfolio_snapshots is where ingested
+# snapshots live; new ones may exist ONLY there). Bug fixed 2026-06-10: globbing
+# Downloads alone left the live site marking Jun-1 positions while Jun-3/Jun-5
+# snapshots sat in the archive (stale shares, missing buys).
+_SNAP_DIRS = ("/mnt/c/Users/carlo/Downloads",
+              "/mnt/c/Users/carlo/Documents/GBM_Account_Archive/portfolio_snapshots")
 def load_broker_snapshot():
     def _ts(p):                                          # the 13-digit Unix-ms stamp, ignoring " (1)" etc.
         m = _re2.search(r"(\d{13})", os.path.basename(p))
         return int(m.group(1)) if m else 0
-    files = sorted(_g2.glob("/mnt/c/Users/carlo/Downloads/GBM_Homebroker_Detalle_de_Portafolio_*.csv"), key=_ts)
+    files = []
+    for d in _SNAP_DIRS:
+        files += _g2.glob(d + "/GBM_Homebroker_Detalle_de_Portafolio_*.csv")
+    # ms-stamped originals only: the archive's date-alias copies (_morning/_close)
+    # duplicate ms-stamped files, and only the ms stamp orders reliably.
+    files = sorted({f for f in files if _ts(f)}, key=_ts)
     if not files:
         return None, None, None
-    path = files[-1]
-    ms_ts = _ts(path)
-    snap_date = pd.to_datetime(ms_ts, unit="ms") if ms_ts else pd.Timestamp.today()
-    sect = None; eq = []; cash = None
-    with open(path, encoding="utf-8-sig", errors="replace") as fh:
-        for parts in _csv.reader(fh):
-            if not parts:
-                continue
-            if len(parts) == 1:                         # section header row
-                sect = parts[0].strip(); continue
-            if parts[0].strip() == "Emisora/Fondo":     # column header row
-                continue
-            name = parts[0].replace("*", "").strip()
-            if sect in ("Mercado de Capitales Nacional", "Mercado de Capitales Global (SIC)"):
-                eq.append({"ticker": name, "Títulos": _bmoney(parts[1]),
-                           "Costo promedio": _bmoney(parts[2]),
-                           "Precio mercado": _bmoney(parts[3]),
-                           "valor_broker": _bmoney(parts[5]), "imp_cto_broker": _bmoney(parts[9])})
-            elif name == "GBMF2 BM":
-                cash = _bmoney(parts[5])                # Valor mercado of the cash sleeve
-    return pd.DataFrame(eq), cash, snap_date
+
+    def _parse(path):
+        sect = None; eq = []; cash = None; efec24 = 0.0
+        with open(path, encoding="utf-8-sig", errors="replace") as fh:
+            for parts in _csv.reader(fh):
+                if not parts:
+                    continue
+                if len(parts) == 1:                     # section header row
+                    sect = parts[0].strip(); continue
+                if parts[0].strip() == "Emisora/Fondo":  # column header row
+                    continue
+                name = parts[0].replace("*", "").strip()
+                if sect in ("Mercado de Capitales Nacional", "Mercado de Capitales Global (SIC)"):
+                    eq.append({"ticker": name, "Títulos": _bmoney(parts[1]),
+                               "Costo promedio": _bmoney(parts[2]),
+                               "Precio mercado": _bmoney(parts[3]),
+                               "valor_broker": _bmoney(parts[5]), "imp_cto_broker": _bmoney(parts[9])})
+                elif name == "GBMF2 BM":
+                    cash = _bmoney(parts[5])            # Valor mercado of the cash sleeve
+                elif name.upper().startswith("EFEC") and "24" in name:
+                    efec24 = _bmoney(parts[5])          # T+1 settlement lag (negative = unsettled buys)
+        return eq, cash, efec24
+
+    # newest-first; accept the first snapshot that actually carries equity rows
+    # (funds/cash-only exports must not blank the holdings table)
+    for path in reversed(files):
+        try:
+            eq, cash, efec24 = _parse(path)
+        except OSError:
+            continue
+        if eq:
+            snap_date = pd.to_datetime(_ts(path), unit="ms")
+            return pd.DataFrame(eq), cash, efec24, snap_date
+    return None, None, 0.0, None
 
 # ---------- load & clean ----------
 df = pd.read_excel(XLSX, "DBE Acciones", header=0)
@@ -326,7 +351,34 @@ print(f"  equity/balance: {len(ts)} days | baseline {BASELINE:,.0f} | "
 # Portafolio" export (authoritative), NOT the stale Excel. The Excel still drives
 # the historical curve above; the broker file drives every headline KPI and the
 # holdings table so the numbers match the account exactly.
-_bdf, BROKER_CASH, _bsnap = load_broker_snapshot()
+_bdf, BROKER_CASH, BROKER_EFEC24, _bsnap = load_broker_snapshot()
+
+# ---------- external-flow adjustment for the $10M-recycled-base KPIs ----------
+# Standing rule (jun03_to_jun05.md, Rules 1-6): deposits into the GBMF2 cash
+# sleeve are CAPITAL ADDITIONS, never P&L. The raw F2 balance after the
+# 2026-06-05 +$19M external deposit would otherwise read as fabricated
+# "realized" in  realized = cost + cash - base.  The recycled-book cash is:
+#   F2 balance + EFEC 24HRS (T+1 settlement lag, negative = buys not yet
+#   drawn from F2) - cumulative external deposits dated <= snapshot date.
+# Ledger lives OUTSIDE this public repo (real peso amounts are private).
+# Whether the $10M base itself should grow by these deposits is an open
+# Carlos decision; until then external flows are excluded, not re-based.
+_EXT_FLOWS = "/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite/real_numbers/external_flows.json"
+_ext_dep = 0.0
+try:
+    _ef = json.loads(Path(_EXT_FLOWS).read_text())
+    for _f in _ef.get("flows", []):
+        if _bsnap is None or pd.to_datetime(_f["date"]) <= _bsnap:
+            _ext_dep += float(_f["amount_mxn"])
+    if _ext_dep:
+        print(f"  external-flows ledger: excluding {_ext_dep:,.2f} MXN of deposits "
+              f"from the recycled cash sleeve ({len(_ef.get('flows', []))} entries)")
+except FileNotFoundError:
+    print(f"  (warn: no external-flows ledger at {_EXT_FLOWS} — raw F2 balance feeds KPIs; "
+          f"a deposit would read as fake realized P/L)")
+except Exception as _efe:
+    print(f"  (warn: external-flows ledger unreadable ({_efe}) — raw F2 balance feeds KPIs)")
+BROKER_CASH_RECYCLED = (BROKER_CASH or 0.0) + (BROKER_EFEC24 or 0.0) - _ext_dep
 if _bdf is None or _bdf.empty:
     raise SystemExit("FATAL: no GBM Detalle de Portafolio CSV found in Downloads — cannot build canonical snapshot")
 latest = _bdf.copy()
@@ -493,7 +545,10 @@ assert "fxaANEL" not in fxa_section and "fxaOS" not in fxa_section
 # (the XLE anti-pattern, Rule 2). Undocumented adds are buys: they raise cost
 # basis only, never P/L.
 CAPITAL = BASELINE * SCALE                          # 10M real x1.8 = 18M (scaled display)
-GBMF2_CASH = (BROKER_CASH or 0.0) * SCALE           # equity-sleeve cash, scaled to match
+# Recycled-scope cash: F2 + settlement lag - external deposits (see ledger note
+# above). Raw F2 after 2026-06-05 carries a +$19M external deposit that must
+# never appear as realized P/L on the $10M-recycled-base book.
+GBMF2_CASH = BROKER_CASH_RECYCLED * SCALE           # equity-sleeve cash, scaled to match
 _unr_now   = float(tot_val - tot_cost)              # unrealized = MV - cost basis
 _real_now  = float(tot_cost + GBMF2_CASH - CAPITAL) # realized = (cost + cash) - base
 _total_now = float(tot_val + GBMF2_CASH)            # total value = MV + cash sleeve

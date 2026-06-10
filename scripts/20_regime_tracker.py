@@ -78,13 +78,10 @@ except Exception as e:
 # oil-price volatility, not physical climate risk. Oil shocks in both directions
 # (2008 spike & crash, 2014-16 glut, 2020 negative prints, 2022 war spike) register. ---
 def _fred(series_id):
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
-    txt = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (research; LTCMA)"},
-                       timeout=30).text
-    d = pd.read_csv(io.StringIO(txt)); d.columns = ["Date", series_id]
-    d["Date"] = pd.to_datetime(d["Date"])
-    d[series_id] = pd.to_numeric(d[series_id], errors="coerce")
-    return d.set_index("Date")[series_id].dropna()
+    # Shared helper (API w/ key -> fredgraph fallback). The keyless scrape's
+    # timeout is what kept the EnergyVol facet at n/a for two weeks.
+    from fred_api import fred_series
+    return fred_series(series_id, timeout=(6, 30))
 try:
     oil = _fred("DCOILWTICO").resample("ME").last()
     oil_vol = oil.pct_change().rolling(6, min_periods=3).std() * np.sqrt(12)

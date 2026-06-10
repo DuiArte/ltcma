@@ -58,13 +58,8 @@ def fetch_fred():
     out = {}
     for name, sid in FRED.items():
         try:
-            url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
-            txt = requests.get(url, timeout=30).text
-            df = pd.read_csv(io.StringIO(txt))
-            df.columns = ["Date", name]
-            df["Date"] = pd.to_datetime(df["Date"])
-            df[name] = pd.to_numeric(df[name], errors="coerce")
-            out[name] = df.set_index("Date")[name]
+            from fred_api import fred_series   # API w/ key -> fredgraph fallback
+            out[name] = fred_series(sid, name=name, timeout=(6, 30))
             last = out[name].dropna()
             print(f"  FRED {name:22s} ({sid:18s}) last={last.iloc[-1]:.3f} @ {last.index[-1].date()}")
         except Exception as e:
