@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import cupy as cp
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 H, N, NU = 144, 100_000, 6.0          # months, paths, t degrees of freedom
 INFL, CASH = 0.024, 0.033
 SEED = 20260518

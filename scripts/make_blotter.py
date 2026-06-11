@@ -15,8 +15,9 @@ import re
 import pandas as pd
 from collections import defaultdict
 
-DL = "/mnt/c/Users/carlo/Downloads"
-OUT = os.path.expanduser("~/LTCMA/data/blotter_clean.csv")
+import paths as _paths
+DL = _paths.cuser("Downloads")
+OUT = str(_paths.DATA / "blotter_clean.csv")
 
 # The validated trade-export universe (add new exports here as they arrive).
 FILES = [

@@ -6,8 +6,9 @@ Output: data/fx_monthly.csv  (monthly close levels + *_ret return columns)
 import os, time
 import pandas as pd
 
-SRC = "/mnt/c/Users/carlo/Downloads/fxpro_forex_m5"
-OUT = os.path.expanduser("~/LTCMA/data")
+import paths as _paths
+SRC = _paths.cuser("Downloads", "fxpro_forex_m5")
+OUT = _paths.DATA_S
 
 # instruments most useful to the LTCMA risk / regime / currency layers
 WANT = ["#USSPX500", "#USNDAQ100", "#US30", "#US2000",

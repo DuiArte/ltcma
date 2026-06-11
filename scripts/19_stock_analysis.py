@@ -19,7 +19,7 @@ import yfinance as yf
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
-DOCS = os.path.expanduser("~/LTCMA/docs")
+from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)

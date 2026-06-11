@@ -9,7 +9,7 @@ from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-REP = os.path.expanduser("~/LTCMA/report")
+from paths import REPORT_S as REP  # repo-anchored (2026-06-10)
 SRC = f"{REP}/LTCMA_2026.md"
 NAVY = RGBColor(0x1A, 0x3A, 0x5C)
 text = open(SRC, encoding="utf-8").read()

@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-ANA = "/home/carlos/capstone/data/analytics"
+ANA = os.path.expanduser("~/capstone/data/analytics")  # exists on both Win + WSL homes
 G_CAP = 0.045
 RF, ERP = 0.045, 0.045
 

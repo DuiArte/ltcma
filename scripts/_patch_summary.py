@@ -2,7 +2,7 @@
 import pandas as pd
 import os
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 RF = 0.033  # US Cash T-Bill ER (from 03_build_model.py)
 
 vol2 = pd.read_csv(f"{D}/ltcma_vol_v2.csv",  index_col=0)

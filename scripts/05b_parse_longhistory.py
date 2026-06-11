@@ -8,7 +8,8 @@ import os, io, zipfile, re
 import numpy as np
 import pandas as pd
 
-LH = os.path.expanduser("~/LTCMA/data/longhistory")
+import paths as _paths
+LH = str(_paths.DATA / "longhistory")
 RAW = f"{LH}/raw"
 
 # ---------- 1. KEN FRENCH regional monthly market total returns ----------

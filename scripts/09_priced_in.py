@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pandas as pd
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 sig = pd.read_csv(f"{D}/signals_fred.csv", index_col=0, parse_dates=True)
 last = sig.ffill().iloc[-1]
 
