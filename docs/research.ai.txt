@@ -1,0 +1,22 @@
+RESEARCH NOTES — AI COPY (low-token)
+asof=10 Jun 2026; funnel: 14 batches all negative | ~181 trials | 1 durable edge (5d mean-reversion, input only) | 3 deployable strategies | 18 findings
+fields: finding|tag|date|title|gist
+#1|closed|2026-05-28|Double-gating is the dominant failure mode|Strategies that already carry internal regime detection lose edge when an external regime gate is layered on top — the signal gets trimmed twice
+#2|method|2026-05-28|Partial-window winners are usually rally artifacts|A precious-metals momentum system that looked deployable on an eight-year window collapsed on the full 23-year history: its profits clustered inside two secular
+#3|method|2026-05-28|Macro feature stores are circuit breakers, not overlays|A 121-column macro / valuation / credit feature store improved no strategy as a per-bar gate
+#4|positive|2026-05-28|Regime-aware weighting beats per-strategy gating|Leaving each sleeve ungated and adapting portfolio weights by regime preserves each sleeve's native edge while still adapting to macro state
+#5|method|2026-05-28|Check the fire-rate before you gate|Several proposed gating conditions essentially never fire on realized history — their 'off' state dominates and any strategy gated on them is unchanged
+#6|method|2026-05-28|Verify the model that verified the result|Two verification runs produced confident-but-vague metrics and were traced to an ambiguous model tier in the AI tooling
+#7|method|2026-05-29|Research continuity must be written, not remembered|A research program operated with AI agents is stateless between sessions: only the standing logs survive
+#8|positive|2026-05-30|The gold-decomposition stress test|Any ensemble that holds gold must be re-run with gold stripped before promotion
+#9|closed|2026-05-31|External regime-gating harms self-defended sleeves|When a sleeve already carries an internal trend / regime filter, an external regime-conditional weight that down-weights it in stress is architecturally inverte
+#10|closed|2026-06-03|Macro state has no usable directional form on this data|A single risk-on / risk-off macro orientation cannot fit a heterogeneous cross-section — the same state implies opposite correct signs across instruments — and 
+#11|closed|2026-06-04|The daily horizon is exhausted: one edge|Three independent new signal families — cross-sectional rank momentum, calendar / seasonal, daily-bar microstructure — were tested for a broadly replicating edg
+#12|closed|2026-06-04|The cost wall: a real gross edge that cannot be executed|Intraday microstructure signals carry genuine gross edge — broad enough to clear the discovery bar at zero cost — but spread plus slippage consumes all of it at
+#13|closed|2026-06-09|The variance risk premium is real — and repriced|The equity-index variance risk premium is the one robust full-period edge found since the survivor: harvesting it in contango netted Sharpe ≈ 0.8 in every pertu
+#14|closed|2026-06-10|Premium thinness is wrapper-independent|Re-expressing the variance premium as defined-risk option spreads fixes the tail profile (crash-correlation turns slightly negative) but cannot manufacture prem
+#15|method|2026-06-10|Survivorship is ~half the measured edge in small markets|The program's one momentum pulse died when re-tested on a point-in-time universe with the delisted and suspended names restored: the clean number was roughly ha
+#16|closed|2026-06-10|Announcement premia replicate — and are unharvestable|The published macro-calendar premia (pre-FOMC drift, the payrolls-day premium) replicate in our data with the right sign, decaying after 2015 exactly as the lit
+#17|closed|2026-06-10|Crypto funding carry: a Sharpe-4 premium, institutionalized away|The delta-neutral funding harvest was genuinely real — roughly 10% a year at 2% volatility for several years, nearly uncorrelated to everything else in the book
+#18|method|2026-06-10|The beta knife is mandatory|Any long-only absolute-return 'pass' must be decomposed against the passive benchmark over the same window before it counts
+batches: v0.5=~20 trials,0 promoted; v0.6=2 trials,0 promoted; v0.7-T1=— trials,0 promoted; v0.7-T3=8 trials,0 promoted; v0.8=8 trials,0 promoted; v0.9=9 trials,0 promoted; v1.0=11 trials,0 promoted; v2.0-vol=30 trials,0 promoted; v2.0-exec=— trials,0 promoted; v2.1=4 pilots trials,0 promoted; v2.2=1 trials,0 promoted; v2.3-A=20 trials,0 promoted; v2.3-B=20 trials,0 promoted; v2.3-C=13 trials,0 promoted

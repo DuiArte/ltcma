@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS,
                       bt_catalog, bt_card, BT_CARD_CSS, _bt_redact)
 
-DOCS = os.path.expanduser("~/LTCMA/docs")
+from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 import pandas as pd
 INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
 RED, GREY, PURPLE = "#7c2d12", "#888888", "#8a3ffc"
@@ -256,7 +256,9 @@ BT_SECTION = (
     'blue</span> = research-passed ensemble component, <span style="color:#9ca3af;'
     'font-weight:600">gray</span> = failed/archived with the lesson learned shown. '
     'Performance metrics are real and scale-invariant; parameters, asset universes and '
-    'entry/exit rules are redacted for confidentiality.</p>'
+    'entry/exit rules are redacted for confidentiality. The full research record — '
+    '18 findings across 14 discovery batches, negative results included — is published '
+    'on the <a href="research.html">Research Notes</a> page.</p>'
     f'{_PILLS}'
     f'<div class="btgrid">{_bt_cards}{_find_cards}</div></section>')
 
@@ -273,6 +275,84 @@ border:1px solid #d4d4d4;padding:6px 14px;cursor:pointer;transition:all .12s}
 .note-card{border-top-color:#0a2540}
 .note-badge{background:#0a2540}
 """
+
+# ── drawdown-episode explorer (client-side, linked to the window control) ────
+# Computes the deepest peak→trough→recovery episodes per strategy inside the
+# chosen start window, renders them as a table, and zooms the charts to an
+# episode on click. Rebuilds whenever the shared window control changes.
+EPISODE_JS = r"""<script>
+(function(){
+  if(!window.BT_DATA)return;
+  var D=window.BT_DATA,ORDER=["SARS","DUO","MARS","BARS"];
+  function navc(a){var o=[],p=1,i;for(i=0;i<a.length;i++){p*=(1+a[i]);o.push(p);}return o;}
+  function episodes(dates,rets){
+    var n=navc(rets),eps=[],i;
+    var pk=-1e18,pkI=0,inDD=false,minV=0,minI=0;
+    for(i=0;i<n.length;i++){
+      if(n[i]>=pk){
+        if(inDD){eps.push({p:pkI,t:minI,r:i,d:minV/pk-1});inDD=false;}
+        pk=n[i];pkI=i;
+      }else{
+        if(!inDD){inDD=true;minV=n[i];minI=i;}
+        else if(n[i]<minV){minV=n[i];minI=i;}
+      }
+    }
+    if(inDD)eps.push({p:pkI,t:minI,r:null,d:minV/pk-1});
+    eps.sort(function(a,b){return a.d-b.d;});
+    return eps.slice(0,3);
+  }
+  function axisUnion(){var set={};ORDER.forEach(function(k){if(D[k])D[k].dates.forEach(function(d){set[d]=1;});});
+    var ax=Object.keys(set);ax.sort();return ax;}
+  var AXIS=axisUnion();
+  function fmtM(d){return d?d.slice(0,7):"—";}
+  function render(start){
+    var tb=document.getElementById('dd-ep-body');if(!tb)return;
+    var html="";
+    ORDER.forEach(function(k){
+      if(!D[k])return;
+      var i0=0,ds=D[k].dates;while(i0<ds.length&&ds[i0]<start)i0++;
+      var sub=ds.slice(i0),rs=D[k].s.slice(i0);
+      if(sub.length<6)return;
+      var eps=episodes(sub,rs);
+      eps.forEach(function(e,j){
+        var down=e.t-e.p,rec=e.r===null?"ongoing":fmtM(sub[e.r]);
+        html+='<tr class="ep-row" data-k="'+k+'" data-p="'+sub[e.p]+'" data-r="'+(e.r===null?sub[sub.length-1]:sub[e.r])+'">'
+          +(j===0?'<td style="white-space:nowrap"><span style="display:inline-block;width:8px;height:8px;background:'+D[k].color+';margin-right:7px"></span>'+D[k].name+'</td>':'<td></td>')
+          +'<td>'+fmtM(sub[e.p])+'</td><td>'+fmtM(sub[e.t])+'</td>'
+          +'<td class="neg">'+(e.d*100).toFixed(1)+'%</td>'
+          +'<td>'+down+' m</td><td>'+rec+'</td></tr>';
+      });
+    });
+    tb.innerHTML=html||'<tr><td colspan="6" style="text-align:left;color:#888">Window too short for episode analysis.</td></tr>';
+    tb.querySelectorAll('.ep-row').forEach(function(r){
+      r.style.cursor='pointer';
+      r.addEventListener('click',function(){
+        if(!window.Plotly)return;
+        var k=r.getAttribute('data-k'),x0=r.getAttribute('data-p'),x1=r.getAttribute('data-r');
+        var upd={'xaxis.range':[x0,x1]};
+        if(k==='BARS'){if(document.getElementById('bars'))Plotly.relayout('bars',upd);}
+        else{['eq','dd'].forEach(function(id){if(document.getElementById(id))Plotly.relayout(id,upd);});}
+        r.style.background='rgba(10,37,64,.07)';
+        setTimeout(function(){r.style.background='';},600);
+      });
+    });
+  }
+  function currentStart(){
+    var sl=document.getElementById('s-start');
+    if(sl&&sl.max&&AXIS.length)return AXIS[Math.min(+sl.value,AXIS.length-1)]||AXIS[0];
+    return AXIS[0];
+  }
+  function refresh(){render(currentStart());}
+  function init(){
+    refresh();
+    var sl=document.getElementById('s-start');
+    if(sl)sl.addEventListener('input',refresh);
+    document.querySelectorAll("[data-bt-range][data-bt-group='s']").forEach(function(b){
+      b.addEventListener('click',function(){setTimeout(refresh,0);});});
+  }
+  if(document.readyState!=='loading')init();else document.addEventListener('DOMContentLoaded',init);
+})();
+</script>"""
 
 STRAT_FILTER_JS = r"""<script>
 document.querySelectorAll('.pills').forEach(function(grp){
@@ -318,6 +398,14 @@ earlier starts only extend the longer-history columns in the indicator table bel
 with materially lower drawdowns than the index (below).</p></section>
 <section class="block"><h2>Drawdown</h2>
 <div class="tile chart wide"><div class="ch">{div(f_dd,'dd')}</div></div></section>
+<section class="block"><h2>Drawdown Episodes</h2>
+<p class="note">The three deepest peak-to-recovery episodes per strategy inside
+the chosen window. Click a row to zoom the charts to that episode; pick any
+range button above to reset the view.</p>
+<div class="tile" style="padding:0 16px 8px;overflow-x:auto">
+<table class="ptable" id="dd-ep"><thead><tr><th style="text-align:left">Strategy</th>
+<th>Peak</th><th>Trough</th><th>Depth</th><th>To trough</th><th>Recovered</th></tr></thead>
+<tbody id="dd-ep-body"></tbody></table></div></section>
 <section class="block"><h2>Mexican Equity Rotation vs IPC (MXN)</h2>
 <div class="tile chart wide"><div class="ch">{div(f_bars,'bars')}</div></div></section>
 <section class="block"><h2>Indicator Set</h2>
@@ -333,6 +421,7 @@ hypothetical results, past performance does not guarantee future results.</p></s
 <footer class="shell-foot"><div class="container"><p>Research, not investment advice.
 Backtested results are hypothetical and do not represent actual trading.</p></div></footer>
 {bt_script}
+{EPISODE_JS}
 {STRAT_FILTER_JS}
 </body></html>"""
 

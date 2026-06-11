@@ -7,7 +7,7 @@
 # the .ai.txt (Tail=/Sharpe=/Omega= etc.). Anything else -> redact in
 # glossary._BT_PUBLIC / _bt_redact and rebuild. See AI_PROCEDURES/WEBSITE_DEPLOY.md.
 cd "$(dirname "$0")/../docs" || exit 1
-for f in backtests.html strategies.html strategies.ai.txt; do
+for f in backtests.html strategies.html strategies.ai.txt research.html research.ai.txt; do
   [ -f "$f" ] || continue
   echo "============ $f ============"
   echo "--- dollar amounts ---"; grep -oE '\$[0-9][0-9,.]+' "$f" | sort -u | head

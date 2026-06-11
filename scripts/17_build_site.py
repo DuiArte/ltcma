@@ -10,9 +10,7 @@ import plotly.graph_objects as go
 from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
                       bt_indicators, bt_g100, BT_JS)
 
-D = os.path.expanduser("~/LTCMA/data")
-REP = os.path.expanduser("~/LTCMA/report")
-DOCS = os.path.expanduser("~/LTCMA/docs")
+from paths import DATA_S as D, REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 os.makedirs(f"{DOCS}/figures", exist_ok=True)
 
 # --- Carbon Design color tokens ---
@@ -293,7 +291,9 @@ STRATBT = (
     'start date: the curve re-bases to 100 and every score recomputes live. Hypothetical '
     'results; the detection-and-optimisation methodology is proprietary. Full indicator set '
     'on the <a href="strategies.html">Strategies</a> page; detail in the '
-    '<a href="report.html">report</a> (Section&nbsp;10).</p>'
+    '<a href="report.html">report</a> (Section&nbsp;10). The full research record behind '
+    'these — including every negative result — is on the '
+    '<a href="research.html">Research Notes</a> page.</p>'
     + _DCTRL +
     '<div class="tile chart wide"><div class="ch">' + _chart + '</div></div>'
     '<div class="tile" style="padding:4px 16px 10px;overflow-x:auto">'
@@ -719,6 +719,32 @@ main{padding:4rem 0 5rem}
 .gloss{margin:0}
 .gloss dt{font-family:var(--serif);font-weight:500;font-size:16px;color:var(--ink);margin-top:1.3rem}
 .gloss dd{font-size:14px;color:var(--sec);margin:.25rem 0 0;max-width:56em;line-height:1.6}
+
+/* ---- interaction polish (2026-06-10): smooth anchors, scroll-reveal, ---- */
+/* ---- sticky table headers, sortable/searchable tables, print          ---- */
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.rv{opacity:0;transform:translateY(6px);transition:opacity .3s ease-out,transform .3s ease-out}
+.rv.vis,.vis{opacity:1;transform:none}
+.ptable thead th{position:sticky;top:59px;background:var(--panel);z-index:2}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
+.tsearch{font:400 13px var(--sans);color:var(--ink);background:var(--panel);
+  border:1px solid var(--line-strong);padding:7px 12px;width:230px;max-width:100%;
+  margin:2px 0 12px;outline:none}
+.tsearch:focus{border-color:var(--accent-line)}
+.tsearch::placeholder{color:var(--muted)}
+@media print{
+  .shell,.shell-foot,.pills,.toc,.btctl,.ccy-toggle,.tsearch{display:none!important}
+  body{background:#fff}
+  .hero{padding:1rem 0}
+  main{padding:1rem 0}
+  .tile,.metric,.btcard{border-color:#bbb;break-inside:avoid}
+  .block{break-inside:avoid-page;margin-bottom:2rem}
+  a{color:#111;text-decoration:none}
+  .rv{opacity:1;transform:none}
+}
 
 /* ---- responsive ---- */
 @media(max-width:820px){
