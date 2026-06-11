@@ -25,9 +25,8 @@ import yfinance as yf
 import plotly.graph_objects as go
 
 import paths
-FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")
-sys.path.insert(0, FXA)
-import make_section as ms
+FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")  # lot-history DATA cache only
+import fxa_section as ms  # repo-native renderer (dual-base FX fix, 2026-06-10)
 
 XLSX = paths.cuser("Downloads", "Copy of Carteras DBE 2.xlsx")
 DATA = paths.DATA_S
