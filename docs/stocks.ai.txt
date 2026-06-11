@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=10 Jun 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=11 Jun 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|29.27|+0.891|Revenue growth
-2|LLY|Healthcare|1136.37|+0.731|CAD beta
-3|PLTR|Technology|130.21|+0.681|Earnings growth
-4|NVDA|Technology|200.42|+0.482|Revenue growth
-5|COST|Consumer Defensive|983.37|+0.479|Gross margin
-6|NVO|Healthcare|42.81|+0.362|CAD beta
-7|WMT|Consumer Defensive|120.59|+0.350|CAD beta
-8|HD|Consumer Cyclical|318.92|+0.318|ROE
-9|KO|Consumer Defensive|83.59|+0.250|CAD beta
-10|NFLX|Communication Services|82.00|+0.226|CAD beta
-11|AAPL|Technology|291.58|+0.201|ROE
-12|ORCL|Technology|201.26|+0.137|CAD beta
-13|AMZN|Consumer Cyclical|238.00|+0.078|CAD beta
-14|DDOG|Technology|227.63|+0.078|Rate beta
-15|UNH|Healthcare|407.46|+0.054|Gross margin
-16|NET|Technology|219.67|+0.049|Rate beta
-17|GOOGL|Communication Services|356.38|+0.015|12-1 momentum
-18|AVGO|Technology|372.10|+0.011|Revenue growth
-19|SNOW|Technology|239.90|+0.005|Rate beta
-20|SHOP|Technology|108.20|-0.022|CAD beta
+1|SMCI|Technology|31.97|+0.884|Revenue growth
+2|LLY|Healthcare|1160.95|+0.732|CAD beta
+3|PLTR|Technology|131.08|+0.680|Earnings growth
+4|NVDA|Technology|204.87|+0.484|Revenue growth
+5|COST|Consumer Defensive|975.69|+0.477|Gross margin
+6|NVO|Healthcare|43.96|+0.352|CAD beta
+7|WMT|Consumer Defensive|120.50|+0.349|CAD beta
+8|HD|Consumer Cyclical|326.01|+0.322|ROE
+9|KO|Consumer Defensive|82.53|+0.248|CAD beta
+10|NFLX|Communication Services|81.27|+0.219|CAD beta
+11|AAPL|Technology|295.63|+0.205|ROE
+12|ORCL|Technology|184.10|+0.118|CAD beta
+13|AMZN|Consumer Cyclical|241.51|+0.081|CAD beta
+14|DDOG|Technology|234.24|+0.080|Rate beta
+15|UNH|Healthcare|405.55|+0.053|Gross margin
+16|NET|Technology|227.44|+0.052|Rate beta
+17|GOOGL|Communication Services|357.77|+0.017|12-1 momentum
+18|AVGO|Technology|385.57|+0.015|Revenue growth
+19|SNOW|Technology|240.39|+0.004|Rate beta
+20|SHOP|Technology|110.47|-0.020|CAD beta
