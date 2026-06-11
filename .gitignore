@@ -20,3 +20,4 @@ _scratch_*
 
 # per-machine agent tooling (preview launch config etc.)
 .claude/
+*.tmp
