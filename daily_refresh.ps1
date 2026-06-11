@@ -117,7 +117,7 @@ try {
     Log "Tree clean; pulled origin/main."
 
     # ---- DryRun: environment checks only ------------------------------------
-    $r = Invoke-Native { python -c "import pandas,numpy,plotly,yfinance,openpyxl,markdown,requests;import paths;print('ENV OK',paths.ROOT)" }
+    $r = Invoke-Native { python -c "import pandas,numpy,plotly,yfinance,openpyxl,markdown,requests;print('ENV OK')" }
     if ($r.Code -ne 0) { Fail "Python env check failed (deps missing?):`n$($r.Text)" }
     # guard: paths.ROOT must be THIS repo, never the stale C:\Users\carlo\LTCMA decoy
     Push-Location $Scripts
