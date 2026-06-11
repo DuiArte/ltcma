@@ -760,7 +760,8 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
   nav a{padding:6px 9px;font-size:12.5px;white-space:nowrap}
   .hero{padding:3rem 0 2.25rem}
   main{padding:3rem 0}.block{margin-bottom:3rem}
-  .metrics{grid-template-columns:1fr 1fr!important;gap:1rem}.mv{font-size:21px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem}
+  .metric{min-width:0;padding:1.1rem .9rem 1rem}.mv{font-size:18px}
   .report table{display:block;overflow-x:auto;white-space:nowrap}
   .ptable{font-size:12px;display:block;overflow-x:auto;white-space:nowrap}
   .ptable th,.ptable td{padding:7px 8px}

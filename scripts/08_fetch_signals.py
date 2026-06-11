@@ -110,10 +110,12 @@ for url in GPR_URLS:
         with open(tmp_path, "wb") as f:
             f.write(r.content)
         xl = pd.ExcelFile(tmp_path)          # validate BEFORE replacing
+        sheets = xl.sheet_names
+        df0 = xl.parse(sheets[0], nrows=3)
+        xl.close()                           # Windows: release the handle, else os.replace -> WinError 32
         os.replace(tmp_path, final_path)     # atomic swap on success only
         print(f"\nGPR downloaded from {url}")
-        print(f"  sheets: {xl.sheet_names}")
-        df0 = xl.parse(xl.sheet_names[0], nrows=3)
+        print(f"  sheets: {sheets}")
         print(f"  columns: {list(df0.columns)[:14]}")
         break
     except Exception as e:
