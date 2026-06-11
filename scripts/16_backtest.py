@@ -13,8 +13,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-D = os.path.expanduser("~/LTCMA/data")
-FIG = os.path.expanduser("~/LTCMA/report/figures")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
+import paths as _paths
+FIG = str(_paths.REPORT / "figures")
 NAVY, GOLD, RED, GREY = "#1a3a5c", "#c8961e", "#a23b3b", "#8a9099"
 G_REAL, HORIZON = 0.019, 10           # real EPS growth assumption, years
 

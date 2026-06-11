@@ -10,7 +10,7 @@ import os
 import numpy as np
 import pandas as pd
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 
 # ---- clean long series: equity from Shiller, FX from FxPro ----
 fx = pd.read_csv(f"{D}/fx_monthly.csv", index_col=0, parse_dates=True)

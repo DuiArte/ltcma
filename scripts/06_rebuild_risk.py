@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.covariance import LedoitWolf
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 LH = f"{D}/longhistory"
 
 # ---------- ETF monthly simple returns ----------

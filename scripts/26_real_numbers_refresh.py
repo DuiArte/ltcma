@@ -24,13 +24,14 @@ import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
 
-FXA = "/mnt/c/Users/carlo/Downloads/fx_attribution_2026-05-26/code"
+import paths
+FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")
 sys.path.insert(0, FXA)
 import make_section as ms
 
-XLSX = "/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
-DATA = os.path.expanduser("~/LTCMA/data")
-REAL = Path("/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite/real_numbers")
+XLSX = paths.cuser("Downloads", "Copy of Carteras DBE 2.xlsx")
+DATA = paths.DATA_S
+REAL = paths.DOCUMENTS / "CarlosDuarteWebsite" / "real_numbers"
 CSS = (REAL / "style.css").read_text(encoding="utf-8")
 
 SCALE = 1.0
@@ -139,7 +140,7 @@ def _money(x):
 
 
 _exrows = []
-for _f in sorted(_glob.glob("/mnt/c/Users/carlo/Downloads/GBM Transacciones Liquidacion*.csv")):
+for _f in sorted(_glob.glob(paths.cuser("Downloads") + "/GBM Transacciones Liquidacion*.csv")):
     try:
         _e = pd.read_csv(_f, dtype=str, keep_default_na=False)
         for _, _r in _e.iterrows():

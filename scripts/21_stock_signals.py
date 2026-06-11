@@ -8,7 +8,7 @@ existing links to signals.html keep working.
 """
 import os
 
-DOCS = os.path.expanduser("~/LTCMA/docs")
+from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 REDIRECT = (
     '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     '<meta http-equiv="refresh" content="0; url=stocks.html#signals">'

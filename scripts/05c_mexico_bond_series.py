@@ -35,7 +35,7 @@ import os
 import numpy as np
 import pandas as pd
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────

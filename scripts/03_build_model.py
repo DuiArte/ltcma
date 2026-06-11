@@ -104,7 +104,7 @@ px = pd.read_csv(f"{DATA}/prices_monthly.csv", index_col=0, parse_dates=True)
 # Merge real Mexico Govt Local bond series if available
 import os as _os
 _mex_paths = [
-    _os.path.expanduser("~/LTCMA/data/mexico_bond_monthly.csv"),
+    str(__import__("paths").DATA / "mexico_bond_monthly.csv"),
     r"C:\Users\carlo\LTCMA\data\mexico_bond_monthly.csv",
 ]
 for _p in _mex_paths:

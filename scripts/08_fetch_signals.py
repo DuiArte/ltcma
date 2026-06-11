@@ -7,7 +7,7 @@ import io, time, os
 import pandas as pd
 import requests
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 HDR = {"User-Agent": "Mozilla/5.0 (research; LTCMA build)"}
 
 FRED = {

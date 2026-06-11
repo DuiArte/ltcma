@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import cupy as cp
 
-D = os.path.expanduser("~/LTCMA/data")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
 H = 12                # horizon (years)
 N = 250_000           # simulated paths
 INFL = 0.024          # US inflation benchmark

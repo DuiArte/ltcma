@@ -9,8 +9,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-D = os.path.expanduser("~/LTCMA/data")
-FIG = os.path.expanduser("~/LTCMA/report/figures")
+from paths import DATA_S as D  # repo-anchored (2026-06-10)
+import paths as _paths
+FIG = str(_paths.REPORT / "figures")
 os.makedirs(FIG, exist_ok=True)
 NAVY, GOLD, RED, GREY = "#1a3a5c", "#c8961e", "#a23b3b", "#8a9099"
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 9,

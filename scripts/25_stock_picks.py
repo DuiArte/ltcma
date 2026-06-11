@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 import picker
 
-DOCS = os.path.expanduser("~/LTCMA/docs")
+from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 ANA = picker.ANA
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"

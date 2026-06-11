@@ -8,8 +8,7 @@ Re-run after 17_build_site.py. Idempotent.
 """
 import os, re
 
-REP  = os.path.expanduser("~/LTCMA/report")
-DOCS = os.path.expanduser("~/LTCMA/docs")
+from paths import REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 
 
 def first_sentence(text):

@@ -3,7 +3,8 @@ Sources: Damodaran (1928+), Shiller (1871+), Ken French Data Library (1990+)."""
 import os, io, zipfile
 import requests
 
-RAW = os.path.expanduser("~/LTCMA/data/longhistory/raw")
+import paths as _paths
+RAW = str(_paths.DATA / "longhistory" / "raw")
 os.makedirs(RAW, exist_ok=True)
 HDR = {"User-Agent": "Mozilla/5.0 (research; LTCMA build)"}
 
