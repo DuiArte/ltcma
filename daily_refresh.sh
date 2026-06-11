@@ -1,11 +1,17 @@
 #!/bin/bash
 # ============================================================================
-# LTCMA daily refresh routine
+# ⚠️ DEPRECATED (2026-06-10 Windows-native migration) — NOT scheduled anymore.
+# The daily refresh runs natively on Windows via daily_refresh.ps1 (repo root),
+# fired directly by Task Scheduler. This script is kept only as a Linux-side
+# fallback for ad-hoc WSL builds; do NOT schedule it (a WSL run racing the
+# Windows run = the two-clone divergence this migration eliminated).
+# See AI_PROCEDURES/WEBSITE_REFRESH_WINDOWS_MIGRATION.md.
+# ============================================================================
+# LTCMA daily refresh routine (legacy WSL path)
 #   1. refresh live public data (best-effort; failures don't abort)
 #   2. rebuild the site + low-token AI copies
 #   3. mirror a backup to C:\Users\carlo\Documents\CarlosDuarteWebsite
 #   4. commit and push the daily refresh (set AUTO_PUSH=0 to stage only)
-# Scheduled daily via Windows Task Scheduler -> wsl bash -lc this script.
 # ============================================================================
 export PATH=/home/carlos/.local/bin:$PATH
 REPO=/home/carlos/LTCMA
