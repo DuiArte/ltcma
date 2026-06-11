@@ -18,13 +18,14 @@ import yfinance as yf
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
-FXA = "/mnt/c/Users/carlo/Downloads/fx_attribution_2026-05-26/code"
+import paths
+FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")
 sys.path.insert(0, FXA)
 import make_section as ms
 
-XLSX = "/mnt/c/Users/carlo/Downloads/Copy of Carteras DBE 2.xlsx"
-DATA = os.path.expanduser("~/LTCMA/data")
-DOCS = os.path.expanduser("~/LTCMA/docs")
+XLSX = paths.cuser("Downloads", "Copy of Carteras DBE 2.xlsx")
+DATA = paths.DATA_S
+DOCS = paths.DOCS_S
 SCALE = 1.8                       # holdings scaling constant (obfuscation)
 FILTER_ANOMALIES = True           # drop rows with impossible returns (bad data)
 INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
@@ -93,8 +94,8 @@ def _bmoney(x):
 # snapshots live; new ones may exist ONLY there). Bug fixed 2026-06-10: globbing
 # Downloads alone left the live site marking Jun-1 positions while Jun-3/Jun-5
 # snapshots sat in the archive (stale shares, missing buys).
-_SNAP_DIRS = ("/mnt/c/Users/carlo/Downloads",
-              "/mnt/c/Users/carlo/Documents/GBM_Account_Archive/portfolio_snapshots")
+_SNAP_DIRS = (paths.cuser("Downloads"),
+              paths.cuser("Documents", "GBM_Account_Archive", "portfolio_snapshots"))
 def load_broker_snapshot():
     def _ts(p):                                          # the 13-digit Unix-ms stamp, ignoring " (1)" etc.
         m = _re2.search(r"(\d{13})", os.path.basename(p))
@@ -210,7 +211,7 @@ def _money(x):
 
 # parse stock executions (buys/sells) from the Liquidacion blotter CSVs
 _exrows = []
-for _f in sorted(_glob.glob("/mnt/c/Users/carlo/Downloads/GBM Transacciones Liquidacion*.csv")):
+for _f in sorted(_glob.glob(paths.cuser("Downloads") + "/GBM Transacciones Liquidacion*.csv")):
     try:
         _e = pd.read_csv(_f, dtype=str, keep_default_na=False)
         for _, _r in _e.iterrows():
@@ -363,7 +364,7 @@ _bdf, BROKER_CASH, BROKER_EFEC24, _bsnap = load_broker_snapshot()
 # Ledger lives OUTSIDE this public repo (real peso amounts are private).
 # Whether the $10M base itself should grow by these deposits is an open
 # Carlos decision; until then external flows are excluded, not re-based.
-_EXT_FLOWS = "/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite/real_numbers/external_flows.json"
+_EXT_FLOWS = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "external_flows.json")
 _ext_dep = 0.0
 try:
     _ef = json.loads(Path(_EXT_FLOWS).read_text())
@@ -585,7 +586,7 @@ dates = ts.index
 # computed curve if the sidecar is absent or unreadable (the daily refresh never breaks).
 # The headline KPI tiles stay live-broker-priced (untouched) — the snapshot-spine curve
 # and the daily KPI carry an inherent ~2pt price-source gap by design.
-_SIDECAR = "/mnt/c/Users/carlo/Documents/CarlosDuarteWebsite/real_numbers/real_curve_series.json"
+_SIDECAR = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "real_curve_series.json")
 try:
     _sc = json.loads(Path(_SIDECAR).read_text())
     _scpts = _sc.get("points", [])
@@ -629,7 +630,21 @@ f1.add_hline(y=CAPITAL, line=dict(color=INK, width=1, dash="dot"),
              annotation_text="Capital (18M, recycled)", annotation_position="bottom right")
 f1.update_layout(title="Total value \u2014 realized (locked in) + unrealized vs 18M capital (daily, scaled)",
                  yaxis_title="MXN (scaled)", xaxis_title="date",
+                 hovermode="x unified",
                  legend=dict(orientation="h", y=-0.18))
+f1.update_traces(hovertemplate="%{y:,.0f}<extra>%{fullData.name}</extra>",
+                 selector=dict(mode="lines"))
+
+# 1b. drawdown from the running peak (%) \u2014 currency-independent, range-linked
+_pk = ts["total"].cummax()
+_ddpct = (ts["total"] / _pk - 1.0) * 100.0
+f1b = go.Figure()
+f1b.add_scatter(x=dates, y=_ddpct, mode="lines", name="Drawdown",
+                line=dict(color=RED, width=1.6), fill="tozeroy",
+                fillcolor="rgba(124,45,18,0.07)",
+                hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra></extra>")
+f1b.update_layout(title="Drawdown from peak (%)", yaxis_title="%",
+                  height=235, showlegend=False)
 
 # 2. per-holding return vs portfolio (currency-independent)
 lat = latest.sort_values("ret")
@@ -657,12 +672,15 @@ rows = ""
 for _, r in latest.iterrows():
     rc = "pos" if r["ret"] >= 0 else "neg"
     pc = "pos" if r["pm"] >= 0 else "neg"
-    rows += (f"<tr><td>{r['ticker']}</td><td>{fmt_sh(r['shares'])}</td>"
-             f"<td>{cval(r['Costo promedio'], 2)}</td>"
-             f"<td>{cval(r['Precio mercado'], 2)}</td>"
-             f"<td>{cval(r['value'])}</td><td>{r['weight']*100:.2f}%</td>"
-             f"<td class='{rc}'>{r['ret']*100:+.2f}%</td>"
-             f"<td class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
+    # data-s = raw sort keys (currency-independent), read by the sort/filter JS
+    rows += (f"<tr><td data-s='{r['ticker']}'>{r['ticker']}</td>"
+             f"<td data-s='{r['shares']:.4f}'>{fmt_sh(r['shares'])}</td>"
+             f"<td data-s='{r['Costo promedio']:.6f}'>{cval(r['Costo promedio'], 2)}</td>"
+             f"<td data-s='{r['Precio mercado']:.6f}'>{cval(r['Precio mercado'], 2)}</td>"
+             f"<td data-s='{r['value']:.2f}'>{cval(r['value'])}</td>"
+             f"<td data-s='{r['weight']:.6f}'>{r['weight']*100:.2f}%</td>"
+             f"<td data-s='{r['ret']:.6f}' class='{rc}'>{r['ret']*100:+.2f}%</td>"
+             f"<td data-s='{r['pm']:.2f}' class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
 
 # ---------- metrics (recycled capital; realized & unrealized kept separate) ----------
 _pnl_now = _real_now + _unr_now
@@ -690,11 +708,37 @@ _ream = _arr(ts["realized_pool"]); _reau = _arr(ts["realized_pool"] / RATE)
 _by = _mk_y("buy"); _sy = _mk_y("sell")
 _bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v/RATE:.0f}" for v in _by)
 _sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v/RATE:.0f}" for v in _sy)
+_pfd = ",".join(f'"{d.strftime("%Y-%m-%d")}"' for d in ts.index)
 JS = """
 <script>
 var TOT={mxn:[__TOTM__],usd:[__TOTU__]},REAL={mxn:[__REAM__],usd:[__REAU__]};
 var BUY={mxn:[__BYM__],usd:[__BYU__]},SEL={mxn:[__SYM__],usd:[__SYU__]};
+var PFD=[__PFD__],CUR='mxn',PF_CAP=__CAP__,PF_RATE=__RATE__,PF_RANGE='all';
+function applyRange(m){
+  PF_RANGE=m;
+  var d=document.getElementById('pf-value'),dd=document.getElementById('pf-dd');
+  if(!d||!window.Plotly||!PFD.length)return;
+  var i0=0;
+  if(m!=='all'){
+    var p=PFD[PFD.length-1].split('-');
+    var last=new Date(+p[0],+p[1]-1,+p[2]);
+    last.setMonth(last.getMonth()-parseInt(m,10));
+    var iso=last.toISOString().slice(0,10);
+    while(i0<PFD.length-1&&PFD[i0]<iso)i0++;
+  }
+  var xr=[PFD[i0],PFD[PFD.length-1]];
+  var lo=Infinity,hi=-Infinity,T=TOT[CUR],R=REAL[CUR],i;
+  for(i=i0;i<T.length;i++){if(T[i]<lo)lo=T[i];if(T[i]>hi)hi=T[i];if(R[i]<lo)lo=R[i];if(R[i]>hi)hi=R[i];}
+  var cap=CUR==='mxn'?PF_CAP:PF_CAP/PF_RATE;
+  if(cap<lo)lo=cap;if(cap>hi)hi=cap;
+  var pad=(hi-lo)*0.07||1;
+  Plotly.relayout(d,{'xaxis.range':xr,'yaxis.range':[lo-pad,hi+pad]});
+  if(dd)Plotly.relayout(dd,{'xaxis.range':xr});
+  document.querySelectorAll('[data-pr]').forEach(function(b){
+    b.classList.toggle('on',b.getAttribute('data-pr')===String(m));});
+}
 function setCurrency(c){
+  CUR=c;
   document.querySelectorAll('.cval').forEach(function(e){e.textContent=e.dataset[c];});
   document.querySelectorAll('.ccy-toggle button').forEach(function(b){
     b.classList.toggle('active',b.dataset.cur===c);});
@@ -704,13 +748,57 @@ function setCurrency(c){
   if(d&&window.Plotly){
     Plotly.restyle(d,{y:[TOT[c],REAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
+    applyRange(PF_RANGE);
   }
   var fxBtn=document.querySelector('#fxa-ccy button[data-v="'+c.toUpperCase()+'"]');
   if(fxBtn) fxBtn.click();
 }
-document.addEventListener('DOMContentLoaded',function(){setCurrency('mxn');});
+document.addEventListener('DOMContentLoaded',function(){
+  setCurrency('mxn');
+  document.querySelectorAll('[data-pr]').forEach(function(b){
+    b.addEventListener('click',function(){applyRange(b.getAttribute('data-pr'));});});
+  // holdings table: click-to-sort headers + ticker filter + "/" shortcut
+  var tb=document.getElementById('h-body');
+  if(tb){
+    var heads=document.querySelectorAll('#h-table thead th');
+    heads.forEach(function(th,ci){
+      th.classList.add('sortable');
+      var arr=document.createElement('span');arr.className='arr';th.appendChild(arr);
+      th.addEventListener('click',function(){
+        var asc=th.getAttribute('data-dir')!=='asc';
+        heads.forEach(function(h){h.removeAttribute('data-dir');
+          var a=h.querySelector('.arr');if(a)a.textContent='';});
+        th.setAttribute('data-dir',asc?'asc':'desc');
+        arr.textContent=asc?'\\u25B4':'\\u25BE';
+        var rows=Array.prototype.slice.call(tb.rows);
+        rows.sort(function(a,b){
+          var x=a.cells[ci].getAttribute('data-s'),y=b.cells[ci].getAttribute('data-s');
+          var nx=parseFloat(x),ny=parseFloat(y),c;
+          if(isFinite(nx)&&isFinite(ny))c=nx-ny;else c=String(x).localeCompare(String(y));
+          return asc?c:-c;});
+        rows.forEach(function(r){tb.appendChild(r);});
+      });
+    });
+    var search=document.getElementById('h-search');
+    if(search){
+      search.addEventListener('input',function(){
+        var q=search.value.trim().toUpperCase();
+        Array.prototype.forEach.call(tb.rows,function(r){
+          r.style.display=(!q||r.cells[0].textContent.toUpperCase().indexOf(q)>-1)?'':'none';});
+      });
+      document.addEventListener('keydown',function(e){
+        var ae=document.activeElement,tag=ae&&ae.tagName;
+        if(e.key==='/'&&ae!==search&&tag!=='INPUT'&&tag!=='TEXTAREA'){
+          e.preventDefault();search.focus();
+          search.scrollIntoView({block:'center',behavior:'smooth'});}
+        if(e.key==='Escape'&&ae===search){search.value='';
+          search.dispatchEvent(new Event('input'));search.blur();}
+      });
+    }
+  }
+});
 </script>
-""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu)
+""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}")
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -751,15 +839,28 @@ $18M&nbsp;MXN base and includes the GBMF2 cash sleeve ({cval(GBMF2_CASH)}).
 Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
 <section class="block"><h2>Total Value vs Capital</h2>
-<div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div></section>
+<div class="btctl"><div class="btranges">
+<button class="btr on" data-pr="all">All</button>
+<button class="btr" data-pr="6">6M</button>
+<button class="btr" data-pr="3">3M</button>
+<button class="btr" data-pr="1">1M</button>
+</div><span class="btlbl">window &middot; hover for daily detail</span></div>
+<div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div>
+<div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f1b, "pf-dd")}</div></div>
+<p class="note" style="margin-top:.8rem">Drawdown is measured from the running
+peak of total value; it reads identically in either currency.</p></section>
 {fxa_section}
 <script>(function(){{var b=document.getElementById('fxa-ccy');
 if(b&&b.parentElement)b.parentElement.style.display='none';}})();</script>
 <section class="block"><h2>Holdings</h2>
+<input type="search" id="h-search" class="tsearch" placeholder="Filter holdings&hellip; press /"
+ aria-label="Filter holdings by ticker">
 <div class="tile" style="padding:0 16px 8px">
-<table class="ptable"><thead><tr><th>Holding</th><th>Shares</th>
+<table class="ptable" id="h-table"><thead><tr><th>Holding</th><th>Shares</th>
 <th>Avg Cost</th><th>Price</th><th>Value</th><th>Weight</th>
-<th>Return</th><th>P/M</th></tr></thead><tbody>{rows}</tbody></table></div></section>
+<th>Return</th><th>P/M</th></tr></thead><tbody id="h-body">{rows}</tbody></table></div>
+<p class="note" style="margin-top:.8rem">Click a column header to sort; type to
+filter. Sorting and filtering are display-only.</p></section>
 <section class="block"><h2>Portfolio vs Its Holdings</h2>
 <div class="grid"><div class="tile chart"><div class="ch">{div(f2, "pf-rel")}</div></div>
 <div class="tile chart"><div class="ch">{div(f3, "pf-alloc")}</div></div></div></section>
