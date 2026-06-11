@@ -544,6 +544,14 @@ standalone_html = HEAD_INLINE + (body_template
                                  .replace("__NAV__", NAV_STANDALONE)
                                  .replace("__GLOSS__", GLOSS_STANDALONE))
 (REAL / "Portfolio_REAL_standalone.html").write_text(standalone_html, encoding="utf-8")
+# Timestamped audit copy (Carlos 2026-06-10): date = as_of, time = run time, so
+# same-day runs never overwrite each other; the un-suffixed name above stays the
+# stable convenience pointer. Timestamped files are NEVER deleted. The "_tracker"
+# tag keeps this lineage (full real-figures tracker mirror) distinct from the
+# curve generator's Portfolio_REAL_standalone_<date>_<time> (raw-balance curve).
+from datetime import datetime as _dt
+_ts_name = f"Portfolio_REAL_standalone_tracker_{_dt.now().strftime('%Y-%m-%d_%H%M%S')}.html"
+(REAL / _ts_name).write_text(standalone_html, encoding="utf-8")
 
 # ---------- summary ----------
 print(f"asof {asof} | USDMXN {RATE:.4f}")
