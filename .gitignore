@@ -17,3 +17,6 @@ logs/
 # local scratch/diagnostic files must never trip the dirty-tree guard or get committed
 scripts/_scratch_*
 _scratch_*
+
+# per-machine agent tooling (preview launch config etc.)
+.claude/
