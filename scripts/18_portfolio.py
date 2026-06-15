@@ -517,6 +517,31 @@ for r in ATTR["rows"]:
     u["interaction"] = (usd_val_now - usd_cost) * (fx_live - x_buy)
     u["pnl"] = u["stock"] + u["fx"] + u["interaction"]
 
+# ---------- per-holding Stock/FX decomposition for the cost-basis table ----------
+# Reuse the canonical FX-attribution unrealized buckets (Stock + FX + Interaction,
+# computed above) as the holdings table's Stock/FX columns. Interaction is folded
+# into Stock (the table shows two legs + total, matching the offline dashboard).
+# ATTR values are REAL (unscaled); the holdings table is x1.8-scaled, so each leg
+# is scaled here. Stock+FX reconciles exactly to each row's P/M.
+DECOMP = {}
+for r in ATTR["rows"]:
+    btk = POS_KEY.get(r["ticker"], r["ticker"])          # cache ticker -> broker name
+    u = r["unrealized"]
+    st = (float(u.get("stock") or 0.0) + float(u.get("interaction") or 0.0)) * SCALE
+    fxv = float(u.get("fx") or 0.0) * SCALE
+    DECOMP[btk] = dict(stock=st, fx=fxv, native=bool(r.get("native")), approx=bool(r.get("approx")))
+
+# FX is the canonical decomposed leg (from the attribution buckets); Stock is the
+# residual Total − FX, so each row and the total reconcile to the cent (absorbs the
+# tiny Imp×Cto vs shares×avg-cost broker rounding into Stock, where it is negligible).
+fx_tot = sum(d["fx"] for tk, d in DECOMP.items()
+             if not d["native"] and tk in set(latest["ticker"]))
+stock_tot = float(tot_val - tot_cost) - fx_tot
+stock_pct = stock_tot / tot_cost * 100.0 if tot_cost else 0.0
+fx_pct    = fx_tot / tot_cost * 100.0 if tot_cost else 0.0
+print(f"  decomposition: stock {stock_tot:,.0f} ({stock_pct:+.2f}%) | "
+      f"fx {fx_tot:,.0f} ({fx_pct:+.2f}%) | reconcile {stock_tot+fx_tot:,.0f} vs P/L {tot_val-tot_cost:,.0f}")
+
 fxa_section = ms.build_section(ATTR, scale=SCALE, prefix="fxa", theme="light",
                                title="FX Attribution")
 # Workaround for upstream make_section.py bug: its CSS template runs
@@ -607,12 +632,21 @@ except FileNotFoundError:
 except Exception as _scerr:
     print(f"  curve: sidecar read failed ({_scerr}) -> keeping computed curve")
 
+# ---------- curve re-frame: Market Value vs Cost Basis (no fixed base) ----------
+# Carlos pivot 2026-06-15: drop the $10M/$18M recycled-base curve entirely. The two
+# lines are now the daily equity market value and the daily invested cost basis; the
+# gap between them is unrealized P&L. This overrides the base/sidecar series computed
+# upstream (left in place but unused) so the chart matches the cost-basis headline.
+ts["total"] = ts["equity"].astype(float)        # market value (mark-to-market)
+ts["realized_pool"] = ts["balance"].astype(float)  # cost basis (capital invested)
+dates = ts.index
+
 # ---------- charts ----------
-# 1. total value (holdings + recycled cash) vs the fixed capital pool
+# 1. market value vs cost basis (gap = unrealized P&L)
 f1 = go.Figure()
-f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Total value (realized + unrealized)",
+f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Market value",
                line=dict(color=BLUE, width=2.6))
-f1.add_scatter(x=dates, y=ts["realized_pool"], mode="lines", name="Capital + realized (locked in)",
+f1.add_scatter(x=dates, y=ts["realized_pool"], mode="lines", name="Cost basis",
                line=dict(color=GREEN, width=1.6, dash="dot"))
 def _eq_at(_dt):
     _s = ts["total"][ts.index <= _dt]
@@ -625,9 +659,7 @@ for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle
     f1.add_scatter(x=_x, y=_y, mode="markers", name=f"{_side.title()}s",
                    marker=dict(color=_col, symbol=_sym, size=9, line=dict(width=1, color="white")),
                    text=_txt, hoverinfo="text")
-f1.add_hline(y=CAPITAL, line=dict(color=INK, width=1, dash="dot"),
-             annotation_text="Capital (18M, recycled)", annotation_position="bottom right")
-f1.update_layout(title="Total value \u2014 realized (locked in) + unrealized vs 18M capital (daily, scaled)",
+f1.update_layout(title="Market value vs cost basis \u2014 gap is unrealized P&L (daily, scaled)",
                  yaxis_title="MXN (scaled)", xaxis_title="date",
                  hovermode="x unified",
                  legend=dict(orientation="h", y=-0.18))
@@ -671,24 +703,38 @@ rows = ""
 for _, r in latest.iterrows():
     rc = "pos" if r["ret"] >= 0 else "neg"
     pc = "pos" if r["pm"] >= 0 else "neg"
+    _d = DECOMP.get(r["ticker"])
+    _is_usd = bool(_d) and not _d["native"]
+    _fx_v = _d["fx"] if _is_usd else 0.0
+    _stock_v = float(r["pm"]) - _fx_v                       # Stock = Total − FX (reconciles per row)
+    _sc = "pos" if _stock_v >= 0 else "neg"
+    if _is_usd:
+        _fxc = "pos" if _d["fx"] >= 0 else "neg"
+        _fx_cell = f"<span class='{_fxc}'>{cval(_d['fx'], signed=True)}</span>"
+        _fx_sort = f"{_d['fx']:.2f}"
+        _approx = " <span class='muted' title='purchase FX estimated (no trade ledger)'>&asymp;</span>" if _d["approx"] else ""
+    else:
+        _fx_cell = "<span class='muted'>&mdash;</span>"; _fx_sort = "0"; _approx = ""
     # data-s = raw sort keys (currency-independent), read by the sort/filter JS
-    rows += (f"<tr><td data-s='{r['ticker']}'>{r['ticker']}</td>"
+    rows += (f"<tr><td data-s='{r['ticker']}'>{r['ticker']}{_approx}</td>"
              f"<td data-s='{r['shares']:.4f}'>{fmt_sh(r['shares'])}</td>"
              f"<td data-s='{r['Costo promedio']:.6f}'>{cval(r['Costo promedio'], 2)}</td>"
              f"<td data-s='{r['Precio mercado']:.6f}'>{cval(r['Precio mercado'], 2)}</td>"
+             f"<td data-s='{r['cost']:.2f}'>{cval(r['cost'])}</td>"
              f"<td data-s='{r['value']:.2f}'>{cval(r['value'])}</td>"
-             f"<td data-s='{r['weight']:.6f}'>{r['weight']*100:.2f}%</td>"
-             f"<td data-s='{r['ret']:.6f}' class='{rc}'>{r['ret']*100:+.2f}%</td>"
-             f"<td data-s='{r['pm']:.2f}' class='{pc}'>{cval(r['pm'], signed=True)}</td></tr>")
+             f"<td data-s='{_stock_v:.2f}' class='{_sc}'>{cval(_stock_v, signed=True)}</td>"
+             f"<td data-s='{_fx_sort}'>{_fx_cell}</td>"
+             f"<td data-s='{r['pm']:.2f}' class='{pc}'>{cval(r['pm'], signed=True)}</td>"
+             f"<td data-s='{r['ret']:.6f}' class='{rc}'>{r['ret']*100:+.2f}%</td></tr>")
 
-# ---------- metrics (recycled capital; realized & unrealized kept separate) ----------
-_pnl_now = _real_now + _unr_now
-SNAP = [("Total Value", cval(_total_now)),
-        ("Realized P / L", cval(_real_now, signed=True)),
-        ("Unrealized P / L", cval(_unr_now, signed=True)),
+# ---------- metrics (cost-basis return + Stock/FX decomposition) ----------
+_pnl_now = float(tot_val - tot_cost)
+SNAP = [("Total Market Value", cval(tot_val)),
+        ("Total Cost Basis", cval(tot_cost)),
+        ("Total Return", f"{port_ret*100:+.2f}%"),
         ("Total P / L", cval(_pnl_now, signed=True)),
-        ("Total Return", f"{(_total_now/CAPITAL-1)*100:+.2f}%"),
-        ("Live Priced", asof)]
+        ("Stock contribution", f"{stock_pct:+.2f}%"),
+        ("FX contribution", f"{fx_pct:+.2f}%")]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for k, v in SNAP)
@@ -728,8 +774,6 @@ function applyRange(m){
   var xr=[PFD[i0],PFD[PFD.length-1]];
   var lo=Infinity,hi=-Infinity,T=TOT[CUR],R=REAL[CUR],i;
   for(i=i0;i<T.length;i++){if(T[i]<lo)lo=T[i];if(T[i]>hi)hi=T[i];if(R[i]<lo)lo=R[i];if(R[i]>hi)hi=R[i];}
-  var cap=CUR==='mxn'?PF_CAP:PF_CAP/PF_RATE;
-  if(cap<lo)lo=cap;if(cap>hi)hi=cap;
   var pad=(hi-lo)*0.07||1;
   Plotly.relayout(d,{'xaxis.range':xr,'yaxis.range':[lo-pad,hi+pad]});
   if(dd)Plotly.relayout(dd,{'xaxis.range':xr});
@@ -820,24 +864,24 @@ USD/MXN {RATE:.4f}</p>
 <main class="container">
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
-amounts; prices, returns and weights are exact. Positions, cost basis and the
-GBMF2 cash sleeve come from the broker statement (source of truth), re-priced
-live. <b>Accounting:</b> the equity book is measured against a fixed $18M&nbsp;MXN
-base (recycled capital); Total&nbsp;Value = holdings market value + GBMF2 cash
-sleeve; Unrealized&nbsp;P/L = market value &minus; cost basis; Realized&nbsp;P/L =
-(cost basis + cash) &minus; base. Undocumented share adds are treated as buys
-(they raise cost basis, never P/L). FX positions and non-GBM bank cash are
-excluded.</div>
+amounts; prices, returns and weights are exact. Positions and cost basis come
+from the broker statement (source of truth), re-priced live. <b>Accounting:</b>
+every position is measured against its cost basis &mdash;
+Return = (market value &divide; cost) &minus; 1. For US-dollar holdings the peso
+P/L is split into <b>Stock</b> (the US price move at the exchange rate we bought
+at) and <b>FX</b> (the peso's move on the original cost); the two sum to Total
+P/L = market value &minus; cost. The GBMF2 cash sleeve, FX positions and non-GBM
+bank cash are excluded from the equity book.</div>
 <section class="block"><h2>Snapshot</h2>
 <div class="ccy-toggle">
 <button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
 <button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
-<p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns and weights
-read the same in either currency. Total Return is measured against the recycled
-$18M&nbsp;MXN base and includes the GBMF2 cash sleeve ({cval(GBMF2_CASH)}).
-Definitions in the <a href="glossary.html">Glossary</a>.</p>
+<p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns read the same
+in either currency. Total Return is on cost basis (market value &divide; cost
+&minus; 1); the Stock and FX contributions decompose where the peso P/L came
+from. Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
-<section class="block"><h2>Total Value vs Capital</h2>
+<section class="block"><h2>Market Value vs Cost Basis</h2>
 <div class="btctl"><div class="btranges">
 <button class="btr on" data-pr="all">All</button>
 <button class="btr" data-pr="6">6M</button>
@@ -847,17 +891,18 @@ Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f1b, "pf-dd")}</div></div>
 <p class="note" style="margin-top:.8rem">Drawdown is measured from the running
-peak of total value; it reads identically in either currency.</p></section>
+peak of market value; it reads identically in either currency.</p></section>
 {fxa_section}
 <script>(function(){{var b=document.getElementById('fxa-ccy');
 if(b&&b.parentElement)b.parentElement.style.display='none';}})();</script>
 <section class="block"><h2>Holdings</h2>
 <input type="search" id="h-search" class="tsearch" placeholder="Filter holdings&hellip; press /"
  aria-label="Filter holdings by ticker">
-<div class="tile" style="padding:0 16px 8px">
-<table class="ptable" id="h-table"><thead><tr><th>Holding</th><th>Shares</th>
-<th>Avg Cost</th><th>Price</th><th>Value</th><th>Weight</th>
-<th>Return</th><th>P/M</th></tr></thead><tbody id="h-body">{rows}</tbody></table></div>
+<div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+<table class="ptable" id="h-table" style="min-width:680px"><thead><tr><th>Holding</th><th>Shares</th>
+<th>Avg Cost</th><th>Price</th><th>Cost</th><th>Value</th>
+<th>Stock P/L</th><th>FX P/L</th><th>Total P/L</th><th>Return</th></tr></thead>
+<tbody id="h-body">{rows}</tbody></table></div>
 <p class="note" style="margin-top:.8rem">Click a column header to sort; type to
 filter. Sorting and filtering are display-only.</p></section>
 <section class="block"><h2>Portfolio vs Its Holdings</h2>
