@@ -32,15 +32,20 @@ def ccy_badge(currency, note=""):
 # Each entry: (term, plain-English explanation -- no math, no jargon).
 GLOSSARY = {
     "Portfolio Accounting & FX": [
-        ("Recycled 8M base",
-         "The equity book is measured against a fixed $18,000,000 MXN starting "
-         "pool, with capital recycled through it. Total Return = (today's total "
-         "value &minus; 8M) &divide; 8M &mdash; not against the running cost of "
-         "what we currently hold."),
+        ("Return on cost basis",
+         "Every position is measured against what we paid for it. "
+         "Total Return = (market value &divide; cost basis) &minus; 1 &mdash; the "
+         "actual gain on capital deployed, not against any fixed starting pool."),
+        ("Stock vs FX decomposition",
+         "For US-dollar holdings the peso profit splits in two: Stock P/L is the "
+         "US price move valued at the exchange rate we bought at; FX P/L is the "
+         "peso's move applied to the original cost. (A tiny price&times;FX cross term "
+         "is folded into Stock.) They sum exactly to Total P/L = market value "
+         "&minus; cost. MX-native holdings have no FX leg."),
         ("GBMF2 cash sleeve",
-         "Cash from equity sales parks in the GBMF2 fund between trades, so it is "
-         "counted as the equity book's cash: Total Value = holdings at market price "
-         "+ GBMF2 cash. We use the real broker balance, never a reconstructed guess."),
+         "Cash from equity sales parks in the GBMF2 fund between trades. It is a "
+         "MXN money fund that also carries external capital, so it is shown as a "
+         "memo only and excluded from the equity cost-basis return."),
         ("Undocumented MORE shares = a BUY",
          "If a holding grows with no matching trade ticket, we treat the extra "
          "shares as a purchase at the price implied by the broker's cost-basis "
