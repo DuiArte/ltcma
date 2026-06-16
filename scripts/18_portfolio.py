@@ -774,17 +774,151 @@ for _, r in latest.iterrows():
              f"<td data-s='{r['pm']:.2f}' class='{pc}'>{cval(r['pm'], signed=True)}</td>"
              f"<td data-s='{r['ret']:.6f}' class='{rc}'>{r['ret']*100:+.2f}%</td></tr>")
 
-# ---------- metrics (cost-basis return + Stock/FX decomposition) ----------
-_pnl_now = float(tot_val - tot_cost)
+# ---------- realized P&L since inception (ledger-based, date-aware, FX-decomposed) ----------
+# Ported from the offline cost-basis dashboard so the public page's realized figures
+# match it and reconcile with the unrealized decomposition above. Source: the GBM
+# "Historial de Transacciones" ledger + dated broker snapshots in the archive. The
+# 24-Apr batch is excluded (VGT/VUG 6:1 split-boundary -> ambiguous cost basis).
+import glob as _rg
+_ARCH  = paths.cuser("Documents", "GBM_Account_Archive")
+_HISTF = os.path.join(_ARCH, "transactions_historial",
+                      "GBM_Historial_Transacciones_2026-04-28_to_2026-06-15.csv")
+_RMON  = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,"jul":7,"ago":8,"sep":9,
+          "oct":10,"nov":11,"dic":12,"jan":1,"apr":4,"aug":8,"dec":12}
+def _rnum(s):
+    s = str(s).replace("$","").replace(",","").replace("(","-").replace(")","").strip()
+    try: return float(s)
+    except ValueError: return 0.0
+def _rdate(s):
+    s = str(s).strip().lower()
+    try:
+        if "/" in s: d,m,y = s.split("/"); return pd.Timestamp(int(y), _RMON.get(m[:3],1), int(d))
+        if "-" in s: d,m,y = s.split("-"); yr=int(y); yr=yr+2000 if yr<100 else yr; return pd.Timestamp(yr, _RMON.get(m[:3],1), int(d))
+    except Exception: return None
+    return None
+def _rtk(n):
+    import re as _re3
+    return _re3.sub(r"\s+[*N]$","",str(n).strip()).replace(" ","")
+def _rsnapdate(p):
+    import re as _re3
+    m = _re3.search(r"(\d{13})", os.path.basename(p))
+    return pd.Timestamp(int(m.group(1)), unit="ms") if m else None
+_rcost = {}
+for _sp in _rg.glob(os.path.join(_ARCH, "portfolio_snapshots", "GBM_Homebroker_Detalle_de_Portafolio_*.csv")):
+    _sd = _rsnapdate(_sp)
+    if _sd is None: continue
+    try:
+        _sect = None
+        with open(_sp, encoding="utf-8-sig", errors="replace") as _fh:
+            for _row in _csv.reader(_fh):
+                if not _row: continue
+                h = _row[0].strip()
+                if h in ("Mercado de Capitales Nacional", "Mercado de Capitales Global (SIC)"):
+                    _sect = "eq"; continue
+                if len(_row) == 1: _sect = None; continue
+                if _sect == "eq" and h not in ("Emisora/Fondo", "") and len(_row) >= 3:
+                    _c = _rnum(_row[2])
+                    if _c > 0: _rcost.setdefault(_rtk(h), []).append((_sd, _c))
+    except OSError:
+        continue
+for _t in _rcost: _rcost[_t].sort()
+def _costasof(t, when):
+    lst = _rcost.get(t)
+    if not lst: return None
+    best = None
+    for d,c in lst:
+        if d <= when: best = c
+        else: break
+    return best if best is not None else lst[0][1]
+try:
+    _fxh = yf.Ticker("MXN=X").history(start="2026-03-15", end="2026-06-16", auto_adjust=False)
+    _fxpts = sorted((d.date(), float(c)) for d,c in zip(_fxh.index, _fxh["Close"]))
+except Exception:
+    _fxpts = []
+def _fxat(dt):
+    day = dt.date() if hasattr(dt, "date") else dt
+    if not _fxpts: return fx_live
+    v = _fxpts[0][1]
+    for d,c in _fxpts:
+        if d <= day: v = c
+        else: break
+    return v
+_lbuys, _lsells = {}, []
+try:
+    with open(_HISTF, encoding="utf-8-sig") as _fh:
+        for _row in _csv.reader(_fh):
+            if not _row or len(_row) < 12 or _row[0].strip() == "Emisora": continue
+            d = _rdate(_row[1])
+            if d is None: continue
+            if "Compra de Acciones" in _row[3]:
+                _lbuys.setdefault(_rtk(_row[0]), []).append((d, _rnum(_row[4])))
+            elif "Venta de Acciones" in _row[3]:
+                _lsells.append({"t": _rtk(_row[0]), "d": d, "sh": _rnum(_row[4]), "px": _rnum(_row[5])})
+except OSError:
+    pass
+def _xbuy(t, upto):
+    lots = [(d,s) for d,s in _lbuys.get(t, []) if d <= upto]
+    tot = sum(s for _,s in lots)
+    return (sum(s*_fxat(d) for d,s in lots)/tot) if tot > 0 else fx_live
+_ragg = {}
+for _s in _lsells:
+    _cb = _costasof(_s["t"], _s["d"]) or _s["px"]
+    _xb = _xbuy(_s["t"], _s["d"]); _xs = _fxat(_s["d"])
+    _pbuy = _cb/_xb if _xb else 0.0; _psell = _s["px"]/_xs if _xs else 0.0
+    _S = _s["sh"]; _dP = _psell - _pbuy
+    _st = _S*_dP*_xb + _S*_dP*(_xs-_xb); _fx = _S*_pbuy*(_xs-_xb); _tt = (_s["px"]-_cb)*_S
+    _a = _ragg.setdefault(_s["t"], {"sh":0.0,"proceeds":0.0,"cost":0.0,"stock":0.0,"fx":0.0,"total":0.0})
+    _a["sh"]+=_S; _a["proceeds"]+=_s["px"]*_S; _a["cost"]+=_cb*_S
+    _a["stock"]+=_st; _a["fx"]+=_fx; _a["total"]+=_tt
+REAL_TOTAL = sum(a["total"] for a in _ragg.values())
+REAL_FX    = sum(a["fx"] for a in _ragg.values())
+REAL_STOCK = REAL_TOTAL - REAL_FX
+print(f"  realized (ledger): total {REAL_TOTAL:,.0f} stock {REAL_STOCK:,.0f} fx {REAL_FX:,.0f} "
+      f"-> x{SCALE} {REAL_TOTAL*SCALE:,.0f}")
+_ragg_rows = sorted(_ragg.items(), key=lambda kv: -kv[1]["total"])
+realized_rows = "".join(
+    f"<tr><td data-s='{t}'>{t}</td>"
+    f"<td data-s='{a['sh']:.2f}'>{fmt_sh(a['sh']*SCALE)}</td>"
+    f"<td data-s='{(a['proceeds']/a['sh'] if a['sh'] else 0):.4f}'>{cval(a['proceeds']/a['sh'] if a['sh'] else 0, 2)}</td>"
+    f"<td data-s='{(a['cost']/a['sh'] if a['sh'] else 0):.4f}'>{cval(a['cost']/a['sh'] if a['sh'] else 0, 2)}</td>"
+    f"<td data-s='{a['stock']:.2f}' class='{_cl(a['stock'])}'>{cval(a['stock']*SCALE, signed=True)}</td>"
+    f"<td data-s='{a['fx']:.2f}' class='{_cl(a['fx'])}'>{cval(a['fx']*SCALE, signed=True)}</td>"
+    f"<td data-s='{a['total']:.2f}' class='{_cl(a['total'])}'>{cval(a['total']*SCALE, signed=True)}</td></tr>"
+    for t, a in _ragg_rows) or "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:16px'>No realized stock sales.</td></tr>"
+realized_foot = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
+    f"<td class='{_cl(REAL_STOCK)}'>{cval(REAL_STOCK*SCALE, signed=True)}</td>"
+    f"<td class='{_cl(REAL_FX)}'>{cval(REAL_FX*SCALE, signed=True)}</td>"
+    f"<td class='{_cl(REAL_TOTAL)}'>{cval(REAL_TOTAL*SCALE, signed=True)}</td></tr>")
+realized_section = f"""<section class="block"><h2>Realized P&amp;L Since Inception</h2>
+<p class="note">Closed stock positions, aggregated by ticker, with the same Stock/FX
+split as the unrealized panel. Cost basis is date-aware (broker snapshot at-or-before
+each sale); the 24-Apr split-boundary batch is excluded. Dollar values are &times;1.8
+scaled and follow the currency toggle; percentages are exact.</p>
+<div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+<table class="ptable" style="min-width:560px"><thead><tr>
+<th>Ticker</th><th>Shares Sold</th><th>Avg Sell</th><th>Avg Cost</th>
+<th>Realized Stock</th><th>Realized FX</th><th>Total</th></tr></thead>
+<tbody>{realized_rows}</tbody><tfoot>{realized_foot}</tfoot></table></div></section>"""
+
+# ---------- metrics (cost-basis return + Stock/FX + realized since inception) ----------
+_pnl_now = float(tot_val - tot_cost)                       # unrealized P/L (scaled MXN)
+_since_incep = REAL_TOTAL * SCALE + _pnl_now               # realized + unrealized (scaled MXN)
 SNAP = [("Total Market Value", cval(tot_val)),
         ("Total Cost Basis", cval(tot_cost)),
-        ("Total Return", f"{port_ret*100:+.2f}%"),
-        ("Total P / L", cval(_pnl_now, signed=True)),
+        ("Return on Cost", f"{port_ret*100:+.2f}%"),
+        ("Total P&amp;L Since Inception", cval(_since_incep, signed=True)),
         ("Stock contribution", f"{stock_pct:+.2f}%"),
         ("FX contribution", f"{fx_pct:+.2f}%")]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for k, v in SNAP)
+# holdings TOTAL row (placed in <tfoot> so the sort/filter JS leaves it pinned)
+holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
+    f"<td class='n'>{cval(tot_cost)}</td><td class='n'>{cval(tot_val)}</td>"
+    f"<td class='n {_cl(stock_tot)}'>{cval(stock_tot, signed=True)}</td>"
+    f"<td class='n {_cl(fx_tot)}'>{cval(fx_tot, signed=True)}</td>"
+    f"<td class='n {_cl(_pnl_now)}'>{cval(_pnl_now, signed=True)}</td>"
+    f"<td class='n {_cl(port_ret)}'>{port_ret*100:+.2f}%</td></tr>")
 
 # ---------- currency-toggle JavaScript ----------
 def _arr(s): return ",".join(f"{v:.0f}" for v in s)
@@ -894,7 +1028,19 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stock Portfolio Tracker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
+<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script>
+<style>
+/* portfolio coherence fixes (2026-06-15):
+   - headers inside the new overflow-x scroll tiles must NOT be sticky (sticky+overflow
+     ancestor was rendering the first row ABOVE the header);
+   - symmetric P/L colours: .ptable td sets the ink colour and out-specifies bare .pos,
+     so positives rendered black while span-wrapped negatives stayed red. Raise specificity. */
+.ptable thead th{{position:static;top:auto}}
+.ptable td.pos{{color:var(--pos)}}
+.ptable td.neg{{color:var(--neg)}}
+.ptable tr.h-total td{{font-weight:700;border-top:2px solid var(--line-strong);background:#fbfaf8}}
+.ptable tr.h-total td:first-child{{letter-spacing:.06em;color:var(--ink)}}
+</style></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -947,9 +1093,10 @@ peak of market value; it reads identically in either currency.</p></section>
 <table class="ptable" id="h-table" style="min-width:680px"><thead><tr><th>Holding</th><th>Shares</th>
 <th>Avg Cost</th><th>Price</th><th>Cost</th><th>Value</th>
 <th>Stock P/L</th><th>FX P/L</th><th>Total P/L</th><th>Return</th></tr></thead>
-<tbody id="h-body">{rows}</tbody></table></div>
+<tbody id="h-body">{rows}</tbody><tfoot>{holdings_total}</tfoot></table></div>
 <p class="note" style="margin-top:.8rem">Click a column header to sort; type to
-filter. Sorting and filtering are display-only.</p></section>
+filter. Sorting and filtering are display-only; the TOTAL row stays pinned.</p></section>
+{realized_section}
 <section class="block"><h2>Portfolio vs Its Holdings</h2>
 <div class="grid"><div class="tile chart"><div class="ch">{div(f2, "pf-rel")}</div></div>
 <div class="tile chart"><div class="ch">{div(f3, "pf-alloc")}</div></div></div></section>
