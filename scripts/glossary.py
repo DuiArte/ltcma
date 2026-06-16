@@ -39,25 +39,23 @@ GLOSSARY = {
         ("Stock vs FX decomposition",
          "For US-dollar holdings the peso profit splits in two: Stock P/L is the "
          "US price move valued at the exchange rate we bought at; FX P/L is the "
-         "peso's move applied to the original cost. (A tiny price&times;FX cross term "
-         "is folded into Stock.) They sum exactly to Total P/L = market value "
-         "&minus; cost. MX-native holdings have no FX leg."),
+         "peso's move applied to the original cost. They sum exactly to Total P/L = "
+         "market value &minus; cost. The Holdings table folds a tiny price&times;FX "
+         "interaction term into Stock; the FX&nbsp;Attribution panel itemizes it as a "
+         "third leg. MX-native holdings (GMEXICO&nbsp;B) have no FX leg."),
         ("GBMF2 cash sleeve",
-         "Cash from equity sales parks in the GBMF2 fund between trades. It is a "
-         "MXN money fund that also carries external capital, so it is shown as a "
-         "memo only and excluded from the equity cost-basis return."),
-        ("Undocumented MORE shares = a BUY",
-         "If a holding grows with no matching trade ticket, we treat the extra "
-         "shares as a purchase at the price implied by the broker's cost-basis "
-         "column. It raises cost basis; it never counts as profit."),
-        ("Undocumented FEWER shares = a SELL",
-         "If a holding shrinks with no matching ticket, we treat the missing shares "
-         "as a sale and book the gain or loss into Realized P/L, at the price "
-         "implied by the change in the cost-basis column."),
-        ("Realized vs Unrealized P/L",
-         "Unrealized = how much our current holdings are worth above (or below) "
-         "what we paid for them. Realized = gains already locked in as cash. "
-         "Together they make total profit."),
+         "Cash from equity sales parks in the GBMF2 MXN money fund between trades. "
+         "Because it also carries external capital, it is excluded from the equity "
+         "book's cost-basis return."),
+        ("Undocumented shares = a buy or sell",
+         "If a holding grows or shrinks with no matching trade ticket, we treat the "
+         "change as a purchase or sale at the price implied by the broker's "
+         "cost-basis column and adjust the cost basis accordingly &mdash; never "
+         "inventing profit."),
+        ("Unrealized P/L",
+         "How much the current holdings are worth above (or below) what we paid for "
+         "them: market value &minus; cost basis. This is the profit shown on the "
+         "portfolio page, split into its Stock and FX drivers."),
         ("FX conversion",
          "One source for USD/MXN &mdash; Yahoo Finance's close on the as-of date "
          "&mdash; used identically everywhere on a page and shown to four decimals "

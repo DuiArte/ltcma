@@ -20,7 +20,8 @@ from glossary import NAV, ccy_badge
 
 import paths
 FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")  # lot-history DATA cache only
-import fxa_section as ms  # repo-native renderer (dual-base FX fix, 2026-06-10)
+# (legacy fxa_section/make_section renderer removed 2026-06-15: the FX Attribution
+#  panel is now rebuilt inline from the same cost-basis source as the holdings table.)
 
 XLSX = paths.cuser("Downloads", "Copy of Carteras DBE 2.xlsx")
 DATA = paths.DATA_S
@@ -527,9 +528,9 @@ DECOMP = {}
 for r in ATTR["rows"]:
     btk = POS_KEY.get(r["ticker"], r["ticker"])          # cache ticker -> broker name
     u = r["unrealized"]
-    st = (float(u.get("stock") or 0.0) + float(u.get("interaction") or 0.0)) * SCALE
-    fxv = float(u.get("fx") or 0.0) * SCALE
-    DECOMP[btk] = dict(stock=st, fx=fxv, native=bool(r.get("native")), approx=bool(r.get("approx")))
+    DECOMP[btk] = dict(fx=float(u.get("fx") or 0.0) * SCALE,
+                       inter=float(u.get("interaction") or 0.0) * SCALE,
+                       native=bool(r.get("native")), approx=bool(r.get("approx")))
 
 # FX is the canonical decomposed leg (from the attribution buckets); Stock is the
 # residual Total − FX, so each row and the total reconcile to the cent (absorbs the
@@ -542,15 +543,61 @@ fx_pct    = fx_tot / tot_cost * 100.0 if tot_cost else 0.0
 print(f"  decomposition: stock {stock_tot:,.0f} ({stock_pct:+.2f}%) | "
       f"fx {fx_tot:,.0f} ({fx_pct:+.2f}%) | reconcile {stock_tot+fx_tot:,.0f} vs P/L {tot_val-tot_cost:,.0f}")
 
-fxa_section = ms.build_section(ATTR, scale=SCALE, prefix="fxa", theme="light",
-                               title="FX Attribution")
-# Workaround for upstream make_section.py bug: its CSS template runs
-# .replace("@P", prefix) before .replace("@PANEL", ...)/("@POS", ...), so
-# those two tokens get mangled to "fxaANEL" / "fxaOS". Patch them post-hoc.
-fxa_section = (fxa_section.replace("background:fxaANEL", "background:#fff")
-                          .replace("color:fxaOS", "color:#0a5d3a"))
-assert fxa_section.startswith('<section id="fxa-root">'), "FXA section malformed"
-assert "fxaANEL" not in fxa_section and "fxaOS" not in fxa_section
+# ---------- FX Attribution panel: rebuilt from the SAME source as the holdings table ----------
+# The legacy ms.build_section() renderer was scrapped (2026-06-15 coherence fix): it
+# carried its own Realized/Unrealized + "Normal/FX-Impact" framing, a frozen lot cache,
+# and a separate currency toggle that fought the new cost-basis model. This panel is
+# the canonical 3-way split (Stock + FX + Interaction) of the SAME unrealized P/L shown
+# in the Holdings table, so it reconciles to the cent and uses the page's cval() MXN/USD
+# toggle and x1.8 scaling uniformly. Stock = Total − FX − Interaction (residual absorbs
+# the negligible Imp×Cto-vs-shares×avg-cost broker rounding).
+def _cl(v): return "pos" if v >= 0 else "neg"
+def build_fxa():
+    body = ""
+    T_st = T_fx = T_in = 0.0
+    for _, r in latest.iterrows():
+        tk = r["ticker"]; total = float(r["pm"]); cost = float(r["cost"]) or 1.0
+        d = DECOMP.get(tk); is_usd = bool(d) and not d["native"]
+        fx = d["fx"] if is_usd else 0.0
+        inter = d["inter"] if is_usd else 0.0
+        stock = total - fx - inter
+        T_st += stock; T_fx += fx; T_in += inter
+        appx = " <span class='muted' title='purchase FX estimated (no trade ledger)'>&asymp;</span>" if (d and d.get("approx")) else ""
+        em = "<span class='muted'>&mdash;</span>"
+        fxc  = f"<span class='{_cl(fx)}'>{cval(fx, signed=True)}</span>" if is_usd else em
+        inc  = f"<span class='{_cl(inter)}'>{cval(inter, signed=True)}</span>" if is_usd else em
+        body += (f"<tr><td data-s='{tk}'>{tk}{appx}</td>"
+                 f"<td data-s='{stock:.2f}' class='n {_cl(stock)}'>{cval(stock, signed=True)}</td>"
+                 f"<td data-s='{fx:.2f}' class='n'>{fxc}</td>"
+                 f"<td data-s='{inter:.2f}' class='n'>{inc}</td>"
+                 f"<td data-s='{total:.2f}' class='n {_cl(total)}'>{cval(total, signed=True)}</td>"
+                 f"<td data-s='{total/cost:.6f}' class='n {_cl(total)}'>{total/cost*100:+.2f}%</td></tr>")
+    g_tot = T_st + T_fx + T_in
+    foot = (f"<tr class='fxa-tot'><td>Portfolio (unrealized)</td>"
+            f"<td class='n {_cl(T_st)}'>{cval(T_st, signed=True)}</td>"
+            f"<td class='n {_cl(T_fx)}'>{cval(T_fx, signed=True)}</td>"
+            f"<td class='n {_cl(T_in)}'>{cval(T_in, signed=True)}</td>"
+            f"<td class='n {_cl(g_tot)}'>{cval(g_tot, signed=True)}</td>"
+            f"<td class='n {_cl(g_tot)}'>{g_tot/tot_cost*100:+.2f}%</td></tr>")
+    return f"""<section class="block" id="fxa-root"><h2>FX Attribution</h2>
+<style>#fxa-root table.ptable .n{{text-align:right;font-variant-numeric:tabular-nums}}
+#fxa-root tr.fxa-tot td{{font-weight:700;border-top:2px solid #d8d5cf;background:#fbfaf8}}</style>
+<p class="note">For each US-dollar holding the unrealized peso P/L splits into
+<b>Stock</b> (US price move at the buy-date exchange rate), <b>FX</b> (the peso's
+move on the original cost) and a small <b>Interaction</b> cross term. The three sum
+exactly to Total = market value &minus; cost &mdash; the same Total (and the same
+FX) as the Holdings table, which folds Interaction into its Stock column. Peso-native
+holdings (GMEXICO&nbsp;B) carry no FX leg. Values follow the currency toggle and are
+&times;1.8 scaled; percentages are exact.
+<span class="muted">&asymp; = purchase FX estimated (no trade ticket).</span></p>
+<div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+<table class="ptable" style="min-width:560px"><thead><tr>
+<th>Holding</th><th>Stock P/L</th><th>FX P/L</th><th>Interaction</th><th>Total P/L</th><th>Return</th>
+</tr></thead><tbody>{body}{foot}</tbody></table></div>
+<p class="note" style="margin-top:.8rem">Net FX impact this period: <b>{cval(T_fx, signed=True)}</b>
+MXN ({T_fx/tot_cost*100:+.2f}% of cost) &mdash; a stronger peso is a drag on dollar holdings.</p>
+</section>"""
+fxa_section = build_fxa()
 
 # ---------- canonical equity-book accounting (recycled $10M base + GBMF2 cash sleeve) ----------
 # Source of truth: the broker "Detalle de Portafolio" snapshot (positions + cost
@@ -793,8 +840,6 @@ function setCurrency(c){
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
     applyRange(PF_RANGE);
   }
-  var fxBtn=document.querySelector('#fxa-ccy button[data-v="'+c.toUpperCase()+'"]');
-  if(fxBtn) fxBtn.click();
 }
 document.addEventListener('DOMContentLoaded',function(){
   setCurrency('mxn');
@@ -870,8 +915,10 @@ every position is measured against its cost basis &mdash;
 Return = (market value &divide; cost) &minus; 1. For US-dollar holdings the peso
 P/L is split into <b>Stock</b> (the US price move at the exchange rate we bought
 at) and <b>FX</b> (the peso's move on the original cost); the two sum to Total
-P/L = market value &minus; cost. The GBMF2 cash sleeve, FX positions and non-GBM
-bank cash are excluded from the equity book.</div>
+P/L = market value &minus; cost. (Stock here folds in a small price&times;FX
+interaction term, itemized separately in <b>FX Attribution</b> below.) The GBMF2
+cash sleeve, FX positions and non-GBM bank cash are excluded from the equity
+book.</div>
 <section class="block"><h2>Snapshot</h2>
 <div class="ccy-toggle">
 <button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
@@ -893,8 +940,6 @@ from. Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <p class="note" style="margin-top:.8rem">Drawdown is measured from the running
 peak of market value; it reads identically in either currency.</p></section>
 {fxa_section}
-<script>(function(){{var b=document.getElementById('fxa-ccy');
-if(b&&b.parentElement)b.parentElement.style.display='none';}})();</script>
 <section class="block"><h2>Holdings</h2>
 <input type="search" id="h-search" class="tsearch" placeholder="Filter holdings&hellip; press /"
  aria-label="Filter holdings by ticker">
