@@ -10,7 +10,7 @@ fields: rank|ticker|sector|price|composite|dominant_var
 6|NVO|Healthcare|43.92|+0.356|CAD beta
 7|WMT|Consumer Defensive|120.82|+0.349|CAD beta
 8|HD|Consumer Cyclical|329.82|+0.322|ROE
-9|KO|Consumer Defensive|80.91|+0.247|CAD beta
+9|KO|Consumer Defensive|80.91|+0.246|CAD beta
 10|NFLX|Communication Services|81.67|+0.221|CAD beta
 11|AAPL|Technology|296.42|+0.203|ROE
 12|ORCL|Technology|192.64|+0.127|CAD beta
