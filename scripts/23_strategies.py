@@ -262,6 +262,75 @@ BT_SECTION = (
     f'{_PILLS}'
     f'<div class="btgrid">{_bt_cards}{_find_cards}</div></section>')
 
+# ── Multi-Level Rotation Family showcase (Findings #29-#34) ──────────────────
+# Editorial, public-safe narrative of the 2026 rotation wave. No tickers, no
+# parameters, no internal paths (confscan-clean): describes universes generically
+# and quotes only scale-invariant metrics (Sharpe, selection lifts, correlation)
+# and unscaled percentages. The deploy decision is unchanged — strategies.json
+# is the source of truth for what is live; this is process documentation.
+ROTATION_SECTION = (
+    '<section class="block" id="rotation-family"><h2>Multi-Level Rotation Family — A Process Showcase (2026)</h2>'
+    '<p class="note">Through the first half of 2026 the research book ran a disciplined wave of '
+    '<b>multi-level rotation</b> strategies — each stacking a macro <i>regime</i> layer (which sets '
+    'the risk posture) on a <i>selection</i> layer (which assets to hold). Across <b>30 backtest '
+    'batches</b> the wave produced exactly one deployed flagship, one paper-track candidate, four '
+    'conditional results, and one outright kill. The kills are shown on purpose: a research process '
+    'is only as trustworthy as the ideas it is willing to throw away.</p>'
+    '<h3 style="font-family:Spectral,Georgia,serif;font-weight:500;color:#111;margin:22px 0 8px">'
+    'The decisive test — de-risk vs. selection</h3>'
+    '<p class="note">Every rotation is decomposed into three return streams on one common window: the '
+    '<b>full</b> strategy, the regime <b>de-risk overlay alone</b> (applied to the plain benchmark, no '
+    'asset-picking), and the <b>selection layer alone</b> (the asset book with no de-risking). If the '
+    'de-risk overlay alone matches the full strategy, the asset-picking is <i>decorative</i> — the edge '
+    'is simply volatility reduction, which a vol-targeted index delivers for free. A genuine multi-level '
+    'edge requires <i>both</i> layers to add separable value <i>and</i> compound. This one test is what '
+    'separates an honest result from a flattering one, and it is run before any verdict is written.</p>'
+    '<h3 style="font-family:Spectral,Georgia,serif;font-weight:500;color:#111;margin:22px 0 8px">'
+    'The selection-edge spectrum</h3>'
+    '<p class="note">Run across five asset classes with the same harness, the test returned five '
+    'different answers — proof it discriminates rather than rubber-stamping. The value the '
+    '<i>selection</i> layer adds on top of the de-risk overlay, in Sharpe units:</p>'
+    '<div class="tile" style="padding:0 16px 8px;overflow-x:auto">'
+    '<table class="ptable"><thead><tr><th style="text-align:left">Rotation universe</th>'
+    '<th>Selection edge<br><span style="font-weight:400;color:#888888">(Sharpe, on top of de-risk)</span></th>'
+    '<th>Verdict</th></tr></thead><tbody>'
+    '<tr><td style="text-align:left">Emerging-market country rotation</td><td>+0.28</td>'
+    '<td><span style="color:#0a2540;font-weight:600">Paper-track candidate</span></td></tr>'
+    '<tr><td style="text-align:left">Mexican equity rotation</td><td>+0.24</td>'
+    '<td><span style="color:#0a2540;font-weight:600">Currency-contingent</span></td></tr>'
+    '<tr><td style="text-align:left">US factor rotation</td><td>+0.04</td>'
+    '<td><span style="color:#6b7280;font-weight:600">Not additive</span></td></tr>'
+    '<tr><td style="text-align:left">US sector rotation</td><td>&asymp;0</td>'
+    '<td><span style="color:#6b7280;font-weight:600">De-risk in disguise</span></td></tr>'
+    '<tr><td style="text-align:left">G10 FX carry</td><td>&minus;0.07</td>'
+    '<td><span style="color:#7c2d12;font-weight:600">Killed</span></td></tr>'
+    '</tbody></table></div>'
+    '<p class="note">The lesson: <b>the asset class decides whether selection has standalone edge.</b> '
+    'Emerging-market country momentum and Mexican size/liquidity dispersion are real, separable premia; '
+    'US cross-sectional sector and factor momentum are not — there the "rotation" is just a regime '
+    'de-risk sleeve in a different costume. In the carry case the premium <i>is</i> crash-risk '
+    'compensation, so a crash-dodging regime gate strips out the very months the selection was being '
+    'paid for — the two layers price the same risk and cannot compound, and the de-risk overlay alone '
+    'beat the full strategy. That result was retired, not deployed.</p>'
+    '<h3 style="font-family:Spectral,Georgia,serif;font-weight:500;color:#111;margin:22px 0 8px">'
+    'Two rules the wave hardened</h3>'
+    '<p class="note"><b>Additivity (correlation).</b> A new rotation sleeve earns a slot only if it '
+    'beats the deployed book by a clear margin <i>or</i> is genuinely uncorrelated to it. The factor '
+    'and sector rotations turned out <b>0.76 correlated to each other</b> despite holding completely '
+    'different universes — proof both are driven by the shared de-risk overlay, not their distinct '
+    'asset picks. Anything above 0.70 to an existing de-risk sleeve is not a new sleeve; it is a second '
+    'copy of one you already own.</p>'
+    '<p class="note"><b>Home-currency truth.</b> A single-country book must be judged in the currency '
+    'the investor actually holds. The Mexican rotation is a Sharpe-1.13 capital preserver in pesos but '
+    'falls to Sharpe 0.42 for a dollar investor once the peso\'s structural depreciation is paid — so '
+    'the hoped-for cross-currency diversification was a headwind, not a benefit. Cross-currency exposure '
+    'is empirical, never assumed.</p>'
+    '<p class="note">Net result through 30 batches: the deployed flagship — <b>Static Drift-Weight '
+    '50/30/20</b> (Sharpe 1.33, GFC-tested) — was not displaced by any rotation. The strongest newcomer '
+    'is held as an uncorrelated paper-track candidate, not a capital allocation. Discipline over a '
+    'flattering headline.</p>'
+    '</section>')
+
 STRAT_CSS = r"""
 .pills{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 22px}
 .pill{font:500 12px 'Inter',sans-serif;letter-spacing:.02em;color:#0a2540;background:#fff;
@@ -416,6 +485,7 @@ range button above to reset the view.</p>
 capture ratios computed vs each strategy's benchmark; VaR/CVaR are monthly at 95%;
 skew and excess kurtosis are population moments. Out-of-sample walk-forward;
 hypothetical results, past performance does not guarantee future results.</p></section>
+{ROTATION_SECTION}
 {BT_SECTION}
 </main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment advice.
