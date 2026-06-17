@@ -2,23 +2,23 @@ STOCK COMPOSITE PICKS — AI COPY (low-token)
 asof=17 Jun 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|28.95|+0.890|Revenue growth
-2|LLY|Healthcare|1112.39|+0.711|CAD beta
-3|PLTR|Technology|134.33|+0.678|Earnings growth
-4|COST|Consumer Defensive|962.42|+0.483|Gross margin
-5|NVDA|Technology|206.97|+0.478|Revenue growth
-6|WMT|Consumer Defensive|117.73|+0.357|CAD beta
-7|NVO|Healthcare|44.18|+0.346|CAD beta
-8|HD|Consumer Cyclical|334.79|+0.328|ROE
-9|KO|Consumer Defensive|79.84|+0.245|CAD beta
-10|AAPL|Technology|295.61|+0.208|ROE
-11|NFLX|Communication Services|77.38|+0.201|CAD beta
-12|ORCL|Technology|187.89|+0.090|CAD beta
-13|DDOG|Technology|230.92|+0.088|Rate beta
-14|AMZN|Consumer Cyclical|239.46|+0.087|CAD beta
-15|NET|Technology|234.45|+0.068|Rate beta
-16|AVGO|Technology|399.24|+0.022|Revenue growth
-17|GOOGL|Communication Services|365.88|+0.022|12-1 momentum
-18|SNOW|Technology|237.96|+0.014|Rate beta
-19|UNH|Healthcare|404.96|+0.008|Gross margin
-20|SHOP|Technology|111.35|-0.014|CAD beta
+1|SMCI|Technology|27.78|+0.894|Revenue growth
+2|LLY|Healthcare|1112.00|+0.711|CAD beta
+3|PLTR|Technology|130.63|+0.678|Earnings growth
+4|COST|Consumer Defensive|965.59|+0.484|Gross margin
+5|NVDA|Technology|204.65|+0.478|Revenue growth
+6|WMT|Consumer Defensive|118.13|+0.358|CAD beta
+7|NVO|Healthcare|43.52|+0.345|CAD beta
+8|HD|Consumer Cyclical|327.48|+0.328|ROE
+9|KO|Consumer Defensive|79.93|+0.245|CAD beta
+10|AAPL|Technology|295.95|+0.209|ROE
+11|NFLX|Communication Services|76.96|+0.198|CAD beta
+12|ORCL|Technology|183.53|+0.091|CAD beta
+13|DDOG|Technology|226.63|+0.089|Rate beta
+14|AMZN|Consumer Cyclical|237.50|+0.089|CAD beta
+15|NET|Technology|226.87|+0.070|Rate beta
+16|AVGO|Technology|392.90|+0.023|Revenue growth
+17|GOOGL|Communication Services|363.79|+0.023|12-1 momentum
+18|SNOW|Technology|234.52|+0.014|Rate beta
+19|UNH|Healthcare|399.53|+0.006|Gross margin
+20|SHOP|Technology|108.09|-0.013|CAD beta
