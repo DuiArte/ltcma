@@ -11,7 +11,7 @@
   Flow:
     1. Verify clean tree (auto-clean generated docs/data leftovers), pull --rebase.
     2. Data refresh (best-effort): 08 signals, 09 priced-in, 10 regimes,
-       20 regime tracker, 19 stock analysis.
+       20 regime tracker, 19 stock analysis, 28 EMBER paper-track.
     3. Site rebuild: 17 site, 23 strategies, 27 research notes, 25 stock picks,
        21 signals redirect, 18 portfolio, 26 real-numbers, 22 AI copies,
        24 backtests redirect.  (17 and 23 are load-bearing: failure aborts.)
@@ -112,8 +112,29 @@ try {
         (Invoke-Native { git clean -fd docs data }) | Out-Null
         Log ("Auto-cleaned {0} generated leftovers from a prior interrupted run." -f $dirty.Count) 'WARN'
     }
-    $r = Invoke-Native { git pull --rebase origin main }
-    if ($r.Code -ne 0) { Fail "git pull --rebase failed:`n$($r.Text)" }
+    # Conflict-safe pull. Generated docs/ + data/ legitimately diverge between the
+    # local build and origin on every push, so a plain `git pull --rebase` can STOP
+    # on a generated-file conflict and leave the clone half-rebased -- which wedged
+    # the daily task for 4 days (the 2026-06-18..23 rebase-trap). `-X theirs` auto-
+    # resolves conflicting hunks (every file is regenerated below, so which side wins
+    # a generated hunk is irrelevant) so the rebase always COMPLETES instead of hanging.
+    $r = Invoke-Native { git pull --rebase -X theirs origin main }
+    if ($r.Code -ne 0) {
+        # Still failed: clean up the half-done rebase and recover ONLY if the local-
+        # vs-origin divergence is generated artifacts (docs/ + data/). If any local
+        # commit touched SOURCE (scripts/, *.ps1, *.md, etc.), refuse to auto-reset --
+        # that path is how unpushed feature work (e.g. EMBER) could be destroyed -- and
+        # stop loudly for a human.
+        (Invoke-Native { git rebase --abort }) | Out-Null
+        $localFiles = (Invoke-Native { git diff --name-only origin/main...HEAD }).Text.Trim()
+        $srcFiles = $localFiles -split "`n" | ForEach-Object { $_.Trim() } |
+                    Where-Object { $_ -and ($_ -notmatch '^(docs/|data/)') }
+        if ($srcFiles) {
+            Fail ("git pull --rebase failed and local commits touch SOURCE files; refusing to auto-reset (manual reconciliation needed):`n{0}" -f ($srcFiles -join "`n"))
+        }
+        (Invoke-Native { git reset --hard origin/main }) | Out-Null
+        Log "pull --rebase conflicted on generated artifacts only; reset to origin/main (local generated commits rebuilt below)." 'WARN'
+    }
     Log "Tree clean; pulled origin/main."
 
     # ---- DryRun: environment checks only ------------------------------------
@@ -137,6 +158,7 @@ try {
     Run-Step '10_regimes.py'         | Out-Null
     Run-Step '20_regime_tracker.py'  | Out-Null
     Run-Step '19_stock_analysis.py'  | Out-Null
+    Run-Step '28_ember_ensemble.py'  | Out-Null   # accumulates EMBER paper-track NAV (best-effort)
 
     # ---- 3. site rebuild ------------------------------------------------------
     Run-Step '17_build_site.py'      -LoadBearing | Out-Null
