@@ -437,11 +437,123 @@ document.querySelectorAll('.pills').forEach(function(grp){
 });
 </script>"""
 
+# ── EMBER 4-Sleeve Ensemble — live paper-track (Finding #38) ──────────────────
+# Renders the accumulating daily mark-to-market equity curve produced by
+# 28_ember_ensemble.py (data/ember_papertrack.json) vs a Static 50/30/20 (SPY/IEF/
+# GLD) reference basket. Confidentiality: sleeves are described by ASSET CLASS only
+# — NO tickers reach this page (rule 4/7); the curve carries dates + NAV numbers,
+# the 4-sleeve allocation is shown as the headline ratio (the 50/30/20 precedent).
+def _ember_section():
+    try:
+        with open(f"{DOCS}/../data/ember_papertrack.json", encoding="utf-8") as f:
+            st = json.load(f)
+        ser = st.get("series", [])
+    except (FileNotFoundError, json.JSONDecodeError):
+        st, ser = {}, []
+    start = st.get("start_date", "2026-06-18")
+    asof = st.get("asof", start)
+    n = len(ser)
+    if ser:
+        xs = [r["date"] for r in ser]
+        ye = [r["ember"] for r in ser]
+        yb = [r["baseline"] for r in ser]
+        e_last, b_last = ye[-1], yb[-1]
+        fe = go.Figure()
+        fe.add_scatter(x=xs, y=ye, mode="lines+markers", name="EMBER 4-Sleeve Ensemble",
+                       line=dict(color=PURPLE, width=2.4), marker=dict(size=5))
+        fe.add_scatter(x=xs, y=yb, mode="lines+markers", name="Static 50/30/20 reference",
+                       line=dict(color=BLUE, width=1.8, dash="dot"), marker=dict(size=4))
+        fe.update_layout(title="Growth of 100 — EMBER ensemble vs Static 50/30/20 (live paper-track)",
+                         legend=dict(orientation="h", y=-0.18))
+        chart = f'<div class="tile chart wide"><div class="ch">{div(fe, "ember")}</div></div>'
+        rel = e_last - b_last
+        statline = (f'<p class="note">Since inception <b>{start}</b> ({n} trading '
+                    f'day{"s" if n != 1 else ""}, as of {asof}): ensemble at '
+                    f'<b>{e_last:.2f}</b> vs reference <b>{b_last:.2f}</b> '
+                    f'(<b>{rel:+.2f}</b> relative, both indexed to 100 at inception). '
+                    'Marked to market daily; the curve extends with each daily refresh.</p>')
+    else:
+        chart = ('<div class="tile" style="padding:28px 24px;color:#666">The paper-track '
+                 'initialises on the first host refresh — the equity curve appears here from '
+                 'inception (2026-06-18) onward.</div>')
+        statline = ""
+
+    sleeves = (
+        '<table class="ptable"><thead><tr><th style="text-align:left">Sleeve</th>'
+        '<th>Weight</th><th style="text-align:left">What it holds (asset class)</th></tr></thead><tbody>'
+        '<tr><td style="text-align:left"><b>Anchor</b> — deployed flagship</td><td>33%</td>'
+        '<td style="text-align:left">The live Static 50/30/20 defensive core: broad US equity, '
+        'intermediate Treasuries and gold.</td></tr>'
+        '<tr><td style="text-align:left"><b>Rates / curve</b> (#35)</td><td>42%</td>'
+        '<td style="text-align:left">A US Treasury duration ladder (bills &rarr; long bonds) plus '
+        'inflation-linked, volatility-targeted.</td></tr>'
+        '<tr><td style="text-align:left"><b>Crypto</b> (#37)</td><td>7%</td>'
+        '<td style="text-align:left">Spot digital-asset ETFs with a trend gate to gold in the '
+        'off-state.</td></tr>'
+        '<tr><td style="text-align:left"><b>Emerging markets</b> (#29)</td><td>18%</td>'
+        '<td style="text-align:left">A diversified single-country EM equity basket, '
+        'volatility-targeted, with a cash off-state.</td></tr>'
+        '</tbody></table>')
+
+    return (
+        '<section class="block" id="ember"><h2>EMBER 4-Sleeve Ensemble &mdash; Live Paper-Track</h2>'
+        '<div class="ember-flag"><b>&#128993; PAPER-TRACK &mdash; NOT LIVE CAPITAL.</b> '
+        'A monitoring track, started 18&nbsp;Jun&nbsp;2026, of the proposed portfolio-layer '
+        'ensemble (research Finding&nbsp;#38). Capital remains on the deployed flagship until '
+        'this track confirms live and a crisis-inclusive (GFC) test is possible. '
+        'No <code>strategies.json</code> change.</div>'
+        '<p class="note">The 2026 rotation wave produced three low-correlation paper-track '
+        'candidates &mdash; a rates/curve sleeve, a crypto sleeve and an emerging-market sleeve. '
+        'Stacked on the deployed Static&nbsp;50/30/20 flagship (the &ldquo;Anchor&rdquo;), the '
+        'backtest lifted the ensemble Sharpe to <b>1.79</b> out-of-sample (<b>+0.44</b> over the '
+        'flagship, PBO&nbsp;0.20) on the 2017&ndash;26 common window. This page tracks whether '
+        'that edge shows up <i>live</i>. Proposed inverse-volatility weights:</p>'
+        '<div class="tile" style="padding:0 16px 8px;overflow-x:auto">'
+        '<p class="ember-wts">Anchor&nbsp;<b>33%</b>&nbsp;&middot;&nbsp;Rates&nbsp;<b>42%</b>'
+        '&nbsp;&middot;&nbsp;Crypto&nbsp;<b>7%</b>&nbsp;&middot;&nbsp;Emerging&nbsp;markets&nbsp;'
+        '<b>18%</b></p>' + sleeves + '</div>'
+        f'<h3 class="ember-h3">Equity curve since inception</h3>{chart}{statline}'
+        '<h3 class="ember-h3">Honest caveats</h3>'
+        '<ul class="ember-cav">'
+        '<li><b>Benign backtest window.</b> The 2017&ndash;26 common window contains no '
+        '2008-style crisis; the headline lift is measured over a calm regime.</li>'
+        '<li><b>GFC untestable.</b> The constituent histories start after 2010 (crypto 2017), so '
+        'no sleeve sees 2008 &mdash; the ensemble cannot be crisis-stress-tested as a whole.</li>'
+        '<li><b>Rates tail untestable.</b> The rates sleeve&rsquo;s worst historical episode '
+        '(the 1994 bond rout) predates the data and cannot be evaluated.</li>'
+        '<li><b>Crypto correlation higher than hoped.</b> At monthly resolution the crypto '
+        'sleeve&rsquo;s correlation to equities is ~0.48, not the ~0.28 the standalone study '
+        'suggested &mdash; less of a diversifier than it first appeared.</li>'
+        '<li><b>Most of the lift is one sleeve.</b> ~69% of the backtest lift comes from a ~45% '
+        'allocation to the rates sleeve, itself an un-deployed paper-track candidate &mdash; the '
+        'ensemble inherits that status.</li>'
+        '<li><b>Live track is a transparent proxy.</b> Each sleeve is tracked as an '
+        'equal-weight basket of its asset class, monthly-rebalanced; the sleeves&rsquo; internal '
+        'regime/trend gates are not reproduced here. The reference line is the Static&nbsp;50/30/20 '
+        'basket, a reproducible stand-in for the deployed book.</li>'
+        '</ul>'
+        '<p class="note" style="color:#888">Hypothetical monitoring track, not actual trading; '
+        'past performance does not guarantee future results. Methodology proprietary &mdash; '
+        'results only.</p>'
+        '</section>')
+
+EMBER_SECTION = _ember_section()
+EMBER_CSS = r"""
+.ember-flag{background:#fffbe6;border:1px solid #e8d98a;border-left:3px solid #b59a00;
+padding:14px 18px;margin:6px 0 18px;font-size:13.5px;color:#5c4a00;line-height:1.55}
+.ember-flag code{background:rgba(0,0,0,.05);padding:1px 5px;font-size:12px}
+.ember-wts{font-family:'Spectral',Georgia,serif;font-size:17px;color:#111;
+text-align:center;margin:14px 0 4px;letter-spacing:.01em}
+.ember-h3{font-family:Spectral,Georgia,serif;font-weight:500;color:#111;margin:22px 0 8px}
+.ember-cav{font-size:13.5px;color:#444;line-height:1.6;margin:0 0 8px;padding-left:20px}
+.ember-cav li{margin-bottom:7px}
+"""
+
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Systematic Strategies</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}{STRAT_CSS}</style><script src="{PLOTLY}"></script></head>
+<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}{STRAT_CSS}{EMBER_CSS}</style><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -485,6 +597,7 @@ range button above to reset the view.</p>
 capture ratios computed vs each strategy's benchmark; VaR/CVaR are monthly at 95%;
 skew and excess kurtosis are population moments. Out-of-sample walk-forward;
 hypothetical results, past performance does not guarantee future results.</p></section>
+{EMBER_SECTION}
 {ROTATION_SECTION}
 {BT_SECTION}
 </main>
@@ -524,6 +637,21 @@ ai = ["LTCMA SYSTEMATIC STRATEGIES — AI COPY (low-token)",
       "interactive: site lets reader re-base start date; values below = full window",
       "fields: code|name|bench|window|metrics..."]
 ai += [ai_row(k) for k in order]
+# EMBER 4-sleeve ensemble live paper-track (Finding #38) — ticker-free, metrics only
+try:
+    with open(f"{DOCS}/../data/ember_papertrack.json", encoding="utf-8") as _f:
+        _es = json.load(_f)
+    _ser = _es.get("series", [])
+    if _ser:
+        ai += ["EMBER 4-SLEEVE ENSEMBLE — LIVE PAPER-TRACK (Finding #38; NOT live capital)",
+               f"inception={_es.get('start_date','2026-06-18')}; asof={_es.get('asof','')}; "
+               f"days={len(_ser)}; indexed-to-100; vs Static 50/30/20 reference basket",
+               "weights inverse-vol: Anchor 33pct, Rates 42pct, Crypto 7pct, EM 18pct",
+               f"latest: ensemble={_ser[-1]['ember']:.2f} reference={_ser[-1]['baseline']:.2f}",
+               "backtest 2017-26: Sharpe=1.79 OOS (+0.44 vs flagship), PBO=0.20; "
+               "caveats: GFC untestable, benign window, crypto rho 0.48, ~69pct lift = rates sleeve"]
+except (FileNotFoundError, json.JSONDecodeError):
+    pass
 open(f"{DOCS}/strategies.ai.txt", "w", encoding="utf-8").write("\n".join(ai) + "\n")
 
 print("strategies.html built:", {k: (round(METRICS[k]["sharpe"], 2) if METRICS[k] else None) for k in order})
