@@ -160,6 +160,16 @@ def build_universe():
 
     with ThreadPoolExecutor(max_workers=8) as ex:
         funds = [r for r in ex.map(fundamentals, tickers) if r]
+    # Resilience guard (2026-06-29): a full yfinance outage returns 0 fundamentals, and the old
+    # pd.DataFrame([]).set_index("ticker") then raised a cryptic `KeyError: 'ticker'` that crashed
+    # the whole daily build (the failure seen during the recovery work). Fail with an actionable
+    # message instead, so the build can treat stocks.html as non-fatal and keep the prior page.
+    # NEVER fabricate fundamentals to paper over an outage.
+    if not funds:
+        raise RuntimeError(
+            "picker: 0/%d fundamentals fetched -- yfinance returned empty info for every ticker "
+            "(rate-limited or offline). stocks.html cannot be rebuilt this run; retain the prior "
+            "page and retry next cycle." % len(tickers))
     fdf = pd.DataFrame(funds).set_index("ticker")
 
     s = sens.set_index("ticker")
