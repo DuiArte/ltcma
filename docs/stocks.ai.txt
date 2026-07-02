@@ -2,23 +2,23 @@ STOCK COMPOSITE PICKS — AI COPY (low-token)
 asof=02 Jul 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|26.95|+0.925|Revenue growth
-2|PLTR|Technology|131.22|+0.706|Earnings growth
-3|LLY|Healthcare|1208.41|+0.627|CAD beta
-4|NVDA|Technology|192.73|+0.470|Revenue growth
-5|COST|Consumer Defensive|947.29|+0.455|Gross margin
-6|WMT|Consumer Defensive|111.60|+0.323|CAD beta
-7|HD|Consumer Cyclical|354.89|+0.307|ROE
-8|NVO|Healthcare|50.10|+0.304|CAD beta
-9|NFLX|Communication Services|78.34|+0.242|12-1 momentum
-10|KO|Consumer Defensive|83.16|+0.212|CAD beta
-11|ORCL|Technology|139.22|+0.194|CAD beta
-12|AAPL|Technology|307.20|+0.174|ROE
-13|AMZN|Consumer Cyclical|243.84|+0.100|CAD beta
-14|NET|Technology|240.25|+0.047|Rate beta
-15|AVGO|Technology|358.56|+0.020|Revenue growth
-16|MSFT|Technology|390.80|+0.019|12-1 momentum
-17|DDOG|Technology|260.50|+0.007|12-1 momentum
-18|META|Communication Services|585.33|+0.006|Gross margin
-19|SHOP|Technology|119.87|+0.004|CAD beta
-20|SNOW|Technology|257.01|+0.003|Rate beta
+1|SMCI|Technology|27.22|+0.919|Revenue growth
+2|PLTR|Technology|129.30|+0.707|Earnings growth
+3|LLY|Healthcare|1213.91|+0.627|CAD beta
+4|NVDA|Technology|194.83|+0.473|Revenue growth
+5|COST|Consumer Defensive|951.67|+0.456|Gross margin
+6|WMT|Consumer Defensive|111.84|+0.323|CAD beta
+7|HD|Consumer Cyclical|357.90|+0.309|ROE
+8|NVO|Healthcare|50.43|+0.299|CAD beta
+9|NFLX|Communication Services|77.65|+0.239|12-1 momentum
+10|KO|Consumer Defensive|84.14|+0.212|CAD beta
+11|ORCL|Technology|140.27|+0.197|CAD beta
+12|AAPL|Technology|308.63|+0.177|ROE
+13|AMZN|Consumer Cyclical|242.67|+0.105|CAD beta
+14|NET|Technology|242.41|+0.050|Rate beta
+15|AVGO|Technology|360.45|+0.025|Revenue growth
+16|MSFT|Technology|390.49|+0.014|12-1 momentum
+17|DDOG|Technology|260.36|+0.011|12-1 momentum
+18|META|Communication Services|582.90|+0.010|Gross margin
+19|SHOP|Technology|119.46|+0.009|CAD beta
+20|SNOW|Technology|260.15|+0.006|Rate beta
