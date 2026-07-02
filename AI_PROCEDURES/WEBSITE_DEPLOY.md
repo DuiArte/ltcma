@@ -180,3 +180,35 @@ path or a blocked endpoint.
   commit step does `git pull --rebase --autostash` first; `concurrency` cancels overlaps.
 - **Node 20 deprecation warning** = `actions/checkout@v4`/`setup-python@v5` (Node 20).
   Warning only, not a failure. Deferred: bump to `@v5`/`@v6` when convenient.
+
+## Pages deploy playbook — `pages build and deployment` (distinct from refresh.yml)
+
+This is GitHub's **built-in** Pages workflow (event `dynamic`, NOT in `.github/`),
+auto-triggered on every push because Pages source = *Deploy from a branch*
+(`build_type: legacy`, `main` `/docs`). It is separate from `refresh.yml`: `refresh.yml`
+commits the rebuilt site, then this workflow builds+deploys it. A green `refresh.yml`
+push can still fail here.
+
+**Where to look** (no `gh`; token via `git credential fill` — never echo it):
+- `curl -s -H "Authorization: Bearer $TOKEN" .../actions/runs?per_page=8` → filter
+  `name == "pages build and deployment"`; the **deploy** job is the one that fails.
+- Authoritative legacy build status: `.../pages/builds?per_page=6` (status + `error.message`)
+  and `.../pages` (`status: built|errored`). Job logs: `.../actions/jobs/<id>/logs`.
+
+**Failure mode — Jekyll "Page build failed." / "Deployment failed, try again later." (2026-07-02).**
+- **Symptom.** `build` job green, `deploy` job red in ~10s: `##[error]Deployment failed,
+  try again later.` `/pages/builds` shows `errored — "Page build failed."`; `/pages`
+  status `errored`. Built clean through 07-01, then failed every push on 07-02
+  (commits `f1b7547`, `34d3bbe`) — persistent, not a one-off.
+- **Cause.** `build_type: legacy` runs a **server-side Jekyll pass** over `/docs`. This
+  site is 100% pre-generated static HTML/PNG (no Liquid, no `_config.yml`, no layouts),
+  so Jekyll is pure overhead and an unstable failure surface. The 07-02 diff was pure
+  numeric data (no new files/Liquid/dup-names/symlinks) — the content was fine; GitHub's
+  Jekyll backend was the problem.
+- **Fix shipped 2026-07-02 (`3d49500`).** Added **`docs/.nojekyll`** so Pages skips
+  Jekyll and publishes files verbatim; `17_build_site.py` re-creates it on every build
+  (line ~15). Result: `deploy` green, `/pages` status `built`, site HTTP 200.
+- **Remember.** For any pre-generated static Pages site, ship `.nojekyll` from day one.
+  If it recurs despite `.nojekyll`, next escalation is switching Pages source to
+  *GitHub Actions* (`build_type: workflow`) with an explicit `upload-pages-artifact` +
+  `deploy-pages` workflow, which removes the legacy Jekyll path entirely.
