@@ -13,6 +13,12 @@ from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
 from paths import DATA_S as D, REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 os.makedirs(f"{DOCS}/figures", exist_ok=True)
 
+# This is a 100% pre-generated static site (no Liquid/Jekyll content). Disable
+# GitHub Pages' server-side Jekyll build via .nojekyll — the legacy branch build
+# intermittently failed with "Page build failed"/"Deployment failed, try again
+# later." (2026-07-02). .nojekyll makes Pages publish the files verbatim.
+open(f"{DOCS}/.nojekyll", "w").close()
+
 # --- Carbon Design color tokens ---
 INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
 RED, GREY, BG = "#7c2d12", "#888888", "#fafafa"
