@@ -25,20 +25,33 @@ CONFIDENTIALITY MODEL
     deters casual reading; it is not a security boundary. Do not publish anything whose
     exposure would actually matter.
 
-REALIZED P&L LEDGER
-    Built from the GBM "Historial de Transacciones" exports in
-    Documents/GBM_Account_Archive/. GBM re-exports the same fills under shifted value
-    dates, so exports OVERLAP and CONTRADICT each other -- a glob+union silently
-    double-counts. Each export therefore owns a disjoint calendar slice (`_SELL_SRC`,
-    `_BUY_SRC`), and two guards fail the build if a fill is claimed twice or if the same
-    ticker/shares/price shows up on two dates <=5 days apart.
+COST BASIS AND REALIZED P&L -- the private ledger sidecar is authoritative
+    `real_numbers/realized_ledger_*.json` (never committed) carries a moving-average,
+    ALL-IN (fee-inclusive), split-adjusted walk of every fill, reconciled to the broker's
+    own `Imp X Cto` to the cent. The build FAILS if it is absent: the in-script
+    approximations it replaced were materially wrong, and shipping those silently is
+    worse than not building.
 
-    `_lbuys` must span the early exports even though no sale settles there: `_xbuy()`
-    needs buy lots at-or-before each sale to compute purchase FX, and with a short
-    window it silently falls back to fx_live (today's rate).
+    Cost basis is all-in everywhere -- realized and unrealized share one convention. The
+    broker's `Costo promedio` is gross of fees and understates the outlay. Held cost is
+    per-ticker over the 22 OPEN positions (not the 9 realized rows -- AMAT closed out).
+    Assert on the full-precision values; the 2-dp figures sum a cent high.
 
-    VGT/VUG are held out of the 24-Apr batch -- their 6:1 split re-based shares on that
-    exact date, so cost basis there is ambiguous.
+    Realized rows are split SEGMENTS, not tickers: a pre-split fill cannot share a
+    per-share average with post-split ones. Interaction folds into Stock, so Stock + FX
+    == Total and (AvgSell - AvgCost) x Shares reproduces it. Both are asserted.
+
+CROSS-CHECK MERGE (`_SELL_SRC` / `_BUY_SRC`)
+    An independent merge of the raw GBM "Historial de Transacciones" exports. It is NOT
+    the source of any published number -- it exists so two separate merges of the same
+    CSVs must agree on the fill set, and as a freshness canary against the sidecar's
+    `as_of`. Neither merge is trustworthy alone; the agreement is.
+
+    GBM re-exports the same fills under shifted value dates, so exports OVERLAP and
+    CONTRADICT each other -- a glob+union silently double-counts. Each export owns a
+    disjoint calendar slice. Genuine same-second partial fills exist, so no tuple-dedup
+    is safe. Guards abort on a fill claimed twice, on the same ticker/shares/price two
+    dates <=5 days apart, and on any fill-count disagreement with the sidecar.
 
 RETURN BANNERS
     Realized / Unrealized / Combined, each against the cost basis it earned on. That
