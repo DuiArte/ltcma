@@ -969,13 +969,37 @@ _pnl_now = float(tot_val - tot_cost)                       # unrealized P/L (sca
 _since_incep = REAL_TOTAL * SCALE + _pnl_now               # realized + unrealized (scaled MXN)
 SNAP = [("Total Market Value", cval(tot_val)),
         ("Total Cost Basis", cval(tot_cost)),
-        ("Return on Cost", f"{port_ret*100:+.2f}%"),
         ("Total P&amp;L Since Inception", cval(_since_incep, signed=True)),
         ("Stock contribution", f"{stock_pct:+.2f}%"),
         ("FX contribution", f"{fx_pct:+.2f}%")]
 snap = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for k, v in SNAP)
+
+# ---------- return banners: realized / unrealized / combined ----------
+# Every ratio here is scale-invariant -- SCALE cancels -- so these are the REAL returns
+# even though the $ tiles above are scaled. Each leg is measured against the cost basis
+# it earned on, which makes Combined the cost-weighted blend of the other two rather
+# than an unrelated third number. ("Return on Cost" was the unrealized leg under a
+# vaguer name; it lives here now.)
+_real_cost = sum(a["cost"] for a in _ragg.values()) * SCALE   # cost basis of shares sold
+_real_pnl  = REAL_TOTAL * SCALE
+_ret_real  = (_real_pnl / _real_cost) if _real_cost else 0.0
+_ret_unr   = port_ret                                          # unrealized / held cost
+_comb_cost = _real_cost + tot_cost
+_ret_comb  = ((_real_pnl + _pnl_now) / _comb_cost) if _comb_cost else 0.0
+if _comb_cost:                                                 # blend identity must hold
+    _w = _real_cost / _comb_cost
+    assert abs(_ret_comb - (_w*_ret_real + (1-_w)*_ret_unr)) < 1e-9, "return banners disagree"
+print(f"  returns: realized {_ret_real*100:+.2f}% (cost {_real_cost/SCALE:,.0f}) | "
+      f"unrealized {_ret_unr*100:+.2f}% (cost {tot_cost/SCALE:,.0f}) | "
+      f"combined {_ret_comb*100:+.2f}%")
+BANNERS = [("Realized return", _ret_real), ("Unrealized return", _ret_unr),
+           ("Combined return", _ret_comb)]
+banners = "".join(
+    f'<div class="metric {"m-calm" if v >= 0 else "m-stress"}">'
+    f'<div class="mv">{v*100:+.2f}%</div><div class="mk">{k}</div></div>'
+    for k, v in BANNERS)
 # holdings TOTAL row (placed in <tfoot> so the sort/filter JS leaves it pinned)
 holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
     f"<td class='n'>{cval(tot_cost)}</td><td class='n'>{cval(tot_val)}</td>"
@@ -1137,7 +1161,13 @@ book.</div>
 in either currency. Total Return is on cost basis (market value &divide; cost
 &minus; 1); the Stock and FX contributions decompose where the peso P/L came
 from. Definitions in the <a href="glossary.html">Glossary</a>.</p>
-<div class="metrics" style="grid-template-columns:repeat(6,1fr)">{snap}</div></section>
+<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{snap}</div>
+<div class="metrics" style="grid-template-columns:repeat(3,1fr);margin-top:1.5rem">{banners}</div>
+<p class="note" style="margin-top:.8rem"><b>Realized</b> is closed sales against the
+cost basis of the shares sold; <b>Unrealized</b> is open positions against the cost
+basis still held; <b>Combined</b> weights the two by their cost bases, so it sits
+between them. All three are exact &mdash; the &times;1.8 display scaling cancels in a
+ratio, unlike the peso tiles above.</p></section>
 <section class="block"><h2>Market Value vs Cost Basis</h2>
 <div class="btctl"><div class="btranges">
 <button class="btr on" data-pr="all">All</button>
