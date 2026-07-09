@@ -420,12 +420,47 @@ except Exception as _efe:
 BROKER_CASH_RECYCLED = (BROKER_CASH or 0.0) + (BROKER_EFEC24 or 0.0) - _ext_dep
 if _bdf is None or _bdf.empty:
     raise SystemExit("FATAL: no GBM Detalle de Portafolio CSV found in Downloads — cannot build canonical snapshot")
+# ---------- private ledger sidecar: realized P&L + all-in held cost basis ----------
+# Never committed (CarlosDuarteWebsite is not a git tree). Fail rather than fall back:
+# the in-script approximations it replaces are materially wrong, and silently shipping
+# them is worse than not building. Realized-side checks live with the realized section.
+import glob as _rg
+import re as _re_tk
+def _norm_ticker(n):
+    """Broker name -> ledger key: 'MELI N' -> MELI, 'GMEXICO B' -> GMEXICOB."""
+    return _re_tk.sub(r"\s+[*N]$", "", str(n).strip()).replace(" ", "")
+_RLDIR = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers")
+_rlf = sorted(_rg.glob(os.path.join(_RLDIR, "realized_ledger_*.json")))
+if not _rlf:
+    raise SystemExit(f"realized ledger sidecar missing under {_RLDIR} -- refusing to "
+                     "publish the approximate snapshot-basis figures")
+_rl = json.loads(Path(_rlf[-1]).read_text(encoding="utf-8"))
+
 latest = _bdf.copy()
 latest["shares"] = latest["Títulos"] * SCALE
-latest["cost"] = latest["shares"] * latest["Costo promedio"]
+
+# Cost basis is ALL-IN (includes buy-side commission + tax). The broker's `Costo
+# promedio` is gross of fees, so shares x Costo promedio understates what was actually
+# paid. Assert on the full-precision values: the 2-dp per-ticker figures sum a cent high.
+_held = _rl["per_ticker_held_allin_cost_mxn"]
+assert abs(sum(_held.values()) - _rl["equity_allin_cost_basis_mxn_exact"]) < 1e-6, \
+    "held all-in cost does not sum to the sidecar total"
+if not (len(_held) == _rl["held_positions_count"] == len(latest)):
+    raise SystemExit(f"held positions disagree: sidecar {len(_held)} / "
+                     f"declared {_rl['held_positions_count']} / snapshot {len(latest)}")
+_kmap = latest["ticker"].map(_norm_ticker)
+_miss, _extra = sorted(set(_kmap) - set(_held)), sorted(set(_held) - set(_kmap))
+if _miss or _extra:
+    raise SystemExit(f"held-cost ticker mismatch -- snapshot-only {_miss}, sidecar-only {_extra}")
+latest["cost"] = _kmap.map(_held).astype(float) * SCALE
+# Keep the rendered identity Cost = Avg Cost x Shares by carrying the per-share all-in.
+latest["Costo promedio"] = latest["cost"] / latest["shares"]
+print(f"  held cost: all-in basis from sidecar ({len(_held)} positions), "
+      f"buy fees {_rl['held_cost_checks']['sum_buy_fees']:,.2f} over broker gross")
+
 latest["value"] = latest["shares"] * latest["Precio mercado"]   # broker mark; live-overridden below
 latest["pm"] = latest["value"] - latest["cost"]
-latest["ret"] = latest["Precio mercado"] / latest["Costo promedio"] - 1
+latest["ret"] = latest["pm"] / latest["cost"]
 latest["px_excel"] = latest["Precio mercado"].astype(float)     # broker price = Yahoo-unpriceable fallback
 asof_excel = _bsnap.strftime("%Y-%m-%d")
 print(f"  broker snapshot: {len(latest)} equity positions @ {asof_excel} | GBMF2 cash {BROKER_CASH:,.2f}")
@@ -460,7 +495,7 @@ if to_fetch:
             latest.loc[idx, "Precio mercado"] = new_mxn
         latest["value"] = latest["shares"] * latest["Precio mercado"]
         latest["pm"] = latest["value"] - latest["cost"]
-        latest["ret"] = latest["Precio mercado"] / latest["Costo promedio"] - 1
+        latest["ret"] = latest["pm"] / latest["cost"]
         print(f"  live priced {len(live_px)} holdings @ "
               f"{priced_at} USDMXN {fx_live:.2f}")
     except Exception as e:
@@ -840,7 +875,6 @@ for _, r in latest.iterrows():
 # VGT/VUG are held out of the 24-Apr batch: their 6:1 split re-based shares on exactly
 # that date (price 04-20), so cost basis there is ambiguous. The other names in the
 # batch have no split and a clean 04-24 broker snapshot to price against.
-import glob as _rg
 _ARCH  = paths.cuser("Documents", "GBM_Account_Archive")
 _HISTD = os.path.join(_ARCH, "transactions_historial")
 _HISTF = os.path.join(_HISTD, "GBM_Historial_Transacciones_2026-04-28_to_2026-06-15.csv")
@@ -863,9 +897,7 @@ def _rdate(s):
         if "-" in s: d,m,y = s.split("-"); yr=int(y); yr=yr+2000 if yr<100 else yr; return pd.Timestamp(yr, _RMON.get(m[:3],1), int(d))
     except Exception: return None
     return None
-def _rtk(n):
-    import re as _re3
-    return _re3.sub(r"\s+[*N]$","",str(n).strip()).replace(" ","")
+_rtk = _norm_ticker            # ledger key normalisation, shared with the holdings snapshot
 def _rsnapdate(p):
     import re as _re3
     m = _re3.search(r"(\d{13})", os.path.basename(p))
@@ -986,14 +1018,8 @@ for _s in _lsells:
 # P&L by ~10%. It survives only as an INDEPENDENT CROSS-CHECK of the sidecar's fill
 # set: two separate merges of the same broker exports must agree on which fills exist.
 #
-# The sidecar (private, never committed) carries the moving-average, all-in,
-# split-adjusted walk reconciled to the broker's own `Imp X Cto` to the cent.
-_RLDIR = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers")
-_rlf = sorted(_rg.glob(os.path.join(_RLDIR, "realized_ledger_*.json")))
-if not _rlf:
-    raise SystemExit(f"realized ledger sidecar missing under {_RLDIR} -- refusing to "
-                     "publish the approximate snapshot-basis walk (~10% overstated)")
-_rl = json.loads(Path(_rlf[-1]).read_text(encoding="utf-8"))
+# The sidecar (loaded above) carries the moving-average, all-in, split-adjusted walk
+# reconciled to the broker's own `Imp X Cto` to the cent.
 _segs = _rl["per_ticker_split_segments"]
 
 # Freshness canary. Our own merge sees the raw exports; if it knows of a sell the
