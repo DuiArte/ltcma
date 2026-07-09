@@ -92,8 +92,33 @@ Sanity gate: max single-day curve move should be low single digits (≈3%), not 
 
 ## Realized P&L ledger (`18_portfolio.py` → "Realized P&L Since Inception")
 
-Source: the GBM *Historial de Transacciones* CSV exports in
-`Documents/GBM_Account_Archive/transactions_historial/`.
+**The private ledger sidecar is authoritative** —
+`real_numbers/realized_ledger_*.json`, a moving-average, all-in (fee-inclusive),
+split-adjusted walk of all 53 fills, reconciled to the broker's own `Imp X Cto` to the
+cent. Never committed; `CarlosDuarteWebsite` is not a git tree. The build **fails** if
+it is absent rather than falling back — the in-script walk overstated realized P&L by
+~10% (see below), and silently publishing that is worse than not building.
+
+The in-script merge of the raw exports survives as an **independent cross-check**: two
+separate merges of the same broker CSVs must agree on which fills exist
+(`fill-set mismatch` aborts), and it acts as a **freshness canary** — if it sees a sell
+dated after the sidecar's `as_of`, the sidecar is stale and the build aborts.
+
+Why the in-script walk is not the source: `_costasof()` prices each sale at the broker
+snapshot's `Costo promedio` at-or-before the sale, which is fee-exclusive *and* stale
+(it ignores buys between that snapshot and the fill), and sell-side fees are never
+deducted. Against the reconciled walk that overstated realized P&L by 119,050 MXN
+(~10%), decomposing per ticker as *cost understated + sell-side fees* to within pesos.
+
+Two rendering rules the sidecar enforces:
+- **Rows are split segments, not tickers.** VGT's 2026-03-17 sale is in pre-split units;
+  folding it into the post-split total makes Avg Sell / Avg Cost meaningless. It renders
+  as its own `VGT (pre-split)` row.
+- **Interaction folds into Stock.** The table has no third leg, so use
+  `realized_stock_incl_interaction` + `realized_fx`; those sum to `realized_mxn` exactly,
+  and `(AvgSell − AvgCost) × Shares` reproduces it. Both are asserted at build time.
+
+Raw-export provenance (used by the cross-check merge):
 
 **GBM exports overlap and contradict each other.** The same fills reappear under
 shifted value dates: the 24-Apr batch is re-exported as a "27-Apr" batch in
@@ -114,15 +139,10 @@ P&L**. Do not "just point it at the newest export."
   the April sales *and* for SOXX's already-counted 29-Apr sale — and silently fell
   back to `fx_live` (today's rate). That is why the realized FX leg once read
   −4,162. A missing lot is silent, not an error.
-- **VGT/VUG are excluded from the 24-Apr batch.** Their 6:1 split re-based shares
-  on that exact date, so cost basis is ambiguous there. Carlos's call; the page
-  note states it.
-
-Known divergence: site realized values run slightly above the offline engine on
-every ticker (AMAT +304 MXN, identical before and after the ledger merge) — the
-site uses broker-snapshot average cost at-or-before each sale, the offline uses a
-running moving average. Share counts match exactly on all non-split tickers. The
-code comment claiming the page "matches the offline dashboard" is stale intent.
+- **No ticker exclusions.** The 24-Apr VGT/VUG sales were once dropped as
+  split-boundary-ambiguous. The sidecar's walk resolves the split basis, so they are
+  back in (2026-07-09, Carlos's call). Their absence was also masking a latent unit
+  bug: without the pre-split 17-Mar fill, VGT's averages happened to stay coherent.
 
 ## Return banners (Realized / Unrealized / Combined)
 
