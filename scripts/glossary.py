@@ -56,6 +56,23 @@ GLOSSARY = {
          "How much the current holdings are worth above (or below) what we paid for "
          "them: market value &minus; cost basis. This is the profit shown on the "
          "portfolio page, split into its Stock and FX drivers."),
+        ("Realized P/L",
+         "Profit or loss already banked by selling. It is fixed the moment the sale "
+         "settles &mdash; later price moves cannot change it. Measured against the "
+         "cost basis recorded at-or-before the sale date, and split into the same "
+         "Stock and FX legs as the unrealized side."),
+        ("Realized return",
+         "Realized P/L divided by the cost basis of the shares that were sold. It "
+         "answers &ldquo;what did the closed trades earn on the money they tied "
+         "up?&rdquo; and says nothing about positions still open."),
+        ("Unrealized return",
+         "Unrealized P/L divided by the cost basis of the holdings still open &mdash; "
+         "the return on paper, on the money still at risk. Its Stock and FX "
+         "contributions add up to it exactly."),
+        ("Combined return",
+         "Realized and unrealized together, each weighted by the cost basis it earned "
+         "on. Because it is a weighted average of the two, it always sits between "
+         "them. Returns are exact figures: the display scaling cancels in a ratio."),
         ("FX conversion",
          "One source for USD/MXN &mdash; Yahoo Finance's close on the as-of date "
          "&mdash; used identically everywhere on a page and shown to four decimals "

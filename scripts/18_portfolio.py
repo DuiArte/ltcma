@@ -1,11 +1,49 @@
 """Build the GBM stock-portfolio tracker page -> docs/portfolio.html.
+
 Source: 'Copy of Carteras DBE 2.xlsx' sheet 'DBE Acciones' (GBM stock holdings
-only -- FX positions and non-GBM bank cash are excluded by design).
-A x1.8 scaling constant is applied to share counts so every formula stays
-intact (value = shares*price, P/M = value - cost, weights unchanged) while the
-displayed magnitudes are not the real amounts. Source Excel is never modified.
-A MXN / USD currency toggle converts figures at the latest USDMXN rate.
+only -- FX positions and non-GBM bank cash are excluded by design). Source Excel
+is never modified. A MXN / USD currency toggle converts at the latest USDMXN rate.
 Refresh: update the Excel, re-run this script.
+
+CONFIDENTIALITY MODEL
+    SCALE is applied to SHARE COUNTS, once, at the source (see `latest["shares"]`).
+    Every downstream formula then stays internally consistent -- value = shares*price,
+    P/L = value - cost, weights and percentages unchanged -- while the displayed peso
+    magnitudes are not the real amounts.
+
+    What is public and exact, by design: per-share prices, % returns, weights.
+    What is scaled: every peso aggregate (cost, market value, P/L).
+
+    Two rules follow, both enforced by the guard block just before the write:
+      1. Scale ONCE, at the source. Never `*SCALE` inside an f-string -- the sibling
+         attribute in that same f-string will still be raw. That exact mistake put the
+         real book in the `data-s` sort attributes for three weeks (c5ae501 -> eb2b196).
+         Attributes (`data-s`, `data-mxn`, title, embedded JSON) are public surface.
+      2. Never name the factor on the page -- that hands the reader the inverse. Write
+         "scaled by a fixed constant".
+    NOTE: this repo is public, so `SCALE` is readable in source regardless. The scaling
+    deters casual reading; it is not a security boundary. Do not publish anything whose
+    exposure would actually matter.
+
+REALIZED P&L LEDGER
+    Built from the GBM "Historial de Transacciones" exports in
+    Documents/GBM_Account_Archive/. GBM re-exports the same fills under shifted value
+    dates, so exports OVERLAP and CONTRADICT each other -- a glob+union silently
+    double-counts. Each export therefore owns a disjoint calendar slice (`_SELL_SRC`,
+    `_BUY_SRC`), and two guards fail the build if a fill is claimed twice or if the same
+    ticker/shares/price shows up on two dates <=5 days apart.
+
+    `_lbuys` must span the early exports even though no sale settles there: `_xbuy()`
+    needs buy lots at-or-before each sale to compute purchase FX, and with a short
+    window it silently falls back to fx_live (today's rate).
+
+    VGT/VUG are held out of the 24-Apr batch -- their 6:1 split re-based shares on that
+    exact date, so cost basis there is ambiguous.
+
+RETURN BANNERS
+    Realized / Unrealized / Combined, each against the cost basis it earned on. That
+    makes Combined the cost-weighted blend of the other two; an assert enforces it.
+    Ratios are scale-invariant, so these publish the REAL returns.
 """
 import json
 import os
@@ -588,7 +626,7 @@ move on the original cost) and a small <b>Interaction</b> cross term. The three 
 exactly to Total = market value &minus; cost &mdash; the same Total (and the same
 FX) as the Holdings table, which folds Interaction into its Stock column. Peso-native
 holdings (GMEXICO&nbsp;B) carry no FX leg. Values follow the currency toggle and are
-&times;1.8 scaled; percentages are exact.
+scaled; percentages are exact.
 <span class="muted">&asymp; = purchase FX estimated (no trade ticket).</span></p>
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
 <table class="ptable" style="min-width:560px"><thead><tr>
@@ -617,17 +655,31 @@ fxa_section = build_fxa()
 # (the XLE anti-pattern, Rule 2). Undocumented adds are buys: they raise cost
 # basis only, never P/L.
 CAPITAL = BASELINE * SCALE                          # 10M real x1.8 = 18M (scaled display)
-# Recycled-scope cash: F2 + settlement lag - external deposits (see ledger note
-# above). Raw F2 after 2026-06-05 carries a +$19M external deposit that must
-# never appear as realized P/L on the $10M-recycled-base book.
+# RETIRED 2026-06-15 (Carlos pivot). Everything from here through the sidecar block is
+# computed and then THROWN AWAY by the "curve re-frame" below, which reassigns
+# ts["total"] / ts["realized_pool"] to market value / cost basis. None of it reaches the
+# page. Kept only so the recycled-base curve can be revived.
+#
+# It is also WRONG, and it prints numbers alarming enough to send a reader chasing a bug
+# that does not exist on the site (it did exactly that, 2026-07-09). Two defects:
+#   1. BROKER_CASH_RECYCLED = F2 + EFEC24 - deposits assumes the deposit still SITS in
+#      F2. The 2026-06-05 external deposit was redeployed into GBMGUBL/GBMDOL, so
+#      subtracting it removes the money twice -> the cash sleeve goes NEGATIVE, and
+#      _real_now then reads as a large phantom "realized loss".
+#   2. tot_cost is shares x `Costo promedio`, which is GROSS of fees. The identity
+#      realized = cost + cash - base needs the ALL-IN cost basis.
+# Before reviving, take both from the private ledger sidecar (realized_ledger_*.json:
+# `cash_recycled_mxn`, `equity_allin_cost_basis_mxn`), whose flow-immune definition never
+# touches F2 at all:  cash = BASELINE - all_in_buys + net_sells.
 GBMF2_CASH = BROKER_CASH_RECYCLED * SCALE           # equity-sleeve cash, scaled to match
 _unr_now   = float(tot_val - tot_cost)              # unrealized = MV - cost basis
-_real_now  = float(tot_cost + GBMF2_CASH - CAPITAL) # realized = (cost + cash) - base
-_total_now = float(tot_val + GBMF2_CASH)            # total value = MV + cash sleeve
+_real_now  = float(tot_cost + GBMF2_CASH - CAPITAL) # BROKEN (see above) -- unused
+_total_now = float(tot_val + GBMF2_CASH)            # BROKEN (see above) -- unused
 _idle_now  = GBMF2_CASH
-print(f"  CANONICAL capital {CAPITAL:,.0f} | cost {tot_cost:,.0f} | cash {GBMF2_CASH:,.0f} | "
-      f"MV {tot_val:,.0f} | realized {_real_now:,.0f} | unrealized {_unr_now:,.0f} | "
-      f"total {_total_now:,.0f} | return {(_total_now/CAPITAL-1)*100:+.2f}%")
+print(f"  [retired base-curve block, not published] cost {tot_cost:,.0f} | "
+      f"MV {tot_val:,.0f} | unrealized {_unr_now:,.0f}"
+      + ("  ** cash sleeve negative: F2-minus-deposits is broken, see comment **"
+         if BROKER_CASH_RECYCLED < 0 else ""))
 
 # historical curve: BLOTTER-FREE, flow-immune decomposition (fixes the XLE anti-pattern).
 # The recycled-$10M base splits into deployed cost basis + idle GBMF2 cash, so the cash
@@ -669,9 +721,8 @@ try:
         # forward-fill each snapshot value across the daily grid, back-fill the head, scale x1.8
         ts["total"] = (_stot.reindex(ts.index, method="ffill").bfill() * SCALE)
         ts["realized_pool"] = (_srea.reindex(ts.index, method="ffill").bfill() * SCALE)
-        print(f"  curve: consuming offline sidecar (as_of {_sc.get('as_of')}, "
-              f"{len(_scpts)} pts) x{SCALE} -> public broker-book curve "
-              f"[end total {ts['total'].iloc[-1]:,.0f}]")
+        print(f"  curve: read offline sidecar (as_of {_sc.get('as_of')}, {len(_scpts)} pts) "
+              f"-> DISCARDED by the curve re-frame below (retired 2026-06-15)")
     else:
         print("  curve: sidecar present but has no points -> keeping computed curve")
 except FileNotFoundError:
@@ -956,8 +1007,8 @@ realized_section = f"""<section class="block"><h2>Realized P&amp;L Since Incepti
 <p class="note">Closed stock positions, aggregated by ticker, with the same Stock/FX
 split as the unrealized panel. Cost basis is date-aware (broker snapshot at-or-before
 each sale). VGT and VUG exclude their 24-Apr sales, which fall on the 6:1 split
-boundary where cost basis is ambiguous. Dollar values are &times;1.8
-scaled and follow the currency toggle; percentages are exact.</p>
+boundary where cost basis is ambiguous. Dollar values are scaled
+and follow the currency toggle; percentages are exact.</p>
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
 <table class="ptable" style="min-width:560px"><thead><tr>
 <th>Ticker</th><th>Shares Sold</th><th>Avg Sell</th><th>Avg Cost</th>
@@ -1166,7 +1217,7 @@ from. Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <p class="note" style="margin-top:.8rem"><b>Realized</b> is closed sales against the
 cost basis of the shares sold; <b>Unrealized</b> is open positions against the cost
 basis still held; <b>Combined</b> weights the two by their cost bases, so it sits
-between them. All three are exact &mdash; the &times;1.8 display scaling cancels in a
+between them. All three are exact &mdash; the display scaling cancels in a
 ratio, unlike the peso tiles above.</p></section>
 <section class="block"><h2>Market Value vs Cost Basis</h2>
 <div class="btctl"><div class="btranges">
@@ -1213,7 +1264,12 @@ _leaked = [f"{t}.{k}={a[k]:,.2f}"
 if _leaked:
     raise SystemExit("CONFIDENTIALITY GUARD FAILED: unscaled real values in data-s -> "
                      + ", ".join(_leaked))
-print(f"  confidentiality guard OK | scale factor x{SCALE} | "
+# Naming the factor in prose hands the reader the inverse: real = displayed / SCALE.
+# Say "scaled by a fixed constant", never the number. (WEBSITE_DEPLOY.md rule 1.)
+_told = [p for p in (f"&times;{SCALE}", f"x{SCALE}", f"×{SCALE}") if p in HTML]
+if _told:
+    raise SystemExit(f"CONFIDENTIALITY GUARD FAILED: page names the scale factor -> {_told}")
+print(f"  confidentiality guard OK | scale factor x{SCALE} not disclosed | "
       f"{len(_ragg)} realized rows checked")
 
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
