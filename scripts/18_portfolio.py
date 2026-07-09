@@ -928,9 +928,10 @@ def _ledger_rows(path):
 # Each (export, kind) owns a disjoint slice of the calendar. Anything outside its slice
 # is another export's responsibility, so no fill is counted twice.
 _SELL_SRC = [
+    (_MARF,  lambda t, d: d <  _D(2026,4,24)),                                  # 17-Mar VGT (pre-spine)
+    (_APRF,  lambda t, d: _D(2026,4,24) <= d < _D(2026,4,29)),                  # 24-Apr batch
     (_HISTF, lambda t, d: d >= _D(2026,4,29)),                                  # 04-29 .. 06-12 core
     (_JUNF,  lambda t, d: d >  _D(2026,6,15)),                                  # 18-Jun batch
-    (_APRF,  lambda t, d: d <  _D(2026,4,29) and t in _APR_NO_SPLIT),           # 24-Apr, ex-split
 ]
 _BUY_SRC = [                                                                    # _xbuy weighting only
     (_FEBF,  lambda t, d: d <  _D(2026,3,1)),
@@ -977,38 +978,83 @@ for _s in _lsells:
     _a = _ragg.setdefault(_s["t"], {"sh":0.0,"proceeds":0.0,"cost":0.0,"stock":0.0,"fx":0.0,"total":0.0})
     _a["sh"]+=_S; _a["proceeds"]+=_s["px"]*_S; _a["cost"]+=_cb*_S
     _a["stock"]+=_st; _a["fx"]+=_fx; _a["total"]+=_tt
-REAL_TOTAL = sum(a["total"] for a in _ragg.values())
-REAL_FX    = sum(a["fx"] for a in _ragg.values())
+# ---------- realized P&L: the private ledger sidecar is authoritative ----------
+# _ragg above is NOT the source. It prices each sale at the broker snapshot's
+# `Costo promedio` at-or-before the sale date, which is fee-exclusive AND stale (it
+# ignores buys between that snapshot and the fill), and it never deducts sell-side
+# fees. Measured against the reconciled inception-to-date walk it overstated realized
+# P&L by ~10%. It survives only as an INDEPENDENT CROSS-CHECK of the sidecar's fill
+# set: two separate merges of the same broker exports must agree on which fills exist.
+#
+# The sidecar (private, never committed) carries the moving-average, all-in,
+# split-adjusted walk reconciled to the broker's own `Imp X Cto` to the cent.
+_RLDIR = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers")
+_rlf = sorted(_rg.glob(os.path.join(_RLDIR, "realized_ledger_*.json")))
+if not _rlf:
+    raise SystemExit(f"realized ledger sidecar missing under {_RLDIR} -- refusing to "
+                     "publish the approximate snapshot-basis walk (~10% overstated)")
+_rl = json.loads(Path(_rlf[-1]).read_text(encoding="utf-8"))
+_segs = _rl["per_ticker_split_segments"]
+
+# Freshness canary. Our own merge sees the raw exports; if it knows of a sell the
+# sidecar's as_of predates, the sidecar's realized total is stale and must be rebuilt.
+_asof = pd.Timestamp(_rl["as_of"])
+_lastsell = max((s["d"] for s in _lsells), default=None)
+if _lastsell is not None and _lastsell > _asof:
+    raise SystemExit(f"realized sidecar STALE: ledger has a sell on {_lastsell.date()}, "
+                     f"after sidecar as_of {_asof.date()} -- regenerate it")
+if len(_lsells) != _rl.get("fill_count"):
+    raise SystemExit(f"realized fill-set mismatch: our merge sees {len(_lsells)} sell fills, "
+                     f"sidecar walked {_rl.get('fill_count')} -- the two disagree on the ledger")
+
+# Legs and per-share identities. `interaction` is folded into Stock (the table has no
+# third column), so Stock + FX must sum to Total, and (AvgSell - AvgCost) x Shares too.
+for _t, _d in _segs.items():
+    assert abs(_d["realized_stock_incl_interaction"] + _d["realized_fx"]
+               - _d["realized_mxn"]) < 0.05, f"realized legs do not sum for {_t}"
+    assert abs((_d["avg_sell_net"] - _d["avg_cost_allin"]) * _d["shares_sold"]
+               - _d["realized_mxn"]) < 1.0, f"avg-price identity fails for {_t}"
+REAL_TOTAL = sum(_d["realized_mxn"] for _d in _segs.values())
+REAL_FX    = sum(_d["realized_fx"] for _d in _segs.values())
 REAL_STOCK = REAL_TOTAL - REAL_FX
-print(f"  realized (ledger): total {REAL_TOTAL:,.0f} stock {REAL_STOCK:,.0f} fx {REAL_FX:,.0f} "
-      f"-> x{SCALE} {REAL_TOTAL*SCALE:,.0f}")
-_ragg_rows = sorted(_ragg.items(), key=lambda kv: -kv[1]["total"])
-def _realized_row(t, a):
-    # _ragg holds RAW ledger amounts. Scale here, once, so the data-s sort key and the
-    # rendered cell are the same scaled number -- they must never diverge, or the sort
-    # attribute republishes the real book. Avg sell/cost are per-share prices: exact by
-    # design, like every other price on the page.
-    sh, stock, fx, total = a["sh"]*SCALE, a["stock"]*SCALE, a["fx"]*SCALE, a["total"]*SCALE
-    avg_sell = a["proceeds"]/a["sh"] if a["sh"] else 0.0
-    avg_cost = a["cost"]/a["sh"] if a["sh"] else 0.0
-    return (f"<tr><td data-s='{t}'>{t}</td>"
+assert abs(REAL_TOTAL - _rl["equity_realized_mxn"]) < 0.05, "segments do not sum to the ledger total"
+
+# Rows are split SEGMENTS, not tickers: VGT's 2026-03-17 fill is in pre-split units and
+# folding it into the post-split total makes Avg Sell / Avg Cost meaningless.
+_RROWS = sorted(({"t": _t, "sh": _d["shares_sold"], "avg_sell": _d["avg_sell_net"],
+                  "avg_cost": _d["avg_cost_allin"], "stock": _d["realized_stock_incl_interaction"],
+                  "fx": _d["realized_fx"], "total": _d["realized_mxn"]}
+                 for _t, _d in _segs.items()), key=lambda r: -r["total"])
+print(f"  realized (sidecar {os.path.basename(_rlf[-1])}, as_of {_asof.date()}): "
+      f"total {REAL_TOTAL:,.0f} stock {REAL_STOCK:,.0f} fx {REAL_FX:,.0f} | "
+      f"{len(_RROWS)} rows | fill set agrees with our merge ({len(_lsells)})")
+
+def _realized_row(r):
+    # Scale once, here, so the data-s sort key and the rendered cell are the same scaled
+    # number -- they must never diverge, or the sort attribute republishes the real book.
+    # Avg sell/cost are per-share prices: exact by design, like every price on the page.
+    sh, stock, fx, total = r["sh"]*SCALE, r["stock"]*SCALE, r["fx"]*SCALE, r["total"]*SCALE
+    return (f"<tr><td data-s='{r['t']}'>{r['t']}</td>"
             f"<td data-s='{sh:.2f}'>{fmt_sh(sh)}</td>"
-            f"<td data-s='{avg_sell:.4f}'>{cval(avg_sell, 2)}</td>"
-            f"<td data-s='{avg_cost:.4f}'>{cval(avg_cost, 2)}</td>"
+            f"<td data-s='{r['avg_sell']:.4f}'>{cval(r['avg_sell'], 2)}</td>"
+            f"<td data-s='{r['avg_cost']:.4f}'>{cval(r['avg_cost'], 2)}</td>"
             f"<td data-s='{stock:.2f}' class='{_cl(stock)}'>{cval(stock, signed=True)}</td>"
             f"<td data-s='{fx:.2f}' class='{_cl(fx)}'>{cval(fx, signed=True)}</td>"
             f"<td data-s='{total:.2f}' class='{_cl(total)}'>{cval(total, signed=True)}</td></tr>")
-realized_rows = "".join(_realized_row(t, a) for t, a in _ragg_rows) or "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:16px'>No realized stock sales.</td></tr>"
+realized_rows = "".join(_realized_row(r) for r in _RROWS) or "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:16px'>No realized stock sales.</td></tr>"
 realized_foot = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
     f"<td class='{_cl(REAL_STOCK)}'>{cval(REAL_STOCK*SCALE, signed=True)}</td>"
     f"<td class='{_cl(REAL_FX)}'>{cval(REAL_FX*SCALE, signed=True)}</td>"
     f"<td class='{_cl(REAL_TOTAL)}'>{cval(REAL_TOTAL*SCALE, signed=True)}</td></tr>")
 realized_section = f"""<section class="block"><h2>Realized P&amp;L Since Inception</h2>
-<p class="note">Closed stock positions, aggregated by ticker, with the same Stock/FX
-split as the unrealized panel. Cost basis is date-aware (broker snapshot at-or-before
-each sale). VGT and VUG exclude their 24-Apr sales, which fall on the 6:1 split
-boundary where cost basis is ambiguous. Dollar values are scaled
-and follow the currency toggle; percentages are exact.</p>
+<p class="note">Every closed sale since inception, walked fill by fill against a
+moving-average cost basis that includes commissions and taxes; proceeds are net of
+fees. Stock and FX are the same decomposition as the unrealized panel, with the small
+cross term folded into Stock, so the two legs sum to Total and
+(Avg&nbsp;Sell &minus; Avg&nbsp;Cost) &times; Shares reproduces it. VGT appears twice:
+its March sale predates the 8:1 split, and pre- and post-split units cannot share a
+per-share average. Dollar values are scaled and follow the currency toggle;
+percentages and per-share prices are exact.</p>
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
 <table class="ptable" style="min-width:560px"><thead><tr>
 <th>Ticker</th><th>Shares Sold</th><th>Avg Sell</th><th>Avg Cost</th>
@@ -1033,7 +1079,7 @@ snap = "".join(
 # it earned on, which makes Combined the cost-weighted blend of the other two rather
 # than an unrelated third number. ("Return on Cost" was the unrealized leg under a
 # vaguer name; it lives here now.)
-_real_cost = sum(a["cost"] for a in _ragg.values()) * SCALE   # cost basis of shares sold
+_real_cost = sum(r["avg_cost"]*r["sh"] for r in _RROWS) * SCALE  # all-in cost of shares sold
 _real_pnl  = REAL_TOTAL * SCALE
 _ret_real  = (_real_pnl / _real_cost) if _real_cost else 0.0
 _ret_unr   = port_ret                                          # unrealized / held cost
@@ -1257,20 +1303,20 @@ confidentiality. Research and monitoring, not investment advice.</p></div></foot
 # rather than publish. Per-share prices and % returns are exact by design and are
 # not checked here.
 assert SCALE == 1.8, f"confidentiality scale factor is {SCALE}, expected 1.8"
-_leaked = [f"{t}.{k}={a[k]:,.2f}"
-           for t, a in _ragg.items()
+_leaked = [f"{r['t']}.{k}={r[k]:,.2f}"
+           for r in _RROWS
            for k in ("sh", "stock", "fx", "total")
-           if abs(a[k]) > 0.005 and f"data-s='{a[k]:.2f}'" in HTML]
+           if abs(r[k]) > 0.005 and f"data-s='{r[k]:.2f}'" in HTML]
 if _leaked:
     raise SystemExit("CONFIDENTIALITY GUARD FAILED: unscaled real values in data-s -> "
                      + ", ".join(_leaked))
-# Naming the factor in prose hands the reader the inverse: real = displayed / SCALE.
-# Say "scaled by a fixed constant", never the number. (WEBSITE_DEPLOY.md rule 1.)
+# Naming the factor in prose lets any reader undo the scaling. Say "scaled by a fixed
+# constant", never the number. (WEBSITE_DEPLOY.md rule 1.)
 _told = [p for p in (f"&times;{SCALE}", f"x{SCALE}", f"×{SCALE}") if p in HTML]
 if _told:
     raise SystemExit(f"CONFIDENTIALITY GUARD FAILED: page names the scale factor -> {_told}")
 print(f"  confidentiality guard OK | scale factor x{SCALE} not disclosed | "
-      f"{len(_ragg)} realized rows checked")
+      f"{len(_RROWS)} realized rows checked")
 
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
 print(f"Portfolio tracker built -> {DOCS}/portfolio.html")
