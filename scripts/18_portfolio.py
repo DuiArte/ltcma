@@ -777,12 +777,28 @@ for _, r in latest.iterrows():
 # ---------- realized P&L since inception (ledger-based, date-aware, FX-decomposed) ----------
 # Ported from the offline cost-basis dashboard so the public page's realized figures
 # match it and reconcile with the unrealized decomposition above. Source: the GBM
-# "Historial de Transacciones" ledger + dated broker snapshots in the archive. The
-# 24-Apr batch is excluded (VGT/VUG 6:1 split-boundary -> ambiguous cost basis).
+# "Historial de Transacciones" ledger + dated broker snapshots in the archive.
+#
+# GBM re-exports the same fills under shifted value dates, so the ledger is assembled
+# from named exports with explicit non-overlapping roles -- never glob+union, which
+# double-counts. The 24-Apr batch appears again as a "27-Apr" batch in export
+# ...549357, and 12-Jun AMAT appears in three files. Export ...238707 is the canonical
+# calendar: it dates the SOXX fills 29-Apr, matching the authoritative window file,
+# where ...549357 says 30-Apr.
+#
+# VGT/VUG are held out of the 24-Apr batch: their 6:1 split re-based shares on exactly
+# that date (price 04-20), so cost basis there is ambiguous. The other names in the
+# batch have no split and a clean 04-24 broker snapshot to price against.
 import glob as _rg
 _ARCH  = paths.cuser("Documents", "GBM_Account_Archive")
-_HISTF = os.path.join(_ARCH, "transactions_historial",
-                      "GBM_Historial_Transacciones_2026-04-28_to_2026-06-15.csv")
+_HISTD = os.path.join(_ARCH, "transactions_historial")
+_HISTF = os.path.join(_HISTD, "GBM_Historial_Transacciones_2026-04-28_to_2026-06-15.csv")
+_APRF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_1779481238707.csv")
+_JUNF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_JUN_2026.csv")
+_FEBF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_1774471069759.csv")
+_MARF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_1774471093585.csv")
+_APR_NO_SPLIT = {"MSFT", "AMZN", "GOOGL", "QQQ"}   # 24-Apr batch, ex-VGT/VUG
+_D = lambda y,m,d: pd.Timestamp(y,m,d)
 _RMON  = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,"jul":7,"ago":8,"sep":9,
           "oct":10,"nov":11,"dic":12,"jan":1,"apr":4,"aug":8,"dec":12}
 def _rnum(s):
@@ -843,19 +859,59 @@ def _fxat(dt):
         if d <= day: v = c
         else: break
     return v
-_lbuys, _lsells = {}, []
-try:
-    with open(_HISTF, encoding="utf-8-sig") as _fh:
-        for _row in _csv.reader(_fh):
-            if not _row or len(_row) < 12 or _row[0].strip() == "Emisora": continue
-            d = _rdate(_row[1])
-            if d is None: continue
-            if "Compra de Acciones" in _row[3]:
-                _lbuys.setdefault(_rtk(_row[0]), []).append((d, _rnum(_row[4])))
-            elif "Venta de Acciones" in _row[3]:
-                _lsells.append({"t": _rtk(_row[0]), "d": d, "sh": _rnum(_row[4]), "px": _rnum(_row[5])})
-except OSError:
-    pass
+def _ledger_rows(path):
+    """Yield (kind, ticker, date, shares, price) for one export; [] if unreadable."""
+    try:
+        with open(path, encoding="utf-8-sig") as _fh:
+            for _row in _csv.reader(_fh):
+                if not _row or len(_row) < 12 or _row[0].strip() == "Emisora": continue
+                d = _rdate(_row[1])
+                if d is None: continue
+                if "Compra de Acciones" in _row[3]:
+                    yield ("buy", _rtk(_row[0]), d, _rnum(_row[4]), _rnum(_row[5]))
+                elif "Venta de Acciones" in _row[3]:
+                    yield ("sell", _rtk(_row[0]), d, _rnum(_row[4]), _rnum(_row[5]))
+    except OSError:
+        return
+
+# Each (export, kind) owns a disjoint slice of the calendar. Anything outside its slice
+# is another export's responsibility, so no fill is counted twice.
+_SELL_SRC = [
+    (_HISTF, lambda t, d: d >= _D(2026,4,29)),                                  # 04-29 .. 06-12 core
+    (_JUNF,  lambda t, d: d >  _D(2026,6,15)),                                  # 18-Jun batch
+    (_APRF,  lambda t, d: d <  _D(2026,4,29) and t in _APR_NO_SPLIT),           # 24-Apr, ex-split
+]
+_BUY_SRC = [                                                                    # _xbuy weighting only
+    (_FEBF,  lambda t, d: d <  _D(2026,3,1)),
+    (_MARF,  lambda t, d: _D(2026,3,1)  <= d < _D(2026,3,24)),
+    (_APRF,  lambda t, d: _D(2026,3,24) <= d < _D(2026,4,28)),
+    (_HISTF, lambda t, d: _D(2026,4,28) <= d <= _D(2026,6,9)),
+    (_JUNF,  lambda t, d: d >  _D(2026,6,9)),
+]
+_lbuys, _lsells, _prov = {}, [], {}
+for _src, _keep in _BUY_SRC:
+    for _k, _t, _d, _sh, _px in _ledger_rows(_src):
+        if _k == "buy" and _keep(_t, _d):
+            _lbuys.setdefault(_t, []).append((_d, _sh))
+for _src, _keep in _SELL_SRC:
+    for _k, _t, _d, _sh, _px in _ledger_rows(_src):
+        if _k != "sell" or not _keep(_t, _d): continue
+        _lsells.append({"t": _t, "d": _d, "sh": _sh, "px": _px})
+        _prov.setdefault((_t, _d, _sh, _px), []).append(os.path.basename(_src))
+
+# A fill reachable from two exports means the slices overlap -> realized P&L inflates
+# silently. Same trade on two nearby dates means a shifted re-export slipped through.
+_dupe = {k: v for k, v in _prov.items() if len(set(v)) > 1}
+if _dupe:
+    raise SystemExit("LEDGER GUARD: fill claimed by >1 export -> " + repr(_dupe))
+_shift = [(a, b) for a in _prov for b in _prov
+          if a < b and a[0] == b[0] and a[2] == b[2] and a[3] == b[3]
+          and 0 < abs((a[1] - b[1]).days) <= 5]
+if _shift:
+    raise SystemExit("LEDGER GUARD: same ticker/shares/price on two nearby dates "
+                     f"(shifted re-export?) -> {_shift}")
+print(f"  ledger: {len(_lsells)} sell fills from {len(_SELL_SRC)} exports, "
+      f"{sum(len(v) for v in _lbuys.values())} buy fills from {len(_BUY_SRC)}")
 def _xbuy(t, upto):
     lots = [(d,s) for d,s in _lbuys.get(t, []) if d <= upto]
     tot = sum(s for _,s in lots)
@@ -899,7 +955,8 @@ realized_foot = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>
 realized_section = f"""<section class="block"><h2>Realized P&amp;L Since Inception</h2>
 <p class="note">Closed stock positions, aggregated by ticker, with the same Stock/FX
 split as the unrealized panel. Cost basis is date-aware (broker snapshot at-or-before
-each sale); the 24-Apr split-boundary batch is excluded. Dollar values are &times;1.8
+each sale). VGT and VUG exclude their 24-Apr sales, which fall on the 6:1 split
+boundary where cost basis is ambiguous. Dollar values are &times;1.8
 scaled and follow the currency toggle; percentages are exact.</p>
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
 <table class="ptable" style="min-width:560px"><thead><tr>
