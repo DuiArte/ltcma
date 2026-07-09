@@ -147,6 +147,46 @@ paths; real positions. Any hit (other than the allowed `50/30/20`, the viewport
 `initial-scale=1`, JS slider vars, and metric-label fragments in `.ai.txt`) →
 redact in `_BT_PUBLIC` / `_bt_redact` and rebuild.
 
+**`confscan.sh` does not scan `portfolio.html`.** It never has. Do not read a
+clean confscan as "the portfolio page is clean" — that page is covered only by
+the in-script guard described below.
+
+### Failure mode: scaled cell, unscaled attribute (2026-07-09)
+
+`portfolio.html` published the real book for three weeks (`c5ae501`, 2026-06-15
+→ `eb2b196`, 2026-07-09). The Realized P&L table rendered every cell as
+`value * SCALE` but wrote the **raw** ledger amount into the `data-s` sort
+attribute:
+
+```python
+# the bug: display scaled, sort key raw
+f"<td data-s='{a['total']:.2f}'>{cval(a['total']*SCALE, signed=True)}</td>"
+```
+
+Four rows x (shares, stock P&L, FX P&L, total) = 16 real MXN figures, visible in
+View Source. Nothing rendered looked wrong, so eyeballing the page could never
+have caught it. Every *other* table on the page pre-scales its values and reuses
+the scaled number for both the attribute and the cell — which is why only this
+one diverged.
+
+Rules that follow:
+
+1. **Scale once, at the source.** A value enters the template already scaled;
+   the template never multiplies. If you write `*SCALE` inside an f-string, the
+   sibling attribute in that same f-string is probably still raw.
+2. **Attributes are public.** `data-s`, `data-mxn`, `title`, `aria-label`,
+   embedded JSON and Plotly `customdata` are as public as the visible text.
+   "It's only for sorting" is not a confidentiality argument.
+3. **The guard is in `18_portfolio.py`, not confscan.** Immediately before the
+   write it asserts `SCALE == 1.8` and fails the build if any raw `_ragg` amount
+   appears as a `data-s` value. It prints
+   `confidentiality guard OK | scale factor x1.8 | N realized rows checked` on
+   every run — if that line is missing from a refresh log, the page was written
+   by an older script and must be rebuilt.
+4. **Verify on the deployed bytes, not the working tree.** `curl` the live URL
+   and diff the sort attributes against their cells; Pages can serve a stale
+   commit while the local file looks correct.
+
 ## CI failure playbook — `.github/workflows/refresh.yml`
 
 GitHub Actions runs the same daily refresh (cron `0 22 * * 1-5` + manual). The
