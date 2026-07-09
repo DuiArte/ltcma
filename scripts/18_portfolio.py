@@ -876,15 +876,22 @@ REAL_STOCK = REAL_TOTAL - REAL_FX
 print(f"  realized (ledger): total {REAL_TOTAL:,.0f} stock {REAL_STOCK:,.0f} fx {REAL_FX:,.0f} "
       f"-> x{SCALE} {REAL_TOTAL*SCALE:,.0f}")
 _ragg_rows = sorted(_ragg.items(), key=lambda kv: -kv[1]["total"])
-realized_rows = "".join(
-    f"<tr><td data-s='{t}'>{t}</td>"
-    f"<td data-s='{a['sh']:.2f}'>{fmt_sh(a['sh']*SCALE)}</td>"
-    f"<td data-s='{(a['proceeds']/a['sh'] if a['sh'] else 0):.4f}'>{cval(a['proceeds']/a['sh'] if a['sh'] else 0, 2)}</td>"
-    f"<td data-s='{(a['cost']/a['sh'] if a['sh'] else 0):.4f}'>{cval(a['cost']/a['sh'] if a['sh'] else 0, 2)}</td>"
-    f"<td data-s='{a['stock']:.2f}' class='{_cl(a['stock'])}'>{cval(a['stock']*SCALE, signed=True)}</td>"
-    f"<td data-s='{a['fx']:.2f}' class='{_cl(a['fx'])}'>{cval(a['fx']*SCALE, signed=True)}</td>"
-    f"<td data-s='{a['total']:.2f}' class='{_cl(a['total'])}'>{cval(a['total']*SCALE, signed=True)}</td></tr>"
-    for t, a in _ragg_rows) or "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:16px'>No realized stock sales.</td></tr>"
+def _realized_row(t, a):
+    # _ragg holds RAW ledger amounts. Scale here, once, so the data-s sort key and the
+    # rendered cell are the same scaled number -- they must never diverge, or the sort
+    # attribute republishes the real book. Avg sell/cost are per-share prices: exact by
+    # design, like every other price on the page.
+    sh, stock, fx, total = a["sh"]*SCALE, a["stock"]*SCALE, a["fx"]*SCALE, a["total"]*SCALE
+    avg_sell = a["proceeds"]/a["sh"] if a["sh"] else 0.0
+    avg_cost = a["cost"]/a["sh"] if a["sh"] else 0.0
+    return (f"<tr><td data-s='{t}'>{t}</td>"
+            f"<td data-s='{sh:.2f}'>{fmt_sh(sh)}</td>"
+            f"<td data-s='{avg_sell:.4f}'>{cval(avg_sell, 2)}</td>"
+            f"<td data-s='{avg_cost:.4f}'>{cval(avg_cost, 2)}</td>"
+            f"<td data-s='{stock:.2f}' class='{_cl(stock)}'>{cval(stock, signed=True)}</td>"
+            f"<td data-s='{fx:.2f}' class='{_cl(fx)}'>{cval(fx, signed=True)}</td>"
+            f"<td data-s='{total:.2f}' class='{_cl(total)}'>{cval(total, signed=True)}</td></tr>")
+realized_rows = "".join(_realized_row(t, a) for t, a in _ragg_rows) or "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:16px'>No realized stock sales.</td></tr>"
 realized_foot = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
     f"<td class='{_cl(REAL_STOCK)}'>{cval(REAL_STOCK*SCALE, signed=True)}</td>"
     f"<td class='{_cl(REAL_FX)}'>{cval(REAL_FX*SCALE, signed=True)}</td>"
@@ -1104,6 +1111,24 @@ filter. Sorting and filtering are display-only; the TOTAL row stays pinned.</p><
 <footer class="shell-foot"><div class="container"><p>Figures scaled for
 confidentiality. Research and monitoring, not investment advice.</p></div></footer>
 {JS}</body></html>"""
+
+# --- confidentiality guard -------------------------------------------------
+# Nothing derived from the real book may reach docs/ unscaled. Rendered cells were
+# audited by eye; data-s sort attributes were not, and carried the real realized
+# P&L to the public site for three weeks (c5ae501, 2026-06-15). Fail the build
+# rather than publish. Per-share prices and % returns are exact by design and are
+# not checked here.
+assert SCALE == 1.8, f"confidentiality scale factor is {SCALE}, expected 1.8"
+_leaked = [f"{t}.{k}={a[k]:,.2f}"
+           for t, a in _ragg.items()
+           for k in ("sh", "stock", "fx", "total")
+           if abs(a[k]) > 0.005 and f"data-s='{a[k]:.2f}'" in HTML]
+if _leaked:
+    raise SystemExit("CONFIDENTIALITY GUARD FAILED: unscaled real values in data-s -> "
+                     + ", ".join(_leaked))
+print(f"  confidentiality guard OK | scale factor x{SCALE} | "
+      f"{len(_ragg)} realized rows checked")
+
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
 print(f"Portfolio tracker built -> {DOCS}/portfolio.html")
 print(f"  {len(latest)} holdings | value(scaled) MXN {tot_val:,.0f} / "
