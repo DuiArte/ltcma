@@ -110,6 +110,17 @@ snapshot's `Costo promedio` at-or-before the sale, which is fee-exclusive *and* 
 deducted. Against the reconciled walk that overstated realized P&L by 119,050 MXN
 (~10%), decomposing per ticker as *cost understated + sell-side fees* to within pesos.
 
+**Cost basis is ALL-IN everywhere** (Carlos, 2026-07-09) — realized and unrealized share
+one convention. Held cost comes from the sidecar's `per_ticker_held_allin_cost_mxn`
+(**22** open positions, not the 9 realized rows — AMAT closed out fully). The broker's
+`Costo promedio` is gross of fees and understates the outlay by 10,513.85 MXN (0.176%).
+
+- Assert on the **full-precision** values; the 2-dp per-ticker figures sum a cent above
+  `equity_allin_cost_basis_mxn_exact`. Render integers so the column and its total agree.
+- `Avg Cost` carries the per-share all-in figure, keeping `Cost = Avg Cost × Shares`.
+- Ticker keys normalise through one shared `_norm_ticker` (`MELI N` → MELI,
+  `GMEXICO B` → GMEXICOB). A mismatch either way aborts and names the symbols.
+
 Two rendering rules the sidecar enforces:
 - **Rows are split segments, not tickers.** VGT's 2026-03-17 sale is in pre-split units;
   folding it into the post-split total makes Avg Sell / Avg Cost meaningless. It renders
@@ -246,10 +257,17 @@ script and must be rebuilt.**
 | Guard | Fails when | Line printed |
 |---|---|---|
 | scale-factor assert | `SCALE` differs from the expected constant | `confidentiality guard OK …` |
-| raw-value scan | any raw `_ragg` amount appears as a `data-s` | ” |
+| raw-value scan | any raw realized amount appears as a `data-s` | ” |
 | factor-disclosure scan | the rendered HTML names the scale factor | ” |
+| sidecar absent | no `realized_ledger_*.json` — refuse to publish approximations | (abort) |
+| sidecar stale | our merge sees a sell dated after its `as_of` | (abort) |
+| fill-set mismatch | the two independent merges disagree on fill count | `realized (sidecar …)` |
+| held-cost sum | per-ticker all-in ≠ `equity_allin_cost_basis_mxn_exact` | `held cost: …` |
+| held-position count | sidecar / declared count / broker snapshot disagree | ” |
+| held-cost ticker map | a symbol exists on one side only | ” |
 | ledger double-count | one fill claimed by >1 export | `ledger: N sell fills …` |
 | shifted re-export | same ticker/shares/price on two dates ≤5 days apart | ” |
+| realized legs | `Stock + FX ≠ Total`, or `(AvgSell−AvgCost)×Sh ≠ Total` | (abort) |
 | banner blend identity | `combined ≠ w·realized + (1−w)·unrealized` | `returns: …` |
 
 Verify a guard by breaking it, not by reading it: change `SCALE`, or add
