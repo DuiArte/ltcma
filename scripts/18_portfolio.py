@@ -1255,11 +1255,12 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script>
 <style>
 /* portfolio coherence fixes (2026-06-15):
-   - headers inside the new overflow-x scroll tiles must NOT be sticky (sticky+overflow
-     ancestor was rendering the first row ABOVE the header);
    - symmetric P/L colours: .ptable td sets the ink colour and out-specifies bare .pos,
-     so positives rendered black while span-wrapped negatives stayed red. Raise specificity. */
-.ptable thead th{{position:static;top:auto}}
+     so positives rendered black while span-wrapped negatives stayed red. Raise specificity.
+   The local `thead th{{position:static}}` patch is gone (2026-07-10): the sticky-inside-a
+   -scroll-tile bug it worked around was global, not portfolio-specific, and is now fixed
+   at the source in 17_build_site.py (style.css). It had masked the same overlap on
+   index/strategies/stocks/research for three weeks. */
 .ptable td.pos{{color:var(--pos)}}
 .ptable td.neg{{color:var(--neg)}}
 .ptable tr.h-total td{{font-weight:700;border-top:2px solid var(--line-strong);background:#fbfaf8}}
