@@ -733,6 +733,13 @@ html{scroll-behavior:smooth}
 .rv{opacity:0;transform:translateY(6px);transition:opacity .3s ease-out,transform .3s ease-out}
 .rv.vis,.vis{opacity:1;transform:none}
 .ptable thead th{position:sticky;top:59px;background:var(--panel);z-index:2}
+/* A tile carrying overflow-x becomes the sticky SCROLLPORT (overflow-y then computes to
+   auto), so `top:59px` no longer clears the site header -- it pushes the header 59px DOWN
+   from the tile's top, straight over the first data row. Pin to the tile instead. Only
+   tables that scroll with the page (regime, stock_*) need the 59px nav offset.
+   Keep this selector in step with the inline `overflow-x:auto` the generators emit. */
+.tscroll .ptable thead th,
+[style*="overflow-x:auto"] .ptable thead th{top:0}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:var(--ink)}
 th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
