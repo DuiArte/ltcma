@@ -40,8 +40,28 @@ jobs:
       - name: Refresh signals (FRED, GPR, EPU, VIX)
         run: python scripts/08_fetch_signals.py
 
-      - name: Rebuild site
-        run: python scripts/17_build_site.py
+      - name: Refresh regimes + stock analysis
+        run: |
+          python scripts/10_regimes.py            # regime series (feeds regime.html + dashboard)
+          python scripts/20_regime_tracker.py     # regime.html
+          python scripts/19_stock_analysis.py     # stock_*.html + stocks.html data
+
+      - name: Rebuild public site
+        # Full public build so a host-off day advances EVERY public page to the same
+        # date, not just the dashboard. Excludes the three host-only scripts on purpose:
+        #   18_portfolio / 26_real_numbers -> read the private book (Downloads/Documents),
+        #                                      absent on the runner; portfolio.html lags a
+        #                                      host-off day by design.
+        #   24_backtests -> static redirect stub into strategies.html#backtests.
+        # 23_strategies reads the Trading_Index hub on the host but falls back to the
+        # committed catalog + docs/index.html's window.BT_DATA in CI (see glossary.bt_load /
+        # bt_catalog), so it must run AFTER 17 rebuilds index.html. 25 must run AFTER 19.
+        run: |
+          python scripts/17_build_site.py         # index / report / glossary / projects
+          python scripts/23_strategies.py         # strategies.html
+          python scripts/27_research_notes.py     # research.html
+          python scripts/25_stock_picks.py        # stocks.html
+          python scripts/21_stock_signals.py      # signals.html redirect
 
       - name: Commit refreshed data & site
         run: |
