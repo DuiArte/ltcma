@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=17 Jul 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=20 Jul 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|24.18|+0.964|Revenue growth
-2|PLTR|Technology|132.38|+0.693|Earnings growth
-3|LLY|Healthcare|1179.11|+0.618|CAD beta
-4|NVDA|Technology|202.81|+0.466|Revenue growth
-5|COST|Consumer Defensive|940.87|+0.462|Gross margin
-6|WMT|Consumer Defensive|114.24|+0.334|CAD beta
-7|HD|Consumer Cyclical|338.87|+0.305|ROE
-8|NVO|Healthcare|50.32|+0.265|CAD beta
-9|ORCL|Technology|126.41|+0.207|CAD beta
-10|AAPL|Technology|333.74|+0.181|ROE
-11|KO|Consumer Defensive|81.56|+0.163|CAD beta
-12|AMZN|Consumer Cyclical|247.23|+0.104|CAD beta
-13|NFLX|Communication Services|68.95|+0.087|12-1 momentum
-14|NET|Technology|277.66|+0.060|Rate beta
-15|MSFT|Technology|393.82|+0.022|12-1 momentum
-16|AVGO|Technology|370.82|+0.022|Revenue growth
-17|DDOG|Technology|258.69|+0.010|12-1 momentum
-18|SNOW|Technology|268.90|+0.009|Rate beta
-19|SHOP|Technology|123.56|+0.009|CAD beta
-20|META|Communication Services|646.01|+0.008|Gross margin
+1|SMCI|Technology|23.83|+0.903|Revenue growth
+2|PLTR|Technology|134.85|+0.681|Earnings growth
+3|LLY|Healthcare|1146.90|+0.617|CAD beta
+4|NVDA|Technology|203.28|+0.458|Revenue growth
+5|COST|Consumer Defensive|935.80|+0.458|Gross margin
+6|WMT|Consumer Defensive|112.20|+0.330|CAD beta
+7|HD|Consumer Cyclical|333.04|+0.310|ROE
+8|NVO|Healthcare|49.61|+0.278|CAD beta
+9|KO|Consumer Defensive|82.12|+0.206|CAD beta
+10|ORCL|Technology|121.38|+0.201|CAD beta
+11|AAPL|Technology|326.59|+0.181|ROE
+12|NFLX|Communication Services|67.60|+0.111|12-1 momentum
+13|AMZN|Consumer Cyclical|249.99|+0.104|CAD beta
+14|NET|Technology|272.42|+0.061|Rate beta
+15|MSFT|Technology|402.29|+0.023|12-1 momentum
+16|AVGO|Technology|378.16|+0.023|Revenue growth
+17|SNOW|Technology|274.34|+0.012|Rate beta
+18|SHOP|Technology|124.48|+0.010|CAD beta
+19|META|Communication Services|645.85|+0.008|Gross margin
+20|DDOG|Technology|263.20|+0.007|12-1 momentum
