@@ -2,23 +2,23 @@ STOCK COMPOSITE PICKS — AI COPY (low-token)
 asof=05 Aug 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|LLY|Healthcare|1169.86|+0.654|CAD beta
-2|SMCI|Technology|30.32|+0.578|Revenue growth
-3|COST|Consumer Defensive|941.99|+0.526|Gross margin
-4|WMT|Consumer Defensive|112.34|+0.450|CAD beta
-5|HD|Consumer Cyclical|353.14|+0.429|ROE
-6|PLTR|Technology|158.43|+0.397|Revenue growth
-7|NVDA|Technology|219.22|+0.310|Revenue growth
-8|AAPL|Technology|311.00|+0.310|ROE
-9|NVO|Healthcare|44.53|+0.297|CAD beta
+1|LLY|Healthcare|1169.86|+0.645|CAD beta
+2|SMCI|Technology|30.32|+0.565|Revenue growth
+3|COST|Consumer Defensive|941.99|+0.521|Gross margin
+4|WMT|Consumer Defensive|112.34|+0.444|CAD beta
+5|HD|Consumer Cyclical|353.14|+0.418|ROE
+6|PLTR|Technology|158.43|+0.406|Revenue growth
+7|NVDA|Technology|219.22|+0.319|Revenue growth
+8|AAPL|Technology|311.00|+0.311|ROE
+9|NVO|Healthcare|44.53|+0.298|CAD beta
 10|KO|Consumer Defensive|86.83|+0.275|CAD beta
-11|ORCL|Technology|144.39|+0.212|CAD beta
-12|GOOGL|Communication Services|362.43|+0.199|Net margin
-13|AMZN|Consumer Cyclical|272.65|+0.145|CAD beta
-14|NET|Technology|292.96|+0.076|Rate beta
-15|NFLX|Communication Services|74.20|+0.073|Buffett score
-16|DDOG|Technology|283.17|+0.050|Rate beta
-17|MSFT|Technology|487.46|+0.021|Net margin
+11|ORCL|Technology|144.39|+0.207|CAD beta
+12|GOOGL|Communication Services|362.43|+0.205|Net margin
+13|AMZN|Consumer Cyclical|272.65|+0.148|Margin of safety
+14|NFLX|Communication Services|74.20|+0.089|CAD beta
+15|NET|Technology|292.96|+0.059|Rate beta
+16|DDOG|Technology|283.17|+0.044|Rate beta
+17|MSFT|Technology|487.46|+0.025|Net margin
 18|AVGO|Technology|418.28|+0.011|Revenue growth
-19|TSLA|Consumer Cyclical|321.55|+0.011|CAD beta
-20|SNOW|Technology|316.84|-0.000|Rate beta
+19|TSLA|Consumer Cyclical|321.55|-0.000|CAD beta
+20|SNOW|Technology|316.84|-0.018|Rate beta
