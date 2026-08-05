@@ -1,4 +1,8 @@
-# Dependencies for the GitHub Actions weekly refresh (scripts 08 + 17).
+# Dependencies for the GitHub Actions scheduled refresh.
+# Scripts run there: 08, 10, 20, 19, 17, 23, 27, 25, 21 (see .github/workflows/refresh.yml).
+# yfinance is imported by 20_regime_tracker.py and 19_stock_analysis.py, both added to
+# the workflow by ba006c4 (2026-07-17) WITHOUT this line -- which killed the cloud
+# backup publisher silently for the next 19 days.
 # The full local pipeline additionally uses scikit-learn, weasyprint,
 # python-docx, and the RAPIDS GPU stack (cudf/cupy) -- none of which run
 # on GitHub runners and none of which the scheduled refresh needs.
@@ -9,3 +13,4 @@ openpyxl
 xlrd
 markdown
 plotly
+yfinance

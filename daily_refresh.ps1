@@ -70,6 +70,17 @@ function Fail {
     param([string]$Msg)
     Log $Msg 'ERROR'
     Log ("=== refresh FAILED ({0}s) ===" -f [math]::Round(((Get-Date)-$script:Start).TotalSeconds)) 'ERROR'
+    # Tripwire. A Fail() used to be indistinguishable from a clean run unless someone
+    # opened the log: the 2026-07-27..08-04 outage ran red for seven weekdays and froze
+    # the public site for 12 days before anyone noticed. The digests read this file.
+    try {
+        Set-Content -Path (Join-Path $LogDir 'REFRESH_ALERT.txt') -Encoding utf8 -Value @"
+$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') refresh FAILED
+$Msg
+Log: $LogFile
+Nothing was committed or pushed; the public site is still on the last good build.
+"@
+    } catch { }
     exit 1
 }
 function Invoke-Native {
@@ -105,8 +116,12 @@ try {
     $r = Invoke-Native { git status --porcelain }
     if ($r.Code -ne 0) { Fail "git status failed: $($r.Text)" }
     if ($r.Text.Trim()) {
-        $dirty = $r.Text.Trim() -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-        $nonGenerated = $dirty | Where-Object { $_ -notmatch '^(M|MM|\?\?)?\s*(docs/|data/)' }
+        # Classify on the RAW porcelain line: `XY PATH`, XY exactly two status chars.
+        # Trimming first strips the status column, so the old alternation only ever
+        # covered M/MM/?? -- a deleted or added generated page (' D docs/x', 'A  docs/x',
+        # 'UU ...', 'R  a -> b') fell through to "non-generated" and hard-aborted the run.
+        $dirty = $r.Text -split "`n" | Where-Object { $_.Trim() }
+        $nonGenerated = $dirty | Where-Object { $_ -notmatch '^.{2}\s+"?(docs/|data/)' }
         if ($nonGenerated) { Fail "Working tree DIRTY beyond generated artifacts:`n$($r.Text)" }
         (Invoke-Native { git checkout -- docs data }) | Out-Null
         (Invoke-Native { git clean -fd docs data }) | Out-Null
@@ -166,7 +181,11 @@ try {
     Run-Step '27_research_notes.py'  | Out-Null
     Run-Step '25_stock_picks.py'     | Out-Null
     Run-Step '21_stock_signals.py'   | Out-Null
-    Run-Step '18_portfolio.py'       | Out-Null
+    # LoadBearing: portfolio.html has a HARD as-of gate below, so a best-effort 18 is a
+    # lie the script tells itself -- it "continues", then dies 4s later on a downstream
+    # symptom that names the wrong cause. Any page with an as-of gate needs its
+    # generator load-bearing, so the log names the real failure on day 1.
+    Run-Step '18_portfolio.py'       -LoadBearing | Out-Null
     Run-Step '26_real_numbers_refresh.py' | Out-Null
     Run-Step '22_ai_copies.py'       | Out-Null
     Run-Step '24_backtests.py'       | Out-Null
@@ -241,6 +260,7 @@ try {
         }
     }
 
+    Remove-Item (Join-Path $LogDir 'REFRESH_ALERT.txt') -ErrorAction SilentlyContinue
     Log "=== refresh DONE ($([math]::Round(((Get-Date)-$script:Start).TotalSeconds))s) ==="
     exit 0
 }

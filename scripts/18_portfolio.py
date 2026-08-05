@@ -121,13 +121,15 @@ def cval(mxn, dec=0, signed=False):
 
 # Map portfolio tickers to yfinance symbols — BMV (.MX) listings, MXN-native.
 TICKER_MAP = {
-    "AMZN": "AMZN.MX", "BA": "BA.MX", "GLD": "GLD.MX", "GOOGL": "GOOGL.MX",
-    "IBM": "IBM.MX", "JPM": "JPM.MX", "MA": "MA.MX", "MELI N": "MELI.MX",
+    "BA": "BA.MX", "GLD": "GLD.MX", "GOOGL": "GOOGL.MX",
+    "IBM": "IBM.MX", "LLY": "LLY.MX", "ORCL": "ORCL.MX", "UBER": "UBER.MX",
     "META": "META.MX", "MSFT": "MSFT.MX", "QQQ": "QQQ.MX", "SOXX": "SOXX.MX",
     "VGT": "VGT.MX", "VUG": "VUG.MX", "GMEXICO B": "GMEXICOB.MX",
-    "LMT": "LMT.MX", "AMAT": "AMAT.MX", "MCHI": "MCHI.MX",
-    "ASTS": "ASTS.MX", "XLE": "XLE.MX",
-    # "CCJ N" has no Yahoo .MX listing -> priced from the broker column (fallback below)
+    "MCHI": "MCHI.MX", "ASTS": "ASTS.MX", "XLE": "XLE.MX",
+    "NVDA": "NVDA.MX", "RKLB": "RKLB.MX",
+    # "CCJ N" has no Yahoo .MX listing -> priced from the broker column (fallback below).
+    # AMZN/JPM/MA/LMT/MELI N/AMAT are CLOSED positions (last: AMZN+MA 2026-07-27,
+    # JPM 2026-07-28) -- removed 2026-08-05.
 }
 
 # ---------- broker source of truth: GBM "Detalle de Portafolio" export ----------
@@ -465,6 +467,21 @@ _kmap = latest["ticker"].map(_norm_ticker)
 _miss, _extra = sorted(set(_kmap) - set(_held)), sorted(set(_held) - set(_kmap))
 if _miss or _extra:
     raise SystemExit(f"held-cost ticker mismatch -- snapshot-only {_miss}, sidecar-only {_extra}")
+# Share counts, not just the ticker SET. Between 2026-07-10 and 2026-07-24 five positions
+# were added to while the sidecar kept its old share counts; the set, the count and the
+# cost sum all still agreed, so every guard passed and the site published a cost basis
+# understated by 36.8% for two weeks. A per-ticker total cost is only meaningful against
+# the share count it was walked for.
+_shr = _rl.get("per_ticker_held_shares")
+if not _shr:
+    raise SystemExit("sidecar has no per_ticker_held_shares -- regenerate it with "
+                     "build_ledger.py; a cost total without its share count is unverifiable")
+_sdrift = {t: (float(s), float(_shr[k]))
+           for t, k, s in zip(latest["ticker"], _kmap, latest["Títulos"])
+           if abs(float(s) - float(_shr.get(k, -1))) > 1e-6}
+if _sdrift:
+    raise SystemExit("held-cost SHARE mismatch (snapshot vs sidecar) -- the sidecar's "
+                     f"cost basis is for different position sizes: {_sdrift}")
 latest["cost"] = _kmap.map(_held).astype(float) * SCALE
 # Keep the rendered identity Cost = Avg Cost x Shares by carrying the per-share all-in.
 latest["Costo promedio"] = latest["cost"] / latest["shares"]
@@ -895,6 +912,8 @@ _APRF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_1779481
 _JUNF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_JUN_2026.csv")
 _FEBF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_1774471069759.csv")
 _MARF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_1774471093585.csv")
+_JULF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_2026-06-29_to_2026-07-24.csv")
+_AUGF  = os.path.join(_HISTD, "GBM_Homebroker_Historial_de_Transacciones_2026-07-06_to_2026-08-05.csv")
 _APR_NO_SPLIT = {"MSFT", "AMZN", "GOOGL", "QQQ"}   # 24-Apr batch, ex-VGT/VUG
 _D = lambda y,m,d: pd.Timestamp(y,m,d)
 _RMON  = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,"jul":7,"ago":8,"sep":9,
@@ -975,8 +994,10 @@ def _ledger_rows(path):
 _SELL_SRC = [
     (_MARF,  lambda t, d: d <  _D(2026,4,24)),                                  # 17-Mar VGT (pre-spine)
     (_APRF,  lambda t, d: _D(2026,4,24) <= d < _D(2026,4,29)),                  # 24-Apr batch
-    (_HISTF, lambda t, d: d >= _D(2026,4,29)),                                  # 04-29 .. 06-12 core
-    (_JUNF,  lambda t, d: d >  _D(2026,6,15)),                                  # 18-Jun batch
+    (_HISTF, lambda t, d: _D(2026,4,29) <= d <= _D(2026,6,15)),                 # 04-29 .. 06-12 core
+    (_JUNF,  lambda t, d: _D(2026,6,15) <  d <  _D(2026,7,1)),                  # 18-Jun batch
+    (_JULF,  lambda t, d: _D(2026,7,1)  <= d <= _D(2026,7,24)),                 # 16-Jul MELI, 24-Jul LMT
+    (_AUGF,  lambda t, d: d >  _D(2026,7,24)),                                  # 27-Jul AMZN+MA, 28-Jul JPM
 ]
 _BUY_SRC = [                                                                    # _xbuy weighting only
     (_FEBF,  lambda t, d: d <  _D(2026,3,1)),
