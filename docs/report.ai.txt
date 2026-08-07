@@ -30,10 +30,12 @@ format: numbered section map; tables pipe-compact; one lead sentence/section. fu
 # TABLES (pipe-compact)
 ## 1. Executive Summary
 |Point estimate|Simulated 12y median|Volatility
-US large-cap equity|6.6%|5.7%|13.6%
+US large-cap equity|6.0%|5.7%†|13.6%
 EM equity|8.0%|6.4%|18.8%
 Brazil / Mexico equity|8.8% / 8.0%|4.1% / 5.7%|32.7% / 22.4%
-US Treasury / IG credit|4.5% – 5.0%|4.2% – 4.7%|7.6% – 8.0%
+US Treasury / IG credit|4.5% – 5.0%|4.2% – 4.7%†|7.6% – 8.0%
+
+## 1. Executive Summary
 EM USD sovereign / Mexican local govt|6.0% / 6.3%|5.5% / 5.7%|9.9% / 11.3%
 Cash (US T-bills)|3.3%|3.2%|3.4%
 
@@ -45,7 +47,7 @@ Cash (US T-bills)|3.3%|3.2%|3.4%
 
 ## 3. Macro Backdrop & Fundamentals Grid
 Market|Policy rate|10Y nominal|10Y real*|Inflation|Trend real GDP|Equity valuation|Damodaran ERP
-**US**|~3.6%|4.59%|~1.9%|~2.7%|~1.9%|CAPE 34.7 — **rich**|4.46%
+**US**|~3.6%|4.59%|~1.9%|~2.7%|~1.9%|CAPE 40.5 — **rich**|4.46%
 **Mexico**|6.50%|8.88%|~4.4%|4.45%|~2.0%|P/E 13.0 — **cheap**|6.69%
 **Brazil**|14.50%|~13.5%|~9.0%|~4.5%|~2.0%|P/E 11.8 — **cheap**|7.47%
 **China**|~3.0% (LPR)|~1.8%|~1.3%|~0.5%|~4.0%|CAPE 17.7 — **cheap**|5.14%
@@ -73,7 +75,7 @@ Signal|What the market prices|LTCMA assumption|Read
 
 ## 5. Expected Returns
 Asset class|Type|ER λ=0|**ER base (λ=0.5)**|ER λ=1|Volatility
-US Large Cap|Equity|7.8%|**6.6%**|5.4%|13.6%
+US Large Cap|Equity|7.8%|**6.0%**|4.2%|13.6%
 US Small Cap|Equity|6.7%|**6.5%**|6.3%|19.6%
 Mexico Equity|Equity|7.4%|**8.0%**|8.6%|22.4%
 Brazil Equity|Equity|8.9%|**8.8%**|8.7%|32.7%
@@ -100,7 +102,7 @@ Gold|Real Asset|—|**3.3%**|—|18.6%
 
 ## 5. Expected Returns
 Market|Dividend|Buyback|Real EPS growth|US inflation|Valuation reversion|= ER
-US Large Cap|1.2%|1.7%|2.5%|2.4%|−1.2%|6.6%
+US Large Cap|1.2%|1.7%|2.5%|2.4%|−3.6%|6.0%
 US Small Cap|1.3%|0.5%|2.5%|2.4%|−0.2%|6.5%
 Mexico|3.2%|0.0%|1.8%|2.4%|+0.6%|8.0%
 Brazil|4.5%|0.0%|2.0%|2.4%|−0.1%|8.8%

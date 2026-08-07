@@ -15,7 +15,7 @@ setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(functio
 <main class="container"><article class="tile report"><h1>Long-Term Capital Market Assumptions — 2026 Edition</h1>
 <p><strong>A proprietary 12-year forward outlook for global asset classes</strong></p>
 <ul>
-<li><strong>As-of date:</strong> 18 May 2026</li>
+<li><strong>Model as-of date:</strong> 7 August 2026 (equity valuation input: 30 June 2026)</li>
 <li><strong>Base currency:</strong> USD</li>
 <li><strong>Horizon:</strong> 12 years (midpoint of a 10–15-year window)</li>
 <li><strong>Universe:</strong> 24 asset classes spanning global equities, fixed income, and real assets</li>
@@ -41,8 +41,8 @@ strategic conclusions:</p>
 <ol>
 <li>
 <p><strong>US large-cap equity has the lowest expected return of any equity market
-   in the universe (~6.6% base case)</strong> — and the <em>highest</em> sensitivity to the
-   valuation assumption. A 2.4-percentage-point swing separates the optimistic and
+   in the universe (~6.0% base case)</strong> — and the <em>highest</em> sensitivity to the
+   valuation assumption. A 3.6-percentage-point swing separates the optimistic and
    pessimistic scenarios. Owning US equity at today's multiple is, mathematically,
    a bet that rich valuations persist.</p>
 </li>
@@ -89,8 +89,8 @@ strategic conclusions:</p>
 <tbody>
 <tr>
 <td>US large-cap equity</td>
-<td>6.6%</td>
-<td>5.7%</td>
+<td>6.0%</td>
+<td>5.7%†</td>
 <td>13.6%</td>
 </tr>
 <tr>
@@ -108,23 +108,18 @@ strategic conclusions:</p>
 <tr>
 <td>US Treasury / IG credit</td>
 <td>4.5% – 5.0%</td>
-<td>4.2% – 4.7%</td>
+<td>4.2% – 4.7%†</td>
 <td>7.6% – 8.0%</td>
-</tr>
-<tr>
-<td>EM USD sovereign / Mexican local govt</td>
-<td>6.0% / 6.3%</td>
-<td>5.5% / 5.7%</td>
-<td>9.9% / 11.3%</td>
-</tr>
-<tr>
-<td>Cash (US T-bills)</td>
-<td>3.3%</td>
-<td>3.2%</td>
-<td>3.4%</td>
 </tr>
 </tbody>
 </table>
+<p>† <em>Simulated medians come from the regime-switching GPU Monte Carlo (scripts
+<code>07</code>/<code>11</code>), a separate stage that is re-run less often than the building-block
+returns. Its current vintage is 22 May 2026, so it does not yet reflect the
+30 June 2026 CAPE refresh; the US large-cap simulated median in particular
+will fall when it is next re-run.</em>
+| EM USD sovereign / Mexican local govt | 6.0% / 6.3% | 5.5% / 5.7% | 9.9% / 11.3% |
+| Cash (US T-bills) | 3.3% | 3.2% | 3.4% |</p>
 <p>(Simulated medians sit below point estimates by design — the volatility drag on
 compounded returns. See Section 7.)</p>
 <hr />
@@ -177,6 +172,20 @@ This model exposes that choice as one parameter, λ:</p>
 spread across λ is itself a signal — the <strong>"valuation bet"</strong> column.</p>
 <p><strong>The fair-value anchor is data-driven.</strong> Shiller's 150-year series puts the US
 CAPE at a 1990+ <strong>median of 26.0</strong> — exactly the anchor used here.</p>
+<p><strong>The current multiple is sourced, not hardcoded.</strong> The US <code>val_now</code> reads the
+latest calendar quarter-end from the Shiller <code>ie_data</code> series (30 June 2026:
+<strong>CAPE 40.49</strong>), pinned to a quarter-end because Shiller's final months carry an
+estimated CPI. Before August 2026 this was a hardcoded constant that went two
+quarters stale without any signal — the refresh path is now automated end to end.</p>
+<p><strong>Open methodology question — one lens or two?</strong> This model is CAPE-anchored, and
+the two standard valuation lenses disagreed over H1 2026: CAPE <em>rose</em> (its
+ten-year real-earnings denominator lags a current earnings surge) while the US
+forward P/E <em>fell</em> as earnings outran price. A CAPE-only reading therefore
+increases the valuation drag in a period when a forward-earnings reading would
+have reduced it. The August 2026 refresh deliberately kept the single-lens CAPE
+method unchanged — it was a data refresh, not a methodology change — but whether
+a 12-year model should be CAPE-anchored, forward-P/E-anchored, or a blend of the
+two remains an open decision, not a settled one.</p>
 <h3>2.3 Risk model — shrinkage and long history</h3>
 <p>Volatility blends a trailing-window estimate with multi-decade history (Shiller
 1871+, Ken French 1990+, Damodaran 1928+), plus <strong>25 years of intraday FX history</strong>
@@ -216,7 +225,7 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
   and US aggregate bonds at 4.1–4.8%. This model's base case sits inside both.</li>
 <li><strong>Historical realized (Damodaran, 1928–2025):</strong> US large-cap returned 10.0%
   annualized, 10-year Treasuries 4.5%, T-bills 3.4%. The forward US equity number
-  is deliberately below its history — the starting CAPE (35) is far above the
+  is deliberately below its history — the starting CAPE (40) is far above the
   historical norm.</li>
 </ul>
 <hr />
@@ -242,7 +251,7 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 <td>~1.9%</td>
 <td>~2.7%</td>
 <td>~1.9%</td>
-<td>CAPE 34.7 — <strong>rich</strong></td>
+<td>CAPE 40.5 — <strong>rich</strong></td>
 <td>4.46%</td>
 </tr>
 <tr>
@@ -437,8 +446,8 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>US Large Cap</td>
 <td>Equity</td>
 <td>7.8%</td>
-<td><strong>6.6%</strong></td>
-<td>5.4%</td>
+<td><strong>6.0%</strong></td>
+<td>4.2%</td>
 <td>13.6%</td>
 </tr>
 <tr>
@@ -648,8 +657,8 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>1.7%</td>
 <td>2.5%</td>
 <td>2.4%</td>
-<td>−1.2%</td>
-<td>6.6%</td>
+<td>−3.6%</td>
+<td>6.0%</td>
 </tr>
 <tr>
 <td>US Small Cap</td>
@@ -1429,8 +1438,9 @@ confidentiality agreement. The libraries behind it include <strong>scikit-learn<
 </ul>
 <h3>11.2 Limitations</h3>
 <ul>
-<li><strong>No paid data.</strong> Valuations rely on Yahoo Finance ETF data and Siblis Research
-  CAPE; ETF distribution yields were hand-adjusted toward true dividend yields.</li>
+<li><strong>No paid data.</strong> The US CAPE comes from the free Shiller <code>ie_data</code> series;
+  other markets rely on Yahoo Finance ETF data and Siblis Research CAPE. ETF
+  distribution yields were hand-adjusted toward true dividend yields.</li>
 <li><strong>ETF proxies, not indices</strong>, for current-regime prices; the regional long
   history (French) proxies some single-country exposures (France/UK use European
   data).</li>
@@ -1488,7 +1498,7 @@ https://finance.yahoo.com</p>
 <code>10</code> regimes · <code>11</code> regime-switching GPU Monte Carlo · <code>13</code>–<code>14</code> FX ingest &amp;
 long-history validation · <code>15</code> visualizations · <code>12</code> Word/PDF rendering.</p>
 <hr />
-<p><em>Prepared 18 May 2026. Expected returns are forward-looking estimates, not
+<p><em>Prepared 18 May 2026; model refreshed 7 August 2026. Expected returns are forward-looking estimates, not
 guarantees; actual outcomes will differ. For internal strategic-allocation use.</em></p></article></main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment
 advice.</p></div></footer></body></html>
