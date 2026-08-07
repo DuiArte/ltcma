@@ -45,14 +45,11 @@ $Backup  = 'C:\Users\carlo\Documents\CarlosDuarteWebsite'
 $LogDir  = 'C:\Users\carlo\Scripts\logs'
 $Today   = Get-Date -Format 'yyyy-MM-dd'
 $LogFile = Join-Path $LogDir "website_refresh_$Today.log"
-$Urls    = @(
-    'https://duiarte.github.io/ltcma/index.html',
-    'https://duiarte.github.io/ltcma/portfolio.html',
-    'https://duiarte.github.io/ltcma/regime.html',
-    'https://duiarte.github.io/ltcma/strategies.html',
-    'https://duiarte.github.io/ltcma/research.html',
-    'https://duiarte.github.io/ltcma/stocks.html'
-)
+# Live-verify target. The page LIST is no longer hard-coded: it is enumerated from
+# docs/ after the build, so a page added by a future generator is covered on day 1.
+# The old six-URL literal silently excluded backtests/report/signals/glossary and the
+# eight stock_*.html pages -- 18 of 24 pages were never live-checked at all.
+$SiteBase = 'https://duiarte.github.io/ltcma'
 
 # generators print Unicode and write UTF-8; force UTF-8 mode on Windows Python
 $env:PYTHONUTF8 = '1'
@@ -235,6 +232,9 @@ try {
     (Invoke-Native { git add docs data }) | Out-Null
     $staged = (Invoke-Native { git diff --cached --name-only }).Text.Trim()
     if (-not $staged) {
+        # Still resolve $hash: the live-verify below reports it, and an unset
+        # variable there would blame an empty commit for a Pages failure.
+        $hash = (Invoke-Native { git rev-parse --short HEAD }).Text.Trim()
         Log "No changes to commit (pages already current)." 'WARN'
     } else {
         $msg = "chore: daily website refresh $Today (Windows-native Task Scheduler)"
@@ -247,17 +247,57 @@ try {
         Log "COMMIT_HASH=$hash"
     }
 
-    Log "Sleeping 60s for GitHub Pages..."
-    Start-Sleep -Seconds 60
-    foreach ($u in $Urls) {
-        try {
-            $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30
-            $hasAsof = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Today))) -or `
-                       ($resp.Content -match ("As of {0}" -f [regex]::Escape($TodayLong)))
-            Log ("LIVE {0} -> HTTP {1}; as-of-today={2}" -f $u, $resp.StatusCode, $hasAsof)
-        } catch {
-            Log ("LIVE check failed for {0}: {1}" -f $u, $_.Exception.Message) 'WARN'
+    # ---- 7. live verify -- ENFORCING, with retries for Pages deploy lag -------
+    # Every page under docs/ is checked for HTTP 200; the pages that carry an
+    # "As of" stamp in the freshly-built file must serve that same date live.
+    # The stamp-bearing set is derived from the build, never hard-coded, so it
+    # tracks generator changes (index.html gained/lost its stamp twice already).
+    #
+    # This used to log a WARN and still report DONE, which meant an F7 Pages
+    # deploy failure -- push green, site frozen -- was indistinguishable from a
+    # healthy run in the log. It now fails the run, which writes REFRESH_ALERT.txt.
+    $pageFiles = Get-ChildItem (Join-Path $Docs '*.html') |
+                 Where-Object { $_.Name -notlike '_scratch*' } | Sort-Object Name
+    $stamped = @{}
+    foreach ($f in $pageFiles) {
+        $hit = Select-String -Path $f.FullName -Pattern ("As of {0}" -f $Today), ("As of {0}" -f $TodayLong) -SimpleMatch |
+               Select-Object -First 1
+        if ($hit) { $stamped[$f.Name] = $true }
+    }
+    Log ("Live-verifying {0} pages ({1} of them carry a today-stamped 'As of')." -f $pageFiles.Count, $stamped.Count)
+
+    $maxRounds = 3
+    $bad = @()
+    for ($round = 1; $round -le $maxRounds; $round++) {
+        Log ("Waiting 60s for GitHub Pages (round {0}/{1})..." -f $round, $maxRounds)
+        Start-Sleep -Seconds 60
+        $bad = @()
+        foreach ($f in $pageFiles) {
+            $u = "$SiteBase/$($f.Name)"
+            try {
+                $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30
+                if ($resp.StatusCode -ne 200) { $bad += ("{0} HTTP {1}" -f $f.Name, $resp.StatusCode); continue }
+                if ($stamped.ContainsKey($f.Name)) {
+                    $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Today))) -or `
+                          ($resp.Content -match ("As of {0}" -f [regex]::Escape($TodayLong)))
+                    if (-not $ok -and $MorningRun) {
+                        $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Yesterday))) -or `
+                              ($resp.Content -match ("As of {0}" -f [regex]::Escape($YesterdayLong)))
+                    }
+                    if (-not $ok) { $bad += ("{0} serving a stale 'As of'" -f $f.Name) }
+                }
+            } catch {
+                $bad += ("{0} unreachable: {1}" -f $f.Name, $_.Exception.Message)
+            }
         }
+        if ($bad.Count -eq 0) {
+            Log ("LIVE OK: all {0} pages HTTP 200; every stamped page shows today (round {1})." -f $pageFiles.Count, $round)
+            break
+        }
+        Log ("LIVE round {0}: {1} page(s) not current yet -- {2}" -f $round, $bad.Count, (($bad | Select-Object -First 6) -join '; ')) 'WARN'
+    }
+    if ($bad.Count -gt 0) {
+        Fail ("Pushed $hash but GitHub Pages is still not serving it after $maxRounds rounds ({0} page(s)). This is failure mode F7 -- check the 'pages build and deployment' workflow, NOT refresh.yml:`n{1}" -f $bad.Count, (($bad | Select-Object -First 12) -join "`n"))
     }
 
     Remove-Item (Join-Path $LogDir 'REFRESH_ALERT.txt') -ErrorAction SilentlyContinue
