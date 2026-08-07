@@ -2,25 +2,65 @@
 All assumptions sourced inline. Horizon = 12y (midpoint of 10-15y).
 Outputs: data/ltcma_returns.csv, ltcma_vol.csv, ltcma_corr.csv, ltcma_summary.csv
 """
+import json
 import numpy as np
 import pandas as pd
 
-DATA = r"C:\Users\carlo\LTCMA\data"
+import paths as _paths                  # repo-anchored (migration 2026-08-07)
+DATA = _paths.DATA_S
 H = 12                 # horizon, years
 INFL_US = 0.024        # US LT inflation (consensus LTCMA ~2.3-2.5%)
 LAMBDAS = [0.0, 0.5, 1.0]   # valuation-reversion dial: none / partial / full
 
 # ============================================================
+# US LARGE-CAP VALUATION INPUT — sourced LIVE, never hardcoded.
+#
+# The CAPE that drives US_LargeCap's valuation reversion comes from the
+# repo's own Shiller series (05a downloads ie_data.xls -> 05b parses it to
+# data/longhistory/shiller_monthly.csv). It was previously a hardcoded
+# 34.7 "as of 12/31/2025" that silently went two quarters stale and read
+# LOW even against its own source (2026-08-07 audit, item #1).
+#
+# Vintage is pinned to the latest calendar QUARTER-END rather than the last
+# row: Shiller's final one-to-three months carry an estimated CPI (see the
+# "CPI estimated" footnote in ie_data.xls), and a quarter-end anchor matches
+# the quarterly cadence of the LTCMA itself. Deterministic and reproducible.
+# ============================================================
+CAPE_FALLBACK = (34.7, "2025-12-31", "STALE hardcoded fallback (Siblis Research)")
+
+def load_us_cape():
+    """(cape, as_of, source) for US large cap, from the free public Shiller series."""
+    p = f"{DATA}/longhistory/shiller_monthly.csv"
+    try:
+        s = pd.read_csv(p, index_col=0, parse_dates=True)["CAPE"].dropna()
+        q = s[s.index.month.isin((3, 6, 9, 12))]
+        if not len(q):
+            raise ValueError("no quarter-end observations in the CAPE column")
+        return (round(float(q.iloc[-1]), 2), str(q.index[-1].date()),
+                "Shiller ie_data via 05a->05b")
+    except Exception as e:
+        print(f"!! WARNING: could not read the live Shiller CAPE from {p} ({e}).")
+        print(f"!! Falling back to {CAPE_FALLBACK[0]} as of {CAPE_FALLBACK[1]} — the "
+              f"equity valuation input is STALE. Run 05a then 05b to refresh it.")
+        return CAPE_FALLBACK
+
+CAPE_NOW, CAPE_ASOF, CAPE_SRC = load_us_cape()
+print(f"US_LargeCap CAPE = {CAPE_NOW}  as of {CAPE_ASOF}   [{CAPE_SRC}]")
+
+# ============================================================
 # EQUITY BUILDING BLOCKS
 # DY=dividend yield, BB=net buyback yield, g=real EPS growth,
 # cape_now / cape_fair drive valuation reversion.
-# Sources: Siblis Research CAPE 12/31/2025; yfinance trailing P/E & yields
-# (May 2026); Damodaran 2026 country ERP; trend-growth = IMF/OECD consensus.
-# cape_fair = judgment anchor (long-run modern fair value) -- documented.
+# Sources: US CAPE = live Shiller series (above); yfinance trailing P/E &
+# yields (May 2026); Damodaran 2026 country ERP; trend-growth = IMF/OECD
+# consensus.
+# cape_fair = judgment anchor (long-run modern fair value) -- documented,
+# and deliberately left alone by the 2026-08-07 refresh: only val_now was
+# stale, and 26.0 is a conservative anchor vs the ~28.2 30y mean.
 # ============================================================
 EQUITY = {
-    # asset            DY     BB     g      val_now  val_fair  metric
-    "US_LargeCap":     (0.012, 0.017, 0.025, 34.7,   26.0,  "CAPE"),
+    # asset            DY     BB     g      val_now    val_fair  metric
+    "US_LargeCap":     (0.012, 0.017, 0.025, CAPE_NOW, 26.0,  "CAPE"),
     "US_SmallCap":     (0.013, 0.005, 0.025, 19.0,   18.0,  "P/E"),
     "Mexico_Eq":       (0.032, 0.000, 0.018, 13.0,   15.0,  "P/E"),
     "Brazil_Eq":       (0.045, 0.000, 0.020, 11.8,   11.5,  "P/E"),
@@ -103,16 +143,11 @@ px = pd.read_csv(f"{DATA}/prices_monthly.csv", index_col=0, parse_dates=True)
 
 # Merge real Mexico Govt Local bond series if available
 import os as _os
-_mex_paths = [
-    str(__import__("paths").DATA / "mexico_bond_monthly.csv"),
-    r"C:\Users\carlo\LTCMA\data\mexico_bond_monthly.csv",
-]
-for _p in _mex_paths:
-    if _os.path.exists(_p):
-        _mex = pd.read_csv(_p, index_col=0, parse_dates=True)
-        px = px.join(_mex[["Mexico_Govt_Local"]], how="left")
-        print(f"Mexico_Govt_Local: loaded real series from {_p}")
-        break
+_mex_path = f"{DATA}/mexico_bond_monthly.csv"
+if _os.path.exists(_mex_path):
+    _mex = pd.read_csv(_mex_path, index_col=0, parse_dates=True)
+    px = px.join(_mex[["Mexico_Govt_Local"]], how="left")
+    print(f"Mexico_Govt_Local: loaded real series from {_mex_path}")
 else:
     print("WARNING: mexico_bond_monthly.csv not found — run 05c first; "
           "Mexico_Govt_Local vol/corr will be absent from simple model.")
@@ -141,6 +176,28 @@ summary["vol"] = vol
 summary["sharpe_base"] = (summary["ER_lambda0.5"] - FIXED_INCOME["US_Cash_TBill"][0]) / summary["vol"]
 summary["lambda_spread"] = summary["ER_lambda0.0"] - summary["ER_lambda1.0"]
 summary.to_csv(f"{DATA}/ltcma_summary.csv")
+
+# ============================================================
+# 3b. MODEL VINTAGE METADATA
+# The daily refresh re-renders the site every day but NEVER runs 01/02/03,
+# so "today" is the signals date, not the model date. index.html used to
+# stamp today's date over frozen model output (2026-08-07 audit, item #10).
+# This file is what lets 17_build_site.py stamp the two dates separately.
+# ============================================================
+meta = {
+    "model_built": pd.Timestamp.today().strftime("%Y-%m-%d"),
+    "horizon_years": H,
+    "us_cape_now": CAPE_NOW,
+    "us_cape_asof": CAPE_ASOF,
+    "us_cape_source": CAPE_SRC,
+    "us_cape_fair": EQUITY["US_LargeCap"][4],
+    "us_largecap_er_lambda0.5": float(summary.loc["US_LargeCap", "ER_lambda0.5"]),
+    "infl_us": INFL_US,
+}
+with open(f"{DATA}/ltcma_meta.json", "w", encoding="utf-8") as fh:
+    json.dump(meta, fh, indent=2)
+print(f"Wrote ltcma_meta.json  (model_built={meta['model_built']}, "
+      f"CAPE {meta['us_cape_now']} @ {meta['us_cape_asof']})")
 
 pd.set_option("display.width", 160, "display.max_columns", 20)
 print("=== EXPECTED RETURNS (USD, 12y) & RISK ===\n")

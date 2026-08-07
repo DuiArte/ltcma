@@ -4,7 +4,8 @@ import pandas as pd
 import requests
 import yfinance as yf
 
-DATA = r"C:\Users\carlo\LTCMA\data"
+import paths as _paths                  # repo-anchored (migration 2026-08-07)
+DATA = _paths.DATA_S
 
 # --- Asset-class universe: ETF proxies (USD total-return via auto_adjust) ---
 EQUITY = {
