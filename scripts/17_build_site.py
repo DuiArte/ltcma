@@ -690,6 +690,12 @@ main{padding:4rem 0 5rem}
   text-transform:none;letter-spacing:0;color:var(--ink)}
 .report p,.report li{font-size:15px;color:var(--ink);margin:.6rem 0;line-height:1.65}
 .report a{color:var(--accent);text-underline-offset:2px}
+/* The Sources section carries bare URLs (Ken French, Siblis, FRED). An unbroken
+   URL is a single unbreakable word: at 375px it blew the container out by ~100px
+   and was the ONLY reason report.html failed the mobile no-overflow gate, since
+   every wide table already scrolls in its own container. break-word (not
+   anywhere) so ordinary prose still wraps on spaces. */
+.report p,.report li,.report a{overflow-wrap:break-word}
 .report table{border-collapse:collapse;width:100%;font-size:13px;margin:1.2rem 0;
   font-variant-numeric:tabular-nums}
 .report th{background:none;color:var(--muted);padding:8px 10px;text-align:left;font-weight:500;
