@@ -1,0 +1,10 @@
+{
+  "model_built": "2026-08-07",
+  "horizon_years": 12,
+  "us_cape_now": 40.49,
+  "us_cape_asof": "2026-06-30",
+  "us_cape_source": "Shiller ie_data via 05a->05b",
+  "us_cape_fair": 26.0,
+  "us_largecap_er_lambda0.5": 0.05987988933867566,
+  "infl_us": 0.024
+}
