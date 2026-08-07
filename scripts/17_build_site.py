@@ -24,6 +24,35 @@ INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
 RED, GREY, BG = "#7c2d12", "#888888", "#fafafa"
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 
+# ---------- model vintage vs signals vintage (2026-08-07 audit, item #10) ----
+# The daily refresh runs 08/09/10/17..28 — it NEVER runs 01/02/03. So "today"
+# is the date of the LIVE SIGNALS layer only; the LTCMA core underneath it is
+# whatever vintage 03_build_model.py last produced. Stamping today's date over
+# frozen model output overstated the model's freshness on the landing page.
+# Both dates are now published separately.
+def _load_json(path, default):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return default
+
+_meta = _load_json(f"{D}/ltcma_meta.json", {})
+MODEL_ASOF = (pd.Timestamp(_meta["model_built"]).strftime("%d %b %Y")
+              if _meta.get("model_built") else "unknown")
+VAL_ASOF = (pd.Timestamp(_meta["us_cape_asof"]).strftime("%d %b %Y")
+            if _meta.get("us_cape_asof") else None)
+
+# The regime-switching Monte Carlo (07/11) is a separate, GPU-only stage that
+# neither the daily refresh nor a plain model rebuild re-runs, so it carries
+# its own vintage. 11_montecarlo_regime.py writes mc_meta.json; the fallback is
+# the vintage of the committed mc_* files (commit e32cfc8, 2026-05-22).
+MC_ASOF = pd.Timestamp(
+    _load_json(f"{D}/mc_meta.json", {}).get("sim_built", "2026-05-22")
+).strftime("%d %b %Y")
+
+VAL_LINE = (f"&middot; equity valuation input {VAL_ASOF}" if VAL_ASOF else "")
+
 summ = pd.read_csv(f"{D}/ltcma_summary.csv", index_col=0)
 ret = pd.read_csv(f"{D}/ltcma_returns.csv", index_col=0)
 corr = pd.read_csv(f"{D}/ltcma_corr_v2.csv", index_col=0)
@@ -176,7 +205,10 @@ CHARTS = [
  ("regimes", f6, True, "Two news-based gauges of how tense the world is. "
   "Shaded bands are 'stress' months when markets get jumpier."),
  ("montecarlo", f7, False, "The range of where a 12-year investment could "
-  "realistically land — from a bad case (left) to a good case (right)."),
+  "realistically land — from a bad case (left) to a good case (right). "
+  f"Simulation vintage {MC_ASOF}: the GPU regime-switching engine is a "
+  "separate stage and is not re-run by the daily refresh, so this chart can "
+  "trail the expected-return table above."),
  ("backtest", f8, False, "A check on whether this method's past forecasts came "
   "true. The closer the dots sit to the diagonal line, the better."),
 ]
@@ -366,7 +398,8 @@ INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <p class="lede">A proprietary 12-year forward outlook for global asset classes —
 building-block expected returns, Ledoit-Wolf risk modelling, and a
 regime-switching GPU Monte Carlo engine.</p>
-<p class="asof">As of {ASOF} &middot; base currency USD &middot; built on free public data</p>
+<p class="asof">Signals as of {ASOF} &middot; LTCMA model as of {MODEL_ASOF}
+{VAL_LINE} &middot; base currency USD &middot; built on free public data</p>
 </div></section>
 <main class="container">
 {RECAP}

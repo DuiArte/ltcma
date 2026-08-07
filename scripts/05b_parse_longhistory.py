@@ -58,6 +58,20 @@ shiller["US_Eq_ret"] = shiller["US_Eq_TR_index"].pct_change()
 shiller.index.name = "Date"
 shiller.to_csv(f"{LH}/shiller_monthly.csv")
 print(f"\nShiller: {len(shiller)} months  {shiller.index.min().date()}..{shiller.index.max().date()}")
+
+# --- freshness assertion -------------------------------------------------
+# The upstream CDN serves a stale copy at HTTP 200 if the URL in 05a rots
+# (that is exactly how the CAPE input sat 20 months stale until 2026-08-07).
+# A successful parse is NOT evidence of fresh data — check the vintage.
+_last = shiller["CAPE"].dropna().index.max()
+_age_days = max(0, (pd.Timestamp.today().normalize() - _last).days)
+if _age_days > 150:
+    print(f"!! STALE SHILLER FEED: last CAPE observation is {_last.date()} "
+          f"({_age_days} days old). The ie_data.xls URL in 05a has probably "
+          f"rotted again — re-check the download link on shillerdata.com. "
+          f"03_build_model.py will build on a stale valuation input.")
+else:
+    print(f"  freshness OK: last CAPE observation {_last.date()} ({_age_days}d old)")
 print(f"  CAPE  now={shiller['CAPE'].dropna().iloc[-1]:.1f}  "
       f"mean(all)={shiller['CAPE'].mean():.1f}  "
       f"mean(1990+)={shiller.loc['1990':,'CAPE'].mean():.1f}  "

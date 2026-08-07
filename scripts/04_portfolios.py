@@ -2,7 +2,8 @@
 import numpy as np
 import pandas as pd
 
-DATA = r"C:\Users\carlo\LTCMA\data"
+import paths as _paths                  # repo-anchored (migration 2026-08-07)
+DATA = _paths.DATA_S
 summary = pd.read_csv(f"{DATA}/ltcma_summary.csv", index_col=0)
 corr = pd.read_csv(f"{DATA}/ltcma_corr.csv", index_col=0)
 

@@ -12,9 +12,16 @@ DOWNLOADS = {
     # Damodaran historical annual returns (S&P500, T-bill, T-bond, Baa, RE, gold)
     "damodaran_histret.xls":
         "https://pages.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls",
-    # Shiller monthly S&P composite + CAPE since 1871
+    # Shiller monthly S&P composite + CAPE since 1871.
+    # NB (2026-08-07): the old .../downloads/ie_data.xls path is a STALE CDN
+    # asset — it still returns HTTP 200 but is frozen at 2024-09, so a
+    # "successful" download silently kept the CAPE 20 months out of date for
+    # over a year. The live asset carries an extra per-file GUID segment.
+    # Deliberately NOT pinning the ?ver= query string shillerdata.com appends:
+    # pinning a version is what re-freezes this. 05b asserts freshness.
     "shiller_ie_data.xls":
-        "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls",
+        "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/"
+        "downloads/e27e58c1-8ae0-488c-a976-a298708c7175/ie_data.xls",
     # Ken French regional market factors (monthly)
     "french_Developed.zip":
         "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Developed_3_Factors_CSV.zip",

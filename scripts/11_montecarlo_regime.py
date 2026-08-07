@@ -159,3 +159,14 @@ print("\n=== GEOPOLITICAL STRESS SCENARIO (1-year shock) ===")
 for g in geo:
     print(f"  {g['portfolio']:30s} {g['shock_1y_return']*100:+6.1f}%")
 print("\nWrote mc_regime_assets.csv, mc_regime_portfolios.csv, geopolitical_scenario.csv")
+
+# Simulation vintage — this GPU stage is not part of the daily refresh, so the
+# site stamps the Monte Carlo chart with its own date rather than implying it
+# is as fresh as the signals layer (2026-08-07 audit, item #10).
+import json as _json
+with open(f"{D}/mc_meta.json", "w", encoding="utf-8") as _fh:
+    _json.dump({"sim_built": pd.Timestamp.today().strftime("%Y-%m-%d"),
+                "seed": SEED, "paths": N, "horizon_months": H,
+                "us_largecap_er_used": float(summary.loc["US_LargeCap",
+                                                         "ER_lambda0.5"])}, _fh, indent=2)
+print(f"Wrote mc_meta.json (sim_built={pd.Timestamp.today().date()})")
