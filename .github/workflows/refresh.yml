@@ -1,9 +1,32 @@
 name: Refresh market data & rebuild site
 
+# ============================================================================
+# SCHEDULE DISABLED 2026-08-11 — MANUAL-DISPATCH ONLY.
+#
+# The CANONICAL daily refresh is the Windows Task Scheduler on Carlos's host
+# (see AI_PROCEDURES/DAILY_REFRESH_PIPELINE.md). This workflow was a duplicate
+# cloud backup publisher. It had been failing EVERY weekday since 2026-07-17
+# (last green: run 43, 2026-07-16) and emailing a failure notice each time.
+#
+# Why the cron is gone rather than "fixed":
+#   1. Redundant — the host already refreshes and pushes daily; GitHub Pages
+#      (pages-build-deployment) deploys off that push, so the public site is
+#      unaffected by this workflow being idle.
+#   2. Unfixable as written — 25_stock_picks.py -> picker.py reads the PRIVATE
+#      host analytics at ~/capstone/data/analytics/stock_sensitivities.parquet,
+#      which cannot exist on a runner and MUST NOT be committed to this public
+#      repo (see GH_ACTIONS_CI_PLAYBOOK.md § RESTRAINT CHECK).
+#   3. Actively hazardous — this job does `git add -A` + commit + push to main.
+#      A cloud push racing the host scheduler is the documented "refresh
+#      rebase-trap" that froze the live site for six days in June 2026.
+#
+# workflow_dispatch is retained so the build can still be run by hand if the
+# host is ever down for an extended period. Full rationale + revival steps:
+#   AI_PROCEDURES/GITHUB_ACTIONS_REFRESH.md
+# ============================================================================
+
 on:
-  schedule:
-    - cron: '0 22 * * 1-5'     # weekdays 22:00 UTC (post US/BMV close); matches host scheduler
-  workflow_dispatch:            # allow manual run from the Actions tab
+  workflow_dispatch:            # MANUAL ONLY — schedule intentionally removed
 
 permissions:
   contents: write
@@ -55,12 +78,22 @@ jobs:
         #   24_backtests -> static redirect stub into strategies.html#backtests.
         # 23_strategies reads the Trading_Index hub on the host but falls back to the
         # committed catalog + docs/index.html's window.BT_DATA in CI (see glossary.bt_load /
-        # bt_catalog), so it must run AFTER 17 rebuilds index.html. 25 must run AFTER 19.
+        # bt_catalog), so it must run AFTER 17 rebuilds index.html.
+        #
+        # 25_stock_picks REMOVED 2026-08-11 — it is host-only, not CI-safe. It imports
+        # picker.build_universe(), which does an UNGUARDED
+        #   pd.read_parquet("~/capstone/data/analytics/stock_sensitivities.parquet")
+        # at picker.py:155. That path is private host analytics, absent on every runner,
+        # so the step died with FileNotFoundError in ~5s on every run from 2026-08-05
+        # (run 57) onward. Committing that parquet to green the build would publish
+        # private state -- forbidden, see GH_ACTIONS_CI_PLAYBOOK.md § RESTRAINT CHECK.
+        # stocks.html therefore lags a host-off day, exactly as portfolio.html does.
+        # To restore it here, picker.py must first gain a graceful fallback for a
+        # missing ANA parquet (and pyarrow must be added to requirements.txt).
         run: |
           python scripts/17_build_site.py         # index / report / glossary / projects
           python scripts/23_strategies.py         # strategies.html
           python scripts/27_research_notes.py     # research.html
-          python scripts/25_stock_picks.py        # stocks.html
           python scripts/21_stock_signals.py      # signals.html redirect
 
       - name: Commit refreshed data & site
