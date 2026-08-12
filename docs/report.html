@@ -35,7 +35,7 @@ regime-switching, and the rest — is explained in plain language in the
 <hr />
 <h2>1. Executive Summary</h2>
 <p>After a long US-led bull market, <strong>the starting point for the next decade is one
-of extreme valuation dispersion.</strong> The US trades at a CAPE of ~35 and Japan ~29,
+of extreme valuation dispersion.</strong> The US trades at a CAPE of ~40 and Japan ~29,
 while Mexico, Brazil, and China trade at 12–18× earnings. That gap drives four
 strategic conclusions:</p>
 <ol>
@@ -59,8 +59,8 @@ strategic conclusions:</p>
 </li>
 <li>
 <p><strong>Bonds still diversify, but less reliably than the pre-2021 era.</strong> The
-   trailing stock/long-Treasury correlation is ~0.00. Gold (0.12 vs US equity)
-   and the Treasury/commodity pairing (−0.35) now do more genuine diversification
+   trailing stock/long-Treasury correlation is ~0.00. Gold (0.11 vs US equity)
+   and the Treasury/commodity pairing (−0.38) now do more genuine diversification
    work than nominal bonds alone.</p>
 </li>
 </ol>
@@ -68,12 +68,12 @@ strategic conclusions:</p>
 <ul>
 <li><strong>What's priced in (Section 4):</strong> the Treasury curve says the market expects
   <strong>no further rate cuts</strong> — short-rate forwards rise, not fall. Inflation
-  expectations (2.5%) sit right on the LTCMA assumption. Credit is priced for
+  expectations (~2.3%) sit right on the LTCMA assumption. Credit is priced for
   perfection. The LTCMA's <em>active bets</em> are exactly where it diverges from this.</li>
 <li><strong>News and regime risk (Section 7):</strong> geopolitical and policy uncertainty
   (GPR, EPU indices) are <strong>elevated, and the market is currently in a "stress"
   regime.</strong> Quantified, that history shows stress periods amplify volatility
-  (1.2–2.2×) and cross-correlations (0.66→0.74) — but, tellingly, did <em>not</em>
+  (1.1–2.1×) and cross-correlations (0.67→0.73) — but, tellingly, did <em>not</em>
   reliably depress returns over 2013–2026.</li>
 </ul>
 <p><strong>Headline expected returns (USD, 12-year, base case):</strong></p>
@@ -258,8 +258,8 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 <tr>
 <td><strong>US</strong></td>
 <td>~3.6%</td>
-<td>4.59%</td>
-<td>~1.9%</td>
+<td>4.72%</td>
+<td>~2.0%</td>
 <td>~2.7%</td>
 <td>~1.9%</td>
 <td>CAPE 40.5 — <strong>rich</strong></td>
@@ -267,9 +267,9 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 <tr>
 <td><strong>Mexico</strong></td>
-<td>6.50%</td>
-<td>8.88%</td>
-<td>~4.4%</td>
+<td>6.50%†</td>
+<td>9.45%</td>
+<td>~5.0%</td>
 <td>4.45%</td>
 <td>~2.0%</td>
 <td>P/E 13.0 — <strong>cheap</strong></td>
@@ -277,7 +277,7 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 <tr>
 <td><strong>Brazil</strong></td>
-<td>14.50%</td>
+<td>14.50%†</td>
 <td>~13.5%</td>
 <td>~9.0%</td>
 <td>~4.5%</td>
@@ -287,7 +287,7 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 <tr>
 <td><strong>China</strong></td>
-<td>~3.0% (LPR)</td>
+<td>~3.0% (LPR)†</td>
 <td>~1.8%</td>
 <td>~1.3%</td>
 <td>~0.5%</td>
@@ -297,9 +297,9 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 <tr>
 <td><strong>Japan</strong></td>
-<td>~0.75%</td>
-<td>2.52%</td>
-<td>~0.0%</td>
+<td>~0.75%†</td>
+<td>2.67%</td>
+<td>~0.2%</td>
 <td>~2.5%</td>
 <td>~0.7%</td>
 <td>CAPE 29.4 — <strong>rich</strong></td>
@@ -307,8 +307,8 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 <tr>
 <td><strong>UK</strong></td>
-<td>~3.9%</td>
-<td>4.82%</td>
+<td>~3.9%†</td>
+<td>4.80%</td>
 <td>~1.8%</td>
 <td>~3.0%</td>
 <td>~1.3%</td>
@@ -317,7 +317,7 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 <tr>
 <td><strong>France</strong></td>
-<td>~2.0% (ECB)</td>
+<td>~2.0% (ECB)†</td>
 <td>3.68%</td>
 <td>~1.9%</td>
 <td>~1.8%</td>
@@ -327,10 +327,17 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 </tr>
 </tbody>
 </table>
-<p>*Real yield = 10Y nominal − current inflation (approximate).</p>
+<p><em>Real yield = 10Y nominal − current inflation (approximate).
+Nominal 10Y yields are the latest observation in <code>data/macro.csv</code> as of
+11 August 2026 (US daily; Mexico, Japan, UK and France are monthly FRED series
+and lag by one to three months). Equity valuations are the model's <code>val_now</code>.
+†Policy rates other than the US are hand-maintained from central-bank sources —
+they are </em><em>not</em>* reproduced by any script in this repo, and the <code>Mexico_PolicyRate</code>
+column in <code>macro.csv</code> has been dead since 2013. Treat them as documented inputs,
+not as regenerated data.</p>
 <p><strong>What the grid says:</strong> valuation is bimodal — the US and Japan are expensive,
 EM/LatAm and China are cheap, with only the UK and France in between. Real yields
-favor Latin America massively (Mexico ~4.4%, Brazil ~9%, vs US ~1.9%). Rate
+favor Latin America massively (Mexico ~5.0%, Brazil ~9%, vs US ~2.0%). Rate
 <em>direction</em> is no longer a tailwind anywhere — carry, not duration, is where the
 return is. China is the contrarian case: cheap and still growing ~4%, but
 deflation and policy risk are what the discount prices.</p>
@@ -384,6 +391,10 @@ LTCMA's cash assumption (3.3%, assuming a drift toward a ~3.0–3.3% neutral rat
 is <em>slightly below</em> what the market prices — a small, deliberate divergence.</p>
 <p><img alt="Priced-in rate path: spot Treasury curve vs implied forwards" src="figures/fig_priced_in.png" /></p>
 <h3>4.2 Priced-in inflation, risk, and the dashboard</h3>
+<p>Market readings below are the <strong>11 August 2026</strong> observation (EPU is the July
+monthly print). They are a dated snapshot of <code>data/priced_in.csv</code>, which script
+<code>09_priced_in.py</code> regenerates every weekday — the live version of this table is
+the dashboard on <code>index.html</code>, which is always current.</p>
 <table>
 <thead>
 <tr>
@@ -396,44 +407,44 @@ is <em>slightly below</em> what the market prices — a small, deliberate diverg
 <tbody>
 <tr>
 <td><strong>Rate path</strong></td>
-<td>No cuts; 1–2y forward 4.4%</td>
+<td>No cuts; ~4.0% avg next 12m, 1–2y forward 4.5%</td>
 <td>Cash 3.3%</td>
 <td>Market more hawkish than the LTCMA's neutral-rate drift</td>
 </tr>
 <tr>
 <td><strong>Long-run inflation</strong></td>
-<td>10y breakeven 2.48%, 5y5y forward 2.27%</td>
+<td>10y breakeven 2.27%, 5y5y forward 2.31%</td>
 <td>2.40%</td>
 <td><strong>Aligned</strong> — LTCMA sits mid-range</td>
 </tr>
 <tr>
 <td><strong>US credit risk</strong></td>
-<td>HY OAS 2.80% (~14th percentile — very tight)</td>
+<td>HY OAS 2.70% (~8th percentile — very tight)</td>
 <td>HY 5.0%, tight-spread drag applied</td>
 <td><strong>Agreement</strong> — credit priced for perfection; LTCMA already cautious</td>
 </tr>
 <tr>
 <td><strong>Equity volatility</strong></td>
-<td>VIX 18.4 (~historical median)</td>
+<td>VIX 15.5 (~35th percentile)</td>
 <td>Equity vols 13–33%</td>
 <td>Market calm; no near-term stress priced</td>
 </tr>
 <tr>
 <td><strong>Recession</strong></td>
-<td>Yield curve 10Y–3M +0.93% (positive)</td>
+<td>Yield curve 10Y–3M +0.81% (positive)</td>
 <td>n/a</td>
 <td>No recession priced in</td>
 </tr>
 <tr>
 <td><strong>Policy uncertainty</strong></td>
-<td>EPU 212 (baseline ~100 — elevated)</td>
+<td>EPU 184 (baseline ~100 — elevated)</td>
 <td>n/a</td>
 <td><strong>Complacency divergence</strong> — see below</td>
 </tr>
 </tbody>
 </table>
-<p><strong>The complacency divergence.</strong> Policy uncertainty (EPU) is elevated at ~212
-while equity volatility (VIX) sits near its historical median. The market is
+<p><strong>The complacency divergence.</strong> Policy uncertainty (EPU) is elevated at ~184
+while equity volatility (VIX) sits below its historical median. The market is
 treating heavy policy noise — a Fed-chair transition, tariff conflict, the Gulf
 situation — as signal-free. Either the noise resolves benignly (the 2013–2026
 pattern) or this gap closes through a volatility spike. The regime engine in
@@ -459,7 +470,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>7.8%</td>
 <td><strong>6.0%</strong></td>
 <td>4.2%</td>
-<td>13.6%</td>
+<td>13.4%</td>
 </tr>
 <tr>
 <td>US Small Cap</td>
@@ -467,7 +478,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>6.7%</td>
 <td><strong>6.5%</strong></td>
 <td>6.3%</td>
-<td>19.6%</td>
+<td>19.3%</td>
 </tr>
 <tr>
 <td>Mexico Equity</td>
@@ -475,7 +486,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>7.4%</td>
 <td><strong>8.0%</strong></td>
 <td>8.6%</td>
-<td>22.4%</td>
+<td>21.9%</td>
 </tr>
 <tr>
 <td>Brazil Equity</td>
@@ -483,7 +494,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>8.9%</td>
 <td><strong>8.8%</strong></td>
 <td>8.7%</td>
-<td>32.7%</td>
+<td>31.2%</td>
 </tr>
 <tr>
 <td>China Equity</td>
@@ -491,7 +502,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>8.1%</td>
 <td><strong>7.4%</strong></td>
 <td>6.7%</td>
-<td>23.1%</td>
+<td>22.8%</td>
 </tr>
 <tr>
 <td>Japan Equity</td>
@@ -499,7 +510,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>7.1%</td>
 <td><strong>6.4%</strong></td>
 <td>5.8%</td>
-<td>16.7%</td>
+<td>16.5%</td>
 </tr>
 <tr>
 <td>UK Equity</td>
@@ -507,7 +518,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>8.0%</td>
 <td><strong>7.0%</strong></td>
 <td>6.1%</td>
-<td>16.6%</td>
+<td>16.1%</td>
 </tr>
 <tr>
 <td>France Equity</td>
@@ -515,7 +526,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>7.4%</td>
 <td><strong>7.2%</strong></td>
 <td>7.0%</td>
-<td>17.7%</td>
+<td>17.3%</td>
 </tr>
 <tr>
 <td>EM Equity (broad)</td>
@@ -523,7 +534,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>8.0%</td>
 <td><strong>8.0%</strong></td>
 <td>8.0%</td>
-<td>18.8%</td>
+<td>18.7%</td>
 </tr>
 <tr>
 <td>DM ex-US Equity (broad)</td>
@@ -531,7 +542,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>7.5%</td>
 <td><strong>7.7%</strong></td>
 <td>8.0%</td>
-<td>15.7%</td>
+<td>15.4%</td>
 </tr>
 <tr>
 <td>US Cash / T-Bills</td>
@@ -547,7 +558,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>4.5%</strong></td>
 <td>—</td>
-<td>7.6%</td>
+<td>7.5%</td>
 </tr>
 <tr>
 <td>US Treasury Long</td>
@@ -555,7 +566,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>4.8%</strong></td>
 <td>—</td>
-<td>15.2%</td>
+<td>15.1%</td>
 </tr>
 <tr>
 <td>US TIPS</td>
@@ -563,7 +574,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>4.5%</strong></td>
 <td>—</td>
-<td>6.2%</td>
+<td>6.0%</td>
 </tr>
 <tr>
 <td>US IG Corporate</td>
@@ -571,7 +582,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>5.0%</strong></td>
 <td>—</td>
-<td>8.0%</td>
+<td>7.9%</td>
 </tr>
 <tr>
 <td>US High Yield</td>
@@ -579,7 +590,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>5.0%</strong></td>
 <td>—</td>
-<td>7.9%</td>
+<td>7.7%</td>
 </tr>
 <tr>
 <td>EM USD Sovereign</td>
@@ -587,7 +598,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>6.0%</strong></td>
 <td>—</td>
-<td>9.9%</td>
+<td>9.7%</td>
 </tr>
 <tr>
 <td>EM Local Debt</td>
@@ -595,7 +606,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>4.8%</strong></td>
 <td>—</td>
-<td>11.3%</td>
+<td>10.9%</td>
 </tr>
 <tr>
 <td>Mexico Govt (local, Mbonos)</td>
@@ -603,7 +614,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>6.3%</strong></td>
 <td>—</td>
-<td>14.8%</td>
+<td>14.7%</td>
 </tr>
 <tr>
 <td>Global Aggregate ex-US (hedged)</td>
@@ -611,7 +622,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>3.8%</strong></td>
 <td>—</td>
-<td>5.9%</td>
+<td>5.4%</td>
 </tr>
 <tr>
 <td>US REITs</td>
@@ -619,7 +630,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>6.3%</strong></td>
 <td>—</td>
-<td>17.6%</td>
+<td>16.9%</td>
 </tr>
 <tr>
 <td>Global REITs ex-US</td>
@@ -627,7 +638,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>6.4%</strong></td>
 <td>—</td>
-<td>16.5%</td>
+<td>15.5%</td>
 </tr>
 <tr>
 <td>Commodities (broad)</td>
@@ -635,7 +646,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>3.5%</strong></td>
 <td>—</td>
-<td>17.2%</td>
+<td>17.0%</td>
 </tr>
 <tr>
 <td>Gold</td>
@@ -643,7 +654,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>—</td>
 <td><strong>3.3%</strong></td>
 <td>—</td>
-<td>18.6%</td>
+<td>18.7%</td>
 </tr>
 </tbody>
 </table>
@@ -668,7 +679,7 @@ Section 7 is built precisely to price that asymmetry.</p>
 <td>1.7%</td>
 <td>2.5%</td>
 <td>2.4%</td>
-<td>−3.6%</td>
+<td>−1.8%</td>
 <td>6.0%</td>
 </tr>
 <tr>
@@ -782,120 +793,120 @@ matrix is Ledoit-Wolf shrunk and positive semi-definite.</p>
 <tr>
 <td><strong>US Large Cap</strong></td>
 <td>1.00</td>
-<td>0.71</td>
+<td>0.70</td>
 <td>0.61</td>
-<td>0.69</td>
-<td>0.83</td>
+<td>0.71</td>
+<td>0.84</td>
 <td>−0.01</td>
 <td>0.79</td>
 <td>0.66</td>
-<td>0.12</td>
-<td>0.41</td>
+<td>0.11</td>
+<td>0.39</td>
 </tr>
 <tr>
 <td><strong>EM Equity</strong></td>
-<td>0.71</td>
+<td>0.70</td>
 <td>1.00</td>
-<td>0.67</td>
-<td>0.70</td>
+<td>0.66</td>
+<td>0.69</td>
 <td>0.83</td>
-<td>0.00</td>
-<td>0.70</td>
+<td>−0.01</td>
+<td>0.68</td>
 <td>0.72</td>
-<td>0.38</td>
-<td>0.49</td>
+<td>0.35</td>
+<td>0.46</td>
 </tr>
 <tr>
 <td><strong>Mexico Equity</strong></td>
 <td>0.61</td>
-<td>0.67</td>
-<td>1.00</td>
-<td>0.58</td>
-<td>0.73</td>
-<td>−0.04</td>
 <td>0.66</td>
-<td>0.65</td>
-<td>0.27</td>
-<td>0.44</td>
+<td>1.00</td>
+<td>0.57</td>
+<td>0.74</td>
+<td>−0.06</td>
+<td>0.64</td>
+<td>0.64</td>
+<td>0.26</td>
+<td>0.43</td>
 </tr>
 <tr>
 <td><strong>Japan Equity</strong></td>
+<td>0.71</td>
 <td>0.69</td>
-<td>0.70</td>
-<td>0.58</td>
+<td>0.57</td>
 <td>1.00</td>
-<td>0.83</td>
-<td>0.03</td>
+<td>0.84</td>
+<td>0.02</td>
 <td>0.61</td>
 <td>0.58</td>
-<td>0.13</td>
-<td>0.31</td>
+<td>0.10</td>
+<td>0.26</td>
 </tr>
 <tr>
 <td><strong>US Treasury Long</strong></td>
 <td>−0.01</td>
-<td>0.00</td>
-<td>−0.04</td>
-<td>0.03</td>
 <td>−0.01</td>
+<td>−0.06</td>
+<td>0.02</td>
+<td>−0.02</td>
 <td>1.00</td>
-<td>0.13</td>
-<td>0.36</td>
-<td>0.27</td>
-<td>−0.35</td>
+<td>0.10</td>
+<td>0.35</td>
+<td>0.24</td>
+<td>−0.38</td>
 </tr>
 <tr>
 <td><strong>US High Yield</strong></td>
 <td>0.79</td>
-<td>0.70</td>
-<td>0.66</td>
+<td>0.68</td>
+<td>0.64</td>
 <td>0.61</td>
-<td>0.78</td>
-<td>0.13</td>
+<td>0.79</td>
+<td>0.10</td>
 <td>1.00</td>
 <td>0.81</td>
-<td>0.27</td>
-<td>0.45</td>
+<td>0.23</td>
+<td>0.43</td>
 </tr>
 <tr>
 <td><strong>Gold</strong></td>
-<td>0.12</td>
-<td>0.38</td>
-<td>0.27</td>
-<td>0.13</td>
+<td>0.11</td>
+<td>0.35</td>
 <td>0.26</td>
-<td>0.27</td>
-<td>0.27</td>
-<td>0.37</td>
+<td>0.10</td>
+<td>0.24</td>
+<td>0.24</td>
+<td>0.23</td>
+<td>0.35</td>
 <td>1.00</td>
-<td>0.22</td>
+<td>0.23</td>
 </tr>
 <tr>
 <td><strong>Commodities</strong></td>
-<td>0.41</td>
-<td>0.49</td>
-<td>0.44</td>
-<td>0.31</td>
+<td>0.39</td>
 <td>0.46</td>
-<td>−0.35</td>
+<td>0.43</td>
+<td>0.26</td>
 <td>0.45</td>
-<td>0.33</td>
-<td>0.22</td>
+<td>−0.38</td>
+<td>0.43</td>
+<td>0.30</td>
+<td>0.23</td>
 <td>1.00</td>
 </tr>
 </tbody>
 </table>
 <h3>6.2 What the risk picture tells us</h3>
 <ul>
-<li><strong>Equities are highly correlated (0.6–0.83).</strong> Geographic diversification
+<li><strong>Equities are highly correlated (0.57–0.84).</strong> Geographic diversification
   reduces single-country risk but little systemic drawdown risk.</li>
 <li><strong>Long Treasuries are the cleanest equity diversifier on paper (≈0.00)</strong> — but
   regime-dependent (Section 7); the average hides post-2021 positive-correlation
   episodes.</li>
-<li><strong>Gold is a genuine diversifier</strong> (0.12 vs US equity) and earns its place
+<li><strong>Gold is a genuine diversifier</strong> (0.11 vs US equity) and earns its place
   despite a modest 3.3% return.</li>
 <li><strong>High yield is equity in disguise</strong> (0.79 correlation with US equity).</li>
-<li><strong>The Treasury/commodity pair (−0.35)</strong> is the strongest natural hedge.</li>
+<li><strong>The Treasury/commodity pair (−0.38)</strong> is the strongest natural hedge.</li>
 </ul>
 <p><img alt="Asset correlation matrix (Ledoit-Wolf shrunk)" src="figures/fig_correlation.png" /></p>
 <hr />
@@ -903,11 +914,15 @@ matrix is Ledoit-Wolf shrunk and positive semi-definite.</p>
 <h3>7.1 Quantifying the news</h3>
 <p>Geopolitical and policy events enter the model through two text-based indices
 (see 2.5): <strong>GPR</strong> (geopolitical risk) and <strong>EPU</strong> (economic policy uncertainty).
-Both are currently elevated — GPR ~231 and EPU ~212 against a ~100 baseline,
-reflecting the Gulf situation, tariff conflict, and the Fed-chair transition.</p>
+Both remain elevated against a ~100 baseline — GPR ~153 and EPU ~184 at the
+July 2026 monthly print, down from the March 2026 spike (GPR 330) but still
+well above normal, reflecting the Gulf situation, tariff conflict, and the
+Fed-chair transition.</p>
 <p>History (2013–2026) is classified into <strong>calm</strong> and <strong>stress</strong> regimes — a stress
 month being one in the top third of a combined GPR+EPU score. <strong>34% of months
-were stress months; as of May 2026 the market is <em>in</em> a stress regime.</strong></p>
+were stress months; at the latest classified month (July 2026) the market is
+<em>in</em> a stress regime</strong> — and has been continuously since November 2024, a
+21-month spell against an average spell length of ~5 months.</p>
 <p><img alt="GPR and EPU uncertainty indices with stress months shaded" src="figures/fig_regime_timeline.png" /></p>
 <h3>7.2 What stress regimes do — and don't do</h3>
 <table>
@@ -920,15 +935,15 @@ were stress months; as of May 2026 the market is <em>in</em> a stress regime.</s
 <tbody>
 <tr>
 <td><strong>Volatility</strong></td>
-<td>Amplifies 1.2–2.2× (US equity 1.6×, high yield 2.1×, EM sovereign 2.2×; <strong>gold least affected at 1.2×</strong>)</td>
+<td>Amplifies 1.1–2.1× (US equity 1.6×, high yield 2.0×, EM sovereign 2.1×; <strong>gold among the least affected at 1.3×</strong>)</td>
 </tr>
 <tr>
 <td><strong>Correlation</strong></td>
-<td>Equity cross-correlation rises 0.66 → 0.74 — diversification weakens just when it is needed</td>
+<td>Equity cross-correlation rises 0.67 → 0.73 — diversification weakens just when it is needed</td>
 </tr>
 <tr>
 <td><strong>Persistence</strong></td>
-<td>Stress regimes last ~5.7 months on average (Markov: stress→stress 0.82)</td>
+<td>Stress regimes last ~5.2 months on average (Markov: stress→stress 0.81)</td>
 </tr>
 <tr>
 <td><strong>Returns</strong></td>
@@ -1121,9 +1136,9 @@ with λ. <strong>US Large Cap (2.4pp) and UK (1.9pp) carry the largest valuation
 </li>
 <li>
 <p><strong>Mexican local government bonds are the standout fixed-income holding.</strong>
-   ~6.3% USD return, and the simulation confirms an outstanding downside profile
-   (3.5% loss probability). The ~4.4% real yield is a thick cushion against MXN
-   depreciation.</p>
+   ~6.3% USD return, and the simulation confirms the best downside profile in the
+   fixed-income sleeve (5.3% median, 9.7% probability of a 12-year loss). The
+   ~5.0% real yield is a thick cushion against MXN depreciation.</p>
 </li>
 <li>
 <p><strong>EM USD sovereign debt over US credit.</strong> 6.0% vs 5.0%, similar volatility,
@@ -1132,8 +1147,9 @@ with λ. <strong>US Large Cap (2.4pp) and UK (1.9pp) carry the largest valuation
 </li>
 <li>
 <p><strong>Use gold and commodities for diversification, not return.</strong> With the
-   stock/bond correlation no longer dependably negative, and gold the <em>least</em>
-   volatility-amplified asset in stress regimes (1.2×), it is a structural hedge —
+   stock/bond correlation no longer dependably negative, and gold among the
+   <em>least</em> volatility-amplified risk assets in stress regimes (1.3×, against
+   1.6× for US large-cap), it is a structural hedge —
    but the simulation is blunt that it rarely beats inflation, so size it as one.</p>
 </li>
 <li>
@@ -1164,38 +1180,38 @@ through the regime-switching engine (annually rebalanced).</p>
 <tr>
 <td>Conservative 30/70</td>
 <td>5.0%</td>
-<td>5.0%</td>
-<td>1.7% – 8.5%</td>
-<td>+0.8%</td>
+<td>4.9%</td>
+<td>1.7% – 8.3%</td>
+<td>+0.9%</td>
 <td>−8.8%</td>
 <td>10%</td>
 </tr>
 <tr>
 <td>Moderate 60/40</td>
-<td>5.8%</td>
-<td>5.7%</td>
-<td>1.1% – 10.6%</td>
-<td>−0.1%</td>
+<td>5.6%</td>
+<td>5.5%</td>
+<td>1.0% – 10.3%</td>
+<td>−0.2%</td>
 <td>−18.0%</td>
-<td>12%</td>
+<td>13%</td>
 </tr>
 <tr>
 <td>Growth 90/10</td>
-<td>6.3%</td>
-<td>6.2%</td>
-<td>0.2% – 12.6%</td>
-<td>−1.4%</td>
+<td>6.0%</td>
+<td>6.0%</td>
+<td>0.0% – 12.3%</td>
+<td>−1.5%</td>
 <td>−27.2%</td>
-<td>15%</td>
+<td>17%</td>
 </tr>
 <tr>
 <td><strong>Edge-Tilted (moderate risk)</strong></td>
-<td><strong>5.9%</strong></td>
 <td><strong>5.8%</strong></td>
-<td><strong>0.7% – 11.2%</strong></td>
-<td><strong>−0.6%</strong></td>
+<td><strong>5.7%</strong></td>
+<td><strong>0.6% – 11.1%</strong></td>
+<td><strong>−0.7%</strong></td>
 <td><strong>−20.2%</strong></td>
-<td><strong>14%</strong></td>
+<td><strong>15%</strong></td>
 </tr>
 </tbody>
 </table>
