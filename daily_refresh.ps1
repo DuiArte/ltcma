@@ -9,6 +9,8 @@
   retired -- see AI_PROCEDURES\WEBSITE_REFRESH_WINDOWS_MIGRATION.md.
 
   Flow:
+    0. Take the cross-task repo lock (weekly_model_rebuild.ps1 takes the same
+       one) so the two jobs can never touch this clone at the same time.
     1. Verify clean tree (auto-clean generated docs/data leftovers), pull --rebase.
     2. Data refresh (best-effort): 08 signals, 09 priced-in, 10 regimes,
        20 regime tracker, 19 stock analysis, 28 EMBER paper-track.
@@ -61,8 +63,48 @@ function Log {
     param([string]$Msg, [string]$Level = 'INFO')
     $line = "{0} [{1}] {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $Msg
     Write-Host $line
-    Add-Content -Path $LogFile -Value $line -Encoding UTF8
+    # Tolerant on purpose: with $ErrorActionPreference='Stop' a full disk makes this
+    # throw inside Fail(), which re-enters the catch and dies before REFRESH_ALERT.txt
+    # is ever written -- no alert in exactly the case that most needs one.
+    Add-Content -Path $LogFile -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
 }
+
+# ---- Cross-task repo lock ---------------------------------------------------
+# weekly_model_rebuild.ps1 (Sun 22:00) takes this SAME lock. Both scripts operate
+# on this clone and both start by running `git checkout -- docs data` +
+# `git clean -fd docs data`, so an overlap lets one wipe the other's in-flight
+# output -- and the weekly job could then commit a data/ set that is half its own
+# rebuild and half HEAD. The nominal schedules do not overlap, but
+# StartWhenAvailable fires a missed Sunday rebuild at next logon, which can land
+# minutes before this job's 16:31 slot.
+#
+# A named MUTEX, not a lock file: Task Scheduler kills a run that hits its
+# ExecutionTimeLimit and the OS releases an abandoned mutex (caught below, we take
+# ownership); a lock file left by that same kill would deadlock every future run.
+# Process exit releases it too, so every Fail() path is safe.
+$script:RepoMutex = $null
+function Enter-RepoLock {
+    param([int]$TimeoutMinutes = 25)
+    foreach ($n in @('Global\LTCMA_REPO_LOCK', 'Local\LTCMA_REPO_LOCK')) {
+        $m = $null
+        try { $m = New-Object System.Threading.Mutex($false, $n) } catch { continue }
+        $owned = $false
+        try { $owned = $m.WaitOne([TimeSpan]::FromMinutes($TimeoutMinutes)) }
+        catch [System.Threading.AbandonedMutexException] { $owned = $true }
+        if ($owned) { $script:RepoMutex = $m; Log "Repo lock acquired ($n)."; return $true }
+        $m.Dispose()
+        return $false   # creatable but contended -- a real timeout, not a namespace problem
+    }
+    Log "Could not create a repo mutex; proceeding WITHOUT cross-task locking." 'WARN'
+    return $true
+}
+function Exit-RepoLock {
+    if ($script:RepoMutex) {
+        try { $script:RepoMutex.ReleaseMutex() } catch { }
+        $script:RepoMutex.Dispose(); $script:RepoMutex = $null
+    }
+}
+
 function Fail {
     param([string]$Msg)
     Log $Msg 'ERROR'
@@ -84,6 +126,11 @@ function Invoke-Native {
     param([scriptblock]$Script)
     $prev = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
+    # Clear first: every caller runs a NATIVE command, so a command that cannot be
+    # launched at all (python off PATH mid-run) leaves LASTEXITCODE at the PREVIOUS
+    # step's value -- a prior `git status` 0 would report a generator that never ran
+    # as a success. $null propagates and `$null -ne 0` is true, so callers fail loudly.
+    $global:LASTEXITCODE = $null
     try { $out = & $Script 2>&1 | ForEach-Object { "$_" }; $code = $LASTEXITCODE }
     finally { $ErrorActionPreference = $prev }
     return [pscustomobject]@{ Code = $code; Text = ($out -join "`n") }
@@ -108,6 +155,11 @@ Log "=== Windows-native refresh START ($mode) ==="
 
 try {
     Set-Location $Repo
+
+    # ---- 0. cross-task repo lock -------------------------------------------
+    if (-not (Enter-RepoLock -TimeoutMinutes 25)) {
+        Fail "Another LTCMA job holds the repo lock and did not release it within 25 min (weekly_model_rebuild.ps1 running long, or a wedged run). Refusing to build -- a concurrent 'git checkout -- docs data' would destroy its in-flight model rebuild."
+    }
 
     # ---- 1. clean tree + pull ----------------------------------------------
     $r = Invoke-Native { git status --porcelain }
@@ -302,8 +354,10 @@ try {
 
     Remove-Item (Join-Path $LogDir 'REFRESH_ALERT.txt') -ErrorAction SilentlyContinue
     Log "=== refresh DONE ($([math]::Round(((Get-Date)-$script:Start).TotalSeconds))s) ==="
+    Exit-RepoLock
     exit 0
 }
 catch {
     Fail ("Unhandled: {0}`n{1}" -f $_.Exception.Message, $_.ScriptStackTrace)
 }
+finally { Exit-RepoLock }
