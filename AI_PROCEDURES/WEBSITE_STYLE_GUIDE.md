@@ -55,6 +55,22 @@ Observations. **Restraint is the design constraint — when in doubt, remove dec
 - Primary series accent `#0a2540`; secondary muted `#888888`. No fills/gradients.
 - Grid `#e5e5e5` (single weight). Font Inter; mono tick/axis where tabular.
 - Already-embedded charts inherit new fonts/accent on next full `daily_refresh`.
+- ⚠️ **`font.family` must name a family the page actually `<link>`s** — Spectral, Inter or
+  JetBrains Mono. A missing family is a silent browser fallback, not an error: from at least
+  2026-06 to 2026-08-12 `18_portfolio.py` asked for `"IBM Plex Sans"`, which no page has ever
+  loaded, so its charts rendered in the generic sans beside Inter body text. Grep
+  `scripts/*.py` for stray `family=` values.
+- **Numbers are mono, labels are sans** — set `tickfont` and `hoverlabel.font` to the
+  JetBrains Mono stack so figures match `.asof` / `.mv`; leave `font` / `title_font` Inter.
+- **No in-plot `title` when an HTML `<h2>` sits above the chart**, and no `xaxis_title` on a
+  date axis. Carry the vintage in a mono `<p class="asof">` under the heading instead.
+- **One meaning per colour per chart.** `GREEN #0a5d3a` = buy / positive; if a line is also
+  green, move the line (cost basis → `GREY #888888`).
+- Hover: `hovermode="x unified"` + `xaxis.hoverformat` prints the date header itself — don't
+  repeat it in the trace text. Multi-line bodies use `<br>`; whitespace alignment does not
+  survive HTML. Separator `·` U+00B7, never `•` U+2022.
+- ⚠️ **Hover `text` is public surface.** Anything scaled elsewhere on the page must be scaled
+  in the hover too, and guarded — see `WEBSITE_DEPLOY.md § Chart hovers are public surface`.
 
 ## Apply / verify
 - Regen via WSL `daily_refresh.sh` (hub `~/LTCMA`). On native Windows, edit the
