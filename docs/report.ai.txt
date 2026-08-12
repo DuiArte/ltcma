@@ -30,13 +30,11 @@ format: numbered section map; tables pipe-compact; one lead sentence/section. fu
 # TABLES (pipe-compact)
 ## 1. Executive Summary
 |Point estimate|Simulated 12y median|Volatility
-US large-cap equity|6.0%|5.7%†|13.6%
-EM equity|8.0%|6.4%|18.8%
-Brazil / Mexico equity|8.8% / 8.0%|4.1% / 5.7%|32.7% / 22.4%
-US Treasury / IG credit|4.5% – 5.0%|4.2% – 4.7%†|7.6% – 8.0%
-
-## 1. Executive Summary
-EM USD sovereign / Mexican local govt|6.0% / 6.3%|5.5% / 5.7%|9.9% / 11.3%
+US large-cap equity|6.0%|5.2%|13.4%
+EM equity|8.0%|6.4%|18.7%
+Brazil / Mexico equity|8.8% / 8.0%|4.6% / 5.8%|31.2% / 21.9%
+US Treasury / IG credit|4.5% – 5.0%|4.2% – 4.7%|7.5% – 7.9%
+EM USD sovereign / Mexican local govt|6.0% / 6.3%|5.6% / 5.3%|9.7% / 14.7%
 Cash (US T-bills)|3.3%|3.2%|3.4%
 
 ## 2. Methodology
@@ -133,10 +131,10 @@ Behavior in stress months|Finding
 
 ## 7. News, Regimes & Monte Carlo Simulation
 Portfolio|5th pct|**Median**|95th pct|Mean|CVaR (worst-5% avg)|P(loss)|P(< inflation)
-Conservative 30/70|1.7%|**5.0%**|8.5%|5.0%|+0.8%|1%|10%
-Moderate 60/40|1.1%|**5.7%**|10.6%|5.8%|−0.1%|2%|12%
-Growth 90/10|0.2%|**6.2%**|12.6%|6.3%|−1.4%|5%|15%
-**Edge-Tilted (moderate risk)**|**0.7%**|**5.8%**|**11.2%**|**5.9%**|**−0.6%**|**3%**|**14%**
+Conservative 30/70|1.7%|**4.9%**|8.3%|5.0%|+0.9%|1%|10%
+Moderate 60/40|1.0%|**5.5%**|10.3%|5.6%|−0.2%|2%|13%
+Growth 90/10|0.0%|**6.0%**|12.3%|6.0%|−1.5%|5%|17%
+**Edge-Tilted (moderate risk)**|**0.6%**|**5.7%**|**11.1%**|**5.8%**|**−0.7%**|**3%**|**15%**
 
 ## 7. News, Regimes & Monte Carlo Simulation
 Portfolio|1-year impact

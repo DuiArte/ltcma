@@ -15,7 +15,7 @@ setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(functio
 <main class="container"><article class="tile report"><h1>Long-Term Capital Market Assumptions — 2026 Edition</h1>
 <p><strong>A proprietary 12-year forward outlook for global asset classes</strong></p>
 <ul>
-<li><strong>Model as-of date:</strong> 7 August 2026 (equity valuation input: 30 June 2026)</li>
+<li><strong>Model as-of date:</strong> 11 August 2026 (equity valuation input: 30 June 2026)</li>
 <li><strong>Base currency:</strong> USD</li>
 <li><strong>Horizon:</strong> 12 years (midpoint of a 10–15-year window)</li>
 <li><strong>Universe:</strong> 24 asset classes spanning global equities, fixed income, and real assets</li>
@@ -90,36 +90,47 @@ strategic conclusions:</p>
 <tr>
 <td>US large-cap equity</td>
 <td>6.0%</td>
-<td>5.7%†</td>
-<td>13.6%</td>
+<td>5.2%</td>
+<td>13.4%</td>
 </tr>
 <tr>
 <td>EM equity</td>
 <td>8.0%</td>
 <td>6.4%</td>
-<td>18.8%</td>
+<td>18.7%</td>
 </tr>
 <tr>
 <td>Brazil / Mexico equity</td>
 <td>8.8% / 8.0%</td>
-<td>4.1% / 5.7%</td>
-<td>32.7% / 22.4%</td>
+<td>4.6% / 5.8%</td>
+<td>31.2% / 21.9%</td>
 </tr>
 <tr>
 <td>US Treasury / IG credit</td>
 <td>4.5% – 5.0%</td>
-<td>4.2% – 4.7%†</td>
-<td>7.6% – 8.0%</td>
+<td>4.2% – 4.7%</td>
+<td>7.5% – 7.9%</td>
+</tr>
+<tr>
+<td>EM USD sovereign / Mexican local govt</td>
+<td>6.0% / 6.3%</td>
+<td>5.6% / 5.3%</td>
+<td>9.7% / 14.7%</td>
+</tr>
+<tr>
+<td>Cash (US T-bills)</td>
+<td>3.3%</td>
+<td>3.2%</td>
+<td>3.4%</td>
 </tr>
 </tbody>
 </table>
-<p>† <em>Simulated medians come from the regime-switching GPU Monte Carlo (scripts
-<code>07</code>/<code>11</code>), a separate stage that is re-run less often than the building-block
-returns. Its current vintage is 22 May 2026, so it does not yet reflect the
-30 June 2026 CAPE refresh; the US large-cap simulated median in particular
-will fall when it is next re-run.</em>
-| EM USD sovereign / Mexican local govt | 6.0% / 6.3% | 5.5% / 5.7% | 9.9% / 11.3% |
-| Cash (US T-bills) | 3.3% | 3.2% | 3.4% |</p>
+<p><em>Simulated medians come from the regime-switching GPU Monte Carlo (scripts
+<code>07</code>/<code>11</code>). As of 11 August 2026 that stage is </em><em>re-run on the same schedule as
+the building-block returns</em><em>, so the medians above reflect the same 30 June 2026
+CAPE input as the point estimates — the two layers are no longer of different
+vintages. The US large-cap simulated median fell 5.7% → 5.2% when the simulation
+was rebuilt on the refreshed means.</em></p>
 <p>(Simulated medians sit below point estimates by design — the volatility drag on
 compounded returns. See Section 7.)</p>
 <hr />
@@ -936,7 +947,7 @@ through an explicit deterministic scenario (7.5).</p>
 <h3>7.3 The simulation engine</h3>
 <p>100,000 paths, monthly steps over 12 years, two-regime Markov-switching with
 Student-t fat tails, <strong>starting in the stress regime</strong>. The engine ran on the
-RTX 4060 in ~15 seconds.</p>
+RTX 4060 in 3.4 seconds.</p>
 <h3>7.4 Simulated 12-year outcomes — portfolios</h3>
 <table>
 <thead>
@@ -955,54 +966,56 @@ RTX 4060 in ~15 seconds.</p>
 <tr>
 <td>Conservative 30/70</td>
 <td>1.7%</td>
-<td><strong>5.0%</strong></td>
-<td>8.5%</td>
+<td><strong>4.9%</strong></td>
+<td>8.3%</td>
 <td>5.0%</td>
-<td>+0.8%</td>
+<td>+0.9%</td>
 <td>1%</td>
 <td>10%</td>
 </tr>
 <tr>
 <td>Moderate 60/40</td>
-<td>1.1%</td>
-<td><strong>5.7%</strong></td>
-<td>10.6%</td>
-<td>5.8%</td>
-<td>−0.1%</td>
+<td>1.0%</td>
+<td><strong>5.5%</strong></td>
+<td>10.3%</td>
+<td>5.6%</td>
+<td>−0.2%</td>
 <td>2%</td>
-<td>12%</td>
+<td>13%</td>
 </tr>
 <tr>
 <td>Growth 90/10</td>
-<td>0.2%</td>
-<td><strong>6.2%</strong></td>
-<td>12.6%</td>
-<td>6.3%</td>
-<td>−1.4%</td>
+<td>0.0%</td>
+<td><strong>6.0%</strong></td>
+<td>12.3%</td>
+<td>6.0%</td>
+<td>−1.5%</td>
 <td>5%</td>
-<td>15%</td>
+<td>17%</td>
 </tr>
 <tr>
 <td><strong>Edge-Tilted (moderate risk)</strong></td>
-<td><strong>0.7%</strong></td>
+<td><strong>0.6%</strong></td>
+<td><strong>5.7%</strong></td>
+<td><strong>11.1%</strong></td>
 <td><strong>5.8%</strong></td>
-<td><strong>11.2%</strong></td>
-<td><strong>5.9%</strong></td>
-<td><strong>−0.6%</strong></td>
+<td><strong>−0.7%</strong></td>
 <td><strong>3%</strong></td>
-<td><strong>14%</strong></td>
+<td><strong>15%</strong></td>
 </tr>
 </tbody>
 </table>
 <p><strong>CVaR</strong> is the average annualized return in the worst 5% of paths — the genuine
-tail. The gap between the 5th percentile and CVaR is the fat tail at work: in a
-genuinely bad 12-year run, a Growth portfolio compounds at <strong>−1.4% per year</strong>,
-not the −0.2%/yr a normal-distribution model would suggest. Conservative, by
-contrast, still eked out a small positive return even in its worst 5%.</p>
+tail. The gap between the 5th percentile and CVaR is the fat tail at work: a
+Growth portfolio's 5th-percentile path merely breaks even (<strong>0.0%/yr</strong>), but the
+<em>average</em> of everything at or below it compounds at <strong>−1.5% per year</strong> — the
+damage is concentrated well beyond the percentile most risk reports stop at.
+Conservative, by contrast, still eked out a small positive return (<strong>+0.9%/yr</strong>)
+across its worst 5%.</p>
 <p><img alt="Monte Carlo outcome fans for the four portfolios" src="figures/fig_mc_fan.png" /></p>
 <p>Asset-level distributions (<code>data/mc_regime_assets.csv</code>) confirm the earlier
-ranking: <strong>Mexican local government bonds (5.7% median, 3.5% chance of a 12-year
-loss) and EM USD sovereigns (5.5% median, 2.6% loss probability)</strong> remain the
+ranking: <strong>EM USD sovereigns (5.6% median, 2.3% chance of a 12-year loss) and
+Mexican local government bonds (5.3% median, 9.7% loss probability)</strong> remain the
 standout risk-adjusted holdings; <strong>gold and commodities have a &gt;50% chance of
 failing to beat inflation</strong> and belong in a portfolio for correlation, not return.</p>
 <h3>7.5 Deterministic geopolitical-stress scenario</h3>
@@ -1492,13 +1505,14 @@ https://siblisresearch.com/data/cape-ratios-by-country/</p>
 <p>Yahoo Finance. (2026). <em>Historical market and fundamental data</em> [Data set].
 https://finance.yahoo.com</p>
 <h3>11.4 Reproducibility</h3>
-<p>All figures regenerate from the scripts in <code>~/LTCMA/scripts</code> (WSL, <code>cudf-env</code>):
+<p>All figures regenerate from the scripts in <code>scripts/</code> in this repository
+(Windows-native Python; the GPU stages need <code>cupy-cuda12x</code>):
 <code>01</code>–<code>02</code> data · <code>03</code>–<code>04</code> returns/portfolios · <code>05a</code>–<code>05b</code> long history ·
 <code>06</code> shrinkage risk model · <code>07</code> Monte Carlo · <code>08</code>–<code>09</code> signals &amp; priced-in ·
 <code>10</code> regimes · <code>11</code> regime-switching GPU Monte Carlo · <code>13</code>–<code>14</code> FX ingest &amp;
 long-history validation · <code>15</code> visualizations · <code>12</code> Word/PDF rendering.</p>
 <hr />
-<p><em>Prepared 18 May 2026; model refreshed 7 August 2026. Expected returns are forward-looking estimates, not
+<p><em>Prepared 18 May 2026; model refreshed 11 August 2026. Expected returns are forward-looking estimates, not
 guarantees; actual outcomes will differ. For internal strategic-allocation use.</em></p></article></main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment
 advice.</p></div></footer></body></html>
