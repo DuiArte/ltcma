@@ -207,8 +207,9 @@ CHARTS = [
  ("montecarlo", f7, False, "The range of where a 12-year investment could "
   "realistically land — from a bad case (left) to a good case (right). "
   f"Simulation vintage {MC_ASOF}: the GPU regime-switching engine is a "
-  "separate stage and is not re-run by the daily refresh, so this chart can "
-  "trail the expected-return table above."),
+  "separate stage from the daily signals refresh, but since 11 Aug 2026 it is "
+  "rebuilt on the same weekly cycle as the expected-return table above, so the "
+  "two are built on the same inputs."),
  ("backtest", f8, False, "A check on whether this method's past forecasts came "
   "true. The closer the dots sit to the diagonal line, the better."),
 ]
