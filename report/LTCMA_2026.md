@@ -24,7 +24,7 @@ regime-switching, and the rest — is explained in plain language in the
 ## 1. Executive Summary
 
 After a long US-led bull market, **the starting point for the next decade is one
-of extreme valuation dispersion.** The US trades at a CAPE of ~35 and Japan ~29,
+of extreme valuation dispersion.** The US trades at a CAPE of ~40 and Japan ~29,
 while Mexico, Brazil, and China trade at 12–18× earnings. That gap drives four
 strategic conclusions:
 
@@ -44,20 +44,20 @@ strategic conclusions:
    and high-yield credit, which sit at multi-year-tight spreads.
 
 4. **Bonds still diversify, but less reliably than the pre-2021 era.** The
-   trailing stock/long-Treasury correlation is ~0.00. Gold (0.12 vs US equity)
-   and the Treasury/commodity pairing (−0.35) now do more genuine diversification
+   trailing stock/long-Treasury correlation is ~0.00. Gold (0.11 vs US equity)
+   and the Treasury/commodity pairing (−0.38) now do more genuine diversification
    work than nominal bonds alone.
 
 **Two cross-checks against the live market** sharpen the picture:
 
 - **What's priced in (Section 4):** the Treasury curve says the market expects
   **no further rate cuts** — short-rate forwards rise, not fall. Inflation
-  expectations (2.5%) sit right on the LTCMA assumption. Credit is priced for
+  expectations (~2.3%) sit right on the LTCMA assumption. Credit is priced for
   perfection. The LTCMA's *active bets* are exactly where it diverges from this.
 - **News and regime risk (Section 7):** geopolitical and policy uncertainty
   (GPR, EPU indices) are **elevated, and the market is currently in a "stress"
   regime.** Quantified, that history shows stress periods amplify volatility
-  (1.2–2.2×) and cross-correlations (0.66→0.74) — but, tellingly, did *not*
+  (1.1–2.1×) and cross-correlations (0.67→0.73) — but, tellingly, did *not*
   reliably depress returns over 2013–2026.
 
 **Headline expected returns (USD, 12-year, base case):**
@@ -197,19 +197,26 @@ It runs on an NVIDIA RTX 4060 in ~15 seconds and produces full return
 
 | Market | Policy rate | 10Y nominal | 10Y real* | Inflation | Trend real GDP | Equity valuation | Damodaran ERP |
 |---|---|---|---|---|---|---|---|
-| **US** | ~3.6% | 4.59% | ~1.9% | ~2.7% | ~1.9% | CAPE 40.5 — **rich** | 4.46% |
-| **Mexico** | 6.50% | 8.88% | ~4.4% | 4.45% | ~2.0% | P/E 13.0 — **cheap** | 6.69% |
-| **Brazil** | 14.50% | ~13.5% | ~9.0% | ~4.5% | ~2.0% | P/E 11.8 — **cheap** | 7.47% |
-| **China** | ~3.0% (LPR) | ~1.8% | ~1.3% | ~0.5% | ~4.0% | CAPE 17.7 — **cheap** | 5.14% |
-| **Japan** | ~0.75% | 2.52% | ~0.0% | ~2.5% | ~0.7% | CAPE 29.4 — **rich** | 5.14% |
-| **UK** | ~3.9% | 4.82% | ~1.8% | ~3.0% | ~1.3% | CAPE 20.2 — **fair** | 5.01% |
-| **France** | ~2.0% (ECB) | 3.68% | ~1.9% | ~1.8% | ~1.2% | CAPE ~21 — **fair** | 5.01% |
+| **US** | ~3.6% | 4.72% | ~2.0% | ~2.7% | ~1.9% | CAPE 40.5 — **rich** | 4.46% |
+| **Mexico** | 6.50%† | 9.45% | ~5.0% | 4.45% | ~2.0% | P/E 13.0 — **cheap** | 6.69% |
+| **Brazil** | 14.50%† | ~13.5% | ~9.0% | ~4.5% | ~2.0% | P/E 11.8 — **cheap** | 7.47% |
+| **China** | ~3.0% (LPR)† | ~1.8% | ~1.3% | ~0.5% | ~4.0% | CAPE 17.7 — **cheap** | 5.14% |
+| **Japan** | ~0.75%† | 2.67% | ~0.2% | ~2.5% | ~0.7% | CAPE 29.4 — **rich** | 5.14% |
+| **UK** | ~3.9%† | 4.80% | ~1.8% | ~3.0% | ~1.3% | CAPE 20.2 — **fair** | 5.01% |
+| **France** | ~2.0% (ECB)† | 3.68% | ~1.9% | ~1.8% | ~1.2% | CAPE ~21 — **fair** | 5.01% |
 
 *Real yield = 10Y nominal − current inflation (approximate).
+Nominal 10Y yields are the latest observation in `data/macro.csv` as of
+11 August 2026 (US daily; Mexico, Japan, UK and France are monthly FRED series
+and lag by one to three months). Equity valuations are the model's `val_now`.
+†Policy rates other than the US are hand-maintained from central-bank sources —
+they are **not** reproduced by any script in this repo, and the `Mexico_PolicyRate`
+column in `macro.csv` has been dead since 2013. Treat them as documented inputs,
+not as regenerated data.
 
 **What the grid says:** valuation is bimodal — the US and Japan are expensive,
 EM/LatAm and China are cheap, with only the UK and France in between. Real yields
-favor Latin America massively (Mexico ~4.4%, Brazil ~9%, vs US ~1.9%). Rate
+favor Latin America massively (Mexico ~5.0%, Brazil ~9%, vs US ~2.0%). Rate
 *direction* is no longer a tailwind anywhere — carry, not duration, is where the
 return is. China is the contrarian case: cheap and still growing ~4%, but
 deflation and policy risk are what the discount prices.
@@ -248,17 +255,22 @@ is *slightly below* what the market prices — a small, deliberate divergence.
 
 ### 4.2 Priced-in inflation, risk, and the dashboard
 
+Market readings below are the **11 August 2026** observation (EPU is the July
+monthly print). They are a dated snapshot of `data/priced_in.csv`, which script
+`09_priced_in.py` regenerates every weekday — the live version of this table is
+the dashboard on `index.html`, which is always current.
+
 | Signal | What the market prices | LTCMA assumption | Read |
 |---|---|---|---|
-| **Rate path** | No cuts; 1–2y forward 4.4% | Cash 3.3% | Market more hawkish than the LTCMA's neutral-rate drift |
-| **Long-run inflation** | 10y breakeven 2.48%, 5y5y forward 2.27% | 2.40% | **Aligned** — LTCMA sits mid-range |
-| **US credit risk** | HY OAS 2.80% (~14th percentile — very tight) | HY 5.0%, tight-spread drag applied | **Agreement** — credit priced for perfection; LTCMA already cautious |
-| **Equity volatility** | VIX 18.4 (~historical median) | Equity vols 13–33% | Market calm; no near-term stress priced |
-| **Recession** | Yield curve 10Y–3M +0.93% (positive) | n/a | No recession priced in |
-| **Policy uncertainty** | EPU 212 (baseline ~100 — elevated) | n/a | **Complacency divergence** — see below |
+| **Rate path** | No cuts; ~4.0% avg next 12m, 1–2y forward 4.5% | Cash 3.3% | Market more hawkish than the LTCMA's neutral-rate drift |
+| **Long-run inflation** | 10y breakeven 2.27%, 5y5y forward 2.31% | 2.40% | **Aligned** — LTCMA sits mid-range |
+| **US credit risk** | HY OAS 2.70% (~8th percentile — very tight) | HY 5.0%, tight-spread drag applied | **Agreement** — credit priced for perfection; LTCMA already cautious |
+| **Equity volatility** | VIX 15.5 (~35th percentile) | Equity vols 13–33% | Market calm; no near-term stress priced |
+| **Recession** | Yield curve 10Y–3M +0.81% (positive) | n/a | No recession priced in |
+| **Policy uncertainty** | EPU 184 (baseline ~100 — elevated) | n/a | **Complacency divergence** — see below |
 
-**The complacency divergence.** Policy uncertainty (EPU) is elevated at ~212
-while equity volatility (VIX) sits near its historical median. The market is
+**The complacency divergence.** Policy uncertainty (EPU) is elevated at ~184
+while equity volatility (VIX) sits below its historical median. The market is
 treating heavy policy noise — a Fed-chair transition, tariff conflict, the Gulf
 situation — as signal-free. Either the noise resolves benignly (the 2013–2026
 pattern) or this gap closes through a volatility spike. The regime engine in
@@ -272,30 +284,30 @@ Section 7 is built precisely to price that asymmetry.
 
 | Asset class | Type | ER λ=0 | **ER base (λ=0.5)** | ER λ=1 | Volatility |
 |---|---|---|---|---|---|
-| US Large Cap | Equity | 7.8% | **6.0%** | 4.2% | 13.6% |
-| US Small Cap | Equity | 6.7% | **6.5%** | 6.3% | 19.6% |
-| Mexico Equity | Equity | 7.4% | **8.0%** | 8.6% | 22.4% |
-| Brazil Equity | Equity | 8.9% | **8.8%** | 8.7% | 32.7% |
-| China Equity | Equity | 8.1% | **7.4%** | 6.7% | 23.1% |
-| Japan Equity | Equity | 7.1% | **6.4%** | 5.8% | 16.7% |
-| UK Equity | Equity | 8.0% | **7.0%** | 6.1% | 16.6% |
-| France Equity | Equity | 7.4% | **7.2%** | 7.0% | 17.7% |
-| EM Equity (broad) | Equity | 8.0% | **8.0%** | 8.0% | 18.8% |
-| DM ex-US Equity (broad) | Equity | 7.5% | **7.7%** | 8.0% | 15.7% |
+| US Large Cap | Equity | 7.8% | **6.0%** | 4.2% | 13.4% |
+| US Small Cap | Equity | 6.7% | **6.5%** | 6.3% | 19.3% |
+| Mexico Equity | Equity | 7.4% | **8.0%** | 8.6% | 21.9% |
+| Brazil Equity | Equity | 8.9% | **8.8%** | 8.7% | 31.2% |
+| China Equity | Equity | 8.1% | **7.4%** | 6.7% | 22.8% |
+| Japan Equity | Equity | 7.1% | **6.4%** | 5.8% | 16.5% |
+| UK Equity | Equity | 8.0% | **7.0%** | 6.1% | 16.1% |
+| France Equity | Equity | 7.4% | **7.2%** | 7.0% | 17.3% |
+| EM Equity (broad) | Equity | 8.0% | **8.0%** | 8.0% | 18.7% |
+| DM ex-US Equity (broad) | Equity | 7.5% | **7.7%** | 8.0% | 15.4% |
 | US Cash / T-Bills | Fixed Income | — | **3.3%** | — | 3.4% |
-| US Treasury Intermediate | Fixed Income | — | **4.5%** | — | 7.6% |
-| US Treasury Long | Fixed Income | — | **4.8%** | — | 15.2% |
-| US TIPS | Fixed Income | — | **4.5%** | — | 6.2% |
-| US IG Corporate | Fixed Income | — | **5.0%** | — | 8.0% |
-| US High Yield | Fixed Income | — | **5.0%** | — | 7.9% |
-| EM USD Sovereign | Fixed Income | — | **6.0%** | — | 9.9% |
-| EM Local Debt | Fixed Income | — | **4.8%** | — | 11.3% |
-| Mexico Govt (local, Mbonos) | Fixed Income | — | **6.3%** | — | 14.8% |
-| Global Aggregate ex-US (hedged) | Fixed Income | — | **3.8%** | — | 5.9% |
-| US REITs | Real Asset | — | **6.3%** | — | 17.6% |
-| Global REITs ex-US | Real Asset | — | **6.4%** | — | 16.5% |
-| Commodities (broad) | Real Asset | — | **3.5%** | — | 17.2% |
-| Gold | Real Asset | — | **3.3%** | — | 18.6% |
+| US Treasury Intermediate | Fixed Income | — | **4.5%** | — | 7.5% |
+| US Treasury Long | Fixed Income | — | **4.8%** | — | 15.1% |
+| US TIPS | Fixed Income | — | **4.5%** | — | 6.0% |
+| US IG Corporate | Fixed Income | — | **5.0%** | — | 7.9% |
+| US High Yield | Fixed Income | — | **5.0%** | — | 7.7% |
+| EM USD Sovereign | Fixed Income | — | **6.0%** | — | 9.7% |
+| EM Local Debt | Fixed Income | — | **4.8%** | — | 10.9% |
+| Mexico Govt (local, Mbonos) | Fixed Income | — | **6.3%** | — | 14.7% |
+| Global Aggregate ex-US (hedged) | Fixed Income | — | **3.8%** | — | 5.4% |
+| US REITs | Real Asset | — | **6.3%** | — | 16.9% |
+| Global REITs ex-US | Real Asset | — | **6.4%** | — | 15.5% |
+| Commodities (broad) | Real Asset | — | **3.5%** | — | 17.0% |
+| Gold | Real Asset | — | **3.3%** | — | 18.7% |
 
 ![Risk/return map of the 24-asset universe](figures/fig_return_risk.png)
 
@@ -303,7 +315,7 @@ Section 7 is built precisely to price that asymmetry.
 
 | Market | Dividend | Buyback | Real EPS growth | US inflation | Valuation reversion | = ER |
 |---|---|---|---|---|---|---|
-| US Large Cap | 1.2% | 1.7% | 2.5% | 2.4% | −3.6% | 6.0% |
+| US Large Cap | 1.2% | 1.7% | 2.5% | 2.4% | −1.8% | 6.0% |
 | US Small Cap | 1.3% | 0.5% | 2.5% | 2.4% | −0.2% | 6.5% |
 | Mexico | 3.2% | 0.0% | 1.8% | 2.4% | +0.6% | 8.0% |
 | Brazil | 4.5% | 0.0% | 2.0% | 2.4% | −0.1% | 8.8% |
@@ -330,26 +342,26 @@ matrix is Ledoit-Wolf shrunk and positive semi-definite.
 
 | | US LC | EM Eq | Mexico | Japan | DM exUS | US Treas Long | US HY | EM USD Sov | Gold | Commod |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **US Large Cap** | 1.00 | 0.71 | 0.61 | 0.69 | 0.83 | −0.01 | 0.79 | 0.66 | 0.12 | 0.41 |
-| **EM Equity** | 0.71 | 1.00 | 0.67 | 0.70 | 0.83 | 0.00 | 0.70 | 0.72 | 0.38 | 0.49 |
-| **Mexico Equity** | 0.61 | 0.67 | 1.00 | 0.58 | 0.73 | −0.04 | 0.66 | 0.65 | 0.27 | 0.44 |
-| **Japan Equity** | 0.69 | 0.70 | 0.58 | 1.00 | 0.83 | 0.03 | 0.61 | 0.58 | 0.13 | 0.31 |
-| **US Treasury Long** | −0.01 | 0.00 | −0.04 | 0.03 | −0.01 | 1.00 | 0.13 | 0.36 | 0.27 | −0.35 |
-| **US High Yield** | 0.79 | 0.70 | 0.66 | 0.61 | 0.78 | 0.13 | 1.00 | 0.81 | 0.27 | 0.45 |
-| **Gold** | 0.12 | 0.38 | 0.27 | 0.13 | 0.26 | 0.27 | 0.27 | 0.37 | 1.00 | 0.22 |
-| **Commodities** | 0.41 | 0.49 | 0.44 | 0.31 | 0.46 | −0.35 | 0.45 | 0.33 | 0.22 | 1.00 |
+| **US Large Cap** | 1.00 | 0.70 | 0.61 | 0.71 | 0.84 | −0.01 | 0.79 | 0.66 | 0.11 | 0.39 |
+| **EM Equity** | 0.70 | 1.00 | 0.66 | 0.69 | 0.83 | −0.01 | 0.68 | 0.72 | 0.35 | 0.46 |
+| **Mexico Equity** | 0.61 | 0.66 | 1.00 | 0.57 | 0.74 | −0.06 | 0.64 | 0.64 | 0.26 | 0.43 |
+| **Japan Equity** | 0.71 | 0.69 | 0.57 | 1.00 | 0.84 | 0.02 | 0.61 | 0.58 | 0.10 | 0.26 |
+| **US Treasury Long** | −0.01 | −0.01 | −0.06 | 0.02 | −0.02 | 1.00 | 0.10 | 0.35 | 0.24 | −0.38 |
+| **US High Yield** | 0.79 | 0.68 | 0.64 | 0.61 | 0.79 | 0.10 | 1.00 | 0.81 | 0.23 | 0.43 |
+| **Gold** | 0.11 | 0.35 | 0.26 | 0.10 | 0.24 | 0.24 | 0.23 | 0.35 | 1.00 | 0.23 |
+| **Commodities** | 0.39 | 0.46 | 0.43 | 0.26 | 0.45 | −0.38 | 0.43 | 0.30 | 0.23 | 1.00 |
 
 ### 6.2 What the risk picture tells us
 
-- **Equities are highly correlated (0.6–0.83).** Geographic diversification
+- **Equities are highly correlated (0.57–0.84).** Geographic diversification
   reduces single-country risk but little systemic drawdown risk.
 - **Long Treasuries are the cleanest equity diversifier on paper (≈0.00)** — but
   regime-dependent (Section 7); the average hides post-2021 positive-correlation
   episodes.
-- **Gold is a genuine diversifier** (0.12 vs US equity) and earns its place
+- **Gold is a genuine diversifier** (0.11 vs US equity) and earns its place
   despite a modest 3.3% return.
 - **High yield is equity in disguise** (0.79 correlation with US equity).
-- **The Treasury/commodity pair (−0.35)** is the strongest natural hedge.
+- **The Treasury/commodity pair (−0.38)** is the strongest natural hedge.
 
 ![Asset correlation matrix (Ledoit-Wolf shrunk)](figures/fig_correlation.png)
 
@@ -361,12 +373,16 @@ matrix is Ledoit-Wolf shrunk and positive semi-definite.
 
 Geopolitical and policy events enter the model through two text-based indices
 (see 2.5): **GPR** (geopolitical risk) and **EPU** (economic policy uncertainty).
-Both are currently elevated — GPR ~231 and EPU ~212 against a ~100 baseline,
-reflecting the Gulf situation, tariff conflict, and the Fed-chair transition.
+Both remain elevated against a ~100 baseline — GPR ~153 and EPU ~184 at the
+July 2026 monthly print, down from the March 2026 spike (GPR 330) but still
+well above normal, reflecting the Gulf situation, tariff conflict, and the
+Fed-chair transition.
 
 History (2013–2026) is classified into **calm** and **stress** regimes — a stress
 month being one in the top third of a combined GPR+EPU score. **34% of months
-were stress months; as of May 2026 the market is *in* a stress regime.**
+were stress months; at the latest classified month (July 2026) the market is
+*in* a stress regime** — and has been continuously since November 2024, a
+21-month spell against an average spell length of ~5 months.
 
 ![GPR and EPU uncertainty indices with stress months shaded](figures/fig_regime_timeline.png)
 
@@ -374,9 +390,9 @@ were stress months; as of May 2026 the market is *in* a stress regime.**
 
 | Behavior in stress months | Finding |
 |---|---|
-| **Volatility** | Amplifies 1.2–2.2× (US equity 1.6×, high yield 2.1×, EM sovereign 2.2×; **gold least affected at 1.2×**) |
-| **Correlation** | Equity cross-correlation rises 0.66 → 0.74 — diversification weakens just when it is needed |
-| **Persistence** | Stress regimes last ~5.7 months on average (Markov: stress→stress 0.82) |
+| **Volatility** | Amplifies 1.1–2.1× (US equity 1.6×, high yield 2.0×, EM sovereign 2.1×; **gold among the least affected at 1.3×**) |
+| **Correlation** | Equity cross-correlation rises 0.67 → 0.73 — diversification weakens just when it is needed |
+| **Persistence** | Stress regimes last ~5.2 months on average (Markov: stress→stress 0.81) |
 | **Returns** | **No reliable drawdown.** Over 2013–2026, news-stress months did *not* systematically post lower returns — markets repeatedly "climbed the wall of worry" |
 
 This last point is the honest, important finding. **Elevated geopolitical and
@@ -488,17 +504,18 @@ with λ. **US Large Cap (2.4pp) and UK (1.9pp) carry the largest valuation risk.
    return with less valuation risk. Highest-conviction edge.
 
 2. **Mexican local government bonds are the standout fixed-income holding.**
-   ~6.3% USD return, and the simulation confirms an outstanding downside profile
-   (3.5% loss probability). The ~4.4% real yield is a thick cushion against MXN
-   depreciation.
+   ~6.3% USD return, and the simulation confirms the best downside profile in the
+   fixed-income sleeve (5.3% median, 9.7% probability of a 12-year loss). The
+   ~5.0% real yield is a thick cushion against MXN depreciation.
 
 3. **EM USD sovereign debt over US credit.** 6.0% vs 5.0%, similar volatility,
    the best inflation-beating odds in the book, and it avoids the tight-spread
    compression risk in US IG and HY.
 
 4. **Use gold and commodities for diversification, not return.** With the
-   stock/bond correlation no longer dependably negative, and gold the *least*
-   volatility-amplified asset in stress regimes (1.2×), it is a structural hedge —
+   stock/bond correlation no longer dependably negative, and gold among the
+   *least* volatility-amplified risk assets in stress regimes (1.3×, against
+   1.6× for US large-cap), it is a structural hedge —
    but the simulation is blunt that it rarely beats inflation, so size it as one.
 
 5. **Don't fight the curve on rates.** The market prices no cuts; positioning
@@ -517,10 +534,10 @@ through the regime-switching engine (annually rebalanced).
 
 | Portfolio | Mean | Median | 5th–95th range | CVaR | Geopolitical scenario | P(< inflation) |
 |---|---|---|---|---|---|---|
-| Conservative 30/70 | 5.0% | 5.0% | 1.7% – 8.5% | +0.8% | −8.8% | 10% |
-| Moderate 60/40 | 5.8% | 5.7% | 1.1% – 10.6% | −0.1% | −18.0% | 12% |
-| Growth 90/10 | 6.3% | 6.2% | 0.2% – 12.6% | −1.4% | −27.2% | 15% |
-| **Edge-Tilted (moderate risk)** | **5.9%** | **5.8%** | **0.7% – 11.2%** | **−0.6%** | **−20.2%** | **14%** |
+| Conservative 30/70 | 5.0% | 4.9% | 1.7% – 8.3% | +0.9% | −8.8% | 10% |
+| Moderate 60/40 | 5.6% | 5.5% | 1.0% – 10.3% | −0.2% | −18.0% | 13% |
+| Growth 90/10 | 6.0% | 6.0% | 0.0% – 12.3% | −1.5% | −27.2% | 17% |
+| **Edge-Tilted (moderate risk)** | **5.8%** | **5.7%** | **0.6% – 11.1%** | **−0.7%** | **−20.2%** | **15%** |
 
 The **Edge-Tilted** portfolio underweights US large-cap, overweights EM/DM-ex-US
 and Japan equity, and replaces much of the bond sleeve with EM USD sovereign
