@@ -16,8 +16,16 @@
        takes the same one, so the two jobs can never touch this clone at once.
     1. Guard clean tree (generated docs/+data/ leftovers auto-cleaned), pull --rebase.
     2. Long history: 05a download, 05b parse (ASSERTS Shiller vintage freshness).
-    3. LTCMA core: 01 prices+macro, 02 valuations, 03 model, 04 portfolios.
-       ALL load-bearing -- a half-built model must never reach the gate.
+    3. LTCMA core: 01 prices+macro, 05c Mexico bond series, 02 valuations,
+       03 model, 04 portfolios. ALL load-bearing -- a half-built model must
+       never reach the gate. 05c sits between 01 and 03 because it DERIVES the
+       Mexico_Govt_Local index from the FRED series 01 just fetched, and 03/06
+       consume its output. It ran in no scheduled job until 2026-08-12, so the
+       index had been frozen at 2026-06-23 while everything around it moved.
+    3b. Derived display series: 16 long-history backtest (best-effort). Reads
+       05a's Shiller raw; its CSVs feed 17_build_site.py in the DAILY job.
+       Also orphaned until 2026-08-12. Best-effort because a stale chart is
+       better than a blocked model rebuild -- the freshness checker grades it.
     4. MATERIALITY GATE (scripts/model_delta_gate.py): rebuilt data/ vs HEAD.
        A breach reverts data/ and stops the run. Nothing is published.
        Tolerances: 75 bp headline ER . 150 bp any asset ER . 100 bp any
@@ -97,6 +105,17 @@ $MCFiles = @(
     'data/geopolitical_scenario.csv', 'data/mc_meta.json',
     'data/longhistory/damodaran_longrun.csv'
 )
+
+# 16_backtest.py is the ONLY step in this job that writes a TRACKED file outside
+# data/ -- report/figures/fig_backtest.png. That matters more than it looks:
+# daily_refresh.ps1 hard-Fail()s on a working tree dirty beyond docs/+data/
+# (it only auto-cleans those two), so a regenerated PNG left uncommitted here
+# would abort EVERY subsequent daily refresh and freeze the whole public site --
+# the F8 shape, one step's side effect blocking all 24 pages. So this path is
+# staged with the data commit AND reverted on every gate-failure path, exactly
+# like data/ itself. If a future step writes another tracked file outside data/,
+# it must be added here too.
+$BacktestFig = 'report/figures/fig_backtest.png'
 
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
@@ -265,9 +284,28 @@ try {
 
     # ---- 3. LTCMA core -------------------------------------------------------
     Run-Step '01_fetch_data.py'        -LoadBearing | Out-Null
+    # 05c DERIVES the Mexico_Govt_Local USD total-return index from the FRED
+    # yield + DEXMXUS series that 01 just wrote into macro.csv, and 03 and 06
+    # both consume mexico_bond_monthly.csv. It is pure local arithmetic -- no
+    # network -- so the only way it fails is a real code/data break, which is
+    # exactly what you want to hear about loudly. Hence load-bearing.
+    # Orphaned until 2026-08-12: it ran in NO scheduled job, so 03 and 06 were
+    # modelling Mexican local debt off an index frozen at 2026-06-23 while
+    # macro.csv refreshed weekly around it.
+    Run-Step '05c_mexico_bond_series.py' -LoadBearing | Out-Null
     Run-Step '02_fetch_valuations.py'  -LoadBearing | Out-Null
     Run-Step '03_build_model.py'       -LoadBearing | Out-Null
     Run-Step '04_portfolios.py'        -LoadBearing | Out-Null
+
+    # 16 rebuilds the long-history CAPE/bond backtest from 05a's Shiller raw.
+    # Its CSVs are read by 17_build_site.py in the DAILY job, so a frozen 16 is
+    # a frozen chart on a live page -- it had stalled at vintage 2013 (two
+    # vintages behind) since 2026-06-23. Best-effort on purpose: this feeds a
+    # display chart, not the model, and blocking a model rebuild over it would
+    # trade a stale chart for no rebuild at all. A silent permanent failure is
+    # caught instead by Scripts\data_freshness_check.ps1, which grades the
+    # mtime of backtest_results.csv against a budget.
+    Run-Step '16_backtest.py' | Out-Null
 
     # ---- 4. materiality gate -------------------------------------------------
     Log "-- materiality gate (rebuilt data/ vs HEAD)"
@@ -277,7 +315,7 @@ try {
         Pop-Location
         # Revert so the next daily refresh is not blocked by a dirty tree (F5) and
         # so nothing half-reviewed can leak out via a later run.
-        (Invoke-Native { git checkout -- data }) | Out-Null
+        (Invoke-Native { git checkout -- data $BacktestFig }) | Out-Null
         Fail "MATERIALITY GATE BREACH -- the rebuilt model moved more than tolerance. data/ reverted, nothing published. Review the deltas above, then re-run with -Force if the move is real."
     }
     if ($g.Code -eq 2 -and $Force) { Log "Gate breached but -Force given; publishing anyway." 'WARN' }
@@ -288,7 +326,7 @@ try {
     # any other code is an exception, and an unevaluable breaker stops the run.
     if ($g.Code -ne 0 -and $g.Code -ne 2 -and -not $Force) {
         Pop-Location
-        (Invoke-Native { git checkout -- data }) | Out-Null
+        (Invoke-Native { git checkout -- data $BacktestFig }) | Out-Null
         Fail "MATERIALITY GATE COULD NOT EVALUATE (exit $($g.Code)) -- the circuit breaker is broken, so nothing is published. data/ reverted. Fix scripts/model_delta_gate.py, or re-run with -Force once a human has read the deltas."
     }
     if ($g.Code -ne 0 -and $g.Code -ne 2 -and $Force) { Log "Gate could not evaluate (exit $($g.Code)) but -Force given; publishing anyway." 'WARN' }
@@ -323,7 +361,7 @@ try {
     # ---- 6. commit data/ on its own (F6) -------------------------------------
     # Generated data never rides in the same commit as source: that pairing is what
     # froze the site for 4 days in June 2026 and made the obvious recovery destructive.
-    (Invoke-Native { git add data }) | Out-Null
+    (Invoke-Native { git add data $BacktestFig }) | Out-Null
     $staged = (Invoke-Native { git diff --cached --name-only }).Text.Trim()
     if (-not $staged) {
         Log "Model rebuilt with no data change (inputs unmoved since last run)." 'WARN'
