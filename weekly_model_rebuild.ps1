@@ -102,6 +102,11 @@ function Fail {
     param([string]$Msg)
     Log $Msg 'ERROR'
     Log ("=== model rebuild FAILED ({0}s) ===" -f [math]::Round(((Get-Date)-$script:Start).TotalSeconds)) 'ERROR'
+    # A -DryRun / -BuildOnly failure is a TEST, not a production outage. Writing the
+    # alert file for one leaves a stale alarm that nothing clears (a dry run exits
+    # before the success path), and a false alert is worse than none -- it teaches
+    # whoever reads it to ignore the file. Only a real scheduled run raises it.
+    if ($DryRun -or $BuildOnly) { exit 1 }
     try {
         Set-Content -Path $AlertFile -Encoding utf8 -Value @"
 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') weekly model rebuild FAILED
@@ -176,6 +181,7 @@ try {
     else { Log "cupy unavailable; 06/07/11 will be SKIPPED and the MC keeps its current vintage.`n$cupyChk" 'WARN' }
 
     if ($DryRun) {
+        Remove-Item $AlertFile -ErrorAction SilentlyContinue
         Log "=== DRY RUN OK ($([math]::Round(((Get-Date)-$script:Start).TotalSeconds))s) ==="
         exit 0
     }
