@@ -86,12 +86,25 @@ RED, GREY = "#7c2d12", "#888888"
 sig = pd.read_csv(f"{DATA}/signals_fred.csv", index_col=0)
 RATE = float(pd.to_numeric(sig["USDMXN"], errors="coerce").dropna().iloc[-1])
 
+# Chart chrome follows the site design system (17_build_site.py -> style.css):
+# Inter for labels, JetBrains Mono for every NUMBER (axis ticks + hover), the same
+# split the `.asof` / `.mv` stamps use. The old "IBM Plex Sans" family was never
+# loaded by any page -- the font <link> only pulls Spectral / Inter / JetBrains Mono
+# -- so the charts silently fell back to the generic sans while the surrounding page
+# rendered in Inter. Aligning it here is the whole "match the newer charts" delta;
+# every other page already ships the Inter LAYOUT.
+SANS = "Inter, system-ui, -apple-system, sans-serif"
+MONO = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
 LAYOUT = dict(template="plotly_white",
-              font=dict(family="IBM Plex Sans, sans-serif", size=12, color=INK),
-              title_font=dict(color=INK, size=15), dragmode=False,
+              font=dict(family=SANS, size=12, color=INK),
+              title_font=dict(color=INK, size=15, family=SANS), dragmode=False,
               margin=dict(l=64, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
+              hoverlabel=dict(font=dict(family=MONO, size=11, color=INK),
+                              bgcolor="rgba(255,255,255,.97)",
+                              bordercolor="#d4d4d4", align="left"),
+              xaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)),
+              yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)))
 
 def div(fig, name):
     fig.update_layout(**LAYOUT)
@@ -341,24 +354,17 @@ for _tk in _pos.columns:
 
 _epx = df.pivot_table(index="Fecha", columns="ticker", values="px_excel", aggfunc="last").reindex(_daily).ffill()  # Excel MXN price fallback (e.g. CCJ N)
 
-# trade markers from the consolidated, de-duplicated blotter (operation dates).
-# Built by make_blotter.py from the full GBM export universe; aggregated to one
-# marker per day+side, with the hover listing the tickers traded that day.
-_td = pd.DataFrame(columns=["date", "side", "shares", "text"])
-try:
-    _bl = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
-    _bl = _bl[_bl["date"] >= _first]                     # only within the curve window
-    _rows = []
-    for (_d, _sd), _g in _bl.groupby(["date", "side"]):
-        _per = _g.groupby("ticker")["shares"].sum().sort_values(ascending=False)
-        _sg = "+" if _sd == "buy" else "-"
-        _lst = ", ".join(f"{_t} {_sg}{int(abs(_sh))}" for _t, _sh in _per.items())
-        _rows.append(dict(date=_d, side=_sd, shares=float(_g["shares"].sum()),
-                          text=f"{_d.strftime('%d %b %Y')} - {_sd.title()}: {_lst}"))
-    _td = pd.DataFrame(_rows)
-except Exception as _e:
-    print(f"  blotter markers unavailable: {_e}")
-print(f"  trade markers: {len(_td)} day-events from blotter_clean.csv")
+# trade markers: RETIRED SOURCE -- `data/blotter_clean.csv` (2026-08-12).
+# That file is written by make_blotter.py from a HARDCODED list of `Downloads/*.csv`
+# exports that was last extended in May, so it froze at 2026-05-19 and the chart lost
+# every trade for the following three months: the 18-Jun trim batch, the 16-Jul MELI
+# closeout and the ORCL/LLY opens, the 24-Jul LMT closeout, and the 27/28-Jul
+# AMZN/MA/JPM exits. Markers are now merged from the same canonical, guard-protected
+# GBM_Account_Archive export universe that the realized-P&L section walks (`_MK_SRC`),
+# so the ledger and the chart can never again disagree about which fills exist.
+# The build happens after that section, where `_ledger_rows` and the export paths are
+# defined; `_first` (curve start) is captured here for its window filter.
+_MK_WINDOW_START = _first
 
 # daily market value and invested cost (scaled), then unrealized P&L
 _mv = pd.Series(0.0, index=_daily)
@@ -805,29 +811,9 @@ ts["realized_pool"] = ts["balance"].astype(float)  # cost basis (capital investe
 dates = ts.index
 
 # ---------- charts ----------
-# 1. market value vs cost basis (gap = unrealized P&L)
-f1 = go.Figure()
-f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Market value",
-               line=dict(color=BLUE, width=2.6))
-f1.add_scatter(x=dates, y=ts["realized_pool"], mode="lines", name="Cost basis",
-               line=dict(color=GREEN, width=1.6, dash="dot"))
-def _eq_at(_dt):
-    _s = ts["total"][ts.index <= _dt]
-    return float(_s.iloc[-1]) if len(_s) else None
-for _side, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle-down")]:
-    _s = _td[_td["side"] == _side] if len(_td) else _td
-    _x = list(_s["date"]) if len(_s) else []
-    _y = [_eq_at(_d) for _d in _x]
-    _txt = list(_s["text"]) if len(_s) else []
-    f1.add_scatter(x=_x, y=_y, mode="markers", name=f"{_side.title()}s",
-                   marker=dict(color=_col, symbol=_sym, size=9, line=dict(width=1, color="white")),
-                   text=_txt, hoverinfo="text")
-f1.update_layout(title="Market value vs cost basis \u2014 gap is unrealized P&L (daily, scaled)",
-                 yaxis_title="MXN (scaled)", xaxis_title="date",
-                 hovermode="x unified",
-                 legend=dict(orientation="h", y=-0.18))
-f1.update_traces(hovertemplate="%{y:,.0f}<extra>%{fullData.name}</extra>",
-                 selector=dict(mode="lines"))
+# 1. market value vs cost basis (gap = unrealized P&L) -- built further down, next to
+#    the ledger merge that feeds its buy/sell markers (search `_MK_SRC`). Everything it
+#    needs from here (`ts`, `dates`) is final at this point and is not touched again.
 
 # 1b. drawdown from the running peak (%) \u2014 currency-independent, range-linked
 _pk = ts["total"].cummax()
@@ -1030,6 +1016,165 @@ if _shift:
                      f"(shifted re-export?) -> {_shift}")
 print(f"  ledger: {len(_lsells)} sell fills from {len(_SELL_SRC)} exports, "
       f"{sum(len(v) for v in _lbuys.values())} buy fills from {len(_BUY_SRC)}")
+
+# ---------- trade markers on the equity curve (canonical fill merge) ----------
+# Replaces data/blotter_clean.csv, which froze at 2026-05-19 (see the note where the
+# curve window is captured). Same disjoint-calendar-partition discipline as _SELL_SRC,
+# but covering BOTH sides: each export owns one slice of the calendar, anything outside
+# it belongs to another export, so no fill can be counted twice or silently dropped.
+# _BUY_SRC is NOT reused -- its last slice is open-ended (`d > 09-Jun`) and its MARF
+# slice overlaps _APRF, which is harmless for the FX weighting it feeds and wrong for a
+# marker set. It is also left untouched on purpose: it feeds `_xbuy`, which prices the
+# realized FX leg. No accounting input changes here; this block only renders.
+_MK_SRC = [
+    (_FEBF,  lambda d: d <  _D(2026, 3, 1)),                     # 13-Feb .. 26-Feb
+    (_MARF,  lambda d: _D(2026, 3, 1)  <= d <  _D(2026, 3, 24)), # 12-Mar .. 23-Mar
+    (_APRF,  lambda d: _D(2026, 3, 24) <= d <  _D(2026, 4, 28)), # 26-Mar, 24-Apr
+    (_HISTF, lambda d: _D(2026, 4, 28) <= d <= _D(2026, 6, 15)), # 28-Apr .. 12-Jun
+    (_JUNF,  lambda d: _D(2026, 6, 15) <  d <  _D(2026, 7, 1)),  # 18-Jun .. 25-Jun
+    (_JULF,  lambda d: _D(2026, 7, 1)  <= d <= _D(2026, 7, 24)), # 02-Jul .. 24-Jul
+    (_AUGF,  lambda d: d >  _D(2026, 7, 24)),                    # 27-Jul .. 28-Jul
+]
+_mkf, _mkprov = [], {}
+for _src, _keep in _MK_SRC:
+    for _k, _t, _d, _sh, _px in _ledger_rows(_src):
+        if _sh <= 0 or not _keep(_d):
+            continue
+        _mkf.append((_k, _t, _d, _sh, _px))
+        _mkprov.setdefault((_k, _t, _d, _sh, _px), []).append(os.path.basename(_src))
+
+# Same two guards the realized merge runs, for the same reasons: a fill reachable from
+# two exports means the slices overlap; the same trade on two nearby dates means a
+# shifted re-export slipped through. Either one puts a phantom marker on the chart.
+_mkdupe = {k: sorted(set(v)) for k, v in _mkprov.items() if len(set(v)) > 1}
+if _mkdupe:
+    raise SystemExit("MARKER GUARD: fill claimed by >1 export -> " + repr(_mkdupe))
+_mkshift = [(a, b) for a in _mkprov for b in _mkprov
+            if a < b and a[0] == b[0] and a[1] == b[1] and a[3] == b[3] and a[4] == b[4]
+            and 0 < abs((a[2] - b[2]).days) <= 5]
+if _mkshift:
+    raise SystemExit("MARKER GUARD: same side/ticker/shares/price on two nearby dates "
+                     f"(shifted re-export?) -> {_mkshift}")
+# Cross-check against the canonical realized merge. The two partitions are built
+# independently and must agree on the sell set to the fill; if they ever diverge, one
+# of them is wrong and the chart would be telling a different story than the P&L table.
+_mksell = sorted((t, d, sh, px) for k, t, d, sh, px in _mkf if k == "sell")
+_lsx    = sorted((s["t"], s["d"], s["sh"], s["px"]) for s in _lsells)
+if _mksell != _lsx:
+    raise SystemExit(f"MARKER GUARD: marker merge sees {len(_mksell)} sell fills, the "
+                     f"realized merge sees {len(_lsx)} -- the two partitions disagree")
+
+# Aggregate to one row per (date, side, ticker), then walk the whole history once to
+# tag the two events a reader actually looks for: the first buy of a name (NEW) and the
+# sale that takes it to zero (CLOSE). Both are derived from the fills, never asserted.
+_agg = {}
+for _k, _t, _d, _sh, _px in _mkf:
+    _a = _agg.setdefault((_d, _k, _t), {"sh": 0.0, "mxn": 0.0})
+    _a["sh"] += _sh
+    _a["mxn"] += _sh * _px
+_seen, _net, _tag = set(), {}, {}
+for _key in sorted(_agg):
+    _d, _k, _t = _key
+    _a, _n0 = _agg[_key], _net.get(_t, 0.0)
+    _g = " NEW" if (_k == "buy" and _t not in _seen) else ""
+    _seen.add(_t)
+    _n1 = _n0 + (_a["sh"] if _k == "buy" else -_a["sh"])
+    _net[_t] = _n1
+    if _k == "sell" and _n0 > 0.5 and abs(_n1) < 0.5:
+        _g = " CLOSE"
+    _tag[_key] = _g
+
+# One marker per day+side. Per-FILL markers would stack 150+ points on ~40 distinct
+# x-values at the identical y (the curve is daily), so they would render as one blob
+# with five sixths of them unhoverable -- day+side is the finest granularity the chart
+# can actually show, and every fill still appears in that day's hover.
+_MKDAY = {}
+for _key in sorted(_agg):
+    _d, _k, _t = _key
+    _a = _agg[_key]
+    _r = _MKDAY.setdefault((_d, _k), {"mxn": 0.0, "lines": []})
+    _r["mxn"] += _a["mxn"]
+    _r["lines"].append((_a["mxn"], _t + _tag[_key], _a["sh"], _a["mxn"] / _a["sh"]))
+
+def _eq_at(_dt):
+    _s = ts["total"][ts.index <= _dt]
+    return float(_s.iloc[-1]) if len(_s) else None
+
+# CONFIDENTIALITY: shares and peso amounts are scaled here, once, exactly like every
+# other figure on this page (see the module docstring). Publishing RAW fill shares next
+# to the scaled holdings table would hand the reader the ratio and invert the whole
+# page -- which is what the retired blotter hover did. Per-share prices stay exact,
+# same rule as the holdings table; scaled_shares x price == scaled_amount, so the
+# hover reconciles internally.
+_MK_DROPPED = sorted({_d for (_d, _k) in _MKDAY if _d < _MK_WINDOW_START})
+_MK_LINECAP = 6
+_amax = max([_r["mxn"] for (_d, _k), _r in _MKDAY.items()
+             if _d >= _MK_WINDOW_START] or [1.0])
+def _mk_txt(_d, _k, _r, _cur):
+    """Hover body. `x unified` already prints the date as the box header."""
+    _dv = 1.0 if _cur == "mxn" else RATE
+    _hd = ("▲ Buy" if _k == "buy" else "▼ Sell")
+    _out = [f"<b>{_hd}</b> · {_r['mxn'] * SCALE / _dv:,.0f} {_cur.upper()}"]
+    _ls = sorted(_r["lines"], key=lambda x: -x[0])
+    for _m, _t, _sh, _px in _ls[:_MK_LINECAP]:
+        _out.append(f"{_t} {fmt_sh(_sh * SCALE)} @ {_px / _dv:,.2f}")
+    if len(_ls) > _MK_LINECAP:
+        _out.append(f"··· +{len(_ls) - _MK_LINECAP} more")
+    return "<br>".join(_out)
+
+_MKPTS = {"buy": [], "sell": []}
+for (_d, _k), _r in sorted(_MKDAY.items()):
+    if _d < _MK_WINDOW_START:
+        continue                                  # no curve to sit on before it starts
+    _y = _eq_at(_d)
+    if _y is None:
+        continue
+    _MKPTS[_k].append(dict(
+        d=_d, y=_y,
+        size=float(np.clip(7.0 + 11.0 * np.sqrt(max(_r["mxn"], 0.0) / _amax), 7.0, 18.0)),
+        mxn=_mk_txt(_d, _k, _r, "mxn"), usd=_mk_txt(_d, _k, _r, "usd")))
+print(f"  trade markers: {len(_mkf)} fills from {len(_MK_SRC)} archive exports -> "
+      f"{len(_MKPTS['buy'])} buy-days + {len(_MKPTS['sell'])} sell-days on the curve"
+      + (f" | {len(_MK_DROPPED)} pre-curve day(s) dropped "
+         f"({', '.join(d.strftime('%d-%b') for d in _MK_DROPPED)})" if _MK_DROPPED else "")
+      + f" | sell set agrees with the realized merge ({len(_mksell)})")
+# Stamp the curve with the page's mark date, not `ts.index[-1]`. The daily grid runs to
+# today by construction and forward-fills, so its last index is a calendar date, not a
+# price date -- stamping that would claim a vintage the data does not have and would
+# disagree with the "As of" in the hero on any non-trading day.
+_CURVE_ASOF = asof
+_MK_LAST = max((_d for (_d, _k) in _MKDAY), default=None)
+_MK_LAST_S = _MK_LAST.strftime("%Y-%m-%d") if _MK_LAST is not None else "n/a"
+_N_BUYD, _N_SELLD = len(_MKPTS["buy"]), len(_MKPTS["sell"])
+
+# ---------- chart 1: market value vs cost basis, with the trade markers ----------
+# Design pass 2026-08-12: chrome stripped to match the newer pages. The in-plot title
+# is gone (the <h2> directly above it said the same thing twice) and so is the "date"
+# x-axis title; the mono stamp under the heading carries the vintage instead. Cost
+# basis moved BLUE->GREY because green now means "buy" on this chart.
+f1 = go.Figure()
+f1.add_scatter(x=dates, y=ts["total"], mode="lines", name="Market value",
+               line=dict(color=BLUE, width=2.4),
+               hovertemplate="%{y:,.0f}<extra>Market value</extra>")
+f1.add_scatter(x=dates, y=ts["realized_pool"], mode="lines", name="Cost basis",
+               line=dict(color=GREY, width=1.4, dash="dot"),
+               hovertemplate="%{y:,.0f}<extra>Cost basis</extra>")
+for _k, _col, _sym in [("buy", GREEN, "triangle-up"), ("sell", RED, "triangle-down")]:
+    _p = _MKPTS[_k]
+    f1.add_scatter(x=[q["d"] for q in _p], y=[q["y"] for q in _p], mode="markers",
+                   name="Buy" if _k == "buy" else "Sell",
+                   marker=dict(color=_col, symbol=_sym, opacity=.93,
+                               size=[q["size"] for q in _p],
+                               line=dict(width=1.1, color="#ffffff")),
+                   text=[q["mxn"] for q in _p],
+                   hovertemplate="%{text}<extra></extra>",
+                   hoverlabel=dict(bordercolor=_col))
+f1.update_layout(yaxis_title="MXN (scaled)", hovermode="x unified",
+                 xaxis=dict(hoverformat="%d %b %Y", showspikes=True, spikemode="across",
+                            spikethickness=1, spikecolor="#c9c9c9", spikedash="dot"),
+                 legend=dict(orientation="h", yanchor="bottom", y=1.0,
+                             xanchor="left", x=0, font=dict(size=11),
+                             bgcolor="rgba(0,0,0,0)"))
 def _xbuy(t, upto):
     lots = [(d,s) for d,s in _lbuys.get(t, []) if d <= upto]
     tot = sum(s for _,s in lots)
@@ -1167,23 +1312,22 @@ holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td
 
 # ---------- currency-toggle JavaScript ----------
 def _arr(s): return ",".join(f"{v:.0f}" for v in s)
-def _mk_y(side):
-    _s = _td[_td["side"] == side] if len(_td) else _td
-    _o = []
-    for _d in (_s["date"] if len(_s) else []):
-        _ss = ts["total"][ts.index <= _d]
-        _o.append(float(_ss.iloc[-1]) if len(_ss) else 0.0)
-    return _o
 _totm = _arr(ts["total"]); _totu = _arr(ts["total"] / RATE)
 _ream = _arr(ts["realized_pool"]); _reau = _arr(ts["realized_pool"] / RATE)
-_by = _mk_y("buy"); _sy = _mk_y("sell")
+_by = [q["y"] for q in _MKPTS["buy"]]; _sy = [q["y"] for q in _MKPTS["sell"]]
 _bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v/RATE:.0f}" for v in _by)
 _sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v/RATE:.0f}" for v in _sy)
+# Marker hover bodies, one array per currency. The toggle restyles `text` alongside
+# `y`, so the pesos in a marker hover can never disagree with the axis beside it.
+_j = lambda vs: ",".join(json.dumps(v, ensure_ascii=False) for v in vs)
+_btm = _j([q["mxn"] for q in _MKPTS["buy"]]);  _btu = _j([q["usd"] for q in _MKPTS["buy"]])
+_stm = _j([q["mxn"] for q in _MKPTS["sell"]]); _stu = _j([q["usd"] for q in _MKPTS["sell"]])
 _pfd = ",".join(f'"{d.strftime("%Y-%m-%d")}"' for d in ts.index)
 JS = """
 <script>
 var TOT={mxn:[__TOTM__],usd:[__TOTU__]},REAL={mxn:[__REAM__],usd:[__REAU__]};
 var BUY={mxn:[__BYM__],usd:[__BYU__]},SEL={mxn:[__SYM__],usd:[__SYU__]};
+var BUYT={mxn:[__BTM__],usd:[__BTU__]},SELT={mxn:[__STM__],usd:[__STU__]};
 var PFD=[__PFD__],CUR='mxn',PF_CAP=__CAP__,PF_RATE=__RATE__,PF_RANGE='all';
 function applyRange(m){
   PF_RANGE=m;
@@ -1216,6 +1360,7 @@ function setCurrency(c){
   var d=document.getElementById('pf-value');
   if(d&&window.Plotly){
     Plotly.restyle(d,{y:[TOT[c],REAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
+    Plotly.restyle(d,{text:[BUYT[c],SELT[c]]},[2,3]);
     Plotly.relayout(d,{'yaxis.title.text':c.toUpperCase()+' (scaled)'});
     applyRange(PF_RANGE);
   }
@@ -1265,7 +1410,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 });
 </script>
-""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}")
+""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__BTM__", _btm).replace("__BTU__", _btu).replace("__STM__", _stm).replace("__STU__", _stu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}")
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -1327,6 +1472,14 @@ basis still held; <b>Combined</b> weights the two by their cost bases, so it sit
 between them. All three are exact &mdash; the display scaling cancels in a
 ratio, unlike the peso tiles above.</p></section>
 <section class="block"><h2>Market Value vs Cost Basis</h2>
+<p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Equity curve as of
+{_CURVE_ASOF} &middot; trades through {_MK_LAST_S} &middot; {_N_BUYD} buy days
+&middot; {_N_SELLD} sell days</p>
+<p class="note">The gap between the two lines is unrealized P&amp;L. Triangles mark
+every day the book traded &mdash; <span style="color:var(--pos)">&#9650;</span> buys,
+<span style="color:var(--neg)">&#9660;</span> sells &mdash; sized by the amount dealt
+that day. Hover one for the tickers, share counts and prices behind it; click a legend
+entry to hide a series.</p>
 <div class="btctl"><div class="btranges">
 <button class="btr on" data-pr="all">All</button>
 <button class="btr" data-pr="6">6M</button>
@@ -1336,7 +1489,11 @@ ratio, unlike the peso tiles above.</p></section>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f1b, "pf-dd")}</div></div>
 <p class="note" style="margin-top:.8rem">Drawdown is measured from the running
-peak of market value; it reads identically in either currency.</p></section>
+peak of market value; it reads identically in either currency. Trade markers come
+from the same broker transaction ledger as the realized table below; share counts
+and peso amounts in the hover carry the page&rsquo;s display scaling, prices do
+not. <b>NEW</b> flags the first purchase of a name, <b>CLOSE</b> a sale that takes
+the position to zero.</p></section>
 {fxa_section}
 <section class="block"><h2>Holdings</h2>
 <input type="search" id="h-search" class="tsearch" placeholder="Filter holdings&hellip; press /"
@@ -1371,6 +1528,21 @@ _leaked = [f"{r['t']}.{k}={r[k]:,.2f}"
 if _leaked:
     raise SystemExit("CONFIDENTIALITY GUARD FAILED: unscaled real values in data-s -> "
                      + ", ".join(_leaked))
+# Same rule for the trade-marker hovers added 2026-08-12. They publish share counts and
+# peso totals, so both must carry the display scaling -- the retired blotter hover
+# shipped RAW fill shares beside the scaled holdings table, which hands a reader the
+# ratio for any name it could be matched against. Regenerate each hover body WITHOUT
+# the scaling and fail if that string reached the page, in either JSON escaping.
+def _mk_raw(_d, _k, _r):
+    return _mk_txt(_d, _k, {"mxn": _r["mxn"] / SCALE,
+                            "lines": [(m, t, sh / SCALE, px) for m, t, sh, px in _r["lines"]]},
+                   "mxn")
+_mkleak = [f"{_d.date()} {_k}" for (_d, _k), _r in _MKDAY.items() if _d >= _MK_WINDOW_START
+           for _s in [_mk_raw(_d, _k, _r)]
+           if json.dumps(_s) in HTML or json.dumps(_s, ensure_ascii=False) in HTML]
+if _mkleak:
+    raise SystemExit("CONFIDENTIALITY GUARD FAILED: unscaled trade-marker hover reached "
+                     "the chart -> " + ", ".join(_mkleak))
 # Naming the factor in prose lets any reader undo the scaling. Say "scaled by a fixed
 # constant", never the number. (WEBSITE_DEPLOY.md rule 1.)
 _told = [p for p in (f"&times;{SCALE}", f"x{SCALE}", f"×{SCALE}") if p in HTML]
