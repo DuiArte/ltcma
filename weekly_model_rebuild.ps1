@@ -12,12 +12,18 @@
   AI_PROCEDURES\LTCMA_REBUILD.md, "Scheduling regime".
 
   Flow:
+    0. Take the cross-task repo lock (see Enter-RepoLock) -- daily_refresh.ps1
+       takes the same one, so the two jobs can never touch this clone at once.
     1. Guard clean tree (generated docs/+data/ leftovers auto-cleaned), pull --rebase.
     2. Long history: 05a download, 05b parse (ASSERTS Shiller vintage freshness).
     3. LTCMA core: 01 prices+macro, 02 valuations, 03 model, 04 portfolios.
        ALL load-bearing -- a half-built model must never reach the gate.
     4. MATERIALITY GATE (scripts/model_delta_gate.py): rebuilt data/ vs HEAD.
        A breach reverts data/ and stops the run. Nothing is published.
+       Tolerances: 75 bp headline ER . 150 bp any asset ER . 100 bp any
+       portfolio ER . 10% relative CAPE (and CAPE vintage must not go
+       backwards). Keep these four numbers in sync with model_delta_gate.py
+       and AI_PROCEDURES\LTCMA_REBUILD.md if they are ever retuned.
     5. Risk + simulation: 06, 07, 11 -- ONE UNIT. If any fails (e.g. cupy), all
        three outputs are reverted to HEAD so the block keeps a single coherent
        vintage, and the run continues (the site stamps the MC vintage separately).
@@ -38,8 +44,13 @@
   catch-up run published).
 
   Logs to C:\Users\carlo\Scripts\logs\model_rebuild_<date>.log.
-  On failure writes C:\Users\carlo\Scripts\logs\MODEL_ALERT.txt (read by the
-  same digests that read REFRESH_ALERT.txt).
+  On failure writes C:\Users\carlo\Scripts\logs\MODEL_ALERT.txt. That file is
+  READ BY (design audit 2026-08-11 -- it had no reader for its first day, which
+  is the F8/F9 mistake exactly):
+    * Scripts\website_refresh_watchdog.ps1 -- folds it into REFRESH_ALERT.txt
+      and independently grades the model vintage published on origin/main;
+    * the Cowork task `website-refresh-verify` (weekdays 17:45), which is the
+      layer that actually reaches Carlos.
 
 .PARAMETER Force
   Publish even if the materiality gate reports a breach. Use only after a human
@@ -96,8 +107,49 @@ function Log {
     param([string]$Msg, [string]$Level = 'INFO')
     $line = "{0} [{1}] {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $Msg
     Write-Host $line
-    Add-Content -Path $LogFile -Value $line -Encoding UTF8
+    # Never let a log write kill the run. With $ErrorActionPreference='Stop' a full
+    # disk made Add-Content throw INSIDE Fail(), which re-entered the catch and
+    # terminated with an unhandled exception before MODEL_ALERT.txt was written --
+    # i.e. the one failure mode where the alert matters most had no alert.
+    Add-Content -Path $LogFile -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
 }
+
+# ---- Cross-task repo lock ---------------------------------------------------
+# daily_refresh.ps1 takes this SAME lock. Both scripts operate on this clone and
+# both begin with `git checkout -- docs data` + `git clean -fd docs data`, so an
+# overlap lets one wipe the other's in-flight output and commit an internally
+# inconsistent data/ set. They cannot overlap on the nominal schedule (Sun 22:00
+# vs Mon-Fri 16:31), but StartWhenAvailable fires a missed Sunday run at next
+# logon -- which can land minutes before Monday's 16:31 -- and a manual -Publish
+# can land anywhere.
+#
+# A named MUTEX, not a lock file: Task Scheduler kills a run that hits its
+# ExecutionTimeLimit, and the OS releases an abandoned mutex (we catch that and
+# take ownership). A stale lock file left by the same kill would deadlock every
+# future run instead. Process exit also releases it, so every Fail() path is safe.
+$script:RepoMutex = $null
+function Enter-RepoLock {
+    param([int]$TimeoutMinutes = 25)
+    foreach ($n in @('Global\LTCMA_REPO_LOCK', 'Local\LTCMA_REPO_LOCK')) {
+        $m = $null
+        try { $m = New-Object System.Threading.Mutex($false, $n) } catch { continue }
+        $owned = $false
+        try { $owned = $m.WaitOne([TimeSpan]::FromMinutes($TimeoutMinutes)) }
+        catch [System.Threading.AbandonedMutexException] { $owned = $true }
+        if ($owned) { $script:RepoMutex = $m; Log "Repo lock acquired ($n)."; return $true }
+        $m.Dispose()
+        return $false   # creatable but contended -- a real timeout, do not try the other namespace
+    }
+    Log "Could not create a repo mutex; proceeding WITHOUT cross-task locking." 'WARN'
+    return $true
+}
+function Exit-RepoLock {
+    if ($script:RepoMutex) {
+        try { $script:RepoMutex.ReleaseMutex() } catch { }
+        $script:RepoMutex.Dispose(); $script:RepoMutex = $null
+    }
+}
+
 function Fail {
     param([string]$Msg)
     Log $Msg 'ERROR'
@@ -121,6 +173,13 @@ function Invoke-Native {
     param([scriptblock]$Script)
     $prev = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
+    # Clear LASTEXITCODE first. Every caller here runs a NATIVE command (git,
+    # python, powershell.exe), so if the command cannot be launched at all --
+    # python dropped off PATH mid-run, a corrupt git install -- nothing sets it
+    # and the STALE value from the previous step is what gets returned. A prior
+    # `git status` exit 0 would then report a python that never ran as a success.
+    # $null propagates, and `$null -ne 0` is true, so the caller fails loudly.
+    $global:LASTEXITCODE = $null
     try { $out = & $Script 2>&1 | ForEach-Object { "$_" }; $code = $LASTEXITCODE }
     finally { $ErrorActionPreference = $prev }
     return [pscustomobject]@{ Code = $code; Text = ($out -join "`n") }
@@ -146,6 +205,11 @@ Log "=== WEEKLY model rebuild START ($mode) ==="
 
 try {
     Set-Location $Repo
+
+    # ---- 0. cross-task repo lock ---------------------------------------------
+    if (-not (Enter-RepoLock -TimeoutMinutes 25)) {
+        Fail "Another LTCMA job holds the repo lock and did not release it within 25 min (daily_refresh.ps1 running long, or a wedged run). Refusing to rebuild -- concurrent 'git checkout -- docs data' would destroy its in-flight output."
+    }
 
     # ---- 1. clean tree + pull ------------------------------------------------
     $r = Invoke-Native { git status --porcelain }
@@ -217,7 +281,17 @@ try {
         Fail "MATERIALITY GATE BREACH -- the rebuilt model moved more than tolerance. data/ reverted, nothing published. Review the deltas above, then re-run with -Force if the move is real."
     }
     if ($g.Code -eq 2 -and $Force) { Log "Gate breached but -Force given; publishing anyway." 'WARN' }
-    if ($g.Code -eq 1) { Log "Gate could not evaluate (exit 1); continuing without it." 'WARN' }
+    # A gate that CRASHED is not a gate that passed. This used to log a WARN and
+    # publish anyway, which meant one bad import in model_delta_gate.py silently
+    # disarmed the circuit breaker on every unattended run -- the exact shape of
+    # failure the breaker exists to prevent. main() only ever returns 0 or 2, so
+    # any other code is an exception, and an unevaluable breaker stops the run.
+    if ($g.Code -ne 0 -and $g.Code -ne 2 -and -not $Force) {
+        Pop-Location
+        (Invoke-Native { git checkout -- data }) | Out-Null
+        Fail "MATERIALITY GATE COULD NOT EVALUATE (exit $($g.Code)) -- the circuit breaker is broken, so nothing is published. data/ reverted. Fix scripts/model_delta_gate.py, or re-run with -Force once a human has read the deltas."
+    }
+    if ($g.Code -ne 0 -and $g.Code -ne 2 -and $Force) { Log "Gate could not evaluate (exit $($g.Code)) but -Force given; publishing anyway." 'WARN' }
 
     # ---- 5. risk + simulation: ONE UNIT --------------------------------------
     if ($SkipMC) {
@@ -275,15 +349,30 @@ try {
         # docs/ is deliberately NOT rebuilt here -- see the header note.
         if ($staged) {
             $r = Invoke-Native { git push origin main }
-            if ($r.Code -ne 0) { Fail "git push failed:`n$($r.Text)" }
+            if ($r.Code -ne 0) {
+                # Lost a push race (origin advanced between our pull and our push).
+                # Rebase onto the new tip and try once more before alerting: the
+                # alternative is an unpushed local commit sitting in front of an
+                # advancing origin overnight, which is the F6 rebase-trap seed.
+                Log "git push rejected; rebasing onto the new origin/main and retrying once." 'WARN'
+                $rb = Invoke-Native { git pull --rebase -X theirs origin main }
+                if ($rb.Code -ne 0) {
+                    (Invoke-Native { git rebase --abort }) | Out-Null
+                    Fail "git push failed and the retry rebase also failed; the model data commit is LOCAL and unpushed. Reconcile by hand:`n$($rb.Text)`n$($r.Text)"
+                }
+                $r = Invoke-Native { git push origin main }
+                if ($r.Code -ne 0) { Fail "git push failed twice (second attempt after a clean rebase):`n$($r.Text)" }
+            }
             Log "Pushed model data to origin/main. The next daily refresh will render it to the site."
         }
     }
 
     Remove-Item $AlertFile -ErrorAction SilentlyContinue
     Log "=== WEEKLY model rebuild DONE ($([math]::Round(((Get-Date)-$script:Start).TotalSeconds))s) ==="
+    Exit-RepoLock
     exit 0
 }
 catch {
     Fail ("Unhandled: {0}`n{1}" -f $_.Exception.Message, $_.ScriptStackTrace)
 }
+finally { Exit-RepoLock }
