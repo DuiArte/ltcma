@@ -41,12 +41,21 @@ RED, GREY = "#7c2d12", "#888888"
 sig = pd.read_csv(f"{DATA}/signals_fred.csv", index_col=0)
 RATE = float(pd.to_numeric(sig["USDMXN"], errors="coerce").dropna().iloc[-1])
 
+# Chart chrome follows the site design system: Inter for labels, JetBrains Mono for
+# every NUMBER. "IBM Plex Sans" is NOT in the page font <link> -- asking for it is a
+# silent fallback to the generic sans, not an error. See WEBSITE_STYLE_GUIDE.md.
+SANS = "Inter, system-ui, -apple-system, sans-serif"
+MONO = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
 LAYOUT = dict(template="plotly_white",
-              font=dict(family="IBM Plex Sans, sans-serif", size=12, color=INK),
-              title_font=dict(color=INK, size=15), dragmode=False,
+              font=dict(family=SANS, size=12, color=INK),
+              title_font=dict(color=INK, size=15, family=SANS), dragmode=False,
               margin=dict(l=64, r=24, t=52, b=46),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
+              hoverlabel=dict(font=dict(family=MONO, size=11, color=INK),
+                              bgcolor="rgba(255,255,255,.97)",
+                              bordercolor="#d4d4d4", align="left"),
+              xaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)),
+              yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)))
 
 
 def divhtml(fig, name):
