@@ -65,11 +65,21 @@ IPC_SCREEN = ["WALMEX.MX", "FEMSAUBD.MX", "GFNORTEO.MX", "GMEXICOB.MX", "AMXB.MX
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
          'family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">')
+# Chart chrome follows the site design system: Inter for labels, JetBrains Mono for
+# every NUMBER. "IBM Plex Sans" is NOT in the FONTS <link> above -- asking for it is a
+# silent fallback to the generic sans, not an error. See WEBSITE_STYLE_GUIDE.md.
+SANS = "Inter, system-ui, -apple-system, sans-serif"
+MONO = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
 LAYOUT = dict(template="plotly_white", dragmode=False,
-              font=dict(family="IBM Plex Sans, sans-serif", size=12, color=INK),
-              title_font=dict(color=INK, size=14), margin=dict(l=55, r=20, t=46, b=42),
+              font=dict(family=SANS, size=12, color=INK),
+              title_font=dict(color=INK, size=14, family=SANS),
+              margin=dict(l=55, r=20, t=46, b=42),
               paper_bgcolor="white", plot_bgcolor="white",
-              xaxis=dict(gridcolor="#e5e5e5"), yaxis=dict(gridcolor="#e5e5e5"))
+              hoverlabel=dict(font=dict(family=MONO, size=11, color=INK),
+                              bgcolor="rgba(255,255,255,.97)",
+                              bordercolor="#d4d4d4", align="left"),
+              xaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)),
+              yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)))
 
 def div(fig, name):
     fig.update_layout(**LAYOUT)
