@@ -1,5 +1,5 @@
 RESEARCH NOTES — AI COPY (low-token)
-asof=14 Aug 2026; funnel: 14 batches all negative | ~181 trials | 1 durable edge (5d mean-reversion, input only) | 3 deployable strategies | 18 findings
+asof=17 Aug 2026; funnel: 14 batches all negative | ~181 trials | 1 durable edge (5d mean-reversion, input only) | 3 deployable strategies | 18 findings
 fields: finding|tag|date|title|gist
 #1|closed|2026-05-28|Double-gating is the dominant failure mode|Strategies that already carry internal regime detection lose edge when an external regime gate is layered on top — the signal gets trimmed twice
 #2|method|2026-05-28|Partial-window winners are usually rally artifacts|A precious-metals momentum system that looked deployable on an eight-year window collapsed on the full 23-year history: its profits clustered inside two secular
