@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=17 Aug 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=18 Aug 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|38.28|+0.574|Revenue growth
-2|DDOG|Technology|247.32|+0.543|Earnings growth
-3|LLY|Healthcare|1183.16|+0.537|CAD beta
-4|PLTR|Technology|172.55|+0.471|Revenue growth
-5|COST|Consumer Defensive|953.50|+0.456|Gross margin
-6|NVDA|Technology|225.01|+0.394|Revenue growth
-7|WMT|Consumer Defensive|114.33|+0.363|CAD beta
-8|HD|Consumer Cyclical|337.88|+0.348|ROE
-9|AAPL|Technology|305.59|+0.265|ROE
-10|GOOGL|Communication Services|344.00|+0.211|Net margin
-11|KO|Consumer Defensive|86.98|+0.206|CAD beta
-12|ORCL|Technology|146.65|+0.190|CAD beta
-13|AMZN|Consumer Cyclical|261.31|+0.145|CAD beta
-14|NET|Technology|307.01|+0.079|Rate beta
-15|AVGO|Technology|392.43|+0.039|Revenue growth
-16|NFLX|Communication Services|76.02|+0.018|Buffett score
-17|SNOW|Technology|330.11|+0.015|Rate beta
-18|NVO|Healthcare|44.88|+0.006|CAD beta
-19|AMD|Technology|506.00|-0.002|Revenue growth
-20|MSFT|Technology|480.35|-0.006|Net margin
+1|SMCI|Technology|37.41|+0.573|Revenue growth
+2|DDOG|Technology|246.00|+0.548|Earnings growth
+3|LLY|Healthcare|1225.73|+0.501|CAD beta
+4|PLTR|Technology|171.54|+0.473|Revenue growth
+5|COST|Consumer Defensive|961.35|+0.463|Gross margin
+6|NVDA|Technology|219.74|+0.388|Revenue growth
+7|WMT|Consumer Defensive|115.20|+0.370|CAD beta
+8|HD|Consumer Cyclical|337.49|+0.354|ROE
+9|AAPL|Technology|310.03|+0.271|ROE
+10|GOOGL|Communication Services|344.20|+0.214|Net margin
+11|KO|Consumer Defensive|88.82|+0.210|CAD beta
+12|AMZN|Consumer Cyclical|259.45|+0.150|Margin of safety
+13|ORCL|Technology|142.79|+0.124|CAD beta
+14|NET|Technology|301.36|+0.089|Rate beta
+15|AVGO|Technology|380.00|+0.044|Revenue growth
+16|SNOW|Technology|325.33|+0.023|Rate beta
+17|NFLX|Communication Services|77.77|+0.018|Buffett score
+18|NVO|Healthcare|45.71|+0.004|CAD beta
+19|AMD|Technology|484.39|+0.002|Revenue growth
+20|TSLA|Consumer Cyclical|336.87|-0.001|CAD beta
