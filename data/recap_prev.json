@@ -1,11 +1,11 @@
 {
-  "date": "18 Aug 2026",
+  "date": "19 Aug 2026",
   "values": {
-    "US 10Y": 4.72,
+    "US 10Y": 4.71,
     "Fed Funds": 3.63,
     "10Y Breakeven": 2.3,
-    "VIX": 15.19,
-    "HY credit spread": 2.7,
+    "VIX": 15.84,
+    "HY credit spread": 2.75,
     "USD / MXN": 17.012
   }
 }
