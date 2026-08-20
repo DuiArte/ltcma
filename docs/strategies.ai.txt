@@ -1,5 +1,5 @@
 LTCMA SYSTEMATIC STRATEGIES — AI COPY (low-token)
-asof=19 Aug 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
+asof=20 Aug 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
 names public-safe (no mechanism exposed); rf USD=4.5% BARS=9%
 interactive: site lets reader re-base start date; values below = full window
 fields: code|name|bench|window|metrics...
@@ -8,7 +8,7 @@ DUO|Balanced Multi-strategy|vs S&P 500|2007-01..2026-04(231m)|CAGR=9.9%|vol=10.5
 MARS|Defensive Multi-asset|vs S&P 500|1998-04..2026-04(336m)|CAGR=7.3%|vol=8.9%|Sharpe=0.31|Sortino=0.41|MaxDD=-17.6%|Calmar=0.41|Omega=1.94|GtP=0.94|Recov=35.01|Ulcer=6.4%|VaR95=-3.6%|CVaR95=-5.6%|Tail=1.31|Win=68.5%|Skew=-0.53|Kurt=2.07|Alpha=+1.5%|Beta=0.34|TE=12.5%|IR=-0.08|UpCap=0.51|DnCap=0.34|LongestDD=40m
 BARS|Mexican Equity Rotation|vs IPC|2008-05..2026-04(204m)|CAGR=11.4%|vol=14.2%|Sharpe=0.17|Sortino=0.25|MaxDD=-24.1%|Calmar=0.47|Omega=1.92|GtP=0.92|Recov=21.91|Ulcer=7.9%|VaR95=-5.6%|CVaR95=-8.2%|Tail=1.34|Win=60.3%|Skew=-0.12|Kurt=1.32|Alpha=+4.6%|Beta=0.66|TE=10.6%|IR=0.55|UpCap=0.85|DnCap=0.52|LongestDD=54m
 EMBER 4-SLEEVE ENSEMBLE — LIVE PAPER-TRACK (Finding #38; NOT live capital)
-inception=2026-06-18; asof=2026-08-19; days=43; indexed-to-100; vs Static 50/30/20 reference basket
+inception=2026-06-18; asof=2026-08-20; days=44; indexed-to-100; vs Static 50/30/20 reference basket
 weights inverse-vol: Anchor 33pct, Rates 42pct, Crypto 7pct, EM 18pct
-latest: ensemble=101.76 reference=102.63
+latest: ensemble=102.15 reference=102.16
 backtest 2017-26: Sharpe=1.79 OOS (+0.44 vs flagship), PBO=0.20; caveats: GFC untestable, benign window, crypto rho 0.48, ~69pct lift = rates sleeve
