@@ -93,6 +93,8 @@ function tune(){
          ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
          m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
          lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
+         h:FL.height,
+         an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
          md:(d.data||[]).map(function(t){return t.mode;})};
       st.set(d,o);}
     /* Per-point text labels are unreadable once the plot is 283px wide: the
@@ -122,7 +124,10 @@ function tune(){
         'legend.y':(o.lg.y===undefined?null:o.lg.y),
         'legend.yanchor':o.lg.yanchor||null};
       if(d._fullLayout.xaxis){back['xaxis.tickfont.size']=null;back['xaxis.title.font.size']=null;}
-      if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;}
+      if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
+        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=null;}
+      if(o.h)back['height']=o.h;
+      o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
       modes(false);
       try{Plotly.relayout(d,back);Plotly.Plots.resize(d);}catch(e){}
       return;}
@@ -148,6 +153,21 @@ function tune(){
        straight into a 375px viewport therefore kept Plotly's default 700px SVG,
        visually clipped to the 283px tile, ticks landing 360px past its right
        edge. (Keep this comment free of `name=number` -- confscan greps it.) */
+    /* hline annotations ("stress threshold +0.5", "fed funds 3.63%") are drawn
+       INSIDE the plot area and sit on top of the data. At 283px they cover the
+       series they annotate. The dotted line itself stays -- only its caption is
+       hidden, and the surrounding prose already names the thresholds. This is
+       the one defect class the clip check cannot see: it never leaves the div. */
+    o.an.forEach(function(_,i){up['annotations['+i+'].visible']=false;});
+    /* A log y-axis renders minor decade labels (8, 9) that collide once the
+       plot is ~340px tall. Decades only on mobile. */
+    if(d._fullLayout.yaxis&&d._fullLayout.yaxis.type==='log')up['yaxis.dtick']=1;
+    /* Cap height so a chart is not a full portrait screen -- EXCEPT horizontal
+       bar charts with many categories, where the height IS the category axis and
+       shrinking it makes the labels collide instead. */
+    var hbar=(d.data||[]).some(function(t){return t.type==='bar'&&t.orientation==='h';});
+    var ncat=hbar?Math.max.apply(null,(d.data||[]).map(function(t){return (t.y||[]).length;})):0;
+    if(o.h&&o.h>360&&!(hbar&&ncat>8))up['height']=340;
     modes(true);
     try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
   });
