@@ -99,7 +99,8 @@ function tune(){
     if(d._fullLayout.yaxis){up['yaxis.tickfont.size']=10;up['yaxis.title.font.size']=10.5;}
     /* config responsive:true only fires on window-resize EVENTS. A page loaded
        straight into a 375px viewport therefore kept Plotly's default 700px SVG,
-       visually clipped to the 283px tile -- x ticks landed at x=647. Fit it. */
+       visually clipped to the 283px tile, ticks landing 360px past its right
+       edge. (Keep this comment free of `name=number` -- confscan greps it.) */
     modes(true);
     try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
   });
