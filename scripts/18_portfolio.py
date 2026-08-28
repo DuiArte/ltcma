@@ -837,6 +837,11 @@ f2.add_vline(x=port_ret * 100, line=dict(color=INK, dash="dash"),
              annotation_text=f"portfolio {port_ret*100:+.2f}%")
 f2.update_layout(title="Holding return vs the portfolio (dashed = portfolio total)",
                  xaxis_title="return since cost (%)")
+# Same outside-label headroom as pf-alloc below, but this one diverges around 0,
+# so both ends need padding -- the extreme bar sits at whichever end is longer.
+_lo, _hi = min(0.0, float(lat["ret"].min()) * 100), max(0.0, float(lat["ret"].max()) * 100)
+_pad = max(1.0, (_hi - _lo) * 0.26)
+f2.update_xaxes(range=[_lo - _pad, _hi + _pad])
 
 # 3. allocation (currency-independent)
 al = latest.sort_values("weight")
@@ -846,6 +851,12 @@ f3 = go.Figure(go.Bar(x=al["weight"] * 100, y=al["ticker"], orientation="h",
                       textposition="outside"))
 f3.update_layout(title="Current allocation by holding",
                  xaxis_title="% of stock portfolio")
+# textposition="outside" writes the label PAST the end of the longest bar, and
+# fixedrange=True stops Plotly from auto-expanding the axis to make room -- so at
+# a 283px mobile width the top label ("25.07%") ran 22px past the plot and was
+# clipped by .tile{overflow:hidden}. Reserve the headroom in the range instead of
+# switching to textposition="auto", which would move labels inside on desktop too.
+f3.update_xaxes(range=[0, float(al["weight"].max()) * 100 * 1.34])
 
 # ---------- holdings table ----------
 rows = ""

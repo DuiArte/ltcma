@@ -86,7 +86,8 @@ def div(fig, name):
     fig.update_xaxes(fixedrange=True); fig.update_yaxes(fixedrange=True)
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id=name,
                        config={"displayModeBar": False, "scrollZoom": False,
-                               "doubleClick": False, "showAxisDragHandles": False})
+                               "doubleClick": False, "showAxisDragHandles": False,
+                               "responsive": True})
 
 def num(x):  return x if isinstance(x, (int, float)) and x == x else None
 def pct(x):  return f"{x*100:.1f}%" if num(x) is not None else "n/a"

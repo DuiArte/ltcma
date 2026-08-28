@@ -54,7 +54,8 @@ def div(fig, name):
     fig.update_xaxes(fixedrange=True); fig.update_yaxes(fixedrange=True)
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id=name,
                        config={"displayModeBar": False, "scrollZoom": False,
-                               "doubleClick": False, "showAxisDragHandles": False})
+                               "doubleClick": False, "showAxisDragHandles": False,
+                               "responsive": True})
 
 
 # ---------------------------------------------------------------- commentary
