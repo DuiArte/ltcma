@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=28 Aug 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=31 Aug 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|37.08|+0.552|Revenue growth
-2|LLY|Healthcare|1174.61|+0.533|CAD beta
-3|DDOG|Technology|236.98|+0.510|Earnings growth
-4|NVDA|Technology|217.55|+0.485|Revenue growth
-5|COST|Consumer Defensive|945.47|+0.449|Gross margin
-6|PLTR|Technology|186.29|+0.438|Revenue growth
-7|WMT|Consumer Defensive|103.09|+0.346|CAD beta
-8|HD|Consumer Cyclical|330.19|+0.307|ROE
-9|AAPL|Technology|319.70|+0.285|ROE
-10|KO|Consumer Defensive|89.66|+0.218|CAD beta
-11|GOOGL|Communication Services|346.59|+0.211|Net margin
-12|ORCL|Technology|150.85|+0.197|CAD beta
-13|AMZN|Consumer Cyclical|266.43|+0.143|CAD beta
-14|NET|Technology|299.84|+0.057|Rate beta
-15|NFLX|Communication Services|81.72|+0.038|Buffett score
-16|AVGO|Technology|368.79|+0.024|Revenue growth
-17|NVO|Healthcare|45.61|+0.015|CAD beta
-18|MSFT|Technology|513.53|-0.003|Net margin
-19|SNOW|Technology|328.00|-0.014|Rate beta
-20|TSLA|Consumer Cyclical|348.75|-0.024|CAD beta
+1|SMCI|Technology|37.28|+0.554|Revenue growth
+2|LLY|Healthcare|1156.73|+0.532|CAD beta
+3|DDOG|Technology|237.04|+0.509|Earnings growth
+4|NVDA|Technology|220.78|+0.485|Revenue growth
+5|COST|Consumer Defensive|943.89|+0.447|Gross margin
+6|PLTR|Technology|186.38|+0.439|Revenue growth
+7|WMT|Consumer Defensive|104.87|+0.345|CAD beta
+8|HD|Consumer Cyclical|327.83|+0.306|ROE
+9|AAPL|Technology|316.85|+0.283|ROE
+10|KO|Consumer Defensive|88.67|+0.218|CAD beta
+11|GOOGL|Communication Services|339.35|+0.210|Net margin
+12|ORCL|Technology|149.12|+0.196|CAD beta
+13|AMZN|Consumer Cyclical|259.77|+0.142|CAD beta
+14|NET|Technology|305.11|+0.054|Rate beta
+15|NFLX|Communication Services|81.05|+0.038|Buffett score
+16|AVGO|Technology|370.34|+0.023|Revenue growth
+17|NVO|Healthcare|45.33|+0.016|CAD beta
+18|MSFT|Technology|507.29|-0.004|Net margin
+19|SNOW|Technology|331.43|-0.016|Rate beta
+20|AMD|Technology|470.72|-0.026|Revenue growth
