@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Research Notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><style>
+<link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"><style>
 .toc{display:flex;flex-wrap:wrap;gap:0;border:1px solid #d4d4d4;margin:0 0 2.6rem;width:fit-content;max-width:100%}
 .toc a{font:500 12.5px 'Inter',sans-serif;color:#555;text-decoration:none;padding:8px 16px;
 border-right:1px solid #d4d4d4;letter-spacing:.01em;transition:background .12s,color .12s}
@@ -43,6 +43,10 @@ document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoun
 setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
 });</script><script>(function(){
 var MOB=640,st=new WeakMap();
+/* read the breakpoint from --bp-sm so CSS and JS cannot drift; 640 is the fallback
+   and the token resolves to that same 640, so both paths agree today. */
+try{var _bp=parseInt(getComputedStyle(document.documentElement)
+  .getPropertyValue('--bp-sm'),10);if(_bp>0)MOB=_bp;}catch(_e){}
 function wrap(t,cpl){
   if(!t)return t;
   var w=String(t).split(' '),ln=[],c='';
@@ -165,7 +169,7 @@ exactly one durable feature-level edge and three deployable strategies — and
 every batch since the first has promoted nothing. That is the honest base rate
 of systematic-edge discovery, and hiding it would misstate how hard this is.
 The 18 load-bearing findings below are the working capital of the program.</p>
-<p class="asof">As of 31 Aug 2026 &middot; negative results published by design</p>
+<p class="asof">As of 01 Sep 2026 &middot; negative results published by design</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#funnel">The funnel</a><a href="#batches">Batch record</a>
