@@ -68,6 +68,7 @@ import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
+from design_system import CSS_LINKS
 
 import paths
 FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")  # lot-history DATA cache only
@@ -1429,7 +1430,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stock Portfolio Tracker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script>
 <style>
 /* portfolio coherence fixes (2026-06-15):
    - symmetric P/L colours: .ptable td sets the ink colour and out-specifies bare .pos,

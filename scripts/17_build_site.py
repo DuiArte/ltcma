@@ -9,6 +9,8 @@ import markdown
 import plotly.graph_objects as go
 from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
                       bt_indicators, bt_g100, BT_JS)
+from design_system import CSS_LINKS
+import design_system
 
 from paths import DATA_S as D, REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 os.makedirs(f"{DOCS}/figures", exist_ok=True)
@@ -391,7 +393,7 @@ INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Capital Market Assumptions</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -447,7 +449,7 @@ REPORT = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Full Report</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -466,7 +468,7 @@ GLOSSARY_PAGE = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Glossary</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -538,7 +540,7 @@ PROJECTS_PAGE = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Carlos Duarte — Projects</title>
 <meta name="description" content="A portfolio of quantitative-research projects by Carlos Duarte — methodology, deployed strategies and tooling, each linking to its own GitHub repository.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css">
+{CSS_LINKS}<link rel="stylesheet" href="style.css">
 <style>
 .proj-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem;margin-top:8px}}
 .proj-card{{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:0;
@@ -847,5 +849,11 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
 }
 """
 open(f"{DOCS}/style.css", "w", encoding="utf-8").write(CSS)
+# Design-system sheets are build outputs like style.css above -- emitted every run so
+# `git clean -fd docs data` can never orphan them (REDESIGN_PLAN D1). tokens.css and
+# base.css are <link>ed BEFORE style.css, so style.css still wins every shared selector
+# until a page opts in with `<body class="ds-v2">`.
+_ds_out = design_system.emit(DOCS)
 print(f"Carbon site built -> {DOCS}  | regime={regime} | as-of {ASOF}")
 print(f"  index.html, report.html, style.css, figures/  ({len(CHARTS)} locked charts)")
+print(f"  design system -> {_ds_out} (tokens.css, base.css)")

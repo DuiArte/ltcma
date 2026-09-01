@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
+from design_system import CSS_LINKS
 import picker
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
@@ -334,7 +335,7 @@ future returns.</p></div></section>
     html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>Stock Research — Picks, Analysis &amp; Signals</title>{FONTS}'
-            f'<link rel="stylesheet" href="style.css"><style>{PAGE_CSS}</style>'
+            f'{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{PAGE_CSS}</style>'
             f'<script src="{PLOTLY}"></script></head><body>'
             f'<header class="shell"><div class="shell-in">'
             f'<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b>'

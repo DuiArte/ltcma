@@ -1,0 +1,117 @@
+{
+ "backtests.html": {
+  "charts": 0,
+  "tables": 0,
+  "tiles": 0
+ },
+ "bt_buy_the_dip.html": {
+  "charts": 1,
+  "tables": 5,
+  "tiles": 1
+ },
+ "bt_crt.html": {
+  "charts": 1,
+  "tables": 6,
+  "tiles": 1
+ },
+ "bt_static_diversification.html": {
+  "charts": 1,
+  "tables": 3,
+  "tiles": 1
+ },
+ "bt_static_drift_weights.html": {
+  "charts": 1,
+  "tables": 10,
+  "tiles": 1
+ },
+ "glossary.html": {
+  "charts": 1,
+  "tables": 0,
+  "tiles": 0
+ },
+ "index.html": {
+  "charts": 10,
+  "tables": 1,
+  "tiles": 10
+ },
+ "portfolio.html": {
+  "charts": 5,
+  "tables": 3,
+  "tiles": 7
+ },
+ "projects.html": {
+  "charts": 1,
+  "tables": 0,
+  "tiles": 0
+ },
+ "regime.html": {
+  "charts": 3,
+  "tables": 2,
+  "tiles": 5
+ },
+ "report.html": {
+  "charts": 1,
+  "tables": 15,
+  "tiles": 1
+ },
+ "research.html": {
+  "charts": 1,
+  "tables": 1,
+  "tiles": 19
+ },
+ "signals.html": {
+  "charts": 0,
+  "tables": 0,
+  "tiles": 0
+ },
+ "stock_AAPL.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_AMZN.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_BA.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_GOOGL.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_IBM.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_META.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_MSFT.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stock_NVDA.html": {
+  "charts": 4,
+  "tables": 3,
+  "tiles": 6
+ },
+ "stocks.html": {
+  "charts": 2,
+  "tables": 3,
+  "tiles": 13
+ },
+ "strategies.html": {
+  "charts": 5,
+  "tables": 4,
+  "tiles": 26
+ }
+}

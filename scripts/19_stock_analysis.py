@@ -20,6 +20,7 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
+from design_system import CSS_LINKS
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)
@@ -102,7 +103,7 @@ def big(x):
 def page(title, body):
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
-            f'<title>{title}</title>{FONTS}<link rel="stylesheet" href="style.css">'
+            f'<title>{title}</title>{FONTS}{CSS_LINKS}<link rel="stylesheet" href="style.css">'
             f'<script src="{PLOTLY}"></script></head><body>'
             f'<header class="shell"><div class="shell-in">'
             f'<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b>'
