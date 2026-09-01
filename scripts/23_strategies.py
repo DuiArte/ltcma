@@ -10,6 +10,7 @@ import numpy as np
 import plotly.graph_objects as go
 from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS,
                       bt_catalog, bt_card, BT_CARD_CSS, _bt_redact)
+from design_system import CSS_LINKS
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 import pandas as pd
@@ -562,7 +563,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Systematic Strategies</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}{STRAT_CSS}{EMBER_CSS}</style><script src="{PLOTLY}"></script></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}{STRAT_CSS}{EMBER_CSS}</style><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>

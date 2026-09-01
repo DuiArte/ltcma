@@ -29,6 +29,7 @@ HUB_CANDIDATES = [
 
 sys.path.insert(0, HERE)
 from glossary import NAV, bt_card  # noqa: E402
+from design_system import CSS_LINKS
 
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
          'family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">')
@@ -162,7 +163,7 @@ def shell(title, body, plot=False):
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title}</title>
 {FONTS}
-<link rel="stylesheet" href="style.css"></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>

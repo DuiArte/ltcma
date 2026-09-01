@@ -13,6 +13,7 @@ import pandas as pd
 from glossary import NAV, _bt_redact
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
+from design_system import CSS_LINKS
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 
 # ── the funnel (headline numbers — keep in sync with STRATEGY_LOG tally) ─────
@@ -268,7 +269,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Research Notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><style>{CSS}</style></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{CSS}</style></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>

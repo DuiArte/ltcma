@@ -1,140 +1,8 @@
 """Shared site components: the navigation bar, the plain-language glossary,
 and the currency badge. Imported by 17/18/19 so there is one source of truth.
 """
+from design_system import MOBILE_CHARTS_JS
 
-# --- mobile chart tuning (2026-08-28) ---
-# Plotly neither wraps nor shrinks a title, and there is no layout option for
-# "font size at this breakpoint". At a 283px mobile plot width a 45-char title
-# renders ~350-410px wide and is silently CLIPPED by `.tile{overflow:hidden}` --
-# which is exactly why the site passed the 375px no-overflow gate while every
-# chart read as truncated. The gate measures the DOCUMENT; the clipping happens
-# inside a tile. So the breakpoint has to be applied from JS.
-#
-# Appended to NAV rather than shipped as its own file: NAV is already the one
-# piece of chrome every generator injects, so this reaches all 23 pages with no
-# extra request and no new dependency.
-#
-# Desktop is untouched by construction: above the breakpoint the tuner takes an
-# early return before it ever calls relayout. Originals are stashed on first
-# sight and restored on the way back up, so a desktop<->mobile resize round-trip
-# is lossless.
-_MOBILE_CHARTS_JS = """<script>(function(){
-var MOB=640,st=new WeakMap();
-function wrap(t,cpl){
-  if(!t)return t;
-  var w=String(t).split(' '),ln=[],c='';
-  for(var i=0;i<w.length;i++){var n=c?c+' '+w[i]:w[i];
-    if(n.length>cpl&&c){ln.push(c);c=w[i];}else{c=n;}}
-  if(c)ln.push(c);
-  return ln.join('<br>');
-}
-function tune(){
-  if(!window.Plotly)return;
-  var mob=window.innerWidth<=MOB;
-  document.querySelectorAll('.plotly-graph-div').forEach(function(d){
-    if(!d._fullLayout)return;                       /* not rendered yet; a later retry gets it */
-    var rect=d.getBoundingClientRect();
-    if(!rect.width)return;
-    /* re-tune when the width BUCKET changes, not on every pixel: 375->414 must
-       re-wrap the title, but a scroll-driven 1px reflow must not relayout. */
-    var key=mob?('m'+Math.round(rect.width/30)):'d';
-    if(d.__tk===key)return;
-    var first=!d.__tk; d.__tk=key;
-    var o=st.get(d);
-    if(!o){var L=d.layout||{},FL=d._fullLayout;
-      o={t:(L.title&&L.title.text)||'',
-         ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
-         m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
-         lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
-         h:FL.height,
-         an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
-         md:(d.data||[]).map(function(t){return t.mode;})};
-      st.set(d,o);}
-    /* Per-point text labels are unreadable once the plot is 283px wide: the
-       risk/return map packs 24 asset labels into that space and 22 of the 24
-       pairs overlap. Traces that carry many labels drop to markers-only on
-       mobile -- the class legend still identifies them and a tap still shows
-       the name on hover. The cutoff is 3, not 6: the 4-label Real Asset trace
-       still self-overlapped twice at 283px. */
-    function modes(mob){
-      var chg=false,arr=(d.data||[]).map(function(t,i){
-        var m=o.md[i];
-        if(!mob||!m||m.indexOf('text')<0)return m;
-        if(!t.text||t.text.length<=3)return m;
-        chg=true;return m.replace('+text','').replace('text+','').replace('text','markers');});
-      if(mob&&!chg)return;
-      if(!mob&&!(o.md||[]).some(function(m){return m&&m.indexOf('text')>=0;}))return;
-      try{Plotly.restyle(d,{mode:arr});}catch(e){}
-    }
-    if(!mob){
-      if(first)return;                              /* first sight on desktop: nothing to undo */
-      var back={'title.text':o.t,'title.font.size':o.ts,
-        'margin.l':o.m.l,'margin.r':o.m.r,'margin.t':o.m.t,'margin.b':o.m.b,
-        'legend.font.size':(o.lg.font&&o.lg.font.size)||null,
-        'legend.orientation':o.lg.orientation||null,
-        'legend.x':(o.lg.x===undefined?null:o.lg.x),
-        'legend.xanchor':o.lg.xanchor||null,
-        'legend.y':(o.lg.y===undefined?null:o.lg.y),
-        'legend.yanchor':o.lg.yanchor||null};
-      if(d._fullLayout.xaxis){back['xaxis.tickfont.size']=null;back['xaxis.title.font.size']=null;}
-      if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
-        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=null;}
-      if(o.h)back['height']=o.h;
-      o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
-      modes(false);
-      try{Plotly.relayout(d,back);Plotly.Plots.resize(d);}catch(e){}
-      return;}
-    /* SCALE the generator's margins, never replace them -- the correlation
-       heatmap carries 130px left/bottom margins for its asset labels, and a
-       flat 44px left margin would clip them off the chart entirely.
-       Margins resolve FIRST because the title is left-anchored at margin.l:
-       wrapping against the full div width let every title start 35px in and then
-       run 12-23px past the right edge, clipped by .tile{overflow:hidden}. */
-    var mL=Math.max(34,Math.round(o.m.l*0.72)),mR=Math.max(10,Math.round(o.m.r*0.5));
-    /* ~6.3px per char for Inter at 12.5px; the 8px pad keeps it off the edge. */
-    var cpl=Math.max(14,Math.floor((rect.width-mL-8)/6.3));
-    var txt=wrap(o.t,cpl),lines=txt?txt.split('<br>').length:0;
-    var up={'title.text':txt,'title.font.size':12.5,
-      'margin.l':mL,'margin.r':mR,
-      'margin.t':(lines>1?26+lines*15:Math.max(34,Math.round(o.m.t*0.8))),
-      'margin.b':Math.max(34,Math.round(o.m.b*0.82)),
-      'legend.font.size':9.5,'legend.orientation':'h',
-      'legend.x':0,'legend.xanchor':'left','legend.y':-0.24,'legend.yanchor':'top'};
-    if(d._fullLayout.xaxis){up['xaxis.tickfont.size']=10;up['xaxis.title.font.size']=10.5;}
-    if(d._fullLayout.yaxis){up['yaxis.tickfont.size']=10;up['yaxis.title.font.size']=10.5;}
-    /* config responsive:true only fires on window-resize EVENTS. A page loaded
-       straight into a 375px viewport therefore kept Plotly's default 700px SVG,
-       visually clipped to the 283px tile, ticks landing 360px past its right
-       edge. (Keep this comment free of `name=number` -- confscan greps it.) */
-    /* hline annotations ("stress threshold +0.5", "fed funds 3.63%") are drawn
-       INSIDE the plot area and sit on top of the data. At 283px they cover the
-       series they annotate. The dotted line itself stays -- only its caption is
-       hidden, and the surrounding prose already names the thresholds. This is
-       the one defect class the clip check cannot see: it never leaves the div. */
-    o.an.forEach(function(_,i){up['annotations['+i+'].visible']=false;});
-    /* A log y-axis renders minor decade labels (8, 9) that collide once the
-       plot is ~340px tall. Decades only on mobile. */
-    if(d._fullLayout.yaxis&&d._fullLayout.yaxis.type==='log')up['yaxis.dtick']=1;
-    /* Cap height so a chart is not a full portrait screen -- EXCEPT horizontal
-       bar charts with many categories, where the height IS the category axis and
-       shrinking it makes the labels collide instead. */
-    var hbar=(d.data||[]).some(function(t){return t.type==='bar'&&t.orientation==='h';});
-    var ncat=hbar?Math.max.apply(null,(d.data||[]).map(function(t){return (t.y||[]).length;})):0;
-    if(o.h&&o.h>360&&!(hbar&&ncat>8))up['height']=340;
-    modes(true);
-    try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
-  });
-}
-/* Plotly renders from inline scripts and settles asynchronously (the 40x
-   under-report the old iframe gate hit), so poll a few times rather than
-   trusting one DOMContentLoaded pass. */
-function retry(){[0,250,900,2000,3500].forEach(function(ms){setTimeout(tune,ms);});}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',retry);else retry();
-var tid;function later(){clearTimeout(tid);tid=setTimeout(tune,160);}
-window.addEventListener('resize',later);window.addEventListener('orientationchange',later);
-})();</script>"""
-
-# --- navigation (single source of truth across all pages) ---
 NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
        '<a href="portfolio.html">Portfolio</a>'
@@ -152,7 +20,7 @@ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isInter
 document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoundingClientRect();if(r.top<window.innerHeight){el.classList.add('vis');return;}el.classList.add('rv');io.observe(el);});
 setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
 });</script>"""
-       + _MOBILE_CHARTS_JS)
+       + MOBILE_CHARTS_JS)
 
 
 def ccy_badge(currency, note=""):

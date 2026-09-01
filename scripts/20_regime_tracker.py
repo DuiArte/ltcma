@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
 from paths import DATA_S as DATA, DOCS_S as DOCS  # repo-anchored (2026-06-10)
+from design_system import CSS_LINKS
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
@@ -241,7 +242,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Regime Tracker — when to adjust the strategy</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
