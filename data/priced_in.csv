@@ -1,7 +1,7 @@
 signal,market_priced_in,ltcma_assumption,read
-Policy-rate path,~4.2% avg next 12m; 1-2y fwd 4.6%,Cash ER 3.3% (assumes drift to ~3.0-3.3% neutral),"Market prices NO cuts; if right, near-term cash yields above the LTCMA path"
+Policy-rate path,~4.1% avg next 12m; 1-2y fwd 4.6%,Cash ER 3.3% (assumes drift to ~3.0-3.3% neutral),"Market prices NO cuts; if right, near-term cash yields above the LTCMA path"
 Long-run inflation,"10y breakeven 2.35%, 5y5y 2.33%",2.40%,Aligned -- LTCMA sits mid-range of what's priced
-US credit risk,"HY OAS 2.66% (3th pctile, very tight)",US HY ER 5.0% (tight-spread drag already applied),Market prices near-zero default stress; LTCMA already cautious -- agreement
-Equity volatility,VIX 15.2 (33th pctile),Equity vols 13-33%,Market calm; no near-term stress priced
-Recession,Curve 10Y-3M +0.88% (positive),n/a,No recession priced in
+US credit risk,"HY OAS 2.65% (3th pctile, very tight)",US HY ER 5.0% (tight-spread drag already applied),Market prices near-zero default stress; LTCMA already cautious -- agreement
+Equity volatility,VIX 14.3 (27th pctile),Equity vols 13-33%,Market calm; no near-term stress priced
+Recession,Curve 10Y-3M +0.87% (positive),n/a,No recession priced in
 Policy uncertainty,EPU 178 (elevated),n/a,High policy noise but low market vol -- complacency divergence
