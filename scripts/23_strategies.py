@@ -10,7 +10,7 @@ import numpy as np
 import plotly.graph_objects as go
 from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS,
                       bt_catalog, bt_card, BT_CARD_CSS, _bt_redact)
-from design_system import CSS_LINKS
+from design_system import CSS_LINKS, axis_formats, assert_no_entities
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 import pandas as pd
@@ -37,6 +37,7 @@ LAYOUT = dict(template="plotly_white",
 
 
 def div(fig, name):
+    fig = axis_formats(assert_no_entities(fig))
     fig.update_layout(**LAYOUT)
     fig.update_xaxes(fixedrange=True); fig.update_yaxes(fixedrange=True)
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id=name,

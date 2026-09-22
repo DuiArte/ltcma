@@ -37,6 +37,108 @@ CHART = {
 
 FONTS = ("Inter", "Spectral", "JetBrains Mono")   # A9: nothing else may appear
 
+# --- number presentation: ONE rule, enforced where every chart already passes ----
+# A trace with no `hovertemplate` falls back to Plotly's default, which prints the raw
+# float: GMEXICOB's return read `17.956999914853366%` in a tooltip on the live site.
+# The 2026-09-22 audit found 289 such traces across 13 pages, 155 of them carrying
+# >=5-decimal values. Fixing them one by one is 289 chances to forget, and the next
+# chart added would reintroduce it.
+#
+# So the rule lives in `axis_formats(fig)`, which every generator calls from inside its
+# own `div()` -- the single funnel every published chart already goes through. It sets
+# `hoverformat` per axis and never overwrites one that was set deliberately.
+#
+# Date axes take a d3-TIME format; giving them a numeric one prints literal garbage.
+# The axis type is usually left on "auto", so it is inferred from the data rather than
+# read off the layout.
+# --- ONE chart palette, shared by every generator ------------------------------
+# Before 2026-09-22 each generator carried its own constants and `GOLD` was in fact a
+# grey (#6b7280), so "gold" and "grey" rendered identically while reading as two
+# different things in the source. Worse, `RED` did double duty: a semantic negative-P/L
+# marker in one place and an ordinary categorical series colour in another, which spends
+# the site's only alarm colour on things that are not alarming.
+#
+# The split that matters: SEQ is for telling categories apart and carries no meaning;
+# POS/NEG are semantic and appear ONLY where a number's sign is the point.
+NAVY    = "#0a2540"     # primary — this book, the main series
+SLATE   = "#5b7c99"     # secondary series
+TEAL    = "#0f766e"     # the single accent: utilisation, offsetting correlation
+BENCH   = "#9aa5b1"     # benchmarks and reference lines — deliberately recessive
+MUTED   = "#b6bec8"     # "behind the reference" fill
+GRIDLN  = "#e5e5e5"
+POS, NEG = "#0a5d3a", "#7c2d12"       # SEMANTIC ONLY — never a categorical series
+SEQ = (NAVY, TEAL, SLATE, BENCH, "#7e97b3", "#7fb3ad")   # categorical ramp, in order
+CORR_SCALE = [[0.0, TEAL], [0.25, "#7fb3ad"], [0.5, "#f4f4f2"],
+              [0.75, "#7e97b3"], [1.0, NAVY]]
+
+MAX_DP = 2                                  # site-wide ceiling on displayed decimals
+NUM_HOVER = f",.{MAX_DP}f"                  # 1,234.57
+DATE_HOVER = "%d %b %Y"
+
+
+def _is_date_axis(fig, letter):
+    import datetime as _dt
+    for tr in fig.data:
+        vals = getattr(tr, letter, None)
+        if vals is None or len(vals) == 0:
+            continue
+        v = vals[0]
+        if isinstance(v, (_dt.date, _dt.datetime)):
+            return True
+        if isinstance(v, str) and len(v) >= 8 and v[:4].isdigit() and v[4] in "-/":
+            return True
+        return False           # first trace with data decides; mixed axes do not exist here
+    return False
+
+
+def _is_category_axis(fig, letter):
+    for tr in fig.data:
+        vals = getattr(tr, letter, None)
+        if vals is None or len(vals) == 0:
+            continue
+        v = vals[0]
+        return isinstance(v, str) and not (len(v) >= 8 and v[:4].isdigit())
+    return False
+
+
+def axis_formats(fig):
+    """Give every axis a hover format so no raw float can reach a tooltip.
+
+    Idempotent, and deliberately non-destructive: an axis that already carries a
+    `hoverformat` was set on purpose (percentages, basis points) and is left alone.
+    """
+    for letter, axis in (("x", "xaxis"), ("y", "yaxis")):
+        ax = getattr(fig.layout, axis, None)
+        if ax is None or ax.hoverformat is not None:
+            continue
+        if _is_category_axis(fig, letter):
+            continue                                   # tickers, asset names: not numbers
+        fig.update_layout(**{axis: dict(
+            hoverformat=DATE_HOVER if _is_date_axis(fig, letter) else NUM_HOVER)})
+    return fig
+
+
+# --- entities are HTML, and a Plotly hovertemplate is NOT HTML ------------------
+# Plotly renders a small HTML subset inside hover text but does not decode named
+# entities, so `&middot;` reaches the user as the seven literal characters. Shipped
+# that way in a9a5361 and caught on the live site the same day. Write the character.
+BAD_ENTITIES = ("&middot;", "&amp;", "&nbsp;", "&ndash;", "&mdash;", "&rsquo;", "&times;")
+
+
+def assert_no_entities(fig, name=""):
+    """Abort if a hovertemplate or trace name carries an HTML entity."""
+    for tr in fig.data:
+        for attr in ("hovertemplate", "name", "texttemplate"):
+            v = getattr(tr, attr, None)
+            if isinstance(v, str):
+                for ent in BAD_ENTITIES:
+                    if ent in v:
+                        raise SystemExit(
+                            f"CHART GUARD: {name or fig.layout.title.text!r} has the literal "
+                            f"HTML entity {ent!r} in .{attr} -- Plotly does not decode "
+                            f"entities in hover text. Write the character itself.")
+    return fig
+
 TOKENS = """/* GENERATED by scripts/design_system.py -- do not edit under docs/. */
 :root{
   /* ---- colour: copied verbatim from style.css, resolves identically ---- */
