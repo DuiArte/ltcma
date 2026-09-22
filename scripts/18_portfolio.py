@@ -414,6 +414,43 @@ print(f"  equity/balance: {len(ts)} days | baseline {BASELINE:,.0f} | "
 # holdings table so the numbers match the account exactly.
 _bdf, BROKER_CASH, BROKER_EFEC24, _bsnap = load_broker_snapshot()
 
+# ---------- position sidecar: the walked book supersedes a stale broker cut ----------
+# The newest "Detalle de Portafolio" is 2026-08-05. Eleven fills happened after it (7 buys,
+# 4 sells incl. the MSFT/META/ORCL closes), so marking that cut to today's prices publishes
+# a seven-week-old book with fresh prices on it -- realized understated by 106,855 MXN and a
+# position missing. Nothing ABORTED on that: the freshness guard below compares this file's
+# own merge against the sidecar, and both were pinned to the same August exports, so it was
+# checking stale against stale.
+#
+# The fix is to feed the walk, not to loosen a guard. `position_latest.json` carries the
+# 2026-09-21 holdings from the blotter walk that reconciles to Portfolio_REAL_2026-09-21.xlsx
+# at 0.00 MXN. Two dates are kept DISTINCT and both are published:
+#   as_of       2026-09-21  what the book holds  (walked forward from the blotter)
+#   recon_asof  2026-08-05  last INDEPENDENT confirmation of those share counts (20/20)
+# Conflating them would be the real error: a walk reconciled against itself proves nothing,
+# so an undocumented trade after 2026-08-05 is undetectable by construction until a new
+# broker export lands. That limitation is rendered on the page, not buried here.
+RECON_ASOF = _bsnap.strftime("%Y-%m-%d") if _bsnap is not None else None
+_POSF = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "position_latest.json")
+try:
+    _ps = json.loads(Path(_POSF).read_text(encoding="utf-8"))
+    _pas = pd.to_datetime(_ps["as_of"])
+    if _bsnap is None or _pas > _bsnap:
+        _bdf = pd.DataFrame([{"ticker": r["ticker"], "Títulos": r["shares"],
+                              "Costo promedio": r["avg_cost_mxn"],
+                              "Precio mercado": r["last_mark_mxn"],
+                              "valor_broker": r["mv_mxn"],
+                              "imp_cto_broker": r["allin_cost_mxn"]}
+                             for r in _ps["positions"]])
+        print(f"  positions: walk sidecar {_ps['as_of']} supersedes the broker cut "
+              f"{RECON_ASOF} ({len(_bdf)} positions; share recon anchor stays {_ps['recon_asof']})")
+        _bsnap = _pas
+        RECON_ASOF = _ps["recon_asof"]
+    else:
+        print(f"  positions: broker cut {RECON_ASOF} is newer than the walk sidecar -- keeping it")
+except FileNotFoundError:
+    print(f"  positions: no walk sidecar ({_POSF}) -> broker cut {RECON_ASOF}")
+
 # ---------- external-flow adjustment for the $10M-recycled-base KPIs ----------
 # Standing rule (jun03_to_jun05.md, Rules 1-6): deposits into the GBMF2 cash
 # sleeve are CAPITAL ADDITIONS, never P&L. The raw F2 balance after the
@@ -802,14 +839,55 @@ except FileNotFoundError:
 except Exception as _scerr:
     print(f"  curve: sidecar read failed ({_scerr}) -> keeping computed curve")
 
-# ---------- curve re-frame: Market Value vs Cost Basis (no fixed base) ----------
-# Carlos pivot 2026-06-15: drop the $10M/$18M recycled-base curve entirely. The two
-# lines are now the daily equity market value and the daily invested cost basis; the
-# gap between them is unrealized P&L. This overrides the base/sidecar series computed
-# upstream (left in place but unused) so the chart matches the cost-basis headline.
-ts["total"] = ts["equity"].astype(float)        # market value (mark-to-market)
-ts["realized_pool"] = ts["balance"].astype(float)  # cost basis (capital invested)
+# ---------- curve re-frame v2 (2026-09-22): the peak-base walk supersedes everything ----
+# Carlos pivot 2026-06-15 dropped the fixed-base curve for Market Value vs Cost Basis,
+# computed here from the Excel spine priced through Yahoo. That computation is now
+# RETIRED as a published series for two reasons:
+#
+#   1. It disagrees with the book. The Yahoo/Excel spine reconstructs positions from
+#      snapshot diffs; the blotter walk reconstructs them from the fills themselves and
+#      ties to Portfolio_REAL_2026-09-21.xlsx at 0.00 MXN. When two series disagree, the
+#      one that reconciles to the broker wins.
+#   2. Its USD line was a lie of convenience -- the whole MXN curve divided by ONE rate,
+#      today's. A dollar book does not work that way: every purchase converted at its own
+#      rate, so the USD cost basis carries the history of the peso (FX_ATTRIBUTION, and
+#      adenda 4: one order even flips sign between currencies). The curve below carries a
+#      genuine USD series built from the per-fill FX, not a division.
+#
+# `peak_sidecar.json` is private (real pesos) and is produced by
+# portfolio_updates/site_peakbase_2026-09-22/_build/peak_curves.py behind a 19-guard
+# battery. If it is missing the build FAILS rather than silently republishing the old
+# curve: shipping a series that disagrees with the book is worse than not shipping.
+_PKF = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "peak_sidecar.json")
+try:
+    PK = json.loads(Path(_PKF).read_text(encoding="utf-8"))
+except FileNotFoundError:
+    raise SystemExit(f"peak sidecar missing at {_PKF} -- refusing to publish the retired "
+                     "Excel/Yahoo curve, which disagrees with the reconciled book")
+_pc = pd.DataFrame(PK["curve"])
+_pc["d"] = pd.to_datetime(_pc["d"])
+_pc = _pc.set_index("d").sort_index()
+ts = pd.DataFrame({
+    "total":              _pc["mv_mxn"].astype(float) * SCALE,
+    "realized_pool":      _pc["cost_mxn"].astype(float) * SCALE,
+    "total_usd":          _pc["mv_usd"].astype(float) * SCALE,
+    "realized_pool_usd":  _pc["cost_usd"].astype(float) * SCALE,
+})
+ts["equity"], ts["balance"] = ts["total"], ts["realized_pool"]
 dates = ts.index
+_MK_WINDOW_START = dates.min()          # the walk starts at the FIRST fill, so no marker
+                                        # is orphaned off the head of the curve any more
+print(f"  curve: peak-base sidecar ({PK['as_of']}, {len(_pc)} days) | "
+      f"base USD {PK['base_usd']:,.2f} / MXN {PK['base_mxn']:,.2f} | "
+      f"MWRR {PK['mwrr_usd']*100:.2f}% USD / {PK['mwrr_mxn']*100:.2f}% MXN | "
+      f"TWRR {PK['twrr_usd']*100:.2f}% USD")
+
+# The published MXN base must be the one Carlos approved. A silent drift here would
+# re-denominate every percentage on the page without anything looking wrong.
+assert abs(PK["base_mxn"] - 12_831_669.88) < 0.05, \
+    f"MXN peak base drifted from the approved 12,831,669.88 -> {PK['base_mxn']:,.2f}"
+assert abs(PK["base_usd"] - 739_395.50) < 0.05, \
+    f"USD peak base drifted from the approved 739,395.50 -> {PK['base_usd']:,.2f}"
 
 # ---------- charts ----------
 # 1. market value vs cost basis (gap = unrealized P&L) -- built further down, next to
@@ -819,24 +897,35 @@ dates = ts.index
 # 1b. drawdown from the running peak (%) \u2014 currency-independent, range-linked
 _pk = ts["total"].cummax()
 _ddpct = (ts["total"] / _pk - 1.0) * 100.0
+# Drawdown was drawn in RED, the same token the holdings table spends on a negative
+# return. One colour doing two semantic jobs on one page teaches the reader nothing; a
+# drawdown chart is ALREADY entirely negative, so the colour carries no information at
+# all. Navy, like every other series about this book.
 f1b = go.Figure()
 f1b.add_scatter(x=dates, y=_ddpct, mode="lines", name="Drawdown",
-                line=dict(color=RED, width=1.6), fill="tozeroy",
-                fillcolor="rgba(124,45,18,0.07)",
+                line=dict(color=BLUE, width=1.6), fill="tozeroy",
+                fillcolor="rgba(10,37,64,0.07)",
                 hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra></extra>")
-f1b.update_layout(title="Drawdown from peak (%)", yaxis_title="%",
-                  height=235, showlegend=False)
+f1b.update_layout(title="How far below its own high-water mark the book has been",
+                  yaxis_title="below peak (%)", height=235, showlegend=False)
 
 # 2. per-holding return vs portfolio (currency-independent)
+# Bars were coloured green/red by sign. The sign is already given three times over --
+# by which side of zero the bar sits on, by the leading +/- in the label, and by the
+# sort order -- so the colour was redundant, and it burned the one channel left for
+# saying something the reader cannot otherwise see: whether the holding beat the book.
+# That is what it encodes now. Navy = ahead of the portfolio, grey = behind it.
 lat = latest.sort_values("ret")
-colors = [GREEN if r >= 0 else RED for r in lat["ret"]]
+colors = [BLUE if r >= port_ret else "#b6bec8" for r in lat["ret"]]
 f2 = go.Figure(go.Bar(x=lat["ret"] * 100, y=lat["ticker"], orientation="h",
                       marker_color=colors,
                       text=[f"{r*100:+.2f}%" for r in lat["ret"]],
-                      textposition="outside"))
+                      textposition="outside",
+                      textfont=dict(family=MONO, size=10),
+                      hovertemplate="%{y} &middot; %{x:+.2f}%<extra></extra>"))
 f2.add_vline(x=port_ret * 100, line=dict(color=INK, dash="dash"),
              annotation_text=f"portfolio {port_ret*100:+.2f}%")
-f2.update_layout(title="Holding return vs the portfolio (dashed = portfolio total)",
+f2.update_layout(title="Which holdings are carrying the book, and which are not",
                  xaxis_title="return since cost (%)")
 # Same outside-label headroom as pf-alloc below, but this one diverges around 0,
 # so both ends need padding -- the extreme bar sits at whichever end is longer.
@@ -849,8 +938,10 @@ al = latest.sort_values("weight")
 f3 = go.Figure(go.Bar(x=al["weight"] * 100, y=al["ticker"], orientation="h",
                       marker_color=BLUE,
                       text=[f"{w*100:.2f}%" for w in al["weight"]],
-                      textposition="outside"))
-f3.update_layout(title="Current allocation by holding",
+                      textposition="outside",
+                      textfont=dict(family=MONO, size=10),
+                      hovertemplate="%{y} &middot; %{x:.2f}% of the book<extra></extra>"))
+f3.update_layout(title="How concentrated the book is",
                  xaxis_title="% of stock portfolio")
 # textposition="outside" writes the label PAST the end of the longest bar, and
 # fixedrange=True stops Plotly from auto-expanding the axis to make room -- so at
@@ -974,6 +1065,13 @@ def _fxat(dt):
     return v
 def _ledger_rows(path):
     """Yield (kind, ticker, date, shares, price) for one export; [] if unreadable."""
+    if path is _DM:                       # the pipe-delimited family, deduped as one source
+        return iter(_dm_rows())
+    return _ledger_rows_hist(path)
+
+
+def _ledger_rows_hist(path):
+    """The comma-delimited 'Historial de Transacciones' export."""
     try:
         with open(path, encoding="utf-8-sig") as _fh:
             for _row in _csv.reader(_fh):
@@ -987,6 +1085,74 @@ def _ledger_rows(path):
     except OSError:
         return
 
+
+# ---------- the "DetalleMovimientos" export family (pipe-delimited) ----------
+# GBM's newer export. Different separator, different column names, and it PAGINATES: the
+# 31-Aug pull came as eight files that overlap each other, and the 21-Sep pull repeats
+# history again. So these cannot be given disjoint calendar slices the way the Historial
+# exports are -- the overlap is WITHIN the family.
+#
+# The dedup is the MAX-over-pages construction from the offline consolidator (reference
+# GBM_PORTFOLIO rule 4): a fill is keyed on (instrument, side, shares, net, settle) and the
+# family contributes the HIGHEST count any single page shows for that key, never the sum.
+# Genuine same-second partial fills therefore survive, while a fill repeated across pages is
+# counted once. Summing would double-count; set-dedup would erase real partials.
+_DM = "__detalle_movimientos__"           # sentinel source id, not a path
+_DMF = [os.path.join(_HISTD, "DetalleMovimientos_228128_31082026_p%d.csv" % i) for i in range(8)]
+_DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_21092026.csv")]
+_DM_CACHE = None
+
+
+def _dm_rows():
+    global _DM_CACHE
+    if _DM_CACHE is not None:
+        return _DM_CACHE
+    import collections as _c
+    per_page, dropped = [], 0
+    for _f in _DMF:
+        bucket = _c.defaultdict(list)
+        try:
+            with open(_f, encoding="utf-8-sig", errors="replace") as _fh:
+                _lines = _fh.read().splitlines()
+        except OSError:
+            continue
+        if len(_lines) < 3:
+            continue
+        _hdr = _lines[1].split("|")
+        for _ln in _lines[2:]:
+            if not _ln.strip():
+                continue
+            r = dict(zip(_hdr, _ln.split("|")))
+            if r.get("Movimiento") not in ("Buy", "Sell"):
+                continue
+            sh, net = _rnum(r.get("Titulos asignados")), _rnum(r.get("Importe Neto"))
+            if sh <= 0 or net <= 0 or not (r.get("Liquidacion") or "").strip():
+                continue
+            d = (r.get("Instruccion") or "").strip().split(" ")[0]
+            if "/" not in d:
+                continue
+            _dd, _mm, _yy = d.split("/")
+            key = (r["Instrumento"].strip(), r["Movimiento"], r["Titulos asignados"].strip(),
+                   r["Importe Neto"].strip(), r["Liquidacion"].strip())
+            bucket[key].append(("buy" if r["Movimiento"] == "Buy" else "sell",
+                                _rtk(r["Instrumento"]),
+                                pd.Timestamp(int(_yy), int(_mm), int(_dd)),
+                                sh, _rnum(r.get("Precio de la orden"))))
+        per_page.append(bucket)
+    merged = {}
+    for bucket in per_page:
+        for k, rs in bucket.items():
+            if len(rs) > len(merged.get(k, [])):
+                merged[k] = rs
+            dropped += len(rs)
+    out = [row for rs in merged.values() for row in rs]
+    dropped -= len(out)
+    out.sort(key=lambda r: (r[2], 0 if r[0] == "buy" else 1, r[1]))
+    print(f"  DetalleMovimientos family: {len(out)} fills from {len(per_page)} pages "
+          f"({dropped} cross-page duplicates collapsed)")
+    _DM_CACHE = out
+    return out
+
 # Each (export, kind) owns a disjoint slice of the calendar. Anything outside its slice
 # is another export's responsibility, so no fill is counted twice.
 _SELL_SRC = [
@@ -995,14 +1161,16 @@ _SELL_SRC = [
     (_HISTF, lambda t, d: _D(2026,4,29) <= d <= _D(2026,6,15)),                 # 04-29 .. 06-12 core
     (_JUNF,  lambda t, d: _D(2026,6,15) <  d <  _D(2026,7,1)),                  # 18-Jun batch
     (_JULF,  lambda t, d: _D(2026,7,1)  <= d <= _D(2026,7,24)),                 # 16-Jul MELI, 24-Jul LMT
-    (_AUGF,  lambda t, d: d >  _D(2026,7,24)),                                  # 27-Jul AMZN+MA, 28-Jul JPM
+    (_AUGF,  lambda t, d: _D(2026,7,24) <  d <= _D(2026,8,5)),                  # 27-Jul AMZN+MA, 28-Jul JPM
+    (_DM,    lambda t, d: d >  _D(2026,8,5)),                                   # 17-Sep ORCL/META, 18-Sep MSFT
 ]
 _BUY_SRC = [                                                                    # _xbuy weighting only
     (_FEBF,  lambda t, d: d <  _D(2026,3,1)),
     (_MARF,  lambda t, d: _D(2026,3,1)  <= d < _D(2026,3,24)),
     (_APRF,  lambda t, d: _D(2026,3,24) <= d < _D(2026,4,28)),
     (_HISTF, lambda t, d: _D(2026,4,28) <= d <= _D(2026,6,9)),
-    (_JUNF,  lambda t, d: d >  _D(2026,6,9)),
+    (_JUNF,  lambda t, d: _D(2026,6,9)  <  d <= _D(2026,8,5)),
+    (_DM,    lambda t, d: d >  _D(2026,8,5)),          # 13-Aug basket, 19-Aug VUG, 01-Sep QQQ
 ]
 _lbuys, _lsells, _prov = {}, [], {}
 for _src, _keep in _BUY_SRC:
@@ -1045,7 +1213,8 @@ _MK_SRC = [
     (_HISTF, lambda d: _D(2026, 4, 28) <= d <= _D(2026, 6, 15)), # 28-Apr .. 12-Jun
     (_JUNF,  lambda d: _D(2026, 6, 15) <  d <  _D(2026, 7, 1)),  # 18-Jun .. 25-Jun
     (_JULF,  lambda d: _D(2026, 7, 1)  <= d <= _D(2026, 7, 24)), # 02-Jul .. 24-Jul
-    (_AUGF,  lambda d: d >  _D(2026, 7, 24)),                    # 27-Jul .. 28-Jul
+    (_AUGF,  lambda d: _D(2026, 7, 24) <  d <= _D(2026, 8, 5)),  # 27-Jul .. 28-Jul
+    (_DM,    lambda d: d >  _D(2026, 8, 5)),                     # 13-Aug .. 18-Sep
 ]
 _mkf, _mkprov = [], {}
 for _src, _keep in _MK_SRC:
@@ -1108,8 +1277,8 @@ for _key in sorted(_agg):
     _r["mxn"] += _a["mxn"]
     _r["lines"].append((_a["mxn"], _t + _tag[_key], _a["sh"], _a["mxn"] / _a["sh"]))
 
-def _eq_at(_dt):
-    _s = ts["total"][ts.index <= _dt]
+def _eq_at(_dt, _col="total"):
+    _s = ts[_col][ts.index <= _dt]
     return float(_s.iloc[-1]) if len(_s) else None
 
 # CONFIDENTIALITY: shares and peso amounts are scaled here, once, exactly like every
@@ -1142,7 +1311,7 @@ for (_d, _k), _r in sorted(_MKDAY.items()):
     if _y is None:
         continue
     _MKPTS[_k].append(dict(
-        d=_d, y=_y,
+        d=_d, y=_y, y_usd=_eq_at(_d, "total_usd"),
         size=float(np.clip(7.0 + 11.0 * np.sqrt(max(_r["mxn"], 0.0) / _amax), 7.0, 18.0)),
         mxn=_mk_txt(_d, _k, _r, "mxn"), usd=_mk_txt(_d, _k, _r, "usd")))
 print(f"  trade markers: {len(_mkf)} fills from {len(_MK_SRC)} archive exports -> "
@@ -1187,6 +1356,127 @@ f1.update_layout(yaxis_title="MXN (scaled)", hovermode="x unified",
                  legend=dict(orientation="h", yanchor="bottom", y=1.0,
                              xanchor="left", x=0, font=dict(size=11),
                              bgcolor="rgba(0,0,0,0)"))
+# ---------- charts 4 & 5: the peak-concurrent performance pair ----------
+# Palette: navy for the book, grey for the benchmark, teal for capital utilisation. No
+# red/green per-series -- direction is already in the numbers, and colour spent on the
+# sign is colour unavailable for the thing the reader actually has to tell apart.
+NAVY, BENCH, TEAL = BLUE, "#9aa5b1", "#0f766e"
+_pcd = _pc.index
+
+# 4. P/L against the peak base, BOTH currencies at once, with utilisation underneath.
+# Both lines are drawn together on purpose rather than following the currency toggle:
+# the gap between them IS the FX effect, and it is only legible side by side. The book
+# earned 16.03% measured in dollars and 14.93% in pesos on exactly the same trades.
+f4 = go.Figure()
+f4.add_scatter(x=_pcd, y=_pc["util_usd"] * 100, mode="lines", name="Capital in use",
+               line=dict(color=TEAL, width=0), fill="tozeroy", yaxis="y2",
+               fillcolor="rgba(15,118,110,0.10)",
+               hovertemplate="%{y:.0f}% of peak<extra>Capital in use</extra>")
+f4.add_scatter(x=_pcd, y=_pc["plpct_usd"] * 100, mode="lines", name="Return · USD",
+               line=dict(color=NAVY, width=2.4),
+               hovertemplate="%{y:+.2f}%<extra>USD</extra>")
+f4.add_scatter(x=_pcd, y=_pc["plpct_mxn"] * 100, mode="lines", name="Return · MXN",
+               line=dict(color=NAVY, width=1.6, dash="dot"),
+               hovertemplate="%{y:+.2f}%<extra>MXN</extra>")
+f4.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
+f4.add_vline(x=pd.Timestamp(PK["peak_date"]), line=dict(color=GREY, width=1, dash="dash"))
+f4.add_annotation(x=pd.Timestamp(PK["peak_date"]), y=1.0, yref="paper", yanchor="bottom",
+                  text="peak capital", showarrow=False,
+                  font=dict(family=SANS, size=10, color=GREY))
+f4.update_layout(
+    title="Return on the most capital the book ever needed at once",
+    yaxis=dict(title="return (%)", gridcolor="#e5e5e5",
+               tickfont=dict(family=MONO, size=11), zeroline=False),
+    yaxis2=dict(title="capital in use (%)", overlaying="y", side="right", range=[0, 320],
+                showgrid=False, tickfont=dict(family=MONO, size=10, color=TEAL),
+                title_font=dict(family=SANS, size=11, color=TEAL)),
+    hovermode="x unified", height=330,
+    legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
+                font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
+
+# 5. TWRR against the index. Different question from chart 4 and labelled as such:
+# this one strips the flows, so it compares DECISIONS and is the only one of the two
+# that an index comparison is legitimate for at all.
+f5 = go.Figure()
+f5.add_scatter(x=_pcd, y=_pc["twr_usd"] * 100, mode="lines", name="This book · USD",
+               line=dict(color=NAVY, width=2.4),
+               hovertemplate="%{y:+.2f}%<extra>Book · USD</extra>")
+f5.add_scatter(x=_pcd, y=_pc["twr_mxn"] * 100, mode="lines", name="This book · MXN",
+               line=dict(color=NAVY, width=1.5, dash="dot"),
+               hovertemplate="%{y:+.2f}%<extra>Book · MXN</extra>")
+_spytr = (_pc["spy"] / float(_pc["spy"].iloc[0]) - 1.0) * 100.0
+f5.add_scatter(x=_pcd, y=_spytr, mode="lines", name="S&P 500 (SPY, total return)",
+               line=dict(color=BENCH, width=1.8),
+               hovertemplate="%{y:+.2f}%<extra>S&amp;P 500</extra>")
+f5.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
+f5.update_layout(title="Investment decisions vs the index (flows removed)",
+                 yaxis_title="cumulative return (%)", hovermode="x unified", height=330,
+                 legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
+                             font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
+
+# ---------- the headline figures, each labelled with WHAT IT MEASURES ----------
+def _pct(x, dec=2):
+    return f"{x*100:+.{dec}f}%"
+
+
+_PEAK_TS = PK["peak_ts"][11:19]
+
+
+def pkval(mxn, usd, dec=0, signed=False):
+    """Currency-aware figure whose USD side is the WALK's dollars, not a division.
+
+    cval() converts by today's single live rate, which is right for a live-priced
+    holdings table and wrong here. The peak base is a specific historical quantity:
+    US$739,395.50 of cost was deployed at one instant, at the rates the fills actually
+    got. Dividing its peso twin by today's rate lands on 741,875 -- close enough to look
+    right and wrong enough to be a different number from the one every other artefact
+    publishes. Both sides are carried explicitly so neither is inferred from the other.
+    """
+    f = fmts if signed else fmt
+    return (f'<span class="cval" data-mxn="{f(mxn, dec)}" '
+            f'data-usd="{f(usd, dec)}">{f(mxn, dec)}</span>')
+
+
+KPI_MONEY = [
+    ("Peak capital deployed", pkval(PK["base_mxn"] * SCALE, PK["base_usd"] * SCALE),
+     "the most the book ever had at work at one moment"),
+    ("Market value", pkval(PK["mv_mxn"] * SCALE, PK["mv_usd"] * SCALE),
+     "open positions, marked today"),
+    ("Realized since inception",
+     pkval(PK["real_mxn"] * SCALE, PK["real_usd"] * SCALE, signed=True),
+     "locked in on closed sales"),
+    ("Unrealized", pkval(PK["unreal_mxn"] * SCALE, PK["unreal_usd"] * SCALE, signed=True),
+     "open positions vs cost"),
+    ("Total P&amp;L", pkval(PK["pl_mxn"] * SCALE, PK["pl_usd"] * SCALE, signed=True),
+     "realized + unrealized"),
+]
+def pkpct(usd, mxn, dec=2, unit="%"):
+    """A return that reads differently in each currency, and says so when toggled."""
+    return (f'<span class="cval" data-mxn="{mxn*100:+.{dec}f}{unit}" '
+            f'data-usd="{usd*100:+.{dec}f}{unit}">{usd*100:+.{dec}f}{unit}</span>')
+
+
+# The S&P tiles do not toggle: SPY is a dollar index and its return is a dollar fact.
+# Restating it in pesos would silently fold the peso's move into the benchmark and make
+# the comparison dishonest in exactly the direction that flatters the book.
+KPI_RET = [
+    ("MWRR", pkpct(PK["mwrr_usd"], PK["mwrr_mxn"]),
+     "money-weighted &mdash; what the capital earned"),
+    ("TWRR", pkpct(PK["twrr_usd"], PK["twrr_mxn"]),
+     "time-weighted &mdash; what the decisions earned"),
+    ("S&amp;P 500", _pct(PK["spy_tr"]), "index total return in USD, same window"),
+    ("vs index", f"{(PK['twrr_usd']-PK['spy_tr'])*100:+.2f} pp",
+     "TWRR less the index, in USD"),
+    ("Capital in use", f"{PK['util_now']*100:.0f}%", "of peak, today"),
+]
+kpi_money = "".join(
+    f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div>'
+    f'<div class="mh">{h}</div></div>' for k, v, h in KPI_MONEY)
+kpi_ret = "".join(
+    f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div>'
+    f'<div class="mh">{h}</div></div>' for k, v, h in KPI_RET)
+
+
 def _xbuy(t, upto):
     lots = [(d,s) for d,s in _lbuys.get(t, []) if d <= upto]
     tot = sum(s for _,s in lots)
@@ -1324,11 +1614,15 @@ holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td
 
 # ---------- currency-toggle JavaScript ----------
 def _arr(s): return ",".join(f"{v:.0f}" for v in s)
-_totm = _arr(ts["total"]); _totu = _arr(ts["total"] / RATE)
-_ream = _arr(ts["realized_pool"]); _reau = _arr(ts["realized_pool"] / RATE)
+# USD comes from the walk's own per-fill-FX series, NOT from dividing the peso curve by
+# one rate. Dividing would assert every peso converted at today's rate; the whole point
+# of the dual-currency view is that they did not.
+_totm = _arr(ts["total"]); _totu = _arr(ts["total_usd"])
+_ream = _arr(ts["realized_pool"]); _reau = _arr(ts["realized_pool_usd"])
 _by = [q["y"] for q in _MKPTS["buy"]]; _sy = [q["y"] for q in _MKPTS["sell"]]
-_bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v/RATE:.0f}" for v in _by)
-_sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v/RATE:.0f}" for v in _sy)
+_byu_v = [q["y_usd"] for q in _MKPTS["buy"]]; _syu_v = [q["y_usd"] for q in _MKPTS["sell"]]
+_bym = ",".join(f"{v:.0f}" for v in _by); _byu = ",".join(f"{v:.0f}" for v in _byu_v)
+_sym2 = ",".join(f"{v:.0f}" for v in _sy); _syu = ",".join(f"{v:.0f}" for v in _syu_v)
 # Marker hover bodies, one array per currency. The toggle restyles `text` alongside
 # `y`, so the pesos in a marker hover can never disagree with the axis beside it.
 _j = lambda vs: ",".join(json.dumps(v, ensure_ascii=False) for v in vs)
@@ -1483,6 +1777,60 @@ cost basis of the shares sold; <b>Unrealized</b> is open positions against the c
 basis still held; <b>Combined</b> weights the two by their cost bases, so it sits
 between them. All three are exact &mdash; the display scaling cancels in a
 ratio, unlike the peso tiles above.</p></section>
+<section class="block"><h2>Performance</h2>
+<p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Book as of {PK['as_of']}
+&middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
+{PK['fx_today']:.4f} (fixed at build)</p>
+<p class="note"><b>Everything below is measured against the most capital this book
+ever had deployed at one moment</b> &mdash; {pkval(PK['base_mxn']*SCALE, PK['base_usd']*SCALE)} on
+{pd.Timestamp(PK['peak_date']).strftime('%d %b %Y')} at {_PEAK_TS}, across
+{PK['peak_n_pos']} open positions. That base is <i>derived</i> from what was actually
+put to work rather than assumed, so the book can never have deployed more than it
+&mdash; a claim the old fixed base could not make, and did not meet.</p>
+<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{kpi_money}</div>
+<div class="metrics" style="grid-template-columns:repeat(5,1fr);margin-top:1.2rem">{kpi_ret}</div>
+<div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f4, "pf-peak")}</div></div>
+<p class="note" style="margin-top:.8rem">The solid line is the return in dollars, the
+dotted one the same trades measured in pesos; the gap between them is the currency, not
+the investing. The shaded band is how much of the peak was actually in use on each day
+&mdash; it averages {PK['util_mean']*100:.0f}% and bottoms at {PK['util_min']*100:.0f}%,
+which is why this is the most conservative of the possible denominators: most of the
+time the book was earning on less than the base it is measured against.</p>
+<div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f5, "pf-twr")}</div></div>
+<div class="twonote">
+<div><h4>MWRR &mdash; {_pct(PK['mwrr_usd'])} <span>(USD)</span></h4>
+<p>Total profit over the peak capital deployed. This is <b>what the money earned</b>:
+it answers &ldquo;I had to have this much available &mdash; what did I get for it?&rdquo;
+Sensitive to how much was invested and when, which is exactly the point. In pesos the
+same trades read {_pct(PK['mwrr_mxn'])}.</p></div>
+<div><h4>TWRR &mdash; {_pct(PK['twrr_usd'])} <span>(USD)</span></h4>
+<p>Daily returns chain-linked with deposits and withdrawals stripped out. This is
+<b>what the decisions earned</b>, independent of how much money happened to be in at
+the time. It is the industry standard (GIPS) and the only one of the two that can
+fairly be set against an index.</p></div></div>
+<p class="note"><b>Both numbers are true and they are not interchangeable.</b> The
+{(PK['twrr_usd']-PK['mwrr_usd'])*100:.1f}-point gap between them is not an error: the
+book was small early and larger later, so the decisions outran the money. A portfolio
+is not &ldquo;up {PK['twrr_usd']*100:.0f}%&rdquo; in the sense of the cash being worth
+that much more &mdash; it is up {_pct(PK['mwrr_usd'])} on the capital it required, while
+its decisions performed like {_pct(PK['twrr_usd'])}. Quoting either one without saying
+which it is, is the mistake this panel exists to prevent.</p>
+<p class="note">Against the index, both ways: on <b>decisions</b> the book returned
+{_pct(PK['twrr_usd'])} against the S&amp;P 500&rsquo;s {_pct(PK['spy_tr'])}, a
+{(PK['twrr_usd']-PK['spy_tr'])*100:+.2f}-point difference. On <b>money</b> &mdash;
+putting the identical {len(PK['markers'])} cash movements into SPY on the identical
+dates and walking it with the same cost-relief rules &mdash; the index would have
+returned {_pct(PK['spy_mwrr'])} against the book&rsquo;s {_pct(PK['mwrr_usd'])}, a
+{(PK['mwrr_usd']-PK['spy_mwrr'])*100:+.2f}-point difference. The second is the harder
+test and the one that cannot be flattered by the timing of the flows.</p>
+<p class="note"><b>What this does not prove.</b> {RECON_ASOF} is the last date on which
+an independent broker statement confirmed these share counts (20 of 20 matched).
+Positions after it are walked forward from the transaction blotter, which reconciles to
+the published book to the centavo &mdash; but a trade that never reached the blotter
+would not show up until a newer statement is loaded. The peso series also carries a
+small approximation between its endpoints, where the one peso-quoted holding is ramped
+rather than marked daily; every headline figure above reads an endpoint, where it is
+exact.</p></section>
 <section class="block"><h2>Market Value vs Cost Basis</h2>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Equity curve as of
 {_CURVE_ASOF} &middot; trades through {_MK_LAST_S} &middot; {_N_BUYD} buy days

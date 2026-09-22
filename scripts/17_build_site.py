@@ -95,13 +95,20 @@ score = (zc(gpr).loc[win] + zc(epu).loc[win]) / 2
 regime = "STRESS" if score.iloc[-1] >= score.quantile(2 / 3) else "CALM"
 usdmxn = sig["USDMXN"].dropna().iloc[-1]
 
+# SNAP is now the ONLY market-levels block on the home page. Until 2026-09-22 there were
+# two: a "Daily Recap" carrying levels-plus-direction and a "Live Market Snapshot"
+# carrying levels-plus-context, stacked one above the other. Five of the six Recap tiles
+# (10Y, Fed Funds, breakeven, VIX, USD/MXN) repeated the Snapshot verbatim, values
+# included -- the only thing the second copy added was the arrow. Merged: the arrow moved
+# onto the tile that already showed the level, and the duplicate section is gone.
 SNAP = [("US 10Y Treasury", f"{last['UST_10Y']:.2f}%"),
         ("Fed Funds", f"{last['FedFunds']:.2f}%"),
         ("10Y Breakeven Inflation", f"{last['Breakeven_10Y']:.2f}%"),
+        ("HY credit spread", f"{last['HY_OAS']:.2f}%"),
         ("VIX", f"{last['VIX']:.1f}"),
+        ("USD / MXN", f"{usdmxn:.2f}"),
         ("Geopolitical Risk (GPR)", f"{gpr.iloc[-1]:.0f}"),
         ("Policy Uncertainty (EPU)", f"{epu.iloc[-1]:.0f}"),
-        ("USD / MXN", f"{usdmxn:.2f}"),
         ("Market Regime", regime)]
 
 # ---------- 1. priced-in rate path ----------
@@ -153,9 +160,21 @@ f4.update_layout(title="Equity expected return across the valuation-reversion di
                  barmode="group", xaxis_title="expected return (%)")
 
 # ---------- 5. correlation heatmap ----------
+# Diverging scale built from the site's own tokens instead of Plotly's stock RdBu_r.
+# Two reasons it had to change: the stock scale's red is a saturated pure hue that
+# belongs to no other element on the site, and it reads as "bad" on a matrix where a
+# high correlation is not bad, just less diversifying. Oxford blue for assets that move
+# together, muted teal for the ones that offset, near-white at zero so the eye lands on
+# the extremes rather than the middle.
+CORR_SCALE = [[0.0, "#0f766e"], [0.25, "#7fb3ad"], [0.5, "#f4f4f2"],
+              [0.75, "#7e97b3"], [1.0, BLUE]]
 f5 = go.Figure(go.Heatmap(z=corr.values, x=[c.replace("_", " ") for c in corr.columns],
                           y=[c.replace("_", " ") for c in corr.index],
-                          colorscale="RdBu_r", zmid=0, zmin=-1, zmax=1))
+                          colorscale=CORR_SCALE, zmid=0, zmin=-1, zmax=1,
+                          hovertemplate="%{y} &middot; %{x}<br>correlation %{z:.2f}"
+                                        "<extra></extra>",
+                          colorbar=dict(outlinewidth=0, thickness=12, len=.7,
+                                        tickfont=dict(size=10))))
 f5.update_layout(title="Asset correlation matrix (Ledoit-Wolf shrunk)",
                  height=640, margin=dict(l=130, b=130))
 
@@ -256,9 +275,8 @@ CERTS = ["CFA — Level I Candidate (exam May 2026)",
 # ---------- assemble HTML ----------
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
-snap = "".join(
-    f'<div class="metric{" m-" + v.lower() if k == "Market Regime" else ""}">'
-    f'<div class="mv">{v}</div><div class="mk">{k}</div></div>' for k, v in SNAP)
+# `snap` is assembled AFTER RECAP_SPEC below, because each tile now carries its own
+# movement line and those are computed there. (See the merge note on SNAP.)
 charts = "".join(
     f'<article class="tile chart{" wide" if wide else ""}">'
     f'<div class="ch">{div(fig, cid)}</div>'
@@ -291,19 +309,18 @@ _chart = div(f_strat, "dash_eq")
 
 def _dpct(x): return "—" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x*100:.1f}%"
 def _dnum(x): return "—" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x:.2f}"
+# The home page shows the FOUR headline indicators; Sortino, Calmar and the OOS window
+# live on Strategies, which carries the same table in full. Until 2026-09-22 both pages
+# printed all seven rows, so a reader scrolling from one to the other met the identical
+# block twice. The home keeps the interactive re-basing (that is what it is FOR); the
+# full indicator set is one click away and is not worth duplicating for its own sake.
 _DROWS = [("CAGR (ann.)", "ann_ret", _dpct), ("Ann. volatility", "ann_vol", _dpct),
-          ("Sharpe", "sharpe", _dnum), ("Sortino", "sortino", _dnum),
-          ("Max drawdown", "max_dd", _dpct), ("Calmar", "calmar", _dnum)]
+          ("Sharpe", "sharpe", _dnum), ("Max drawdown", "max_dd", _dpct)]
 _dhead = "".join(f"<th>{_DNAMES[k]}</th>" for k in _DCOLS)
 _dbody = ""
 for _label, _key, _fmt in _DROWS:
     _cells = "".join(f'<td id="d_{k}_{_key}">{_fmt(_DMET[k][_key]) if _DMET[k] else "—"}</td>' for k in _DCOLS)
     _dbody += f"<tr><td>{_label}</td>{_cells}</tr>"
-_DWINTXT = {k: f'{_bt[k]["dates"][0][:4]}&ndash;{_bt[k]["dates"][-1][:4]} ({len(_bt[k]["dates"])}m)'
-            for k in ["SARS", "DUO", "MARS"]}
-_DWINTXT["SP500"] = f'2007&ndash;2026 ({len(_common)}m)'
-_dwin = "".join(f'<td id="d_{k}_window">{_DWINTXT[k]}</td>' for k in _DCOLS)
-_dbody += f'<tr class="wrow"><td>OOS window</td>{_dwin}</tr>'
 
 _DCTRL = ('<div class="btctl"><div class="btranges">'
           '<button class="btr on" data-bt-range="all" data-bt-group="d">All</button>'
@@ -320,7 +337,7 @@ _dash_data["SP500"] = dict(name="S&P 500", color=RED, rf=0.045, bn="S&P 500",
                            dates=_common, s=_spy, b=_spy)
 _dcfg = ('{mode:"own",cellPrefix:"d",group:"d",'
          'cols:["SARS","DUO","MARS","SP500"],'
-         'rows:["ann_ret","ann_vol","sharpe","sortino","max_dd","calmar"],'
+         'rows:["ann_ret","ann_vol","sharpe","max_dd"],'
          'eq:"dash_eq",slider:"d-start",label:"d-start-lbl"}')
 _dbt_script = ('<script>window.BT_DATA=' + _json.dumps(_dash_data, separators=(",", ":")) +
                ';window.BT_CFG=' + _dcfg + ';</script>\n<script>' + BT_JS + '</script>')
@@ -341,6 +358,9 @@ STRATBT = (
     '<div class="tile" style="padding:4px 16px 10px;overflow-x:auto">'
     '<table class="ptable"><thead><tr><th>Indicator</th>' + _dhead + '</tr></thead>'
     '<tbody>' + _dbody + '</tbody></table></div>'
+    '<p class="note" style="margin-top:.8rem">Sortino, Calmar and the out-of-sample '
+    'window for each strategy are on the <a href="strategies.html">Strategies</a> page, '
+    'alongside the full indicator set.</p>'
     + _dbt_script +
     '</section>')
 certs = "".join(f"<li>{c}</li>" for c in CERTS)
@@ -363,31 +383,30 @@ try:
     _prev_vals = json.load(open(RECAP_PATH)).get("values", {})
 except Exception:
     _prev_vals = {}
-recap_tiles = ""
+# The movement line each merged tile carries, keyed by SNAP's own label.
+_DELTA = {}
 for _lbl, _cur, _seed, _unit, _dec in RECAP_SPEC:
     _base = _prev_vals.get(_lbl, _seed)          # last published value, else prior obs
-    _cur_s = f"{_cur:.{_dec}f}{_unit}"
     if _base is None:
-        _sub = _lbl
+        continue
+    _d = _cur - _base
+    if abs(_d) < 0.5 * 10 ** (-_dec):
+        _DELTA[_lbl] = f"<span style='color:{GREY}'>&mdash; unchanged</span>"
     else:
-        _d = _cur - _base
-        if abs(_d) < 0.5 * 10 ** (-_dec):
-            _sub = f"{_lbl} &middot; <span style='color:{GREY}'>&mdash; flat</span>"
-        else:
-            _arrow = "&#9650;" if _d > 0 else "&#9660;"   # neutral ▲ / ▼ (no good/bad)
-            _sub = (f"{_lbl} &middot; <span style='color:{INK};font-weight:600'>"
-                    f"{_arrow} {_d:+.{_dec}f}{_unit}</span>")
-    recap_tiles += (f'<div class="metric"><div class="mv">{_cur_s}</div>'
-                    f'<div class="mk">{_sub}</div></div>')
+        _arrow = "&#9650;" if _d > 0 else "&#9660;"   # neutral ▲ / ▼ (no good/bad)
+        _DELTA[_lbl] = (f"<span style='color:{INK};font-weight:600'>{_arrow} "
+                        f"{_d:+.{_dec}f}{_unit}</span> since the last update")
 json.dump({"date": ASOF, "values": {l: c for l, c, *_ in RECAP_SPEC}},
           open(RECAP_PATH, "w"), indent=2)
-RECAP = (
-    '<section class="block"><h2>Daily Recap</h2>'
-    '<p class="note">Key market levels and how they have moved since the previous '
-    'update &mdash; a quick read on what changed. Arrows show direction only, not '
-    'good or bad.</p>'
-    f'<div class="metrics" style="grid-template-columns:repeat(3,1fr)">{recap_tiles}</div>'
-    '</section>')
+# SNAP labels are the long form ("US 10Y Treasury"); RECAP_SPEC uses the short one.
+_DKEY = {"US 10Y Treasury": "US 10Y", "10Y Breakeven Inflation": "10Y Breakeven"}
+RECAP = ""                                   # section retired -- merged into the Snapshot
+snap = "".join(
+    f'<div class="metric{" m-" + v.lower() if k == "Market Regime" else ""}">'
+    f'<div class="mv">{v}</div><div class="mk">{k}</div>'
+    + (f'<div class="mh">{_DELTA[_DKEY.get(k, k)]}</div>'
+       if _DKEY.get(k, k) in _DELTA else "")
+    + "</div>" for k, v in SNAP)
 
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -407,11 +426,12 @@ regime-switching GPU Monte Carlo engine.</p>
 </div></section>
 <main class="container">
 {RECAP}
-<section class="block"><h2>Live Market Snapshot</h2>{ccy_badge("USD")}
-<p class="note">Auto-refreshed daily from public data (FRED, Yahoo Finance,
-GPR / EPU uncertainty indices). New to a term? See the
-<a href="glossary.html">Glossary</a>.</p>
-<div class="metrics" style="grid-template-columns:repeat(4,1fr)">{snap}</div></section>
+<section class="block"><h2>Market Snapshot</h2>{ccy_badge("USD")}
+<p class="note">Where the market sits today and how it has moved since the previous
+update &mdash; auto-refreshed daily from public data (FRED, Yahoo Finance, GPR / EPU
+uncertainty indices). Arrows show direction only, not good or bad. New to a term? See
+the <a href="glossary.html">Glossary</a>.</p>
+<div class="metrics" style="grid-template-columns:repeat(3,1fr)">{snap}</div></section>
 <section class="block"><h2>Model Output</h2>
 {ccy_badge("USD", "all expected returns are in US dollars")}
 <p class="note">Each chart below has a plain-language explanation; full
@@ -642,7 +662,21 @@ main{padding:4rem 0 5rem}
 .mv{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:500;
   color:var(--ink);letter-spacing:-.01em;line-height:1.1}
 .mk{font-size:11px;color:var(--muted);margin-top:.55rem;letter-spacing:.06em;text-transform:uppercase}
+/* .mh -- the one-line answer to "what does this number measure?". A percentage whose
+   denominator is not named is a hidden choice, so every return tile carries its own. */
+.mh{font-size:11.5px;color:var(--sec);margin-top:.35rem;line-height:1.35;
+  border-top:1px solid var(--line);padding-top:.45rem}
 .m-stress .mv{color:var(--neg)}.m-calm .mv{color:var(--pos)}
+
+/* ---- side-by-side definition pair (MWRR vs TWRR and similar) ---- */
+.twonote{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;
+  margin-top:1.4rem}
+.twonote>div{background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--accent);padding:1.05rem 1.15rem}
+.twonote h4{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink);
+  margin:0 0 .5rem;letter-spacing:-.01em}
+.twonote h4 span{color:var(--muted);font-size:11.5px;letter-spacing:.04em}
+.twonote p{font-size:13px;color:var(--sec);line-height:1.55;margin:0}
 
 /* ---- chart grid / tiles ---- */
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.5rem}
@@ -840,6 +874,8 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
   main{padding:3rem 0}.block{margin-bottom:3rem}
   .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem}
   .metric{min-width:0;padding:1.1rem .9rem 1rem}.mv{font-size:18px}
+  .mh{font-size:10.5px;margin-top:.3rem;padding-top:.35rem}
+  .twonote{grid-template-columns:minmax(0,1fr);gap:1rem}
   .report table{display:block;overflow-x:auto;white-space:nowrap}
   .ptable{font-size:12px;display:block;overflow-x:auto;white-space:nowrap}
   .ptable th,.ptable td{padding:7px 8px}

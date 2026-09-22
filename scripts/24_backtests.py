@@ -190,7 +190,7 @@ def render_report_page(strat):
         raw = open(md_path, encoding="utf-8").read()
         html = "<pre>" + esc(raw) + "</pre>"
     body = (f'<main class="container"><article class="tile report">'
-            f'<a class="bt-back" href="backtests.html">&larr; All backtests</a>'
+            f'<a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a>'
             f'{html}</article></main>')
     out = shell(f"{esc(strat['name'])} — Backtest Report", body)
     with open(os.path.join(DOCS, out_name), "w", encoding="utf-8") as fh:

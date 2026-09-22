@@ -62,7 +62,21 @@ main{padding:4rem 0 5rem}
 .mv{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:500;
   color:var(--ink);letter-spacing:-.01em;line-height:1.1}
 .mk{font-size:11px;color:var(--muted);margin-top:.55rem;letter-spacing:.06em;text-transform:uppercase}
+/* .mh -- the one-line answer to "what does this number measure?". A percentage whose
+   denominator is not named is a hidden choice, so every return tile carries its own. */
+.mh{font-size:11.5px;color:var(--sec);margin-top:.35rem;line-height:1.35;
+  border-top:1px solid var(--line);padding-top:.45rem}
 .m-stress .mv{color:var(--neg)}.m-calm .mv{color:var(--pos)}
+
+/* ---- side-by-side definition pair (MWRR vs TWRR and similar) ---- */
+.twonote{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;
+  margin-top:1.4rem}
+.twonote>div{background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--accent);padding:1.05rem 1.15rem}
+.twonote h4{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink);
+  margin:0 0 .5rem;letter-spacing:-.01em}
+.twonote h4 span{color:var(--muted);font-size:11.5px;letter-spacing:.04em}
+.twonote p{font-size:13px;color:var(--sec);line-height:1.55;margin:0}
 
 /* ---- chart grid / tiles ---- */
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.5rem}
@@ -260,6 +274,8 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
   main{padding:3rem 0}.block{margin-bottom:3rem}
   .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem}
   .metric{min-width:0;padding:1.1rem .9rem 1rem}.mv{font-size:18px}
+  .mh{font-size:10.5px;margin-top:.3rem;padding-top:.35rem}
+  .twonote{grid-template-columns:minmax(0,1fr);gap:1rem}
   .report table{display:block;overflow-x:auto;white-space:nowrap}
   .ptable{font-size:12px;display:block;overflow-x:auto;white-space:nowrap}
   .ptable th,.ptable td{padding:7px 8px}
