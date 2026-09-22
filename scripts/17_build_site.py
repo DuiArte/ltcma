@@ -9,9 +9,10 @@ import markdown
 import plotly.graph_objects as go
 from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
                       bt_indicators, bt_g100, BT_JS)
-from design_system import CSS_LINKS
+from design_system import CSS_LINKS, axis_formats, assert_no_entities
 import design_system
 
+import paths
 from paths import DATA_S as D, REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 os.makedirs(f"{DOCS}/figures", exist_ok=True)
 
@@ -21,9 +22,13 @@ os.makedirs(f"{DOCS}/figures", exist_ok=True)
 # later." (2026-07-02). .nojekyll makes Pages publish the files verbatim.
 open(f"{DOCS}/.nojekyll", "w").close()
 
-# --- Carbon Design color tokens ---
-INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
-RED, GREY, BG = "#7c2d12", "#888888", "#fafafa"
+# --- chart palette: ONE source, shared with every other generator ---
+# `GOLD` was #6b7280 -- a grey wearing a gold name -- and `RED` was doing semantic
+# (negative) and categorical (just another series) duty at the same time. Both now come
+# from design_system so the whole site cannot drift apart colour by colour.
+from design_system import NAVY, SLATE, TEAL, BENCH, POS, NEG, SEQ
+INK, BLUE, GREEN = "#111111", NAVY, POS
+GOLD, RED, GREY, BG = TEAL, NEG, "#888888", "#fafafa"
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 
 # ---------- model vintage vs signals vintage (2026-08-07 audit, item #10) ----
@@ -73,6 +78,7 @@ LAYOUT = dict(template="plotly_white",
 
 def div(fig, name):
     """Render a locked chart: hover stays, drag/zoom disabled so it can't break."""
+    fig = axis_formats(assert_no_entities(fig))
     fig.update_layout(**LAYOUT)
     fig.update_xaxes(fixedrange=True)
     fig.update_yaxes(fixedrange=True)
@@ -125,7 +131,7 @@ f1.add_scatter(x=ts, y=[y[t] * 100 for t in ts], name="Spot Treasury curve",
                mode="lines+markers", line=dict(color=BLUE, width=3))
 f1.add_scatter(x=fwx, y=fwy, name="Implied forward short rate",
                mode="lines+markers", line=dict(color=GOLD, width=2, dash="dash"))
-f1.add_hline(y=last["FedFunds"], line=dict(color=RED, dash="dot"),
+f1.add_hline(y=last["FedFunds"], line=dict(color=BENCH, dash="dot"),
              annotation_text=f"fed funds {last['FedFunds']:.2f}%")
 f1.update_layout(title="Priced-in rate path — the market expects no cuts",
                  xaxis_title="maturity (years)", yaxis_title="rate (%)")
@@ -144,7 +150,8 @@ f2.update_layout(title="Risk / return map — 12-year LTCMA (base case)",
 
 # ---------- 3. valuation dispersion ----------
 eq = ret[ret["class"] == "Equity"].sort_values("val_now")
-vc = [RED if v > 25 else (GOLD if v > 18 else BLUE) for v in eq["val_now"]]
+# cheap -> expensive reads as one ramp, not as three unrelated hues
+vc = [SEQ[0] if v <= 18 else (SEQ[2] if v <= 25 else SEQ[1]) for v in eq["val_now"]]
 f3 = go.Figure(go.Bar(x=[i.replace("_", " ") for i in eq.index], y=eq["val_now"],
                       marker_color=vc))
 f3.update_layout(title="Valuation dispersion — CAPE / P/E by equity market",
@@ -171,7 +178,7 @@ CORR_SCALE = [[0.0, "#0f766e"], [0.25, "#7fb3ad"], [0.5, "#f4f4f2"],
 f5 = go.Figure(go.Heatmap(z=corr.values, x=[c.replace("_", " ") for c in corr.columns],
                           y=[c.replace("_", " ") for c in corr.index],
                           colorscale=CORR_SCALE, zmid=0, zmin=-1, zmax=1,
-                          hovertemplate="%{y} &middot; %{x}<br>correlation %{z:.2f}"
+                          hovertemplate="%{y} · %{x}<br>correlation %{z:.2f}"
                                         "<extra></extra>",
                           colorbar=dict(outlinewidth=0, thickness=12, len=.7,
                                         tickfont=dict(size=10))))
@@ -181,7 +188,7 @@ f5.update_layout(title="Asset correlation matrix (Ledoit-Wolf shrunk)",
 # ---------- 6. regime timeline ----------
 f6 = go.Figure()
 f6.add_scatter(x=win, y=gpr.loc[win], name="GPR (geopolitical risk)",
-               line=dict(color=RED, width=1))
+               line=dict(color=TEAL, width=1))
 f6.add_scatter(x=win, y=epu.loc[win], name="EPU (policy uncertainty)",
                line=dict(color=BLUE, width=1))
 thr = score.quantile(2 / 3)
@@ -302,7 +309,7 @@ for _k in ["SARS", "DUO", "MARS"]:
     f_strat.add_scatter(x=_common, y=bt_g100(_aligned[_k]), mode="lines",
                         name=_bt[_k]["name"], line=dict(color=_bt[_k]["color"], width=2.2))
 f_strat.add_scatter(x=_common, y=bt_g100(_spy), mode="lines", name="S&P 500",
-                    line=dict(color=RED, width=1.6, dash="dot"))
+                    line=dict(color=BENCH, width=1.6, dash="dot"))
 f_strat.update_layout(title="Growth of 100 — strategies vs S&P 500 (USD)",
                       yaxis_type="log", legend=dict(orientation="h", y=-0.22), height=380)
 _chart = div(f_strat, "dash_eq")
@@ -333,7 +340,7 @@ _DCTRL = ('<div class="btctl"><div class="btranges">'
           '<span id="d-start-lbl" class="btlbl">From &hellip;</span></div>')
 
 _dash_data = dict(_bt)
-_dash_data["SP500"] = dict(name="S&P 500", color=RED, rf=0.045, bn="S&P 500",
+_dash_data["SP500"] = dict(name="S&P 500", color=BENCH, rf=0.045, bn="S&P 500",
                            dates=_common, s=_spy, b=_spy)
 _dcfg = ('{mode:"own",cellPrefix:"d",group:"d",'
          'cols:["SARS","DUO","MARS","SP500"],'
@@ -408,6 +415,62 @@ snap = "".join(
        if _DKEY.get(k, k) in _DELTA else "")
     + "</div>" for k, v in SNAP)
 
+
+# ---------- home as a LANDING: the book first, the model second ----------
+# Carlos, 2026-09-22: the home should lead with what the reader actually came for.
+# The peak-base sidecar is private (real pesos); the home shows only SCALE-invariant
+# figures -- percentages -- plus the same x1.8-scaled money the portfolio page uses,
+# so nothing new is disclosed here that is not already on that page.
+PF_CARD = ""
+try:
+    _pk = json.loads(open(paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers",
+                                      "peak_sidecar.json"), encoding="utf-8").read())
+    _pp = lambda v: f"{v*100:+.2f}%"
+    _tiles = [
+        ("MWRR", _pp(_pk["mwrr_usd"]), _pp(_pk["mwrr_mxn"]),
+         "what the capital earned"),
+        ("TWRR", _pp(_pk["twrr_usd"]), _pp(_pk["twrr_mxn"]),
+         "what the decisions earned"),
+        ("S&P 500", _pp(_pk["spy_tr"]), _pp(_pk["spy_tr"]),
+         "index total return, USD"),
+        ("Alpha", f"{(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp",
+         f"{(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp", "TWRR less the index"),
+    ]
+    _cells = "".join(
+        f'<div class="metric"><div class="mv">'
+        f'<span class="cval" data-mxn="{m}" data-usd="{u}">{u}</span></div>'
+        f'<div class="mk">{k}</div><div class="mh">{h}</div></div>'
+        for k, u, m, h in _tiles)
+    PF_CARD = f"""<section class="block"><h2>Live Portfolio</h2>
+<div class="ccy-toggle">
+<button data-cur="usd" class="active" onclick="setCurrency('usd')">USD</button>
+<button data-cur="mxn" onclick="setCurrency('mxn')">MXN</button></div>
+<p class="note">The real GBM equity book, measured against the most capital it ever had
+deployed at one moment. <b>Two returns, because they answer different questions:</b>
+MWRR is what the money earned, TWRR is what the decisions earned with the flows stripped
+out &mdash; only the second can fairly be set against an index. Full detail, holdings and
+the trade-by-trade curve on the <a href="portfolio.html">Portfolio</a> page.</p>
+<div class="metrics" style="grid-template-columns:repeat(4,1fr)">{_cells}</div>
+<p class="note" style="margin-top:.9rem">Book as of {_pk['as_of']} &middot; share counts
+independently reconciled to {_pk.get('recon_asof', 'n/a')} &middot; returns are exact
+(display scaling cancels in a ratio) &middot; <a href="portfolio.html">see the full book
+&rarr;</a></p>
+<script>
+function setCurrency(c){{
+  document.querySelectorAll('.cval').forEach(function(e){{
+    if(e.dataset[c])e.textContent=e.dataset[c];}});
+  document.querySelectorAll('.ccy-toggle button').forEach(function(b){{
+    b.classList.toggle('active',b.dataset.cur===c);}});
+}}
+</script></section>"""
+    print(f"  home: portfolio card (MWRR {_pk['mwrr_usd']*100:.2f}% / TWRR "
+          f"{_pk['twrr_usd']*100:.2f}% / alpha {(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp)")
+except FileNotFoundError:
+    print("  home: no peak sidecar -> portfolio card omitted")
+except Exception as _e:
+    print(f"  home: portfolio card skipped ({_e})")
+
+
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Capital Market Assumptions</title>
@@ -425,7 +488,7 @@ regime-switching GPU Monte Carlo engine.</p>
 {VAL_LINE} &middot; base currency USD &middot; built on free public data</p>
 </div></section>
 <main class="container">
-{RECAP}
+{PF_CARD}
 <section class="block"><h2>Market Snapshot</h2>{ccy_badge("USD")}
 <p class="note">Where the market sits today and how it has moved since the previous
 update &mdash; auto-refreshed daily from public data (FRED, Yahoo Finance, GPR / EPU

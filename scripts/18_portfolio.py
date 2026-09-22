@@ -68,7 +68,7 @@ import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
-from design_system import CSS_LINKS
+from design_system import CSS_LINKS, axis_formats, assert_no_entities
 
 import paths
 FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")  # lot-history DATA cache only
@@ -108,6 +108,7 @@ LAYOUT = dict(template="plotly_white",
               yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)))
 
 def div(fig, name):
+    fig = axis_formats(assert_no_entities(fig))
     fig.update_layout(**LAYOUT)
     fig.update_xaxes(fixedrange=True)
     fig.update_yaxes(fixedrange=True)
@@ -889,6 +890,33 @@ assert abs(PK["base_mxn"] - 12_831_669.88) < 0.05, \
 assert abs(PK["base_usd"] - 739_395.50) < 0.05, \
     f"USD peak base drifted from the approved 739,395.50 -> {PK['base_usd']:,.2f}"
 
+# ---------- per-holding return: it is NOT the same number in both currencies ----------
+# The page used one `ret` under a currency toggle, which quietly asserted that a holding's
+# return is currency-invariant. It is not. MXN cost is what the pesos bought; USD cost is
+# that same purchase at the rate of ITS OWN fill, so the two returns differ by the peso's
+# move since entry. On this book the spread runs to 1.84 pp (NVDA: +15.38% USD vs +13.55%
+# MXN) and UBER CHANGES SIGN between currencies -- the one place where the reporting
+# currency changes the conclusion rather than the magnitude (FX_ATTRIBUTION adenda 4).
+# GMEXICOB is peso-quoted: its USD column is a presentation conversion, not exposure.
+_RET_BY_TK = {p["ticker"]: p for p in PK.get("positions", [])}
+_RET_FLIP = sorted(t for t, p in _RET_BY_TK.items()
+                   if not p["native"] and (p["ret_usd"] > 0) != (p["ret_mxn"] > 0))
+_RET_GAP = max(((abs(p["ret_usd"] - p["ret_mxn"]), t) for t, p in _RET_BY_TK.items()
+                if not p["native"]), default=(0.0, ""))
+print(f"  per-holding returns: dual-currency for {len(_RET_BY_TK)} positions | widest gap "
+      f"{_RET_GAP[1]} {_RET_GAP[0]*100:.2f} pp | sign flips: {', '.join(_RET_FLIP) or 'none'}")
+
+
+def _ret_cell(tk, fallback):
+    """Return cell that re-reads itself when the currency toggle flips."""
+    p = _RET_BY_TK.get(tk)
+    if not p:
+        return f"{fallback*100:+.2f}%"
+    return (f'<span class="cval" data-mxn="{p["ret_mxn"]*100:+.2f}%" '
+            f'data-usd="{p["ret_usd"]*100:+.2f}%">{p["ret_mxn"]*100:+.2f}%</span>')
+
+
+
 # ---------- charts ----------
 # 1. market value vs cost basis (gap = unrealized P&L) -- built further down, next to
 #    the ledger merge that feeds its buy/sell markers (search `_MK_SRC`). Everything it
@@ -909,27 +937,44 @@ f1b.add_scatter(x=dates, y=_ddpct, mode="lines", name="Drawdown",
 f1b.update_layout(title="How far below its own high-water mark the book has been",
                   yaxis_title="below peak (%)", height=235, showlegend=False)
 
-# 2. per-holding return vs portfolio (currency-independent)
+# 2. per-holding return vs portfolio -- NOT currency-independent, see _ret_cell above.
 # Bars were coloured green/red by sign. The sign is already given three times over --
 # by which side of zero the bar sits on, by the leading +/- in the label, and by the
 # sort order -- so the colour was redundant, and it burned the one channel left for
 # saying something the reader cannot otherwise see: whether the holding beat the book.
 # That is what it encodes now. Navy = ahead of the portfolio, grey = behind it.
-lat = latest.sort_values("ret")
-colors = [BLUE if r >= port_ret else "#b6bec8" for r in lat["ret"]]
-f2 = go.Figure(go.Bar(x=lat["ret"] * 100, y=lat["ticker"], orientation="h",
-                      marker_color=colors,
-                      text=[f"{r*100:+.2f}%" for r in lat["ret"]],
-                      textposition="outside",
+#
+# The bars, their labels and the reference line all restyle on the currency toggle
+# (PFR_* in the JS below), because the ranking itself changes: measured in dollars a
+# holding can sit on the other side of the portfolio line from where pesos put it.
+_rt = lambda tk, cur: _RET_BY_TK.get(tk, {}).get(f"ret_{cur}", float("nan"))
+_PORT = {c: (sum(_RET_BY_TK[t][f"mv_{c}"] for t in _RET_BY_TK)
+             / sum(_RET_BY_TK[t][f"cost_{c}"] for t in _RET_BY_TK) - 1.0)
+         for c in ("mxn", "usd")} if _RET_BY_TK else {"mxn": port_ret, "usd": port_ret}
+lat = latest.assign(_r=[_rt(t, "mxn") for t in latest["ticker"]]).sort_values("_r")
+_TK = list(lat["ticker"])
+PFR = {c: [_rt(t, c) * 100 for t in _TK] for c in ("mxn", "usd")}
+PFR_TXT = {c: [f"{v:+.2f}%" for v in PFR[c]] for c in ("mxn", "usd")}
+PFR_COL = {c: [BLUE if v / 100 >= _PORT[c] else "#b6bec8" for v in PFR[c]]
+           for c in ("mxn", "usd")}
+f2 = go.Figure(go.Bar(x=PFR["mxn"], y=_TK, orientation="h",
+                      marker_color=PFR_COL["mxn"],
+                      text=PFR_TXT["mxn"], textposition="outside",
                       textfont=dict(family=MONO, size=10),
-                      hovertemplate="%{y} &middot; %{x:+.2f}%<extra></extra>"))
-f2.add_vline(x=port_ret * 100, line=dict(color=INK, dash="dash"),
-             annotation_text=f"portfolio {port_ret*100:+.2f}%")
+                      hovertemplate="%{y} · %{x:+.2f}%<extra></extra>"))
+f2.add_vline(x=_PORT["mxn"] * 100, line=dict(color=INK, dash="dash"))
+f2.add_annotation(x=_PORT["mxn"] * 100, y=1.0, yref="paper", yanchor="bottom",
+                  xanchor="left", showarrow=False, name="portline",
+                  text=f"portfolio {_PORT['mxn']*100:+.2f}%",
+                  font=dict(family=SANS, size=10, color=INK))
 f2.update_layout(title="Which holdings are carrying the book, and which are not",
                  xaxis_title="return since cost (%)")
 # Same outside-label headroom as pf-alloc below, but this one diverges around 0,
 # so both ends need padding -- the extreme bar sits at whichever end is longer.
-_lo, _hi = min(0.0, float(lat["ret"].min()) * 100), max(0.0, float(lat["ret"].max()) * 100)
+# Range covers BOTH currencies so the axis does not jump when the toggle flips; a moving
+# axis makes two views look more different than they are.
+_all = PFR["mxn"] + PFR["usd"]
+_lo, _hi = min(0.0, min(_all)), max(0.0, max(_all))
 _pad = max(1.0, (_hi - _lo) * 0.26)
 f2.update_xaxes(range=[_lo - _pad, _hi + _pad])
 
@@ -940,7 +985,7 @@ f3 = go.Figure(go.Bar(x=al["weight"] * 100, y=al["ticker"], orientation="h",
                       text=[f"{w*100:.2f}%" for w in al["weight"]],
                       textposition="outside",
                       textfont=dict(family=MONO, size=10),
-                      hovertemplate="%{y} &middot; %{x:.2f}% of the book<extra></extra>"))
+                      hovertemplate="%{y} · %{x:.2f}% of the book<extra></extra>"))
 f3.update_layout(title="How concentrated the book is",
                  xaxis_title="% of stock portfolio")
 # textposition="outside" writes the label PAST the end of the longest bar, and
@@ -953,7 +998,7 @@ f3.update_xaxes(range=[0, float(al["weight"].max()) * 100 * 1.34])
 # ---------- holdings table ----------
 rows = ""
 for _, r in latest.iterrows():
-    rc = "pos" if r["ret"] >= 0 else "neg"
+    rc = "pos" if _RET_BY_TK.get(r["ticker"], {}).get("ret_mxn", r["ret"]) >= 0 else "neg"
     pc = "pos" if r["pm"] >= 0 else "neg"
     _d = DECOMP.get(r["ticker"])
     _is_usd = bool(_d) and not _d["native"]
@@ -977,7 +1022,7 @@ for _, r in latest.iterrows():
              f"<td data-s='{_stock_v:.2f}' class='{_sc}'>{cval(_stock_v, signed=True)}</td>"
              f"<td data-s='{_fx_sort}'>{_fx_cell}</td>"
              f"<td data-s='{r['pm']:.2f}' class='{pc}'>{cval(r['pm'], signed=True)}</td>"
-             f"<td data-s='{r['ret']:.6f}' class='{rc}'>{r['ret']*100:+.2f}%</td></tr>")
+             f"<td data-s='{r['ret']:.6f}' class='{rc}'>{_ret_cell(r['ticker'], r['ret'])}</td></tr>")
 
 # ---------- realized P&L since inception (ledger-based, date-aware, FX-decomposed) ----------
 # Ported from the offline cost-basis dashboard so the public page's realized figures
@@ -1407,7 +1452,7 @@ f5.add_scatter(x=_pcd, y=_pc["twr_mxn"] * 100, mode="lines", name="This book · 
 _spytr = (_pc["spy"] / float(_pc["spy"].iloc[0]) - 1.0) * 100.0
 f5.add_scatter(x=_pcd, y=_spytr, mode="lines", name="S&P 500 (SPY, total return)",
                line=dict(color=BENCH, width=1.8),
-               hovertemplate="%{y:+.2f}%<extra>S&amp;P 500</extra>")
+               hovertemplate="%{y:+.2f}%<extra>S&P 500</extra>")
 f5.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
 f5.update_layout(title="Investment decisions vs the index (flows removed)",
                  yaxis_title="cumulative return (%)", hovermode="x unified", height=330,
@@ -1629,12 +1674,22 @@ _j = lambda vs: ",".join(json.dumps(v, ensure_ascii=False) for v in vs)
 _btm = _j([q["mxn"] for q in _MKPTS["buy"]]);  _btu = _j([q["usd"] for q in _MKPTS["buy"]])
 _stm = _j([q["mxn"] for q in _MKPTS["sell"]]); _stu = _j([q["usd"] for q in _MKPTS["sell"]])
 _pfd = ",".join(f'"{d.strftime("%Y-%m-%d")}"' for d in ts.index)
+_num = lambda vs: ",".join(f"{v:.4f}" for v in vs)
+_str = lambda vs: ",".join(json.dumps(v) for v in vs)
+_pfrm, _pfru = _num(PFR["mxn"]), _num(PFR["usd"])
+_pfrtm, _pfrtu = _str(PFR_TXT["mxn"]), _str(PFR_TXT["usd"])
+_pfrcm, _pfrcu = _str(PFR_COL["mxn"]), _str(PFR_COL["usd"])
+_pfrlm, _pfrlu = f'{_PORT["mxn"]*100:.4f}', f'{_PORT["usd"]*100:.4f}'
 JS = """
 <script>
 var TOT={mxn:[__TOTM__],usd:[__TOTU__]},REAL={mxn:[__REAM__],usd:[__REAU__]};
 var BUY={mxn:[__BYM__],usd:[__BYU__]},SEL={mxn:[__SYM__],usd:[__SYU__]};
 var BUYT={mxn:[__BTM__],usd:[__BTU__]},SELT={mxn:[__STM__],usd:[__STU__]};
 var PFD=[__PFD__],CUR='mxn',PF_CAP=__CAP__,PF_RATE=__RATE__,PF_RANGE='all';
+var PFR={mxn:[__PFRM__],usd:[__PFRU__]};
+var PFRT={mxn:[__PFRTM__],usd:[__PFRTU__]};
+var PFRC={mxn:[__PFRCM__],usd:[__PFRCU__]};
+var PFRL={mxn:__PFRLM__,usd:__PFRLU__};
 function applyRange(m){
   PF_RANGE=m;
   var d=document.getElementById('pf-value'),dd=document.getElementById('pf-dd');
@@ -1663,6 +1718,15 @@ function setCurrency(c){
     b.classList.toggle('active',b.dataset.cur===c);});
   var lbl=document.getElementById('ccy-label');
   if(lbl) lbl.textContent=c.toUpperCase();
+  var rel=document.getElementById('pf-rel');
+  if(rel&&window.Plotly&&PFR[c]){
+    // A holding's return is not currency-invariant: the bars, their labels, the
+    // ahead/behind colouring AND the portfolio reference line all move with the toggle.
+    Plotly.restyle(rel,{x:[PFR[c]],text:[PFRT[c]],'marker.color':[PFRC[c]]},[0]);
+    Plotly.relayout(rel,{'shapes[0].x0':PFRL[c],'shapes[0].x1':PFRL[c],
+      'annotations[0].x':PFRL[c],
+      'annotations[0].text':'portfolio '+(PFRL[c]>=0?'+':'')+PFRL[c].toFixed(2)+'%'});
+  }
   var d=document.getElementById('pf-value');
   if(d&&window.Plotly){
     Plotly.restyle(d,{y:[TOT[c],REAL[c],BUY[c],SEL[c]]},[0,1,2,3]);
@@ -1716,7 +1780,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 });
 </script>
-""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__BTM__", _btm).replace("__BTU__", _btu).replace("__STM__", _stm).replace("__STU__", _stu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}")
+""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__BTM__", _btm).replace("__BTU__", _btu).replace("__STM__", _stm).replace("__STU__", _stu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}").replace("__PFRM__", _pfrm).replace("__PFRU__", _pfru).replace("__PFRTM__", _pfrtm).replace("__PFRTU__", _pfrtu).replace("__PFRCM__", _pfrcm).replace("__PFRCU__", _pfrcu).replace("__PFRLM__", _pfrlm).replace("__PFRLU__", _pfrlu)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 

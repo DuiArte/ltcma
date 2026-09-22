@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
-from design_system import CSS_LINKS
+from design_system import CSS_LINKS, axis_formats, assert_no_entities
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)
@@ -83,6 +83,7 @@ LAYOUT = dict(template="plotly_white", dragmode=False,
               yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=MONO, size=11)))
 
 def div(fig, name):
+    fig = axis_formats(assert_no_entities(fig))
     fig.update_layout(**LAYOUT)
     fig.update_xaxes(fixedrange=True); fig.update_yaxes(fixedrange=True)
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id=name,
