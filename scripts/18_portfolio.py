@@ -1650,12 +1650,20 @@ print(f"  realized (sidecar {os.path.basename(_rlf[-1])}, as_of {_asof.date()}):
 def _realized_row(r):
     # Scale once, here, so the data-s sort key and the rendered cell are the same scaled
     # number -- they must never diverge, or the sort attribute republishes the real book.
-    # Avg sell/cost are per-share prices: exact by design, like every price on the page.
+    # 2026-09-23: los precios por accion de esta tabla YA NO son exactos.
+    # Esta era la SEGUNDA superficie con precios de trade y el primer parche solo cubrio
+    # los hovers de los markers: el sitio publicaba `12,980.00`, el precio real al que se
+    # vendio QQQ el 23-sep, listo para cruzar contra un extracto. El mismo `j` se aplica a
+    # avg_sell Y avg_cost (asi el spread entre ambos se mueve <=0.30% y nada mas), solo en
+    # el RENDER: `_RROWS` y todos los agregados siguen siendo reales, y el assert de la
+    # identidad de arriba corre sobre el sidecar, antes de esto.
+    _jr = _anon_j(r["t"], r["sh"], r["avg_sell"])
+    _as, _ac = r["avg_sell"] * _jr, r["avg_cost"] * _jr
     sh, stock, fx, total = r["sh"]*SCALE, r["stock"]*SCALE, r["fx"]*SCALE, r["total"]*SCALE
     return (f"<tr><td data-s='{r['t']}'>{r['t']}</td>"
             f"<td data-s='{sh:.2f}'>{fmt_sh(sh)}</td>"
-            f"<td data-s='{r['avg_sell']:.4f}'>{cval(r['avg_sell'], 2)}</td>"
-            f"<td data-s='{r['avg_cost']:.4f}'>{cval(r['avg_cost'], 2)}</td>"
+            f"<td data-s='{_as:.4f}'>{cval(_as, 2)}</td>"
+            f"<td data-s='{_ac:.4f}'>{cval(_ac, 2)}</td>"
             f"<td data-s='{stock:.2f}' class='{_cl(stock)}'>{cval(stock, signed=True)}</td>"
             f"<td data-s='{fx:.2f}' class='{_cl(fx)}'>{cval(fx, signed=True)}</td>"
             f"<td data-s='{total:.2f}' class='{_cl(total)}'>{cval(total, signed=True)}</td></tr>")
@@ -2059,6 +2067,23 @@ _jall = [abs(_anon_j(_tq, _shq, _pxq) - 1.0)
 print("  jitter: %d trades | |eps| min %.3f%% max %.3f%% medio %.3f%% (banda %.2f-%.2f%%)"
       % (len(_jall), 100 * min(_jall), 100 * max(_jall),
          100 * sum(_jall) / len(_jall), 100 * _ANON_MIN, 100 * _ANON_SPAN))
+
+# --- GUARD: ningun precio por accion REAL llega a una superficie de precios --------
+# Dos superficies publican precio de trade: el hover de los markers y la tabla de
+# Realizados. El primer parche solo cubrio la primera, asi que la segunda publicaba
+# `12,980.00`, el precio real de la venta de QQQ del 23-sep.
+# ⚠️ Un barrido de subcadena sobre TODO el HTML no sirve: un numero suelto coincide por
+# mil razones inocentes (ticks de eje, puntos de la curva, la conversion a USD de otra
+# cosa). Ese intento dio 5 falsos positivos. Se comprueban las CELDAS concretas, con el
+# mismo formato con que se emiten.
+_pleak = []
+for _rq in _RROWS:
+    for _lab, _v in (("avg_sell", _rq["avg_sell"]), ("avg_cost", _rq["avg_cost"])):
+        if f"data-s='{_v:.4f}'" in HTML:
+            _pleak.append("realizados %s %s=%.4f" % (_rq["t"], _lab, _v))
+if _pleak:
+    raise SystemExit("ANON GUARD FAILED: precio real por accion en la tabla de "
+                     "Realizados -> " + ", ".join(_pleak[:6]))
 
 # --- GUARD: ningun precio de trade publicado coincide con el del broker ----------
 # Se reconstruye "@ <precio real>" tal como se imprimiria SIN jitter y se exige ausencia,
