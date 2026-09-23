@@ -1354,8 +1354,9 @@ _amax = max([_r["mxn"] for (_d, _k), _r in _MKDAY.items()
 # 🔴 Esto NO es confidencialidad: el repo es publico y la semilla esta en esta linea.
 # Sube la barra contra el cruce CASUAL, no contra quien lea el codigo.
 _ANON_SEED = "ltcma-trade-anon-v1"
-_ANON_SPAN = 0.02                      # |eps| maximo
-_ANON_MIN  = 0.005                     # |eps| MINIMO: nada se publica casi sin mover
+_ANON_MIN  = 0.0015                    # |eps| minimo 0.15% -- nada se publica casi sin mover
+_ANON_SPAN = 0.0030                    # |eps| maximo 0.30%
+_ANON_HARDCAP = 0.005                  # guard: ningun trade puede moverse mas de 0.5%
 
 
 def _anon_u(key):
@@ -1365,12 +1366,16 @@ def _anon_u(key):
 
 
 def _anon_j(t, sh, px):
-    """Multiplicador de precio con ZONA MUERTA alrededor de 1.
+    """Multiplicador de precio: |eps| uniforme en [_ANON_MIN, _ANON_SPAN] = [0.15%, 0.30%].
 
-    Una banda uniforme [-2%, +2%] deja sorteos casi nulos: el primer build imprimio
-    `14 @ 6,930.00` -> `6,929.03`, un desplazamiento de 0.014% que a efectos de cruzar
-    contra un extracto es el mismo precio. Se exige |eps| >= _ANON_MIN, asi que TODO
-    precio publicado se mueve al menos medio punto porcentual.
+    Banda MINIMA a proposito (Carlos, 2026-09-23): lo justo para que ningun precio
+    publicado coincida con el del extracto, y lo bastante chico para no tocar la lectura
+    del trade. La zona muerta existe porque una banda uniforme desde 0 deja sorteos casi
+    nulos -- la primera version imprimio `14 @ 6,930.00 -> 6,929.03`, un 0.014% que a
+    efectos de cruce es el mismo precio.
+
+    Los TITULOS NO se tocan (solo llevan SCALE), asi que shares_pub x precio_pub queda a
+    <=0.30% del importe escalado del fill.
     """
     u = _anon_u("p|%s|%.4f|%g" % (t, px, sh)) / float(1 << 64)
     mag = _ANON_MIN + u * (_ANON_SPAN - _ANON_MIN)      # |eps| en [MIN, SPAN]
@@ -1379,8 +1384,13 @@ def _anon_j(t, sh, px):
 
 
 def _anon_date(d, k):
+    """Corrimiento de EXACTAMENTE un dia habil, hacia adelante o atras.
+
+    Un dia mueve el TWRR/MWRR contra SPY de forma despreciable en la misma ventana; +/-3
+    (la primera version) empezaba a re-ordenar operaciones cercanas entre si.
+    """
     u = _anon_u("d|%s|%s" % (d, k))
-    mag = 1 + (u % 3)
+    mag = 1
     sgn = 1 if (u >> 17) & 1 else -1
     # pd.Timestamp, NO datetime.date: _eq_at compara contra un DatetimeIndex y una
     # date cruda levanta TypeError.
@@ -1395,8 +1405,8 @@ def _mk_txt(_d, _k, _r, _cur):
     _out = [f"<b>{_hd}</b> · {_r['mxn'] * SCALE / _dv:,.0f} {_cur.upper()}"]
     _ls = sorted(_r["lines"], key=lambda x: -x[0])
     for _m, _t, _sh, _px in _ls[:_MK_LINECAP]:
-        _j = _anon_j(_t, _sh, _px)          # jitter de precio, inverso en los titulos
-        _out.append(f"{_t} {fmt_sh(_sh * SCALE / _j)} @ {_px * _j / _dv:,.2f}")
+        _j = _anon_j(_t, _sh, _px)          # solo el precio; los titulos NO se tocan
+        _out.append(f"{_t} {fmt_sh(_sh * SCALE)} @ {_px * _j / _dv:,.2f}")
     if len(_ls) > _MK_LINECAP:
         _out.append(f"··· +{len(_ls) - _MK_LINECAP} more")
     return "<br>".join(_out)
@@ -2031,6 +2041,25 @@ if _mkleak:
                      "the chart -> " + ", ".join(_mkleak))
 # Naming the factor in prose lets any reader undo the scaling. Say "scaled by a fixed
 # constant", never the number. (WEBSITE_DEPLOY.md rule 1.)
+# --- GUARD: el jitter se mantiene dentro de la banda declarada -------------------
+# Si alguna vez se afloja _ANON_SPAN por accidente, el benchmark publicado dejaria de
+# ser comparable con el real. Se comprueba CADA trade, no el promedio.
+_jbad = [(_tq, _pxq, _anon_j(_tq, _shq, _pxq))
+         for (_dq, _kq), _rq in _MKDAY.items() if _dq >= _MK_WINDOW_START
+         for _mq, _tq, _shq, _pxq in _rq["lines"]
+         if abs(_anon_j(_tq, _shq, _pxq) - 1.0) > _ANON_HARDCAP]
+if _jbad:
+    raise SystemExit("ANON GUARD FAILED: jitter fuera de +/-%.2f%% en %d trade(s) -> %s"
+                     % (100 * _ANON_HARDCAP, len(_jbad),
+                        ", ".join("%s @ %.2f (%+.3f%%)" % (a, b, 100 * (c - 1))
+                                  for a, b, c in _jbad[:5])))
+_jall = [abs(_anon_j(_tq, _shq, _pxq) - 1.0)
+         for (_dq, _kq), _rq in _MKDAY.items() if _dq >= _MK_WINDOW_START
+         for _mq, _tq, _shq, _pxq in _rq["lines"]]
+print("  jitter: %d trades | |eps| min %.3f%% max %.3f%% medio %.3f%% (banda %.2f-%.2f%%)"
+      % (len(_jall), 100 * min(_jall), 100 * max(_jall),
+         100 * sum(_jall) / len(_jall), 100 * _ANON_MIN, 100 * _ANON_SPAN))
+
 # --- GUARD: ningun precio de trade publicado coincide con el del broker ----------
 # Se reconstruye "@ <precio real>" tal como se imprimiria SIN jitter y se exige ausencia,
 # en ambas monedas.
