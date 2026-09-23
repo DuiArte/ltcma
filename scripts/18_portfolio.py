@@ -747,12 +747,12 @@ MXN ({T_fx/tot_cost*100:+.2f}% of cost) &mdash; a stronger peso is a drag on dol
 </section>"""
 fxa_section = build_fxa()
 
-# ---------- canonical equity-book accounting (recycled $10M base + GBMF2 cash sleeve) ----------
+# ---------- canonical equity-book accounting (recycled $10M base + MXN money-fund sleeve) ----------
 # Source of truth: the broker "Detalle de Portafolio" snapshot (positions + cost
 # basis + GBMF2 cash), re-priced live from Yahoo. The book is measured against a
 # fixed $10M MXN base with capital recycled through it (Rule 1).
 #
-#   Total value    = equity market value + GBMF2 cash sleeve       (Rule 3)
+#   Total value    = equity market value + MXN money-fund cash sleeve       (Rule 3)
 #   Unrealized P/L = market value - broker cost basis              (live mark)
 #   Realized  P/L  = (cost basis + cash) - $10M base               (capital recovered
 #                                                                    beyond the base)
@@ -1330,13 +1330,64 @@ def _eq_at(_dt, _col="total"):
 # CONFIDENTIALITY: shares and peso amounts are scaled here, once, exactly like every
 # other figure on this page (see the module docstring). Publishing RAW fill shares next
 # to the scaled holdings table would hand the reader the ratio and invert the whole
-# page -- which is what the retired blotter hover did. Per-share prices stay exact,
-# same rule as the holdings table; scaled_shares x price == scaled_amount, so the
-# hover reconciles internally.
+# page -- which is what the retired blotter hover did.
+# 2026-09-23: los per-share prices YA NO son exactos. Llevan el jitter determinista
+# `_anon_j` y los titulos su inverso, de modo que shares_pub x precio_pub sigue siendo
+# el importe escalado y el hover reconcilia internamente, pero ni el precio ni el
+# conteo de titulos coinciden ya con un extracto del broker.
 _MK_DROPPED = sorted({_d for (_d, _k) in _MKDAY if _d < _MK_WINDOW_START})
 _MK_LINECAP = 6
 _amax = max([_r["mxn"] for (_d, _k), _r in _MKDAY.items()
              if _d >= _MK_WINDOW_START] or [1.0])
+# ---------- anonimizacion de trades (regla Carlos, 2026-09-23) ----------
+# Que ningun precio, titulo ni fecha publicados coincidan con un extracto del broker,
+# SIN mover un solo agregado. Mecanica completa en PORTFOLIO_REAL_RENDERER.md.
+#
+#   j = 1 + eps   determinista en [-_ANON_SPAN, +_ANON_SPAN]
+#   precio_pub = precio x j ;  shares_pub = shares x SCALE / j
+#   => el producto -- y por tanto MV, P/L y todo ratio -- queda EXACTAMENTE igual.
+#
+# ⚠️ La receta literal del brief (precio x1.8 Y shares escaladas) no cierra: daria MV
+# x3.24, y forzar MV a x1.8 con precio x1.8 exigiria publicar los TITULOS REALES, que es
+# peor -- titulos reales mas un extracto reconcilian de inmediato.
+#
+# 🔴 Esto NO es confidencialidad: el repo es publico y la semilla esta en esta linea.
+# Sube la barra contra el cruce CASUAL, no contra quien lea el codigo.
+_ANON_SEED = "ltcma-trade-anon-v1"
+_ANON_SPAN = 0.02                      # |eps| maximo
+_ANON_MIN  = 0.005                     # |eps| MINIMO: nada se publica casi sin mover
+
+
+def _anon_u(key):
+    import hashlib
+    return int.from_bytes(hashlib.blake2b(
+        (_ANON_SEED + "|" + str(key)).encode("utf-8"), digest_size=8).digest(), "big")
+
+
+def _anon_j(t, sh, px):
+    """Multiplicador de precio con ZONA MUERTA alrededor de 1.
+
+    Una banda uniforme [-2%, +2%] deja sorteos casi nulos: el primer build imprimio
+    `14 @ 6,930.00` -> `6,929.03`, un desplazamiento de 0.014% que a efectos de cruzar
+    contra un extracto es el mismo precio. Se exige |eps| >= _ANON_MIN, asi que TODO
+    precio publicado se mueve al menos medio punto porcentual.
+    """
+    u = _anon_u("p|%s|%.4f|%g" % (t, px, sh)) / float(1 << 64)
+    mag = _ANON_MIN + u * (_ANON_SPAN - _ANON_MIN)      # |eps| en [MIN, SPAN]
+    sgn = 1.0 if _anon_u("s|%s|%.4f|%g" % (t, px, sh)) & 1 else -1.0
+    return 1.0 + sgn * mag
+
+
+def _anon_date(d, k):
+    u = _anon_u("d|%s|%s" % (d, k))
+    mag = 1 + (u % 3)
+    sgn = 1 if (u >> 17) & 1 else -1
+    # pd.Timestamp, NO datetime.date: _eq_at compara contra un DatetimeIndex y una
+    # date cruda levanta TypeError.
+    return pd.Timestamp(np.busday_offset(np.datetime64(pd.Timestamp(d).date(), "D"),
+                                         sgn * mag, roll="forward"))
+
+
 def _mk_txt(_d, _k, _r, _cur):
     """Hover body. `x unified` already prints the date as the box header."""
     _dv = 1.0 if _cur == "mxn" else RATE
@@ -1344,7 +1395,8 @@ def _mk_txt(_d, _k, _r, _cur):
     _out = [f"<b>{_hd}</b> · {_r['mxn'] * SCALE / _dv:,.0f} {_cur.upper()}"]
     _ls = sorted(_r["lines"], key=lambda x: -x[0])
     for _m, _t, _sh, _px in _ls[:_MK_LINECAP]:
-        _out.append(f"{_t} {fmt_sh(_sh * SCALE)} @ {_px / _dv:,.2f}")
+        _j = _anon_j(_t, _sh, _px)          # jitter de precio, inverso en los titulos
+        _out.append(f"{_t} {fmt_sh(_sh * SCALE / _j)} @ {_px * _j / _dv:,.2f}")
     if len(_ls) > _MK_LINECAP:
         _out.append(f"··· +{len(_ls) - _MK_LINECAP} more")
     return "<br>".join(_out)
@@ -1353,11 +1405,14 @@ _MKPTS = {"buy": [], "sell": []}
 for (_d, _k), _r in sorted(_MKDAY.items()):
     if _d < _MK_WINDOW_START:
         continue                                  # no curve to sit on before it starts
-    _y = _eq_at(_d)
+    _dj = _anon_date(_d, _k)                # fecha corrida +/-1..3 dias habiles
+    _y = _eq_at(_dj)
+    if _y is None:
+        _dj, _y = _d, _eq_at(_d)            # si cae fuera de la curva, no se corre
     if _y is None:
         continue
     _MKPTS[_k].append(dict(
-        d=_d, y=_y, y_usd=_eq_at(_d, "total_usd"),
+        d=_dj, y=_y, y_usd=_eq_at(_dj, "total_usd"),
         size=float(np.clip(7.0 + 11.0 * np.sqrt(max(_r["mxn"], 0.0) / _amax), 7.0, 18.0)),
         mxn=_mk_txt(_d, _k, _r, "mxn"), usd=_mk_txt(_d, _k, _r, "usd")))
 print(f"  trade markers: {len(_mkf)} fills from {len(_MK_SRC)} archive exports -> "
@@ -1808,10 +1863,10 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 </div></header>
 <section class="hero"><div class="container">
 <h1>Stock Portfolio Tracker</h1>
-<p class="lede">A live view of the GBM equity book &mdash; every position
+<p class="lede">A live view of the broker equity book &mdash; every position
 measured against its cost basis and against the portfolio as a whole.
 Figures convert between Mexican pesos and US dollars at the current rate.</p>
-<p class="asof">As of {asof} &middot; GBM equity holdings &middot;
+<p class="asof">As of {asof} &middot; broker equity holdings &middot;
 USD/MXN {RATE:.4f}</p>
 </div></section>
 <main class="container">
@@ -1824,8 +1879,8 @@ Return = (market value &divide; cost) &minus; 1. For US-dollar holdings the peso
 P/L is split into <b>Stock</b> (the US price move at the exchange rate we bought
 at) and <b>FX</b> (the peso's move on the original cost); the two sum to Total
 P/L = market value &minus; cost. (Stock here folds in a small price&times;FX
-interaction term, itemized separately in <b>FX Attribution</b> below.) The GBMF2
-cash sleeve, FX positions and non-GBM bank cash are excluded from the equity
+interaction term, itemized separately in <b>FX Attribution</b> below.) The MXN money-fund
+cash sleeve, FX positions and non-custodian bank cash are excluded from the equity
 book.</div>
 <section class="block"><h2>Snapshot</h2>
 <div class="ccy-toggle">
@@ -1959,9 +2014,15 @@ if _leaked:
 # ratio for any name it could be matched against. Regenerate each hover body WITHOUT
 # the scaling and fail if that string reached the page, in either JSON escaping.
 def _mk_raw(_d, _k, _r):
-    return _mk_txt(_d, _k, {"mxn": _r["mxn"] / SCALE,
-                            "lines": [(m, t, sh / SCALE, px) for m, t, sh, px in _r["lines"]]},
-                   "mxn")
+    """La version VERDADERAMENTE cruda: sin escala y sin jitter. Si esa cadena llega a
+    la pagina, la anonimizacion no corrio."""
+    _o = ["<b>%s</b> · %s MXN" % ("▲ Buy" if _k == "buy" else "▼ Sell",
+                                  format(_r["mxn"], ",.0f"))]
+    for _m, _t, _sh, _px in sorted(_r["lines"], key=lambda x: -x[0])[:_MK_LINECAP]:
+        _o.append(f"{_t} {fmt_sh(_sh)} @ {_px:,.2f}")
+    if len(_r["lines"]) > _MK_LINECAP:
+        _o.append(f"··· +{len(_r['lines']) - _MK_LINECAP} more")
+    return "<br>".join(_o)
 _mkleak = [f"{_d.date()} {_k}" for (_d, _k), _r in _MKDAY.items() if _d >= _MK_WINDOW_START
            for _s in [_mk_raw(_d, _k, _r)]
            if json.dumps(_s) in HTML or json.dumps(_s, ensure_ascii=False) in HTML]
@@ -1970,6 +2031,41 @@ if _mkleak:
                      "the chart -> " + ", ".join(_mkleak))
 # Naming the factor in prose lets any reader undo the scaling. Say "scaled by a fixed
 # constant", never the number. (WEBSITE_DEPLOY.md rule 1.)
+# --- GUARD: ningun precio de trade publicado coincide con el del broker ----------
+# Se reconstruye "@ <precio real>" tal como se imprimiria SIN jitter y se exige ausencia,
+# en ambas monedas.
+_pxleak = []
+for (_dq, _kq), _rq in _MKDAY.items():
+    if _dq < _MK_WINDOW_START:
+        continue
+    for _mq, _tq, _shq, _pxq in sorted(_rq["lines"], key=lambda x: -x[0])[:_MK_LINECAP]:
+        for _dvq in (1.0, RATE):
+            _sq = f"{_tq} {fmt_sh(_shq * SCALE)} @ {_pxq / _dvq:,.2f}"
+            if _sq in HTML:
+                _pxleak.append("%s %s" % (_dq, _sq))
+if _pxleak:
+    raise SystemExit("ANON GUARD FAILED: precio de trade sin jitter en la pagina -> "
+                     + ", ".join(_pxleak[:6]))
+
+# --- GUARD: el sitio no menciona al broker ---------------------------------------
+# ⚠️ Un grep case-insensitive crudo NO sirve: los payloads base64 de Plotly traen "GBm"
+# por casualidad (51 falsos positivos contra 10 menciones reales el 2026-09-23), asi que
+# el guard nunca pasaria y acabaria desactivado. Se limpian los blobs base64 y los
+# escapes \uXXXX ANTES de buscar. Unica excepcion permitida: la frase exacta del CV.
+import re as _re_anon
+_ALLOWED_CV = "afiliado a gbm"
+_BSL = chr(92)                     # sin backslash literal: evita niveles de escape
+_clean = _re_anon.sub(_BSL * 2 + "u[0-9a-fA-F]{4}", "", HTML)
+_clean = _re_anon.sub(r"[A-Za-z0-9+/]{40,}={0,2}", " ", _clean)
+_cl = _clean.lower()
+_bad = [_clean[max(0, m.start() - 45):m.start() + 45]
+        for m in _re_anon.finditer(r"gbm|grupo burs|homebroker", _cl)
+        if _ALLOWED_CV not in _cl[max(0, m.start() - 20):m.start() + 20]]
+if _bad:
+    raise SystemExit("ANON GUARD FAILED: el sitio menciona al broker -> "
+                     + " | ".join(s.replace(chr(10), " ") for s in _bad[:5]))
+print("  anon guard OK | %d markers con jitter | 0 menciones del broker" % len(_mkf))
+
 _told = [p for p in (f"&times;{SCALE}", f"x{SCALE}", f"×{SCALE}") if p in HTML]
 if _told:
     raise SystemExit(f"CONFIDENTIALITY GUARD FAILED: page names the scale factor -> {_told}")

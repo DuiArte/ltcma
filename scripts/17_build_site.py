@@ -245,10 +245,10 @@ CHARTS = [
 
 # ---------- CV / professional experience ----------
 EXPERIENCE = [
-    ("FACE — Investment Advisor affiliated with GBM", "Financial Advisor",
+    ("FACE — Investment Advisor afiliado a gbm", "Financial Advisor",
      "Jan 2026 – Present",
      "Investment advisory for individual clients across multi-asset strategies "
-     "(equities, ETFs, FX, metals) on the GBM platform; model-portfolio "
+     "(equities, ETFs, FX, metals) on the firm's platform; model-portfolio "
      "construction and asset-allocation proposals by risk profile; proprietary "
      "quantitative analysis and performance dashboards for investor reporting."),
     ("Private Investment Fund", "Quantitative Analyst", "Nov 2024 – Present",
@@ -445,7 +445,7 @@ try:
 <div class="ccy-toggle">
 <button data-cur="usd" class="active" onclick="setCurrency('usd')">USD</button>
 <button data-cur="mxn" onclick="setCurrency('mxn')">MXN</button></div>
-<p class="note">The real GBM equity book, measured against the most capital it ever had
+<p class="note">The real equity book, measured against the most capital it ever had
 deployed at one moment. <b>Two returns, because they answer different questions:</b>
 MWRR is what the money earned, TWRR is what the decisions earned with the flows stripped
 out &mdash; only the second can fairly be set against an index. Full detail, holdings and
