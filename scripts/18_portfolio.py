@@ -995,7 +995,105 @@ f3.update_layout(title="How concentrated the book is",
 # switching to textposition="auto", which would move labels inside on desktop too.
 f3.update_xaxes(range=[0, float(al["weight"].max()) * 100 * 1.34])
 
+# ---------- anonimizacion de trades (regla Carlos, 2026-09-23) ----------
+# Que ningun precio, titulo ni fecha publicados coincidan con un extracto del broker,
+# SIN mover un solo agregado. Mecanica completa en PORTFOLIO_REAL_RENDERER.md.
+#
+#   j = 1 + eps   determinista en [-_ANON_SPAN, +_ANON_SPAN]
+#   precio_pub = precio x j ;  shares_pub = shares x SCALE / j
+#   => el producto -- y por tanto MV, P/L y todo ratio -- queda EXACTAMENTE igual.
+#
+# ⚠️ La receta literal del brief (precio x1.8 Y shares escaladas) no cierra: daria MV
+# x3.24, y forzar MV a x1.8 con precio x1.8 exigiria publicar los TITULOS REALES, que es
+# peor -- titulos reales mas un extracto reconcilian de inmediato.
+#
+# 🔴 Esto NO es confidencialidad: el repo es publico y la semilla esta en esta linea.
+# Sube la barra contra el cruce CASUAL, no contra quien lea el codigo.
+_ANON_SEED = "ltcma-trade-anon-v1"
+_ANON_MIN  = 0.0015                    # |eps| minimo 0.15% -- nada se publica casi sin mover
+_ANON_SPAN = 0.0030                    # |eps| maximo 0.30%
+_ANON_HARDCAP = 0.005                  # guard: ningun trade puede moverse mas de 0.5%
+
+
+def _anon_u(key):
+    import hashlib
+    return int.from_bytes(hashlib.blake2b(
+        (_ANON_SEED + "|" + str(key)).encode("utf-8"), digest_size=8).digest(), "big")
+
+
+def _anon_j(t, sh, px):
+    """Multiplicador de precio: |eps| uniforme en [_ANON_MIN, _ANON_SPAN] = [0.15%, 0.30%].
+
+    Banda MINIMA a proposito (Carlos, 2026-09-23): lo justo para que ningun precio
+    publicado coincida con el del extracto, y lo bastante chico para no tocar la lectura
+    del trade. La zona muerta existe porque una banda uniforme desde 0 deja sorteos casi
+    nulos -- la primera version imprimio `14 @ 6,930.00 -> 6,929.03`, un 0.014% que a
+    efectos de cruce es el mismo precio.
+
+    Los TITULOS NO se tocan (solo llevan SCALE), asi que shares_pub x precio_pub queda a
+    <=0.30% del importe escalado del fill.
+    """
+    u = _anon_u("p|%s|%.4f|%g" % (t, px, sh)) / float(1 << 64)
+    mag = _ANON_MIN + u * (_ANON_SPAN - _ANON_MIN)      # |eps| en [MIN, SPAN]
+    sgn = 1.0 if _anon_u("s|%s|%.4f|%g" % (t, px, sh)) & 1 else -1.0
+    return 1.0 + sgn * mag
+
+
+def _anon_date(d, k):
+    """Corrimiento de EXACTAMENTE un dia habil, hacia adelante o atras.
+
+    Un dia mueve el TWRR/MWRR contra SPY de forma despreciable en la misma ventana; +/-3
+    (la primera version) empezaba a re-ordenar operaciones cercanas entre si.
+    """
+    u = _anon_u("d|%s|%s" % (d, k))
+    mag = 1
+    sgn = 1 if (u >> 17) & 1 else -1
+    # pd.Timestamp, NO datetime.date: _eq_at compara contra un DatetimeIndex y una
+    # date cruda levanta TypeError.
+    return pd.Timestamp(np.busday_offset(np.datetime64(pd.Timestamp(d).date(), "D"),
+                                         sgn * mag, roll="forward"))
+
+
 # ---------- holdings table ----------
+# ANONIMIZACION (2026-09-23, extension): el `Costo promedio` tambien se jitteriza.
+# Era la tercera superficie reconciliable y la mas directa de todas: el `Detalle de
+# Portafolio` del broker trae literalmente una columna `Costo promedio`, y aqui el
+# factor SCALE se CANCELA (cost y shares van ambos escalados, asi que cost/shares es el
+# costo por accion REAL) -- coincidia al centavo con el XLSX privado.
+#
+# Llave `c|...`, distinta de la `p|...` de los precios de trade, para que un mismo
+# ticker no reciba el mismo desplazamiento en las dos tablas.
+#
+# La identidad VISIBLE de la tabla se preserva recalculando la columna Cost desde el
+# avg_cost ya jitterizado, y el TOTAL se suma de esa columna. `tot_cost` (real) se deja
+# intacto para todo lo demas: los porcentajes de FX Attribution y el combined return lo
+# siguen usando como denominador, y el sidecar del benchmark ni se toca.
+def _anon_c(t, sh, ac):
+    u = _anon_u("c|%s|%.4f|%g" % (t, ac, sh)) / float(1 << 64)
+    mag = _ANON_MIN + u * (_ANON_SPAN - _ANON_MIN)
+    sgn = 1.0 if _anon_u("cs|%s|%.4f|%g" % (t, ac, sh)) & 1 else -1.0
+    return 1.0 + sgn * mag
+
+
+latest["_ac_j"] = [float(a) * _anon_c(t, s, float(a))
+                   for t, s, a in zip(latest["ticker"], latest["shares"],
+                                      latest["Costo promedio"])]
+latest["_cost_j"] = latest["_ac_j"] * latest["shares"]     # Cost = Avg Cost x Shares
+_tot_cost_disp = float(latest["_cost_j"].sum())            # el TOTAL suma de la columna
+_ac_drift = [(t, float(a), float(b))
+             for t, a, b in zip(latest["ticker"], latest["Costo promedio"], latest["_ac_j"])
+             if abs(b / a - 1.0) > _ANON_HARDCAP]
+if _ac_drift:
+    raise SystemExit("ANON GUARD FAILED: Avg Cost fuera de +/-%.2f%% -> %s"
+                     % (100 * _ANON_HARDCAP, _ac_drift[:5]))
+print("  avg-cost jitter: %d posiciones | |eps| medio %.3f%% | Cost total display %s "
+      "(real %s, drift %+.3f%%)"
+      % (len(latest),
+         100 * sum(abs(float(b) / float(a) - 1) for a, b in
+                   zip(latest["Costo promedio"], latest["_ac_j"])) / len(latest),
+         f"{_tot_cost_disp:,.0f}", f"{tot_cost:,.0f}",
+         100 * (_tot_cost_disp / tot_cost - 1)))
+
 rows = ""
 for _, r in latest.iterrows():
     rc = "pos" if _RET_BY_TK.get(r["ticker"], {}).get("ret_mxn", r["ret"]) >= 0 else "neg"
@@ -1015,9 +1113,9 @@ for _, r in latest.iterrows():
     # data-s = raw sort keys (currency-independent), read by the sort/filter JS
     rows += (f"<tr><td data-s='{r['ticker']}'>{r['ticker']}{_approx}</td>"
              f"<td data-s='{r['shares']:.4f}'>{fmt_sh(r['shares'])}</td>"
-             f"<td data-s='{r['Costo promedio']:.6f}'>{cval(r['Costo promedio'], 2)}</td>"
+             f"<td data-s='{r['_ac_j']:.6f}'>{cval(r['_ac_j'], 2)}</td>"
              f"<td data-s='{r['Precio mercado']:.6f}'>{cval(r['Precio mercado'], 2)}</td>"
-             f"<td data-s='{r['cost']:.2f}'>{cval(r['cost'])}</td>"
+             f"<td data-s='{r['_cost_j']:.2f}'>{cval(r['_cost_j'])}</td>"
              f"<td data-s='{r['value']:.2f}'>{cval(r['value'])}</td>"
              f"<td data-s='{_stock_v:.2f}' class='{_sc}'>{cval(_stock_v, signed=True)}</td>"
              f"<td data-s='{_fx_sort}'>{_fx_cell}</td>"
@@ -1339,65 +1437,6 @@ _MK_DROPPED = sorted({_d for (_d, _k) in _MKDAY if _d < _MK_WINDOW_START})
 _MK_LINECAP = 6
 _amax = max([_r["mxn"] for (_d, _k), _r in _MKDAY.items()
              if _d >= _MK_WINDOW_START] or [1.0])
-# ---------- anonimizacion de trades (regla Carlos, 2026-09-23) ----------
-# Que ningun precio, titulo ni fecha publicados coincidan con un extracto del broker,
-# SIN mover un solo agregado. Mecanica completa en PORTFOLIO_REAL_RENDERER.md.
-#
-#   j = 1 + eps   determinista en [-_ANON_SPAN, +_ANON_SPAN]
-#   precio_pub = precio x j ;  shares_pub = shares x SCALE / j
-#   => el producto -- y por tanto MV, P/L y todo ratio -- queda EXACTAMENTE igual.
-#
-# ⚠️ La receta literal del brief (precio x1.8 Y shares escaladas) no cierra: daria MV
-# x3.24, y forzar MV a x1.8 con precio x1.8 exigiria publicar los TITULOS REALES, que es
-# peor -- titulos reales mas un extracto reconcilian de inmediato.
-#
-# 🔴 Esto NO es confidencialidad: el repo es publico y la semilla esta en esta linea.
-# Sube la barra contra el cruce CASUAL, no contra quien lea el codigo.
-_ANON_SEED = "ltcma-trade-anon-v1"
-_ANON_MIN  = 0.0015                    # |eps| minimo 0.15% -- nada se publica casi sin mover
-_ANON_SPAN = 0.0030                    # |eps| maximo 0.30%
-_ANON_HARDCAP = 0.005                  # guard: ningun trade puede moverse mas de 0.5%
-
-
-def _anon_u(key):
-    import hashlib
-    return int.from_bytes(hashlib.blake2b(
-        (_ANON_SEED + "|" + str(key)).encode("utf-8"), digest_size=8).digest(), "big")
-
-
-def _anon_j(t, sh, px):
-    """Multiplicador de precio: |eps| uniforme en [_ANON_MIN, _ANON_SPAN] = [0.15%, 0.30%].
-
-    Banda MINIMA a proposito (Carlos, 2026-09-23): lo justo para que ningun precio
-    publicado coincida con el del extracto, y lo bastante chico para no tocar la lectura
-    del trade. La zona muerta existe porque una banda uniforme desde 0 deja sorteos casi
-    nulos -- la primera version imprimio `14 @ 6,930.00 -> 6,929.03`, un 0.014% que a
-    efectos de cruce es el mismo precio.
-
-    Los TITULOS NO se tocan (solo llevan SCALE), asi que shares_pub x precio_pub queda a
-    <=0.30% del importe escalado del fill.
-    """
-    u = _anon_u("p|%s|%.4f|%g" % (t, px, sh)) / float(1 << 64)
-    mag = _ANON_MIN + u * (_ANON_SPAN - _ANON_MIN)      # |eps| en [MIN, SPAN]
-    sgn = 1.0 if _anon_u("s|%s|%.4f|%g" % (t, px, sh)) & 1 else -1.0
-    return 1.0 + sgn * mag
-
-
-def _anon_date(d, k):
-    """Corrimiento de EXACTAMENTE un dia habil, hacia adelante o atras.
-
-    Un dia mueve el TWRR/MWRR contra SPY de forma despreciable en la misma ventana; +/-3
-    (la primera version) empezaba a re-ordenar operaciones cercanas entre si.
-    """
-    u = _anon_u("d|%s|%s" % (d, k))
-    mag = 1
-    sgn = 1 if (u >> 17) & 1 else -1
-    # pd.Timestamp, NO datetime.date: _eq_at compara contra un DatetimeIndex y una
-    # date cruda levanta TypeError.
-    return pd.Timestamp(np.busday_offset(np.datetime64(pd.Timestamp(d).date(), "D"),
-                                         sgn * mag, roll="forward"))
-
-
 def _mk_txt(_d, _k, _r, _cur):
     """Hover body. `x unified` already prints the date as the box header."""
     _dv = 1.0 if _cur == "mxn" else RATE
@@ -1691,7 +1730,7 @@ percentages and per-share prices are exact.</p>
 _pnl_now = float(tot_val - tot_cost)                       # unrealized P/L (scaled MXN)
 _since_incep = REAL_TOTAL * SCALE + _pnl_now               # realized + unrealized (scaled MXN)
 SNAP = [("Total Market Value", cval(tot_val)),
-        ("Total Cost Basis", cval(tot_cost)),
+        ("Total Cost Basis", cval(_tot_cost_disp)),
         ("Total P&amp;L Since Inception", cval(_since_incep, signed=True)),
         ("Stock contribution", f"{stock_pct:+.2f}%"),
         ("FX contribution", f"{fx_pct:+.2f}%")]
@@ -1725,7 +1764,7 @@ banners = "".join(
     for k, v in BANNERS)
 # holdings TOTAL row (placed in <tfoot> so the sort/filter JS leaves it pinned)
 holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
-    f"<td class='n'>{cval(tot_cost)}</td><td class='n'>{cval(tot_val)}</td>"
+    f"<td class='n'>{cval(_tot_cost_disp)}</td><td class='n'>{cval(tot_val)}</td>"
     f"<td class='n {_cl(stock_tot)}'>{cval(stock_tot, signed=True)}</td>"
     f"<td class='n {_cl(fx_tot)}'>{cval(fx_tot, signed=True)}</td>"
     f"<td class='n {_cl(_pnl_now)}'>{cval(_pnl_now, signed=True)}</td>"
@@ -2067,6 +2106,33 @@ _jall = [abs(_anon_j(_tq, _shq, _pxq) - 1.0)
 print("  jitter: %d trades | |eps| min %.3f%% max %.3f%% medio %.3f%% (banda %.2f-%.2f%%)"
       % (len(_jall), 100 * min(_jall), 100 * max(_jall),
          100 * sum(_jall) / len(_jall), 100 * _ANON_MIN, 100 * _ANON_SPAN))
+
+# --- GUARD: ningun Avg Cost del sitio coincide con el del XLSX privado ------------
+# Cruce directo contra el entregable real de Carlos. El `Costo promedio` del sitio es el
+# costo por accion REAL cuando no se jitteriza (SCALE se cancela en cost/shares), asi que
+# coincidiria al centavo con la hoja `Portafolio equity` del XLSX y con la columna
+# homonima del `Detalle de Portafolio` del broker.
+# El XLSX vive en Downloads y puede no existir en una corrida programada: si falta se
+# avisa fuerte y no se rompe el job diario; si esta, se exige cero coincidencias.
+_XLSXP = paths.cuser("Downloads", "Portfolio_REAL_%s.xlsx" % asof)
+try:
+    from openpyxl import load_workbook as _lwb
+    _ws = _lwb(_XLSXP, read_only=True, data_only=True)["Portafolio equity"]
+    _hdr = [c.value for c in next(_ws.iter_rows(min_row=1, max_row=1))]
+    _ci = _hdr.index("Costo prom.")
+    _xac = [(r[0].value, float(r[_ci].value)) for r in _ws.iter_rows(min_row=2)
+            if r[0].value and r[_ci].value and str(r[0].value) != "TOTAL"]
+    _match = [f"{tk}={v:.4f}" for tk, v in _xac if f"data-s='{v:.6f}'" in HTML]
+    if _match:
+        raise SystemExit("ANON GUARD FAILED: Avg Cost del sitio identico al del XLSX "
+                         "privado -> " + ", ".join(_match[:8]))
+    print("  avg-cost cross-check vs %s: 0 de %d coinciden"
+          % (os.path.basename(_XLSXP), len(_xac)))
+except SystemExit:
+    raise
+except Exception as _xe:
+    print("  ** WARN: no se pudo cruzar Avg Cost contra el XLSX privado (%s) -- "
+          "el guard NO corrio **" % str(_xe)[:60])
 
 # --- GUARD: ningun precio por accion REAL llega a una superficie de precios --------
 # Dos superficies publican precio de trade: el hover de los markers y la tabla de
