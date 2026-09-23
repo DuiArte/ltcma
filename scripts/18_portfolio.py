@@ -1145,6 +1145,7 @@ def _ledger_rows_hist(path):
 _DM = "__detalle_movimientos__"           # sentinel source id, not a path
 _DMF = [os.path.join(_HISTD, "DetalleMovimientos_228128_31082026_p%d.csv" % i) for i in range(8)]
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_21092026.csv")]
+_DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_23092026.csv")]   # de-risk 23-sep: 5 ventas (QQQ/VGT/VUG/SOXX x2). Alimentar el walk, NO aflojar guards.
 _DM_CACHE = None
 
 
