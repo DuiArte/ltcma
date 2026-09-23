@@ -44,8 +44,8 @@ GLOSSARY = {
          "market value &minus; cost. The Holdings table folds a tiny price&times;FX "
          "interaction term into Stock; the FX&nbsp;Attribution panel itemizes it as a "
          "third leg. MX-native holdings (GMEXICO&nbsp;B) have no FX leg."),
-        ("GBMF2 cash sleeve",
-         "Cash from equity sales parks in the GBMF2 MXN money fund between trades. "
+        ("MXN money-fund cash sleeve",
+         "Cash from equity sales parks in the MXN money-market fund between trades. "
          "Because it also carries external capital, it is excluded from the equity "
          "book's cost-basis return."),
         ("Undocumented shares = a buy or sell",
