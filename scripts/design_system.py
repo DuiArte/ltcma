@@ -73,6 +73,7 @@ CORR_SCALE = [[0.0, TEAL], [0.25, "#7fb3ad"], [0.5, "#f4f4f2"],
 
 MAX_DP = 2                                  # site-wide ceiling on displayed decimals
 NUM_HOVER = f",.{MAX_DP}f"                  # 1,234.57
+NUM_TICK = f",.{MAX_DP}f"                   # mismo techo en las ETIQUETAS de eje
 DATE_HOVER = "%d %b %Y"
 
 
@@ -113,8 +114,14 @@ def axis_formats(fig):
             continue
         if _is_category_axis(fig, letter):
             continue                                   # tickers, asset names: not numbers
-        fig.update_layout(**{axis: dict(
-            hoverformat=DATE_HOVER if _is_date_axis(fig, letter) else NUM_HOVER)})
+        _isdate = _is_date_axis(fig, letter)
+        _upd = dict(hoverformat=DATE_HOVER if _isdate else NUM_HOVER)
+        # 2026-09-24: el techo tambien va a las ETIQUETAS DE EJE, no solo al tooltip.
+        # Mismo criterio no-destructivo: un tickformat puesto a mano (porcentajes, bps,
+        # miles) se respeta; un eje de fecha nunca recibe formato numerico.
+        if not _isdate and ax.tickformat is None:
+            _upd["tickformat"] = NUM_TICK
+        fig.update_layout(**{axis: _upd})
     return fig
 
 
