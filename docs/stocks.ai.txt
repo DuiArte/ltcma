@@ -2,23 +2,23 @@ STOCK COMPOSITE PICKS — AI COPY (low-token)
 asof=24 Sep 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|41.78|+0.530|Revenue growth
-2|LLY|Healthcare|1187.97|+0.519|CAD beta
-3|DDOG|Technology|258.18|+0.505|Earnings growth
-4|NVDA|Technology|224.28|+0.429|Revenue growth
-5|PLTR|Technology|192.69|+0.386|Revenue growth
-6|COST|Consumer Defensive|897.99|+0.369|Gross margin
-7|WMT|Consumer Defensive|107.88|+0.368|CAD beta
-8|HD|Consumer Cyclical|291.62|+0.307|ROE
-9|AAPL|Technology|337.29|+0.298|ROE
-10|AVGO|Technology|349.64|+0.263|Revenue growth
-11|ORCL|Technology|139.87|+0.250|CAD beta
-12|KO|Consumer Defensive|88.32|+0.227|CAD beta
-13|GOOGL|Communication Services|342.51|+0.213|Net margin
-14|AMZN|Consumer Cyclical|249.46|+0.143|CAD beta
-15|NET|Technology|360.80|+0.041|Rate beta
+1|SMCI|Technology|41.51|+0.529|Revenue growth
+2|LLY|Healthcare|1181.89|+0.519|CAD beta
+3|DDOG|Technology|256.92|+0.505|Earnings growth
+4|NVDA|Technology|224.58|+0.429|Revenue growth
+5|PLTR|Technology|192.59|+0.386|Revenue growth
+6|COST|Consumer Defensive|896.48|+0.369|Gross margin
+7|WMT|Consumer Defensive|107.59|+0.368|CAD beta
+8|HD|Consumer Cyclical|292.18|+0.307|ROE
+9|AAPL|Technology|335.92|+0.298|ROE
+10|AVGO|Technology|350.36|+0.263|Revenue growth
+11|ORCL|Technology|139.54|+0.250|CAD beta
+12|KO|Consumer Defensive|88.10|+0.226|CAD beta
+13|GOOGL|Communication Services|342.36|+0.213|Net margin
+14|AMZN|Consumer Cyclical|249.38|+0.143|CAD beta
+15|NET|Technology|358.82|+0.041|Rate beta
 16|NFLX|Communication Services|71.72|+0.029|Buffett score
-17|NVO|Healthcare|38.53|+0.021|CAD beta
-18|SNOW|Technology|335.97|+0.002|Rate beta
-19|MSFT|Technology|498.28|-0.004|Net margin
-20|TSLA|Consumer Cyclical|379.83|-0.028|CAD beta
+17|NVO|Healthcare|38.62|+0.022|CAD beta
+18|SNOW|Technology|334.00|+0.002|Rate beta
+19|MSFT|Technology|497.93|-0.004|Net margin
+20|TSLA|Consumer Cyclical|377.94|-0.028|CAD beta

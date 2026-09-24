@@ -137,7 +137,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <p>🟡 <strong>Ship as public card. Deployable with one honest caveat (PBO borderline) and one important context note (no 2008 in sample).</strong></p>
 <ul>
 <li>11 of 12 survival-bar criteria pass on a clean read.</li>
-<li>The 12th — PBO &lt; 0.30 — comes in at <strong>PBO_structural = 0.33</strong> and <strong>PBO_perturbation = 0.48</strong>. Both above the 0.30 bar on a strict reading. The same PBO carve-out that Carlos applied to Ensemble #14 applies here: the candidate set is mechanically correlated (this strategy's sleeves <em>are</em> the alternatives we benchmark against), which compresses the OS-rank distribution and biases PBO upward. <strong>PBO_structural here (0.33) is tighter than Ensemble #14's (0.40)</strong>, but still flags.</li>
+<li>The 12th — PBO &lt; 0.30 — comes in at <strong>PBO_structural = 0.3254</strong> and <strong>PBO_perturbation = 0.4762</strong>. Both above the 0.30 bar on a strict reading. The same PBO carve-out that Carlos applied to Ensemble #14 applies here: the candidate set is mechanically correlated (this strategy's sleeves <em>are</em> the alternatives we benchmark against), which compresses the OS-rank distribution and biases PBO upward. <strong>PBO_structural here (0.33) is tighter than Ensemble #14's (0.40)</strong>, but still flags.</li>
 <li>On every other axis this strategy is <strong>strictly better than the gated Ensemble #14</strong>: higher Sharpe (1.33 vs 1.26), lower max DD (−3.92% vs −4.91%), simpler architecture, no regime-label dependency, no kill-switch verification problem, no Donchian-XAU decoration.</li>
 </ul>
 <p>Recommendation: ship to the public website as the cleaner of the two ensemble products, with PBO caveat explicit. Time horizon ≥ 5 years for the compound effect to matter; not a get-rich-quick product.</p>
@@ -189,11 +189,11 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 </tr>
 <tr>
 <td>PBO (perturbation, 25)</td>
-<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.476</td>
 </tr>
 <tr>
 <td>PBO (structural, 6)</td>
-<td style="text-align: right;"><strong>0.33</strong> (vs 0.30 bar)</td>
+<td style="text-align: right;"><strong>0.325</strong> (vs 0.30 bar)</td>
 </tr>
 <tr>
 <td>MC P(MaxDD &lt; 10 %)</td>
@@ -256,7 +256,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <td>4</td>
 <td>PBO</td>
 <td>&lt; 0.30</td>
-<td>0.48 perturbation / 0.33 structural — both above 0.30 bar</td>
+<td>0.476 perturbation / 0.325 structural — both above 0.30 bar</td>
 <td>🟡</td>
 </tr>
 <tr>
@@ -317,8 +317,8 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 </tr>
 </tbody>
 </table>
-<p><strong>Score: 11 / 12 ✅ + 1 🟡.</strong> The 🟡 is PBO at 0.33 — same shape as Ensemble #14 (0.40), but tighter. PBO carve-out applies because the candidate set is correlated by construction (this strategy <em>is</em> a linear combination of its alternatives).</p>
-<h3>Note on PBO 0.33 — same caveat as Ensemble #14, cleaner numbers</h3>
+<p><strong>Score: 11 / 12 ✅ + 1 🟡.</strong> The 🟡 is PBO at 0.325 — same shape as Ensemble #14 (0.40), but tighter. PBO carve-out applies because the candidate set is correlated by construction (this strategy <em>is</em> a linear combination of its alternatives).</p>
+<h3>Note on PBO 0.325 — same caveat as Ensemble #14, cleaner numbers</h3>
 <p>PBO via Bailey-López de Prado CSCV (k=10) against the candidate set <code>{static_5030_20, btd_alone, static_alone, crt_alone, equal_weight_3, SPY}</code>. Reading: in 32.5 % of CSCV splits, the IS-best candidate ranks below the OS median. Two interpretations:</p>
 <ol>
 <li><strong>Strict:</strong> PBO &gt; 0.30 indicates non-trivial overfit risk among the candidate set. The bar is missed.</li>
@@ -387,8 +387,8 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 </tr>
 <tr>
 <td>PBO structural</td>
-<td style="text-align: right;">0.33</td>
-<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">0.325</td>
+<td style="text-align: right;">0.397</td>
 <td style="text-align: right;">tighter</td>
 </tr>
 <tr>
@@ -400,7 +400,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <tr>
 <td>MC P(MaxDD &lt; 10 %)</td>
 <td style="text-align: right;">0.998</td>
-<td style="text-align: right;">0.98</td>
+<td style="text-align: right;">0.983</td>
 <td style="text-align: right;">tighter</td>
 </tr>
 <tr>
@@ -467,7 +467,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 </table>
 <p>The regime gating <em>only</em> helps marginally in <strong>calm (+0.04 Sharpe)</strong> and <strong>crisis (+0.06 Sharpe)</strong>. The gating <em>costs</em> in drift (−0.17) and stress (−0.14). Net over the cycle, the simpler version wins.</p>
 <p>The Ensemble #14 report claimed gating earned its keep "in stress and crisis." On this clean re-look the stress claim does not hold up — the static version actually wins stress. Only crisis (n=41, +0.06 Sharpe) shows a thin gating advantage, and the magnitude is well inside one-sample noise.</p>
-<p><strong>Rolling 12-month Sharpe:</strong> Static 50/30/20 wins the head-to-head in <strong>49.5 % of months</strong> with an average edge of <strong>+0.07</strong> rolling Sharpe. This is a tie-with-edge — not a runaway — which is consistent with the close metric difference.</p>
+<p><strong>Rolling 12-month Sharpe:</strong> Static 50/30/20 wins the head-to-head in <strong>49.5 % of months</strong> with an average edge of <strong>+0.066</strong> rolling Sharpe. This is a tie-with-edge — not a runaway — which is consistent with the close metric difference.</p>
 <hr />
 <h2>Sleeve attribution</h2>
 <table>
@@ -640,7 +640,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <td style="text-align: right;">−23.93 %</td>
 </tr>
 <tr>
-<td>SPY scaled to 10 % DD (0.42× de-levered)</td>
+<td>SPY scaled to 10 % DD (0.418× de-levered)</td>
 <td style="text-align: right;">194</td>
 <td style="text-align: right;">6.03 %</td>
 <td style="text-align: right;">6.05 %</td>
@@ -789,7 +789,7 @@ evidence: <code>SignalLib\scenarios\kronos_mc_v0.7_report.md</code>.</p>
 <td>DSR</td>
 <td style="text-align: right;">0.9999</td>
 <td style="text-align: right;">0.9999</td>
-<td style="text-align: right;">−0.00</td>
+<td style="text-align: right;">−0.0001</td>
 </tr>
 </tbody>
 </table>
@@ -809,12 +809,12 @@ evidence: <code>SignalLib\scenarios\kronos_mc_v0.7_report.md</code>.</p>
 <h3>4. Beats SPY only on Sharpe and Axis B — not a CAGR-beat.</h3>
 <p>Raw CAGR 5.06 % vs SPY 14.30 %. Reading this as alpha is wrong — it's a <strong>risk-reduction</strong> trade, not a return amplifier. You sleep better at −3.92 % DD; you pay 9 pp of CAGR for the privilege. Use leverage to recover the CAGR (Axis B). Without leverage, this is a 60/40-style defensive product, not an alpha product.</p>
 <h3>5. PBO is above the 0.30 bar on BOTH readings.</h3>
-<p>Lead with the worse number: <strong>PBO_perturbation = 0.48</strong> is the harder fail. PBO_structural = 0.33 is the kinder reading. Both are above the 0.30 bar. The candidate-set correlation explains most of the structural number; the perturbation number is less defensible — it reflects an actual weight-grid search that's correlated with the selection.</p>
+<p>Lead with the worse number: <strong>PBO_perturbation = 0.476</strong> is the harder fail. PBO_structural = 0.325 is the kinder reading. Both are above the 0.30 bar. The candidate-set correlation explains most of the structural number; the perturbation number is less defensible — it reflects an actual weight-grid search that's correlated with the selection.</p>
 <p>Same caveat as Ensemble #14. On a strict reading, this is a 🟡 not a ✅ on PBO. Carlos has explicitly granted a carve-out for "ensembles of correlated sleeves" in his instructions — this report applies it but flags the strict failure twice (here and in the survival-bar table).</p>
 <h3>6. The 50/30/20 weights are inherited, not freshly optimized — but they were originally selected on this same data.</h3>
 <p>Important honest disclosure: the 50/30/20 weights were not optimized in this script. They were inherited from the <strong>drift-state</strong> row of Ensemble #14's regime-conditional weight table. Ensemble #14 itself selected those weights based on prior judgment about the sleeves' Sharpe and correlations, on the same 2010-03 → 2026-04 dataset.</p>
 <p>That means: this strategy is using a weight vector chosen with full knowledge of the in-sample data, even if no formal grid search was run here. The "no optimization" claim of this backtest is technically true (we ran one config) but misleading — the config inherits one degree of latent selection bias from Ensemble #14.</p>
-<p><strong>Implication:</strong> the PBO_perturbation 0.48 number partly reflects this latent selection. A truly fresh start (e.g. equal-weight 33/33/33 as a baseline alternative without any tuning) would be a more conservative deployment choice. But it would also have a lower CAGR and probably similar Sharpe — so the practical impact is small. We disclose this as part of the brutal-honesty contract.</p>
+<p><strong>Implication:</strong> the PBO_perturbation 0.476 number partly reflects this latent selection. A truly fresh start (e.g. equal-weight 33/33/33 as a baseline alternative without any tuning) would be a more conservative deployment choice. But it would also have a lower CAGR and probably similar Sharpe — so the practical impact is small. We disclose this as part of the brutal-honesty contract.</p>
 <h3>7. OOS 2025+ Sharpe 1.95 is partly the gold + SPY ride, not strategy alpha.</h3>
 <p>Gold has ripped roughly +35 % since 2025-01. SPY is up sharply. The held-out window's outsized Sharpe is mostly the underlying assets — not the regime-aware or sleeve-blending architecture finding new alpha. Carlos's standing rule (Finding #2 in STRATEGY_LOG: "edge = secular rally artifact" if it concentrates in 2008-12 + 2023-26) applies here too, partially. The strategy still works in the other windows, but the OOS 2025+ number should not be taken as predictive of forward returns.</p>
 <hr />
@@ -845,7 +845,7 @@ evidence: <code>SignalLib\scenarios\kronos_mc_v0.7_report.md</code>.</p>
 <p><strong>Regime gating's "stress" advantage doesn't survive a clean look.</strong> Ensemble #14's REPORT claimed gating earned its keep "in genuine stress and crisis." On this re-run, the static strategy actually wins <strong>stress</strong> (Sharpe 1.94 vs Ens 1.80). The gating advantage is concentrated entirely in <strong>crisis</strong> (+0.06 Sharpe) and <strong>calm</strong> (+0.04). Both magnitudes are inside one-sample noise. The Ensemble #14 report overstated the gating's value-add in stress.</p>
 </li>
 <li>
-<p><strong>PBO_structural is <em>tighter</em> than Ensemble #14's (0.33 vs 0.40).</strong> A simpler strategy with a tighter PBO — the structural overfitting story is actually <em>better</em> here than in the gated capstone. Still above 0.30, but the direction of difference is the right one.</p>
+<p><strong>PBO_structural is <em>tighter</em> than Ensemble #14's (0.325 vs 0.397).</strong> A simpler strategy with a tighter PBO — the structural overfitting story is actually <em>better</em> here than in the gated capstone. Still above 0.30, but the direction of difference is the right one.</p>
 </li>
 <li>
 <p><strong>The Static SPY/IEF/GLD sleeve's 51 % contribution at only 30 % weight.</strong> Ensemble #14's 65 % had me thinking the dominance was just a high-weight artifact. It's not — Static dominates <em>at any reasonable weight</em>, simply because its standalone CAGR (8.55 %) is 3× BTD's and ~25 % higher than CRT's. The lesson is even more uncomfortable than the Ensemble #14 report made it sound: <strong>you don't need a fancy ensemble. You need SPY + IEF + GLD.</strong></p>
