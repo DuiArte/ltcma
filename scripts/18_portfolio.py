@@ -1728,7 +1728,7 @@ percentages and per-share prices are exact.</p>
 
 # ---------- metrics (cost-basis return + Stock/FX + realized since inception) ----------
 _pnl_now = float(tot_val - tot_cost)                       # unrealized P/L (scaled MXN)
-_since_incep = REAL_TOTAL * SCALE + _pnl_now               # realized + unrealized (scaled MXN)
+_since_incep = REAL_TOTAL * SCALE + float(tot_val - _tot_cost_disp)   # coherente con el tile de Cost
 SNAP = [("Total Market Value", cval(tot_val)),
         ("Total Cost Basis", cval(_tot_cost_disp)),
         ("Total P&amp;L Since Inception", cval(_since_incep, signed=True)),
@@ -1747,9 +1747,16 @@ snap = "".join(
 _real_cost = sum(r["avg_cost"]*r["sh"] for r in _RROWS) * SCALE  # all-in cost of shares sold
 _real_pnl  = REAL_TOTAL * SCALE
 _ret_real  = (_real_pnl / _real_cost) if _real_cost else 0.0
-_ret_unr   = port_ret                                          # unrealized / held cost
-_comb_cost = _real_cost + tot_cost
-_ret_comb  = ((_real_pnl + _pnl_now) / _comb_cost) if _comb_cost else 0.0
+# 2026-09-24: el denominador del leg NO REALIZADO es el COST BASIS QUE SE MUESTRA, no el
+# real. Desde que el Avg Cost lleva jitter (2026-09-23) el tile `Total Cost Basis` imprime
+# `_tot_cost_disp` (suma de la columna jitterizada) mientras este ratio usaba `tot_cost`:
+# quien dividia los dos tiles obtenia +1.01% y la pagina decia +1.05% -- 3.7 bp de
+# incoherencia VISIBLE, justo lo que Carlos noto. Una pagina tiene que cuadrar con lo que
+# ella misma muestra; el numero real vive en el XLSX privado, que no lleva jitter.
+_pnl_disp  = float(tot_val - _tot_cost_disp)
+_ret_unr   = (_pnl_disp / _tot_cost_disp) if _tot_cost_disp else 0.0
+_comb_cost = _real_cost + _tot_cost_disp
+_ret_comb  = ((_real_pnl + _pnl_disp) / _comb_cost) if _comb_cost else 0.0
 if _comb_cost:                                                 # blend identity must hold
     _w = _real_cost / _comb_cost
     assert abs(_ret_comb - (_w*_ret_real + (1-_w)*_ret_unr)) < 1e-9, "return banners disagree"
@@ -1767,8 +1774,8 @@ holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td
     f"<td class='n'>{cval(_tot_cost_disp)}</td><td class='n'>{cval(tot_val)}</td>"
     f"<td class='n {_cl(stock_tot)}'>{cval(stock_tot, signed=True)}</td>"
     f"<td class='n {_cl(fx_tot)}'>{cval(fx_tot, signed=True)}</td>"
-    f"<td class='n {_cl(_pnl_now)}'>{cval(_pnl_now, signed=True)}</td>"
-    f"<td class='n {_cl(port_ret)}'>{port_ret*100:+.2f}%</td></tr>")
+    f"<td class='n {_cl(_pnl_disp)}'>{cval(_pnl_disp, signed=True)}</td>"
+    f"<td class='n {_cl(_ret_unr)}'>{_ret_unr*100:+.2f}%</td></tr>")
 
 # ---------- currency-toggle JavaScript ----------
 def _arr(s): return ",".join(f"{v:.0f}" for v in s)
@@ -2114,7 +2121,13 @@ print("  jitter: %d trades | |eps| min %.3f%% max %.3f%% medio %.3f%% (banda %.2
 # homonima del `Detalle de Portafolio` del broker.
 # El XLSX vive en Downloads y puede no existir en una corrida programada: si falta se
 # avisa fuerte y no se rompe el job diario; si esta, se exige cero coincidencias.
-_XLSXP = paths.cuser("Downloads", "Portfolio_REAL_%s.xlsx" % asof)
+# El nombre se pinaba a `asof`, asi que el guard dejo de correr en cuanto la pagina
+# avanzo a 2026-09-24 y el XLSX seguia siendo el del 23 -- degradado silencioso a WARN.
+# Se toma el MAS RECIENTE que exista y se imprime cual, que es la unica forma de saber
+# contra que se comparo.
+import glob as _gg
+_cands = sorted(_gg.glob(paths.cuser("Downloads", "Portfolio_REAL_*.xlsx")))
+_XLSXP = _cands[-1] if _cands else paths.cuser("Downloads", "Portfolio_REAL_%s.xlsx" % asof)
 try:
     from openpyxl import load_workbook as _lwb
     _ws = _lwb(_XLSXP, read_only=True, data_only=True)["Portafolio equity"]
