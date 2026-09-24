@@ -130,7 +130,7 @@ def picks_section(df, meta):
             f'<td><b>{tk}</b>{star}<br><span class="tn">{str(r["name"])[:30]}</span></td>'
             f'<td><span class="sec" style="background:{color}">{sec.replace(" Services","")}</span></td>'
             f'<td class="num">${r["price"]:,.2f}</td>'
-            f'<td class="num {comp_cls}"><b>{r["composite"]:+.3f}</b></td>'
+            f'<td class="num {comp_cls}"><b>{r["composite"]:+.2f}</b></td>'
             f'<td class="chips">{chips(cs)}</td>'
             f'<td class="cmt">{commentary(cs)}</td></tr>')
     n_buy = int((df["composite"] > 0).sum())
@@ -175,7 +175,7 @@ def signals_section():
     def cell_beta(beta, t):
         cls = "pos" if beta > 0 else ("neg" if beta < 0 else "")
         bold = "font-weight:600" if abs(t) > 2 else ""
-        return (f'<td class="num {cls}" style="{bold}">{beta:+.3f}'
+        return (f'<td class="num {cls}" style="{bold}">{beta:+.2f}'
                 f'<br><span class="tn">t={t:+.1f}</span></td>')
 
     sens_rows = ""

@@ -238,6 +238,9 @@ try {
     Run-Step '26_real_numbers_refresh.py' | Out-Null
     Run-Step '22_ai_copies.py'       | Out-Null
     Run-Step '24_backtests.py'       | Out-Null
+    # techo de 2 decimales en todo lo visible (Carlos, 2026-09-24). Corre AL FINAL:
+    # tiene que ver el HTML ya publicado por todos los generadores de arriba.
+    Run-Step 'guard_decimals.py'     | Out-Null
     Pop-Location
     Log "Site rebuild complete."
 
