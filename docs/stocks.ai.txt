@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=24 Sep 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=25 Sep 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|41.51|+0.529|Revenue growth
-2|LLY|Healthcare|1181.89|+0.519|CAD beta
-3|DDOG|Technology|256.92|+0.505|Earnings growth
-4|NVDA|Technology|224.58|+0.429|Revenue growth
-5|PLTR|Technology|192.59|+0.386|Revenue growth
-6|COST|Consumer Defensive|896.48|+0.369|Gross margin
-7|WMT|Consumer Defensive|107.59|+0.368|CAD beta
-8|HD|Consumer Cyclical|292.18|+0.307|ROE
-9|AAPL|Technology|335.92|+0.298|ROE
-10|AVGO|Technology|350.36|+0.263|Revenue growth
-11|ORCL|Technology|139.54|+0.250|CAD beta
-12|KO|Consumer Defensive|88.10|+0.226|CAD beta
-13|GOOGL|Communication Services|342.36|+0.213|Net margin
-14|AMZN|Consumer Cyclical|249.38|+0.143|CAD beta
-15|NET|Technology|358.82|+0.041|Rate beta
-16|NFLX|Communication Services|71.72|+0.029|Buffett score
-17|NVO|Healthcare|38.62|+0.022|CAD beta
-18|SNOW|Technology|334.00|+0.002|Rate beta
-19|MSFT|Technology|497.93|-0.004|Net margin
-20|TSLA|Consumer Cyclical|377.94|-0.028|CAD beta
+1|SMCI|Technology|43.26|+0.526|Revenue growth
+2|LLY|Healthcare|1183.46|+0.519|CAD beta
+3|DDOG|Technology|268.13|+0.507|Earnings growth
+4|NVDA|Technology|225.07|+0.429|Revenue growth
+5|PLTR|Technology|189.67|+0.386|Revenue growth
+6|COST|Consumer Defensive|922.76|+0.374|Gross margin
+7|WMT|Consumer Defensive|107.98|+0.369|CAD beta
+8|HD|Consumer Cyclical|293.20|+0.307|ROE
+9|AAPL|Technology|341.07|+0.299|ROE
+10|AVGO|Technology|352.81|+0.263|Revenue growth
+11|ORCL|Technology|137.10|+0.250|CAD beta
+12|KO|Consumer Defensive|87.81|+0.226|CAD beta
+13|GOOGL|Communication Services|343.92|+0.213|Net margin
+14|AMZN|Consumer Cyclical|249.67|+0.144|CAD beta
+15|NET|Technology|349.02|+0.042|Rate beta
+16|NFLX|Communication Services|71.14|+0.027|Buffett score
+17|NVO|Healthcare|38.80|+0.022|CAD beta
+18|SNOW|Technology|335.94|+0.003|Rate beta
+19|MSFT|Technology|516.17|-0.003|Net margin
+20|TSLA|Consumer Cyclical|372.11|-0.027|CAD beta
