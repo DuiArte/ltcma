@@ -174,6 +174,26 @@ not investment advice; past results do not guarantee future outcomes.</p></div><
 </body></html>"""
 
 
+# --- techo de 2 decimales, en el RENDERER ------------------------------------------
+# 2026-09-25: el 24-sep edite los `bt_*.html` A MANO creyendo que no los generaba nadie.
+# Los genera ESTA funcion, desde el REPORT.md de cada estrategia, y el refresh diario los
+# regenero borrando la correccion. El grep que me hizo concluir lo contrario buscaba el
+# literal "bt_buy_the_dip" y aqui el nombre se arma dinamico (`f"bt_{key}.html"`), asi que
+# no podia encontrarlo. **Una negacion sacada de un grep que no podia hallar el caso no es
+# evidencia.** El arreglo va en el renderer, no en el artefacto, para que sobreviva.
+#
+# Excepcion: una probabilidad en [0.995, 1) NO se redondea -- imprimir 1.00 afirmaria
+# certeza (MC P(DD<10%) 0.997, Deflated Sharpe 0.9999). Misma regla que guard_decimals.py.
+_DEC = __import__("re").compile(r"(?<![\d.])(\d+\.\d{3,})(?![\d])")
+
+
+def _cap_decimals(html, max_dp=2):
+    def rep(m):
+        v = float(m.group(1))
+        return m.group(1) if 0.995 <= v < 1.0 else f"{v:.{max_dp}f}"
+    return _DEC.sub(rep, html)
+
+
 def render_report_page(strat):
     """Convert a strategy's REPORT.md to docs/bt_<key>.html. Returns the
     filename if written, else None."""
@@ -189,6 +209,7 @@ def render_report_page(strat):
     except Exception:
         raw = open(md_path, encoding="utf-8").read()
         html = "<pre>" + esc(raw) + "</pre>"
+    html = _cap_decimals(html)
     body = (f'<main class="container"><article class="tile report">'
             f'<a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a>'
             f'{html}</article></main>')
