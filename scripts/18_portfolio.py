@@ -1962,7 +1962,7 @@ basis still held; <b>Combined</b> weights the two by their cost bases, so it sit
 between them. All three are exact &mdash; the display scaling cancels in a
 ratio, unlike the peso tiles above.</p></section>
 <section class="block"><h2>Performance</h2>
-<p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Book as of {PK['as_of']}
+<p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
 &middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
 {PK['fx_today']:.4f} (fixed at build)</p>
 <p class="note"><b>Everything below is measured against the most capital this book
