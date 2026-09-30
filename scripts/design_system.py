@@ -79,12 +79,19 @@ DATE_HOVER = "%d %b %Y"
 
 def _is_date_axis(fig, letter):
     import datetime as _dt
+    import numpy as _np
     for tr in fig.data:
         vals = getattr(tr, letter, None)
         if vals is None or len(vals) == 0:
             continue
+        # 2026-09-29: a pandas DatetimeIndex reaches the figure as a numpy datetime64
+        # array, whose elements are NOT datetime.date. This check used to miss it, so
+        # every date axis built from a DataFrame index got the numeric ",.2f" and the
+        # live portfolio chart printed ",.2f" five times along its x axis.
+        if getattr(getattr(vals, "dtype", None), "kind", "") == "M":
+            return True
         v = vals[0]
-        if isinstance(v, (_dt.date, _dt.datetime)):
+        if isinstance(v, (_dt.date, _dt.datetime, _np.datetime64)):
             return True
         if isinstance(v, str) and len(v) >= 8 and v[:4].isdigit() and v[4] in "-/":
             return True
@@ -144,7 +151,126 @@ def assert_no_entities(fig, name=""):
                             f"CHART GUARD: {name or fig.layout.title.text!r} has the literal "
                             f"HTML entity {ent!r} in .{attr} -- Plotly does not decode "
                             f"entities in hover text. Write the character itself.")
+        for attr in ("hovertemplate", "texttemplate"):
+            v = getattr(tr, attr, None)
+            if isinstance(v, str) and _TPL_SIGN.search(v):
+                raise SystemExit(
+                    f"CHART GUARD: {name or fig.layout.title.text!r} .{attr}={v!r} uses the "
+                    f"d3 sign flag '+' -- plotly.js 2.35 then ignores the WHOLE format and "
+                    f"prints the raw float (13.23208182587156%). Drop the '+'.")
     return fig
+
+
+# --- the sign flag silently disables a hovertemplate format ----------------------
+# 2026-09-29, measured on a clean page with plotly-2.35.0: `%{y:.2f}%` -> 9.68%, but
+# `%{y:+.2f}%` -> 9.676637895645811%. The format is not applied partially, it is dropped,
+# and nothing warns. Five portfolio traces carried it, so the MAX_DP rule never reached
+# them even though every one "had a hovertemplate". Signs in hover come from the data.
+import re as _re
+_TPL_SIGN = _re.compile(r"%\{[^}:]*:\+[^}]*\}")
+_TIME_DIRECTIVE = _re.compile(r"%-?[a-zA-Z]")
+_ISO_DATE = _re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def _plotly_calls(html):
+    """Yield (div_id, data, layout) for every Plotly.newPlot call in a rendered page."""
+    import json
+    dec = json.JSONDecoder()
+    for m in _re.finditer(r'Plotly\.newPlot\(\s*"([^"]+)"\s*,\s*', html):
+        data, end = dec.raw_decode(html, m.end())
+        end = _re.compile(r"\s*,\s*").match(html, end).end()
+        layout, _ = dec.raw_decode(html, end)
+        yield m.group(1), data, layout
+
+
+def _kind(vals):
+    if isinstance(vals, dict):                       # {"dtype": "f8", "bdata": ...}
+        return "num"
+    if not isinstance(vals, list) or not vals:
+        return None
+    v = next((x for x in vals if x is not None), None)
+    if isinstance(v, str):
+        return "date" if _ISO_DATE.match(v) else "cat"
+    return "num" if isinstance(v, (int, float)) else None
+
+
+def guard_plotly_html(html, page):
+    """Scan the FINAL page bytes -- not the figure objects -- for the three hover/axis
+    defects Carlos has caught on the live site. Returns the number of charts checked;
+    raises SystemExit on any hit. A guard that only ever sees green is unverified, so
+    the self-test below feeds it each defect first."""
+    bad, n = [], 0
+    for did, data, layout in _plotly_calls(html):
+        n += 1
+        axes = {}
+        for tr in data:
+            for attr in ("hovertemplate", "texttemplate"):
+                v = tr.get(attr)
+                if isinstance(v, str) and _TPL_SIGN.search(v):
+                    bad.append(f"{did}: {attr} {v!r} has the '+' sign flag (format ignored)")
+            for letter in ("x", "y"):
+                ref = tr.get(f"{letter}axis", letter)
+                key = f"{letter}axis{ref[1:]}"
+                k = _kind(tr.get(letter))
+                if k:
+                    axes.setdefault(key, set()).add(k)
+            # a trace with no template, on a numeric axis with no hoverformat, prints raw
+            if tr.get("type", "scatter") in ("scatter", "bar", "scattergl") \
+                    and tr.get("hoverinfo") not in ("skip", "none") and not tr.get("hovertemplate"):
+                vl = "x" if tr.get("orientation") == "h" else "y"
+                key = f"{vl}axis{tr.get(vl + 'axis', vl)[1:]}"
+                if _kind(tr.get(vl)) == "num" and not (layout.get(key) or {}).get("hoverformat"):
+                    bad.append(f"{did}: trace {tr.get('name')!r} has no hovertemplate and "
+                               f"{key} no hoverformat -> raw float in tooltip")
+        for key, kinds in axes.items():
+            ax = layout.get(key) or {}
+            if "date" in kinds or ax.get("type") == "date":
+                for f in ("tickformat", "hoverformat"):
+                    v = ax.get(f)
+                    if v and not _TIME_DIRECTIVE.search(v):
+                        bad.append(f"{did}: date axis {key}.{f}={v!r} is a NUMBER format "
+                                   f"-> the literal '{v}' is printed as tick/hover text")
+    if bad:
+        raise SystemExit(f"PLOTLY HTML GUARD FAILED on {page} ({len(bad)}):\n  "
+                         + "\n  ".join(bad))
+    return n
+
+
+def _selftest_guard():
+    """Prove the HTML guard FINDS each defect before trusting its green."""
+    tpl = ('<script>Plotly.newPlot("t", [{0}], {1}, {{}})</script>')
+    cases = {
+        "sign": tpl.format('{"x":["2026-01-01"],"y":[1.5],"hovertemplate":"%{y:+.2f}%"}',
+                           '{"xaxis":{"hoverformat":"%d %b %Y"}}'),
+        "datefmt": tpl.format('{"x":["2026-01-01"],"y":[1.5],"hovertemplate":"%{y:.2f}"}',
+                              '{"xaxis":{"tickformat":",.2f"}}'),
+        "raw": tpl.format('{"x":["2026-01-01"],"y":{"dtype":"f8","bdata":"AA=="}}',
+                          '{"xaxis":{"hoverformat":"%d %b %Y"}}'),
+    }
+    for k, h in cases.items():
+        try:
+            guard_plotly_html(h, f"selftest:{k}")
+        except SystemExit:
+            continue
+        raise SystemExit(f"PLOTLY HTML GUARD self-test: defect {k!r} was NOT detected")
+    ok = tpl.format('{"x":["2026-01-01"],"y":[1.5],"hovertemplate":"%{y:.2f}%"}',
+                    '{"xaxis":{"hoverformat":"%d %b %Y","tickformat":"%b %Y"}}')
+    assert guard_plotly_html(ok, "selftest:ok") == 1
+    return len(cases)
+
+
+if __name__ == "__main__" and len(__import__("sys").argv) > 1:
+    # python scripts/design_system.py docs/*.html  -- sweep the published pages
+    import sys, pathlib
+    _selftest_guard()
+    fails = 0
+    for p in sys.argv[1:]:
+        try:
+            print(f"  {p}: {guard_plotly_html(pathlib.Path(p).read_text(encoding='utf-8'), p)} charts OK")
+        except SystemExit as e:
+            fails += 1
+            print(e)
+    sys.exit(1 if fails else 0)
 
 TOKENS = """/* GENERATED by scripts/design_system.py -- do not edit under docs/. */
 :root{
