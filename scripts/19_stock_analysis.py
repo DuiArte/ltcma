@@ -297,7 +297,7 @@ def analyze(ticker):
     body = f"""<section class="hero"><div class="container">
 <h1>{name} <span style="color:#888888">({ticker})</span></h1>
 <p class="lede">{info.get('sector','')} &middot; {info.get('industry','')}</p>
-<p class="asof">CFA-framework equity analysis &middot; data: Yahoo Finance</p>
+<p class="asof">As of {hist_d.index[-1].strftime('%Y-%m-%d') if len(hist_d) else 'n/a'} &middot; CFA-framework equity analysis &middot; data: Yahoo Finance</p>
 </div></section><main class="container">
 <section class="block"><h2>Snapshot</h2>
 {ccy_badge("USD", "US-listed stock, figures in US dollars")}{snap}</section>

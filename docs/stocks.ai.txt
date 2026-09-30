@@ -2,23 +2,23 @@ STOCK COMPOSITE PICKS — AI COPY (low-token)
 asof=30 Sep 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|40.65|+0.528|Revenue growth
-2|LLY|Healthcare|1191.07|+0.520|CAD beta
-3|DDOG|Technology|274.40|+0.509|Earnings growth
-4|NVDA|Technology|231.20|+0.429|Revenue growth
-5|PLTR|Technology|190.36|+0.386|Revenue growth
-6|WMT|Consumer Defensive|105.63|+0.369|CAD beta
-7|COST|Consumer Defensive|919.51|+0.366|Gross margin
-8|HD|Consumer Cyclical|286.06|+0.305|ROE
-9|AAPL|Technology|337.96|+0.299|ROE
-10|AVGO|Technology|354.10|+0.264|Revenue growth
-11|ORCL|Technology|137.44|+0.250|CAD beta
-12|KO|Consumer Defensive|86.81|+0.225|CAD beta
-13|GOOGL|Communication Services|351.94|+0.214|Net margin
-14|AMZN|Consumer Cyclical|251.29|+0.144|CAD beta
-15|NET|Technology|351.74|+0.044|Rate beta
-16|NFLX|Communication Services|70.16|+0.024|Buffett score
-17|NVO|Healthcare|38.51|+0.021|CAD beta
-18|SNOW|Technology|347.41|+0.008|Rate beta
-19|MSFT|Technology|519.10|-0.002|Net margin
-20|TSLA|Consumer Cyclical|349.73|-0.025|CAD beta
+1|SMCI|Technology|40.51|+0.528|Revenue growth
+2|LLY|Healthcare|1188.03|+0.520|CAD beta
+3|DDOG|Technology|275.37|+0.509|Earnings growth
+4|NVDA|Technology|230.89|+0.429|Revenue growth
+5|PLTR|Technology|189.88|+0.386|Revenue growth
+6|WMT|Consumer Defensive|105.69|+0.370|CAD beta
+7|COST|Consumer Defensive|919.18|+0.366|Gross margin
+8|HD|Consumer Cyclical|286.16|+0.305|ROE
+9|AAPL|Technology|337.61|+0.299|ROE
+10|AVGO|Technology|353.29|+0.263|Revenue growth
+11|ORCL|Technology|137.46|+0.250|CAD beta
+12|KO|Consumer Defensive|86.89|+0.225|CAD beta
+13|GOOGL|Communication Services|351.17|+0.214|Net margin
+14|AMZN|Consumer Cyclical|251.30|+0.144|CAD beta
+15|NET|Technology|351.16|+0.044|Rate beta
+16|NFLX|Communication Services|70.11|+0.024|Buffett score
+17|NVO|Healthcare|38.45|+0.021|CAD beta
+18|SNOW|Technology|346.69|+0.008|Rate beta
+19|MSFT|Technology|519.07|-0.002|Net margin
+20|TSLA|Consumer Cyclical|350.59|-0.025|CAD beta
