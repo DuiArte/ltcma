@@ -549,32 +549,79 @@ except Exception:
     fx_live = RATE
 RATE = fx_live          # used by cval() for the MXN/USD toggle
 
+# ---------- marks: EVERY holding, one source per page (2026-09-30) ----------
+# Carlos: "los valores de arriba estan congelados". Six of 21 holdings (AAPL, HD, WMT,
+# COST, CCJ, GMEXICOB -- 14.9% of MV) had NOT been re-marked since 2026-09-23: the
+# first five are simply absent from TICKER_MAP, and GMEXICOB is keyed "GMEXICO B" there
+# while the walk names it "GMEXICOB". Every run silently kept the broker's 09-23 mark,
+# the other 15 moved, so the total drifted a little and looked alive. Measured on the
+# published history: those six prices identical across all 6 refreshes, the rest never.
+#
+# Order of precedence, keyed by a NORMALISED ticker so the naming variants cannot miss:
+#   1. the rolled peak sidecar's per-position mark (29_peak_rollforward.py, same run) --
+#      the SAME mark the Performance block uses, so the page carries one market value
+#   2. the BMV .MX quote (SIC)            3. the US listing x live USDMXN
+# 2/3 are computed anyway and cross-check 1: a sidecar mark more than 5% off the quote
+# is not trusted for that name.
+def _nk(t):
+    t = str(t).strip()
+    return (t[:-2] if t.endswith(" N") else t).replace(" ", "")
+
+_TM = {_nk(k): v for k, v in TICKER_MAP.items()}
+_HELD = {_nk(t) for t in latest["ticker"]}
+MARK, MARK_SRC = {}, {}
 priced_at = None
 live_px = {}
-to_fetch = sorted({TICKER_MAP[t] for t in latest["ticker"] if t in TICKER_MAP})
-if to_fetch:
-    try:
-        ld = yf.download(to_fetch, period="5d", interval="1d",
-                         auto_adjust=True, progress=False)["Close"]
-        if isinstance(ld, pd.Series):
-            ld = ld.to_frame(name=to_fetch[0])
-        live_px = {c: float(ld[c].dropna().iloc[-1]) for c in ld.columns
-                   if ld[c].dropna().size}
-        priced_at = ld.dropna(how="all").index[-1].strftime("%Y-%m-%d")
-        for idx, row in latest.iterrows():
-            yt = TICKER_MAP.get(row["ticker"])
-            if not yt or yt not in live_px:
+try:
+    _mx = sorted({_TM[k] for k in _HELD if k in _TM})
+    _us = sorted(k for k in _HELD if k not in _TM and k != "GMEXICOB")
+    ld = yf.download(_mx + _us, period="5d", interval="1d",
+                     auto_adjust=True, progress=False)["Close"]
+    if isinstance(ld, pd.Series):
+        ld = ld.to_frame(name=(_mx + _us)[0])
+    live_px = {c: float(ld[c].dropna().iloc[-1]) for c in ld.columns if ld[c].dropna().size}
+    priced_at = ld.dropna(how="all").index[-1].strftime("%Y-%m-%d")
+    for k in _HELD:
+        if k in _TM and _TM[k] in live_px:
+            MARK[k], MARK_SRC[k] = live_px[_TM[k]], ".MX"
+        elif k in live_px:
+            MARK[k], MARK_SRC[k] = live_px[k] * fx_live, "US x FX"
+except Exception as e:
+    print(f"  market quotes failed: {e}")
+
+_PKF0 = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "peak_sidecar.json")
+try:
+    _pk0 = json.loads(Path(_PKF0).read_text(encoding="utf-8"))
+    if priced_at is None or _pk0["as_of"] >= priced_at:
+        for p in _pk0["positions"]:
+            k, m = _nk(p["ticker"]), float(p["px_mxn"])
+            if k not in _HELD:
                 continue
-            ccy = "MXN" if yt.endswith(".MX") else "USD"
-            new_mxn = live_px[yt] if ccy == "MXN" else live_px[yt] * fx_live
-            latest.loc[idx, "Precio mercado"] = new_mxn
-        latest["value"] = latest["shares"] * latest["Precio mercado"]
-        latest["pm"] = latest["value"] - latest["cost"]
-        latest["ret"] = latest["pm"] / latest["cost"]
-        print(f"  live priced {len(live_px)} holdings @ "
-              f"{priced_at} USDMXN {fx_live:.2f}")
-    except Exception as e:
-        print(f"  live pricing failed: {e} -- using last-snapshot prices")
+            q = MARK.get(k)
+            if q and abs(m / q - 1) > 0.05:
+                print(f"  WARN mark {k}: sidecar {m:,.2f} vs quote {q:,.2f} "
+                      f"({m/q-1:+.1%}) -- keeping the quote")
+                continue
+            MARK[k], MARK_SRC[k] = m, "sidecar"
+        priced_at = max(priced_at or "", _pk0["as_of"])
+    else:
+        print(f"  WARN peak sidecar {_pk0['as_of']} older than quotes {priced_at} -- "
+              f"holdings marked from quotes")
+except FileNotFoundError:
+    pass
+
+for idx, row in latest.iterrows():
+    k = _nk(row["ticker"])
+    if k in MARK:
+        latest.loc[idx, "Precio mercado"] = MARK[k]
+latest["value"] = latest["shares"] * latest["Precio mercado"]
+latest["pm"] = latest["value"] - latest["cost"]
+latest["ret"] = latest["pm"] / latest["cost"]
+MARKS_STALE = sorted(_HELD - set(MARK))
+_srcs = pd.Series(MARK_SRC).value_counts().to_dict()
+print(f"  marked {len(MARK)}/{len(_HELD)} holdings @ {priced_at} USDMXN {fx_live:.2f} "
+      f"| sources {_srcs}" + (f" | NOT MARKED (broker price kept): {MARKS_STALE}"
+                              if MARKS_STALE else ""))
 
 tot_val = latest["value"].sum()
 tot_cost = latest["cost"].sum()
@@ -612,8 +659,8 @@ PORT_XBUY = float(ATTR.get("port_xbuy") or fx_live)
 _attr_by_tk = {r["ticker"]: r for r in ATTR["rows"]}
 for _, b in _bdf.iterrows():
     bname = str(b["ticker"]).strip()                   # e.g. "ASTS", "GOOGL", "GMEXICO B"
-    if bname not in TICKER_MAP:
-        continue                                       # unmapped/cash sleeve — can't price
+    if _nk(bname) not in MARK:
+        continue                                       # no mark at all — can't price
     ctk = INV_POS.get(bname, bname)                    # cache-style ticker, e.g. "GMEXICOB"
     shares_raw = float(b["Títulos"])
     mxn_cost_raw = float(b["imp_cto_broker"])          # Imp X Cto. = Títulos x Costo promedio
@@ -641,17 +688,14 @@ for r in ATTR["rows"]:
     pos_tk = POS_KEY.get(r["ticker"], r["ticker"])
     u = r["unrealized"]
     if r["native"]:
-        new_mxn_px = live_px.get(TICKER_MAP.get(pos_tk, ""))
+        new_mxn_px = MARK.get(_nk(pos_tk))
         if new_mxn_px:
             u["stock"] = r["shares"] * new_mxn_px - u["mxn_cost"]
             u["pnl"] = u["stock"]
             u["x_val"] = 1.0
         continue
-    yfs = TICKER_MAP.get(pos_tk)
-    if yfs is None:
-        continue
-    new_mxn_px = live_px.get(yfs)
-    if new_mxn_px is None:
+    new_mxn_px = MARK.get(_nk(pos_tk))       # same mark as the holdings row (was
+    if new_mxn_px is None:                    # TICKER_MAP-only: 6 names never re-marked)
         continue
     new_usd_px = new_mxn_px / fx_live
     x_buy = u.get("x_buy")
@@ -2215,6 +2259,11 @@ print(f"  confidentiality guard OK | scale factor x{SCALE} not disclosed | "
 
 # Chart guard on the FINAL bytes (2026-09-29): the '+' sign flag makes plotly.js 2.35 drop
 # the whole hover format, and a numeric tickformat on a date axis prints ",.2f" as ticks.
+# Machine-readable mark coverage for guard_freshness.py: a date stamp says nothing about
+# whether the NUMBERS under it moved (2026-09-30: "As of today" over six 09-23 prices).
+HTML = HTML.replace("</head>", f'<meta name="ltcma-marks" content="asof={priced_at};'
+                    f'marked={len(MARK)};held={len(_HELD)};stale={",".join(MARKS_STALE)}">'
+                    "\n</head>", 1)
 from design_system import guard_plotly_html
 print(f"  plotly html guard OK | {guard_plotly_html(HTML, 'portfolio.html')} charts")
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)

@@ -17,9 +17,10 @@ What this does -- and what it deliberately does NOT do:
     GBM_Account_Archive is newer than the anchor, this refuses (exit 3) -- new fills mean a
     re-walk through the guarded chain, and rolling across them would publish a book that
     does not exist.
-  * Marks move by market growth: US-listing close x MXN=X for SIC names (the same
-    convention 18_portfolio.py uses for the live tiles), GMEXICOB.MX for the peso-native
-    line. Levels stay anchored to the walk; only the ratio comes from the market.
+  * LEVEL marks, as the broker values a position: shares x the SIC .MX quote (US close x
+    MXN=X only where no .MX series exists -- CCJ), GMEXICOB.MX for the peso-native line.
+    USD = MXN / MXN=X, the anchor's own convention. These per-position marks are ALSO what
+    18_portfolio.py uses for the holdings table and the top tiles: one mark per page.
   * TWRR chains the new days (no flows), SPY's flow-matched book is marked forward with its
     share count, and every headline field 17/18 read is recomputed from the rolled curve.
 
@@ -93,6 +94,20 @@ def main():
         for p in A["positions"]:
             sym = NATIVE_YF.get(p["ticker"]) if p["native"] else p["ticker"]
             px[p["ticker"]] = _closes(sym, start)
+        # SIC venue quote (.MX): what the broker marks the position at. Used for the PESO
+        # side whenever it has data at the anchor and recently; the US listing x FX is the
+        # fallback (CCJ has no .MX). 2026-09-30: marking pesos with US x FX alone drifted
+        # +0.57% (max 1.95%) above the .MX quotes within 5 sessions.
+        sic = {}
+        for p in A["positions"]:
+            if p["native"]:
+                continue
+            try:
+                s_mx = _closes(p["ticker"] + ".MX", start)
+            except Exception:
+                continue
+            if not s_mx.loc[:asof_a].empty and s_mx.index.max() >= spy.index.max() - pd.Timedelta(days=4):
+                sic[p["ticker"]] = s_mx
     except Exception as e:
         print(f"  pricing FAILED ({e}) -- sidecar left at {A['as_of']}")
         return 4
@@ -116,24 +131,29 @@ def main():
     L = A["curve"][-1]
     assert L["d"] == A["as_of"], "anchor curve does not end at its own as_of"
 
-    sic = [p for p in A["positions"] if not p["native"]]
-    w_m = sum(p["mv_mxn"] for p in sic)
-    w_u = sum(p["mv_usd"] for p in sic)
+    # LEVEL marks, exactly as the broker values a position: shares x today's quote.
+    # sum(shares x px_mxn) over the SIC names reproduces the anchor curve's mv_mxn to the
+    # centavo, and the anchor's mv_usd is mv_mxn / FX, so both conventions carry over.
+    # (The first cut rolled the anchor by GROWTH; the anchor xlsx marks were intraday, so
+    # that carried a +0.6% level offset vs the .MX quotes into every later day.)
+    sicpos = [p for p in A["positions"] if not p["native"]]
 
-    def growth(p, d):
-        c0, c1 = at(px[p["ticker"]], asof_a), at(px[p["ticker"]], d)
+    def mark(p, d):
+        """(px_mxn, source) for position p on day d."""
+        t = p["ticker"]
         if p["native"]:
-            return c1 / c0, (c1 / c0) * fx_a / at(fxd, d)          # peso-quoted
-        return (c1 * at(fxd, d)) / (c0 * fx_a), c1 / c0          # (mxn, usd)
+            return at(px[t], d), ".MX"
+        if t in sic:
+            return at(sic[t], d), ".MX"
+        return at(px[t], d) * at(fxd, d), "US x FX"
 
     curve = list(A["curve"])
     prev = dict(L)
     spy_sh = L["spy_mv"] / L["spy"]
     for d in days:
-        gm = sum(p["mv_mxn"] * growth(p, d)[0] for p in sic) / w_m
-        gu = sum(p["mv_usd"] * growth(p, d)[1] for p in sic) / w_u
+        mv_m = sum(p["shares"] * mark(p, d)[0] for p in sicpos)
         r = dict(d=d.strftime("%Y-%m-%d"), fx=at(fxd, d),
-                 mv_mxn=L["mv_mxn"] * gm, mv_usd=L["mv_usd"] * gu,
+                 mv_mxn=mv_m, mv_usd=mv_m / at(fxd, d),
                  cost_mxn=L["cost_mxn"], cost_usd=L["cost_usd"],
                  real_mxn=L["real_mxn"], real_usd=L["real_usd"],
                  util_mxn=L["util_mxn"], util_usd=L["util_usd"],
@@ -172,15 +192,18 @@ def main():
     P["spy_mwrr_common"] = P["spy_pl"] / A["base_usd"]
     u = [c["util_usd"] for c in curve]
     P["util_now"], P["util_mean"], P["util_min"] = u[-1], sum(u) / len(u), min(u)
-    pos = []
+    pos, srcs = [], {}
+    fx_l = at(fxd, last)
     for p in A["positions"]:
-        gm, gu = growth(p, last)
-        q = dict(p, mv_mxn=p["mv_mxn"] * gm, mv_usd=p["mv_usd"] * gu,
-                 px_mxn=p["px_mxn"] * gm, px_usd=p["px_usd"] * gu)
+        m, src = mark(p, last)
+        srcs[src] = srcs.get(src, 0) + 1
+        q = dict(p, px_mxn=m, px_usd=m / fx_l, mv_mxn=p["shares"] * m,
+                 mv_usd=p["shares"] * m / fx_l, mark_src=src, mark_date=P["as_of"])
         q["ret_mxn"] = q["mv_mxn"] / q["cost_mxn"] - 1
         q["ret_usd"] = q["mv_usd"] / q["cost_usd"] - 1
         pos.append(q)
     P["positions"] = pos
+    assert abs(sum(q["mv_mxn"] for q in pos if not q["native"]) - P["mv_mxn"]) < 0.01
 
     # invariants the approved page depends on
     assert P["base_mxn"] == A["base_mxn"] and P["base_usd"] == A["base_usd"]
@@ -191,7 +214,7 @@ def main():
     print(f"  rolled {A['as_of']} -> {P['as_of']} (+{len(days)} sessions) | "
           f"MWRR {P['mwrr_usd']*100:.2f}% USD / {P['mwrr_mxn']*100:.2f}% MXN | "
           f"TWRR {P['twrr_usd']*100:.2f}% USD | SPY TR {P['spy_tr']*100:.2f}% | "
-          f"USDMXN {P['fx_today']:.4f}")
+          f"USDMXN {P['fx_today']:.4f} | marks {srcs}")
     return 0
 
 

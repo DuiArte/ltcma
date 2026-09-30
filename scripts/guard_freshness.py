@@ -19,6 +19,12 @@ and grades each against the cadence of what it describes:
                           (a permanently red check gets muted -- that is how F8 hid)
 
 Pages with NO stamp are listed, so "no stamp" can't masquerade as "fresh".
+2026-09-30 (b): a current date stamp proved nothing about the NUMBERS under it -- portfolio.html
+said "As of today" over six holdings still priced at 2026-09-23. So two CONTENT checks:
+  * marks   -- portfolio.html's <meta name="ltcma-marks">: every held name marked, mark date current
+  * frozen  -- each holding's published price vs the previous 3 published refreshes (git history
+               of docs/portfolio.html): identical across 4 consecutive refresh days = FROZEN.
+               Validated on the real history: flagged exactly AAPL CCJ COST GMEXICOB HD WMT.
 Runs against the LIVE site by default (`--local` for docs/). Self-test first.
 Exit 1 on any stale stamp.
 """
@@ -100,6 +106,64 @@ def check(pages, now):
     return stale, owed, fresh, unstamped
 
 
+_HROW = re.compile(r"<tr><td data-s='([^']+)'>.*?</td><td data-s='[^']*'>.*?</td>"
+                   r"<td data-s='[^']*'>.*?</td><td data-s='([\d.]+)'>")
+FROZEN_RUNS = 4          # today + 3 previous published refreshes, all identical
+
+
+def holdings_prices(html):
+    m = re.search(r'<table[^>]*id="h-table".*?</table>', html, re.S)
+    return dict(_HROW.findall(m.group(0))) if m else {}
+
+
+def check_marks(html, now):
+    """portfolio.html's machine-readable mark coverage. Returns problems."""
+    m = re.search(r'<meta name="ltcma-marks" content="([^"]*)"', html)
+    if not m:
+        return ["portfolio.html: no ltcma-marks meta -- mark coverage unprovable"]
+    kv = dict(x.split("=", 1) for x in m.group(1).split(";") if "=" in x)
+    out = []
+    if kv.get("stale"):
+        out.append(f"portfolio.html: holdings NOT re-marked today: {kv['stale']}")
+    if kv.get("marked") != kv.get("held"):
+        out.append(f"portfolio.html: marked {kv.get('marked')}/{kv.get('held')} holdings")
+    d = _parse(kv.get("asof", ""))
+    if d is None or _bdays_between(d, expected_session(now)) > 1:
+        out.append(f"portfolio.html: marks as of {kv.get('asof')}")
+    return out
+
+
+def check_frozen(today_html, history):
+    """history: list of previous published portfolio.html, newest first, one per refresh
+    day. A price identical in today + (FROZEN_RUNS-1) previous refreshes is frozen."""
+    cur = holdings_prices(today_html)
+    prev = [holdings_prices(h) for h in history[:FROZEN_RUNS - 1]]
+    if len(prev) < FROZEN_RUNS - 1:
+        return []
+    return [f"portfolio.html: {t} price {p} unchanged across {FROZEN_RUNS} refreshes"
+            for t, p in sorted(cur.items()) if all(h.get(t) == p for h in prev)]
+
+
+def published_history(n, before):
+    """Previous daily-refresh versions of docs/portfolio.html from git, newest first,
+    at most one per calendar day (a same-day re-run must not count as a new day)."""
+    import subprocess
+    root = os.path.dirname(DOCS)
+    log = subprocess.run(["git", "-C", root, "log", "--format=%h %cs %s", "-n", "60", "--",
+                          "docs/portfolio.html"], capture_output=True, text=True).stdout
+    out, days = [], set()
+    for line in log.splitlines():
+        h, d = line.split()[:2]
+        if "daily website refresh" not in line or d in days or d >= before:
+            continue                     # one per day, and never today's (= the live page)
+        days.add(d)
+        out.append(subprocess.run(["git", "-C", root, "show", f"{h}:docs/portfolio.html"],
+                                  capture_output=True, text=True, encoding="utf-8").stdout)
+        if len(out) >= n:
+            break
+    return out
+
+
 def _selftest():
     now = datetime(2026, 9, 30, 17, 0)
     pages = {
@@ -114,6 +178,18 @@ def _selftest():
     assert [s[:2] for s in stale] == [("a.html", "Performance as of")], stale
     assert [o[0] for o in owed] == ["report.html"], owed
     assert "d.html" in un and len(fresh) == 4, (fresh, un)
+    row = lambda t, p: (f"<tr><td data-s='{t}'>{t}</td><td data-s='1'>1</td>"
+                        f"<td data-s='1'>1</td><td data-s='{p}'>x</td></tr>")
+    tbl = lambda *r: '<table class="ptable" id="h-table">' + "".join(r) + "</table>"
+    hist = [tbl(row("AAPL", "5875.01"), row("QQQ", str(13000 + i))) for i in range(3)]
+    fz = check_frozen(tbl(row("AAPL", "5875.01"), row("QQQ", "13400")), hist)
+    assert len(fz) == 1 and "AAPL" in fz[0], fz
+    assert check_marks('<meta name="ltcma-marks" content="asof=2026-09-30;marked=21;'
+                       'held=21;stale=">', now) == []
+    bad = check_marks('<meta name="ltcma-marks" content="asof=2026-09-23;marked=15;'
+                      'held=21;stale=AAPL,HD">', now)
+    assert len(bad) == 3, bad
+    assert check_marks("<p>no meta</p>", now), "missing meta must fail"
 
 
 def main():
@@ -133,6 +209,11 @@ def main():
             unreachable.append(f"{n}: {e}")
     now = datetime.now()
     stale, owed, fresh, un = check(pages, now)
+    content = []
+    if "portfolio.html" in pages:
+        content = check_marks(pages["portfolio.html"], now)
+        content += check_frozen(pages["portfolio.html"], published_history(FROZEN_RUNS - 1,
+                                                                      now.strftime("%Y-%m-%d")))
     src = "docs/ (local)" if local else SITE
     print(f"FRESHNESS GUARD -- {src} -- expected session {expected_session(now)} -- "
           f"{len(pages)} pages, {len(fresh)} fresh stamps")
@@ -144,10 +225,14 @@ def main():
         print(f"  UNREACHABLE {u}")
     for r in stale:
         print(f"  ** STALE ** {r[0]:24s} {r[1]} {r[2]}")
-    if stale or unreachable:
-        print(f"\n{len(stale)} stale stamp(s), {len(unreachable)} unreachable page(s)")
+    for c in content:
+        print(f"  ** STALE NUMBERS ** {c}")
+    if stale or unreachable or content:
+        print(f"\n{len(stale)} stale stamp(s), {len(content)} stale-number finding(s), "
+              f"{len(unreachable)} unreachable page(s)")
         return 1
-    print("\nOK: every stamp on every reachable page is current for its cadence")
+    print("\nOK: every stamp current for its cadence; every holding re-marked; "
+          "no price frozen across %d refreshes" % FROZEN_RUNS)
     return 0
 
 
