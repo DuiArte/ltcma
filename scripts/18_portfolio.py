@@ -882,6 +882,14 @@ print(f"  curve: peak-base sidecar ({PK['as_of']}, {len(_pc)} days) | "
       f"base USD {PK['base_usd']:,.2f} / MXN {PK['base_mxn']:,.2f} | "
       f"MWRR {PK['mwrr_usd']*100:.2f}% USD / {PK['mwrr_mxn']*100:.2f}% MXN | "
       f"TWRR {PK['twrr_usd']*100:.2f}% USD")
+# The sidecar chain (mxn_peak -> peak_curves -> guards -> make_site_sidecar) is MANUAL and
+# hand-dated; daily_refresh.ps1 never touches it. So the Performance block freezes at the
+# sidecar's as_of while the tiles above are marked live. The page stamps that date
+# honestly; this line makes the lag visible in the refresh log instead of on Carlos's phone.
+_pk_lag = int(np.busday_count(PK["as_of"], pd.Timestamp.today().strftime("%Y-%m-%d")))
+if _pk_lag > 1:
+    print(f"  WARN peak sidecar STALE: Performance block as of {PK['as_of']}, "
+          f"{_pk_lag} business days behind -- rerun site_peakbase chain (WEBSITE_DEPLOY.md)")
 
 # The published MXN base must be the one Carlos approved. A silent drift here would
 # re-denominate every percentage on the page without anything looking wrong.
@@ -961,7 +969,7 @@ f2 = go.Figure(go.Bar(x=PFR["mxn"], y=_TK, orientation="h",
                       marker_color=PFR_COL["mxn"],
                       text=PFR_TXT["mxn"], textposition="outside",
                       textfont=dict(family=MONO, size=10),
-                      hovertemplate="%{y} · %{x:+.2f}%<extra></extra>"))
+                      hovertemplate="%{y} · %{x:.2f}%<extra></extra>"))
 f2.add_vline(x=_PORT["mxn"] * 100, line=dict(color=INK, dash="dash"))
 f2.add_annotation(x=_PORT["mxn"] * 100, y=1.0, yref="paper", yanchor="bottom",
                   xanchor="left", showarrow=False, name="portline",
@@ -1524,10 +1532,10 @@ f4.add_scatter(x=_pcd, y=_pc["util_usd"] * 100, mode="lines", name="Capital in u
                hovertemplate="%{y:.0f}% of peak<extra>Capital in use</extra>")
 f4.add_scatter(x=_pcd, y=_pc["plpct_usd"] * 100, mode="lines", name="Return · USD",
                line=dict(color=NAVY, width=2.4),
-               hovertemplate="%{y:+.2f}%<extra>USD</extra>")
+               hovertemplate="%{y:.2f}%<extra>USD</extra>")
 f4.add_scatter(x=_pcd, y=_pc["plpct_mxn"] * 100, mode="lines", name="Return · MXN",
                line=dict(color=NAVY, width=1.6, dash="dot"),
-               hovertemplate="%{y:+.2f}%<extra>MXN</extra>")
+               hovertemplate="%{y:.2f}%<extra>MXN</extra>")
 f4.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
 f4.add_vline(x=pd.Timestamp(PK["peak_date"]), line=dict(color=GREY, width=1, dash="dash"))
 f4.add_annotation(x=pd.Timestamp(PK["peak_date"]), y=1.0, yref="paper", yanchor="bottom",
@@ -1550,14 +1558,14 @@ f4.update_layout(
 f5 = go.Figure()
 f5.add_scatter(x=_pcd, y=_pc["twr_usd"] * 100, mode="lines", name="This book · USD",
                line=dict(color=NAVY, width=2.4),
-               hovertemplate="%{y:+.2f}%<extra>Book · USD</extra>")
+               hovertemplate="%{y:.2f}%<extra>Book · USD</extra>")
 f5.add_scatter(x=_pcd, y=_pc["twr_mxn"] * 100, mode="lines", name="This book · MXN",
                line=dict(color=NAVY, width=1.5, dash="dot"),
-               hovertemplate="%{y:+.2f}%<extra>Book · MXN</extra>")
+               hovertemplate="%{y:.2f}%<extra>Book · MXN</extra>")
 _spytr = (_pc["spy"] / float(_pc["spy"].iloc[0]) - 1.0) * 100.0
 f5.add_scatter(x=_pcd, y=_spytr, mode="lines", name="S&P 500 (SPY, total return)",
                line=dict(color=BENCH, width=1.8),
-               hovertemplate="%{y:+.2f}%<extra>S&P 500</extra>")
+               hovertemplate="%{y:.2f}%<extra>S&P 500</extra>")
 f5.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
 f5.update_layout(title="Investment decisions vs the index (flows removed)",
                  yaxis_title="cumulative return (%)", hovermode="x unified", height=330,
@@ -2205,6 +2213,10 @@ if _told:
 print(f"  confidentiality guard OK | scale factor x{SCALE} not disclosed | "
       f"{len(_RROWS)} realized rows checked")
 
+# Chart guard on the FINAL bytes (2026-09-29): the '+' sign flag makes plotly.js 2.35 drop
+# the whole hover format, and a numeric tickformat on a date axis prints ",.2f" as ticks.
+from design_system import guard_plotly_html
+print(f"  plotly html guard OK | {guard_plotly_html(HTML, 'portfolio.html')} charts")
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
 print(f"Portfolio tracker built -> {DOCS}/portfolio.html")
 print(f"  {len(latest)} holdings | value(scaled) MXN {tot_val:,.0f} / "

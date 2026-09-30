@@ -43,6 +43,28 @@ def allowed(val, ctx):
 
 
 bad, ok = [], []
+# 2026-09-29: PAYLOAD quita todo <script>, asi que este guard NUNCA vio un chart. El
+# tooltip `USD : 13.23208182587156%` y el eje `,.2f ,.2f ,.2f` vivian ahi, invisibles
+# para el guard y visibles para Carlos. Los charts se revisan aparte, parseando el
+# JSON de cada Plotly.newPlot (design_system.guard_plotly_html), con auto-test previo
+# que demuestra que el guard SI encuentra cada defecto antes de creerle el verde.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from design_system import guard_plotly_html, _selftest_guard
+_selftest_guard()
+chart_fail, n_charts = [], 0
+for fn in sorted(os.listdir(DOCS)):
+    if fn.endswith(".html"):
+        try:
+            n_charts += guard_plotly_html(
+                open(os.path.join(DOCS, fn), encoding="utf-8", errors="replace").read(), fn)
+        except SystemExit as e:
+            chart_fail.append(str(e))
+if chart_fail:
+    print("\n".join(chart_fail))
+    sys.exit(1)
+print("OK charts: %d Plotly charts -- sin flag '+', ejes de fecha con formato de fecha, "
+      "sin trace numerico sin formato" % n_charts)
+
 for fn in sorted(os.listdir(DOCS)):
     if not fn.endswith(".html"):
         continue
