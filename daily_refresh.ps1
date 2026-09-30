@@ -224,6 +224,14 @@ try {
     Run-Step '19_stock_analysis.py'  | Out-Null
     Run-Step '28_ember_ensemble.py'  | Out-Null   # accumulates EMBER paper-track NAV (best-effort)
 
+    # Peak-base sidecar: roll the last VALIDATED walk forward to today's prices + FX
+    # (2026-09-30). Before this, nothing scheduled touched it and the Performance block
+    # + home card froze at the manual chain's date for a week behind an "As of today"
+    # header. Best-effort on purpose: if it refuses (new broker fills need a re-walk) or
+    # pricing fails, the pages keep their honest older date and the freshness guard in
+    # step 8 turns that into an alert instead of blocking every other page.
+    Run-Step '29_peak_rollforward.py' | Out-Null
+
     # ---- 3. site rebuild ------------------------------------------------------
     Run-Step '17_build_site.py'      -LoadBearing | Out-Null
     Run-Step '23_strategies.py'      -LoadBearing | Out-Null
@@ -353,6 +361,30 @@ try {
     }
     if ($bad.Count -gt 0) {
         Fail ("Pushed $hash but GitHub Pages is still not serving it after $maxRounds rounds ({0} page(s)). This is failure mode F7 -- check the 'pages build and deployment' workflow, NOT refresh.yml:`n{1}" -f $bad.Count, (($bad | Select-Object -First 12) -join "`n"))
+    }
+
+    # ---- 8. freshness of EVERY stamp on EVERY live page -----------------------
+    # Step 7 only re-checks pages that were already stamped today in the build, so a
+    # page (or a block inside one) carrying an OLD date was excluded by construction
+    # and could never fail -- how "Performance as of 2026-09-23" survived a week of
+    # green runs. This reads every stamp off the live bytes. Runs AFTER publishing on
+    # purpose: one stale block must not hold back the other 22 pages, but it must not
+    # pass silently either -- alert file + non-zero exit.
+    $fg = Invoke-Native { python (Join-Path $Scripts 'guard_freshness.py') }
+    ($fg.Text -split "`n") | ForEach-Object { Log "  $_" }
+    if ($fg.Code -ne 0) {
+        Log "FRESHNESS GUARD FAILED: published $hash, but stale date stamps are live (above)." 'ERROR'
+        try {
+            Set-Content -Path (Join-Path $LogDir 'REFRESH_ALERT.txt') -Encoding utf8 -Value @"
+$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') refresh PUBLISHED WITH STALE STAMPS
+$($fg.Text)
+Log: $LogFile
+The site was updated ($hash); the pages/blocks listed as STALE were not.
+"@
+        } catch { }
+        Log ("=== refresh DONE WITH STALE STAMPS ({0}s) ===" -f [math]::Round(((Get-Date)-$script:Start).TotalSeconds)) 'ERROR'
+        Exit-RepoLock
+        exit 2
     }
 
     Remove-Item (Join-Path $LogDir 'REFRESH_ALERT.txt') -ErrorAction SilentlyContinue
