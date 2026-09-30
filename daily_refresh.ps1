@@ -338,7 +338,14 @@ try {
         foreach ($f in $pageFiles) {
             $u = "$SiteBase/$($f.Name)"
             try {
-                $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30
+                # -DisableKeepAlive + one retry (2026-09-30): after the 60s sleep the first
+                # requests reused a pooled keep-alive socket the server had already closed
+                # and hung to the 30s timeout -- always the FIRST pages alphabetically
+                # (backtests.html, bt_buy_the_dip.html), which curl served in 0.2s. That
+                # false F7 failed the 09-30 run after a successful publish.
+                try { $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30 -DisableKeepAlive }
+                catch { Start-Sleep -Seconds 3
+                        $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30 -DisableKeepAlive }
                 if ($resp.StatusCode -ne 200) { $bad += ("{0} HTTP {1}" -f $f.Name, $resp.StatusCode); continue }
                 if ($stamped.ContainsKey($f.Name)) {
                     $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Today))) -or `

@@ -425,6 +425,14 @@ PF_CARD = ""
 try:
     _pk = json.loads(open(paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers",
                                       "peak_sidecar.json"), encoding="utf-8").read())
+    # recon_asof lives in position_latest.json, not in the sidecar -- the card printed
+    # "reconciled to n/a" while portfolio.html (same source as here) said 2026-08-05.
+    try:
+        _pk.setdefault("recon_asof", json.loads(open(paths.cuser(
+            "Documents", "CarlosDuarteWebsite", "real_numbers", "position_latest.json"),
+            encoding="utf-8").read())["recon_asof"])
+    except (OSError, KeyError, ValueError):
+        pass
     _pp = lambda v: f"{v*100:+.2f}%"
     _tiles = [
         ("MWRR", _pp(_pk["mwrr_usd"]), _pp(_pk["mwrr_mxn"]),
