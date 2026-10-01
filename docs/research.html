@@ -35,7 +35,9 @@ font-size:12.5px;line-height:1.5;white-space:normal;min-width:200px}
 }
 </style></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
@@ -64,7 +66,7 @@ function tune(){
     if(!rect.width)return;
     /* re-tune when the width BUCKET changes, not on every pixel: 375->414 must
        re-wrap the title, but a scroll-driven 1px reflow must not relayout. */
-    var key=mob?('m'+Math.round(rect.width/30)):'d';
+    var key=(mob?'m':'d')+Math.round(rect.width/30);
     if(d.__tk===key)return;
     var first=!d.__tk; d.__tk=key;
     var o=st.get(d);
@@ -93,10 +95,25 @@ function tune(){
       if(!mob&&!(o.md||[]).some(function(m){return m&&m.indexOf('text')>=0;}))return;
       try{Plotly.restyle(d,{mode:arr});}catch(e){}
     }
+    /* Above the breakpoint a chart can still be narrow: the two-up grid puts a 405px
+       chart on a 1024px screen, and "Equity expected return across the valuation-
+       reversion dial" ran off its right edge, cropped by the tile (audit 2026-10-01;
+       same on regime-line at 864px). Wrap the title against the chart's OWN width.
+       Titles carrying markup are left alone -- wrap() splits on spaces. */
+    var dw=null;
+    if(!mob&&o.t&&o.t.indexOf('<')<0){
+      var avail=rect.width-o.m.l-14,pxc=o.ts*0.52;
+      if(o.t.length*pxc>avail){dw=wrap(o.t,Math.max(20,Math.floor(avail/pxc)));}
+    }
     if(!mob){
-      if(first)return;                              /* first sight on desktop: nothing to undo */
-      var back={'title.text':o.t,'title.font.size':o.ts,
-        'margin.l':o.m.l,'margin.r':o.m.r,'margin.t':o.m.t,'margin.b':o.m.b,
+      if(first&&!dw)return;                         /* first sight on desktop, fits: nothing to do */
+      var dmt=o.m.t+(dw?(dw.split('<br>').length-1)*Math.round(o.ts*1.3):0);
+      if(first){                                    /* only the title moves; nothing else to undo */
+        try{Plotly.relayout(d,{'title.text':dw,'margin.t':dmt});}catch(e){}
+        return;}
+      var back={'title.text':dw||o.t,'title.font.size':o.ts,
+        'margin.l':o.m.l,'margin.r':o.m.r,'margin.b':o.m.b,
+        'margin.t':dmt,
         'legend.font.size':(o.lg.font&&o.lg.font.size)||null,
         'legend.orientation':o.lg.orientation||null,
         'legend.x':(o.lg.x===undefined?null:o.lg.x),
@@ -169,7 +186,7 @@ exactly one durable feature-level edge and three deployable strategies — and
 every batch since the first has promoted nothing. That is the honest base rate
 of systematic-edge discovery, and hiding it would misstate how hard this is.
 The 18 load-bearing findings below are the working capital of the program.</p>
-<p class="asof">As of 30 Sep 2026 &middot; negative results published by design</p>
+<p class="asof">As of 01 Oct 2026 &middot; negative results published by design</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#funnel">The funnel</a><a href="#batches">Batch record</a>
