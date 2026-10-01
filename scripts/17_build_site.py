@@ -99,7 +99,30 @@ win = win[win >= "2000-01-01"]
 zc = lambda s: (s - s.loc[win].mean()) / s.loc[win].std()
 score = (zc(gpr).loc[win] + zc(epu).loc[win]) / 2
 regime = "STRESS" if score.iloc[-1] >= score.quantile(2 / 3) else "CALM"
-usdmxn = sig["USDMXN"].dropna().iloc[-1]
+# The tile says "Market Regime", and regime.html is the page that defines one. Read its
+# state rather than computing a second, different regime here (2026-09-30: home STRESS,
+# regime.html NEUTRAL). The GPR/EPU cut above stays as the fallback and still drives the
+# shaded months on the news-uncertainty chart, which is labelled as exactly that.
+try:
+    _rs = json.load(open(f"{D}/regime_state.json", encoding="utf-8"))
+    regime = _rs["state"].upper()
+except (OSError, KeyError, ValueError):
+    _rs = None
+
+# USD/MXN: FRED's DEXMXUS runs about a week behind the market -- on 2026-09-30 its last
+# observation was 25 Sep (17.69) while the peso closed at 18.04, and portfolio.html (Yahoo
+# MXN=X) said 18.08. Two rates for one currency on one site. Use the same MXN=X close the
+# portfolio page and the rolled sidecar use; FRED is the fallback.
+_fx_obs = sig["USDMXN"].dropna()
+try:
+    _fxc = json.load(open(paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers",
+                                      "peak_sidecar.json"), encoding="utf-8"))["curve"]
+    _fxs = pd.Series([r["fx"] for r in _fxc], index=pd.to_datetime([r["d"] for r in _fxc]))
+    if _fxs.index[-1] >= _fx_obs.index[-1]:
+        _fx_obs = _fxs[~_fxs.index.duplicated(keep="last")]
+except (OSError, KeyError, ValueError, IndexError):
+    pass
+usdmxn = _fx_obs.iloc[-1]
 
 # SNAP is now the ONLY market-levels block on the home page. Until 2026-09-22 there were
 # two: a "Daily Recap" carrying levels-plus-direction and a "Live Market Snapshot"
@@ -111,7 +134,7 @@ SNAP = [("US 10Y Treasury", f"{last['UST_10Y']:.2f}%"),
         ("Fed Funds", f"{last['FedFunds']:.2f}%"),
         ("10Y Breakeven Inflation", f"{last['Breakeven_10Y']:.2f}%"),
         ("HY credit spread", f"{last['HY_OAS']:.2f}%"),
-        ("VIX", f"{last['VIX']:.1f}"),
+        ("VIX", f"{last['VIX']:.2f}"),
         ("USD / MXN", f"{usdmxn:.2f}"),
         ("Geopolitical Risk (GPR)", f"{gpr.iloc[-1]:.0f}"),
         ("Policy Uncertainty (EPU)", f"{epu.iloc[-1]:.0f}"),
@@ -373,38 +396,44 @@ STRATBT = (
 certs = "".join(f"<li>{c}</li>" for c in CERTS)
 
 # ---------- daily recap (what changed since the previous update) ----------
-RECAP_PATH = f"{D}/recap_prev.json"
-def _prior(col):
-    s = sig[col].dropna()
-    return float(s.iloc[-2]) if len(s) > 1 else None
-# (label, current value, prior-observation fallback, unit, decimals)
+# Each tile states WHEN its reading is from and how it moved against the observation
+# before it. Until 2026-10-01 the base was `recap_prev.json`, the value at the previous
+# BUILD -- so two builds on one day (the refresh re-runs) printed "unchanged" on all six
+# tiles, and a series FRED had not updated in a week looked current: `last` is
+# forward-filled, so USD/MXN showed 25 Sep's 17.69 on 30 Sep with no date. Comparing
+# observation to observation is the same on every rerun, and the date makes lag visible.
+def _obs(s):
+    s = s.dropna()
+    return s.index[-1], float(s.iloc[-1]), (float(s.iloc[-2]) if len(s) > 1 else None)
+# (label, series, unit, decimals)
 RECAP_SPEC = [
-    ("US 10Y",           float(last["UST_10Y"]),      _prior("UST_10Y"),      "%", 2),
-    ("Fed Funds",        float(last["FedFunds"]),      _prior("FedFunds"),     "%", 2),
-    ("10Y Breakeven",    float(last["Breakeven_10Y"]), _prior("Breakeven_10Y"),"%", 2),
-    ("VIX",              float(last["VIX"]),           _prior("VIX"),          "",  1),
-    ("HY credit spread", float(last["HY_OAS"]),        _prior("HY_OAS"),       "%", 2),
-    ("USD / MXN",        float(usdmxn),                _prior("USDMXN"),       "",  2),
+    ("US 10Y",           sig["UST_10Y"],       "%", 2),
+    ("Fed Funds",        sig["FedFunds"],      "%", 2),
+    ("10Y Breakeven",    sig["Breakeven_10Y"], "%", 2),
+    ("VIX",              sig["VIX"],           "",  2),
+    ("HY credit spread", sig["HY_OAS"],        "%", 2),
+    ("USD / MXN",        _fx_obs,              "",  2),
 ]
-try:
-    _prev_vals = json.load(open(RECAP_PATH)).get("values", {})
-except Exception:
-    _prev_vals = {}
-# The movement line each merged tile carries, keyed by SNAP's own label.
 _DELTA = {}
-for _lbl, _cur, _seed, _unit, _dec in RECAP_SPEC:
-    _base = _prev_vals.get(_lbl, _seed)          # last published value, else prior obs
+for _lbl, _ser, _unit, _dec in RECAP_SPEC:
+    _dt, _cur, _base = _obs(_ser)
+    _when = _dt.strftime("%d %b").lstrip("0")
     if _base is None:
+        _DELTA[_lbl] = f"<span style='color:{GREY}'>{_when}</span>"
         continue
     _d = _cur - _base
     if abs(_d) < 0.5 * 10 ** (-_dec):
-        _DELTA[_lbl] = f"<span style='color:{GREY}'>&mdash; unchanged</span>"
+        _DELTA[_lbl] = f"<span style='color:{GREY}'>{_when} &middot; unchanged</span>"
     else:
         _arrow = "&#9650;" if _d > 0 else "&#9660;"   # neutral ▲ / ▼ (no good/bad)
-        _DELTA[_lbl] = (f"<span style='color:{INK};font-weight:600'>{_arrow} "
-                        f"{_d:+.{_dec}f}{_unit}</span> since the last update")
-json.dump({"date": ASOF, "values": {l: c for l, c, *_ in RECAP_SPEC}},
-          open(RECAP_PATH, "w"), indent=2)
+        _DELTA[_lbl] = (f"<span style='color:{GREY}'>{_when} &middot;</span> "
+                        f"<span style='color:{INK};font-weight:600'>{_arrow} "
+                        f"{_d:+.{_dec}f}{_unit}</span>")
+_DELTA["Geopolitical Risk (GPR)"] = f"<span style='color:{GREY}'>{gpr.index[-1]:%b %Y} &middot; monthly</span>"
+_DELTA["Policy Uncertainty (EPU)"] = f"<span style='color:{GREY}'>{epu.index[-1]:%b %Y} &middot; monthly</span>"
+if _rs:
+    _DELTA["Market Regime"] = (f"<span style='color:{GREY}'>composite {_rs['stress']:+.2f}σ "
+                               f"&middot; <a href='regime.html'>tracker</a></span>")
 # SNAP labels are the long form ("US 10Y Treasury"); RECAP_SPEC uses the short one.
 _DKEY = {"US 10Y Treasury": "US 10Y", "10Y Breakeven Inflation": "10Y Breakeven"}
 RECAP = ""                                   # section retired -- merged into the Snapshot

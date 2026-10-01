@@ -336,6 +336,13 @@ Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <footer class="shell-foot"><div class="container"><p>Research and monitoring,
 not investment advice.</p></div></footer></body></html>"""
 open(f"{DOCS}/regime.html", "w", encoding="utf-8").write(HTML)
+# The home's "Market Regime" tile reads THIS state. Until 2026-10-01 it computed its own
+# (GPR+EPU only, top-tercile cut) and the two pages disagreed on the same day: home
+# STRESS, regime.html NEUTRAL, both under the label "regime". One definition, one writer.
+import json as _json
+_json.dump({"state": current_state, "stress": round(float(current_stress), 4),
+            "month": comp.index[-1].strftime("%Y-%m"), "months_in_state": months_in_state},
+           open(f"{DATA}/regime_state.json", "w", encoding="utf-8"), indent=1)
 print(f"Regime tracker built -> {DOCS}/regime.html")
 print(f"  current regime: {current_state.upper()}  composite stress {current_stress:+.2f}σ")
 print(f"  months in current regime: {months_in_state}")
