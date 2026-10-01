@@ -421,7 +421,7 @@ STRATBT = (
     '</section>')
 certs = "".join(f"<li>{c}</li>" for c in CERTS)
 
-# ---------- daily recap (what changed since the previous update) ----------
+# ---------- per-tile movement (each reading vs the observation before it) ----------
 # Each tile states WHEN its reading is from and how it moved against the observation
 # before it. Until 2026-10-01 the base was `recap_prev.json`, the value at the previous
 # BUILD -- so two builds on one day (the refresh re-runs) printed "unchanged" on all six
@@ -554,9 +554,10 @@ regime-switching GPU Monte Carlo engine.</p>
 <main class="container">
 {PF_CARD}
 <section class="block"><h2>Market Snapshot</h2>{ccy_badge("USD")}
-<p class="note">Where the market sits today and how it has moved since the previous
-update &mdash; auto-refreshed daily from public data (FRED, Yahoo Finance, GPR / EPU
-uncertainty indices). Arrows show direction only, not good or bad. New to a term? See
+<p class="note">Where the market sits and how each reading moved against the one
+before it. Each tile shows the date of its latest observation &mdash; official series
+(FRED) publish with a lag of a day or more. Refreshed daily from public data (FRED, Yahoo
+Finance, GPR / EPU uncertainty indices). Arrows show direction only, not good or bad. New to a term? See
 the <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(3,1fr)">{snap}</div></section>
 <section class="block"><h2>Model Output</h2>
