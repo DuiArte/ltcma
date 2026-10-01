@@ -165,20 +165,22 @@ fig.add_scatter(x=comp.index, y=comp["stress"], mode="lines",
                 line=dict(color=GREY, width=1), name="Composite stress (raw)")
 fig.add_scatter(x=comp.index, y=comp["stress_smooth"], mode="lines",
                 line=dict(color=BLUE, width=2.5), name="Composite stress (3-mo smoothed)")
-fig.add_hline(y=0.5, line=dict(color=RED, dash="dot"),
-              annotation_text="stress threshold +0.5", annotation_position="top left")
-fig.add_hline(y=-0.5, line=dict(color=GREEN, dash="dot"),
-              annotation_text="calm threshold −0.5", annotation_position="bottom left")
+# Threshold captions used to be in-plot annotations; at desktop width they sat across the
+# 2002-03 line, and the caption under the chart already names both cut-offs.
+fig.add_hline(y=0.5, line=dict(color=RED, dash="dot"))
+fig.add_hline(y=-0.5, line=dict(color=GREEN, dash="dot"))
 fig.add_hline(y=0, line=dict(color=GREY, width=0.5))
 # regime shading for stress runs
 stress_runs = runs[runs["state"] == "stress"]
 for _, run in stress_runs.iterrows():
     fig.add_vrect(x0=run["from_d"], x1=run["to_d"],
                   fillcolor=RED, opacity=0.10, line_width=0)
-fig.update_layout(title="Composite stress index — z-score across 4 facets "
-                  "(economic, political, AI-cycle, environmental). "
-                  "Red bands = identified stress regimes.",
-                  yaxis_title="z-score (standardised)", xaxis_title="month")
+# The legend was vertical at the right and the 130-character title ran past the chart:
+# both were cropped by the tile at 1440px ("Composite stress (3-mo smoothe"). The facets
+# and the meaning of the bands are in the caption; the legend goes underneath.
+fig.update_layout(title="Composite stress index (z-score, 4 facets) · shaded = stress regime",
+                  yaxis_title="z-score (standardised)",
+                  legend=dict(orientation="h", yanchor="top", y=-0.12, xanchor="left", x=0))
 
 # ---------- VIX bucket forward returns (fresh from yfinance) ----------
 spx = yf.download("^GSPC", period="20y", interval="1d",
@@ -283,8 +285,9 @@ trailing-12-month high as a proxy for the AI investment cycle.</p>
 
 <section class="block"><h2>Composite Stress Index Over Time</h2>
 <div class="tile chart"><div class="ch">{div(fig, "regime-line")}</div></div>
-<p class="note">Red bands mark identified stress regimes (smoothed index above
-&plus;0.5). The 2008 financial crisis, 2011 Euro crisis, 2015&ndash;16 China growth
+<p class="note" style="margin-top:.8rem">Shaded bands mark identified stress regimes
+(smoothed index above &plus;0.5); the dotted lines are the stress (&plus;0.5) and calm
+(&minus;0.5) thresholds. Facets: economic, political, AI-cycle, environmental. The 2008 financial crisis, 2011 Euro crisis, 2015&ndash;16 China growth
 scare, 2020 COVID and 2022 inflation shock are all clearly visible.</p>
 </section>
 
