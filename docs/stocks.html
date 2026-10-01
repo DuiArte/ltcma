@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Stock Research — Picks, Analysis &amp; Signals</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"><link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carlos Duarte — Stock Research</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap"><link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"><style>
 .pills{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 18px}
 .pill{font:500 12px 'Inter',sans-serif;letter-spacing:.02em;color:#0a2540;background:#fff;
 border:1px solid #d4d4d4;padding:6px 14px;cursor:pointer;border-radius:0;transition:all .12s}
@@ -18,7 +18,7 @@ background:#f4f4f4;padding:2px 7px;margin:2px 3px 2px 0;white-space:nowrap}
 td.cmt{font-size:12px;color:#444;line-height:1.45;min-width:240px}
 </style><script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script></head><body><header class="shell"><div class="shell-in"><span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
 // sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
-if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
@@ -56,7 +56,7 @@ function tune(){
          ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
          m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
          lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
-         h:FL.height,
+         h:FL.height,dt:(L.yaxis&&L.yaxis.dtick)||null,sh:d.style.height,
          an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
          md:(d.data||[]).map(function(t){return t.mode;})};
       st.set(d,o);}
@@ -103,8 +103,9 @@ function tune(){
         'legend.yanchor':o.lg.yanchor||null};
       if(d._fullLayout.xaxis){back['xaxis.tickfont.size']=null;back['xaxis.title.font.size']=null;}
       if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
-        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=null;}
+        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=o.dt;}
       if(o.h)back['height']=o.h;
+      d.style.height=o.sh;
       o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
       modes(false);
       try{Plotly.relayout(d,back);Plotly.Plots.resize(d);}catch(e){}
@@ -147,6 +148,10 @@ function tune(){
     var ncat=hbar?Math.max.apply(null,(d.data||[]).map(function(t){return (t.y||[]).length;})):0;
     if(o.h&&o.h>360&&!(hbar&&ncat>8))up['height']=340;
     modes(true);
+    /* to_html writes the layout height INLINE on the div (style height 640px for the
+       heatmap). relayout shrinks the SVG, not that box, so the tile kept 300px of blank
+       under the matrix on phones (audit 2026-10-01). Move the box with the figure. */
+    if(up['height'])d.style.height=up['height']+'px';
     try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
   });
 }

@@ -56,6 +56,10 @@ main{padding:4rem 0 5rem}
    row or a two-card panel it glued the caption to the border (strategies, regime,
    portfolio, 2026-10-01 audit). */
 .tile+.note,.tile+p,.metrics+.note,.metrics+p,.twonote+p,.twonote+.note{margin-top:.9rem}
+.archive-note{background:var(--accent-tint);border:1px solid var(--line);
+  border-left:3px solid var(--accent);padding:14px 18px;margin:0 0 1.6rem;font-size:14px;
+  line-height:1.55;color:var(--sec)}
+.archive-note b{color:var(--ink)}
 
 /* ---- metric tiles ---- */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;
