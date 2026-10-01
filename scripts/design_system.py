@@ -73,7 +73,12 @@ CORR_SCALE = [[0.0, TEAL], [0.25, "#7fb3ad"], [0.5, "#f4f4f2"],
 
 MAX_DP = 2                                  # site-wide ceiling on displayed decimals
 NUM_HOVER = f",.{MAX_DP}f"                  # 1,234.57
-NUM_TICK = f",.{MAX_DP}f"                   # mismo techo en las ETIQUETAS de eje
+# Axis TICKS get the same ceiling with trailing zeros trimmed (d3 "~"): 20,000,000 not
+# 20,000,000.00, 2.5 not 2.50, 10 not 10.00. The fixed ",.2f" on ticks (2026-09-24) made
+# every axis on the site read "0.00 / 5.00 / 10.00" and a peso axis "20,000,000.00" --
+# the single most "something is off here" detail of the 2026-10-01 audit. Tooltips keep
+# the fixed 2 dp (NUM_HOVER): a reading is a figure, a tick is a ruler mark.
+NUM_TICK = f",.{MAX_DP}~f"
 DATE_HOVER = "%d %b %Y"
 
 
@@ -123,10 +128,17 @@ def axis_formats(fig):
             continue                                   # tickers, asset names: not numbers
         _isdate = _is_date_axis(fig, letter)
         _upd = dict(hoverformat=DATE_HOVER if _isdate else NUM_HOVER)
+        if ax.type == "log":
+            # plotly 2.35 labels a log axis's MAJOR ticks with its hoverformat when it has
+            # no tickformat ("100.00", "1,000.00") and every minor digit 5-9 under D1.
+            # Trimmed hover (still <= 2 dp) and 2/5 minors only.
+            _upd = dict(hoverformat=NUM_TICK, dtick="D2")
         # 2026-09-24: el techo tambien va a las ETIQUETAS DE EJE, no solo al tooltip.
         # Mismo criterio no-destructivo: un tickformat puesto a mano (porcentajes, bps,
         # miles) se respeta; un eje de fecha nunca recibe formato numerico.
-        if not _isdate and ax.tickformat is None:
+        # A LOG axis is left to Plotly's own decade labels: a tickformat there labels every
+        # minor tick, and strategies.html stacked "1,000.00 900.00 800.00 700.00..." 12px apart.
+        if not _isdate and ax.tickformat is None and ax.type != "log":
             _upd["tickformat"] = NUM_TICK
         fig.update_layout(**{axis: _upd})
     return fig
@@ -397,7 +409,7 @@ function tune(){
     if(!rect.width)return;
     /* re-tune when the width BUCKET changes, not on every pixel: 375->414 must
        re-wrap the title, but a scroll-driven 1px reflow must not relayout. */
-    var key=mob?('m'+Math.round(rect.width/30)):'d';
+    var key=(mob?'m':'d')+Math.round(rect.width/30);
     if(d.__tk===key)return;
     var first=!d.__tk; d.__tk=key;
     var o=st.get(d);
@@ -406,7 +418,7 @@ function tune(){
          ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
          m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
          lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
-         h:FL.height,
+         h:FL.height,dt:(L.yaxis&&L.yaxis.dtick)||null,
          an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
          md:(d.data||[]).map(function(t){return t.mode;})};
       st.set(d,o);}
@@ -426,10 +438,25 @@ function tune(){
       if(!mob&&!(o.md||[]).some(function(m){return m&&m.indexOf('text')>=0;}))return;
       try{Plotly.restyle(d,{mode:arr});}catch(e){}
     }
+    /* Above the breakpoint a chart can still be narrow: the two-up grid puts a 405px
+       chart on a 1024px screen, and "Equity expected return across the valuation-
+       reversion dial" ran off its right edge, cropped by the tile (audit 2026-10-01;
+       same on regime-line at 864px). Wrap the title against the chart's OWN width.
+       Titles carrying markup are left alone -- wrap() splits on spaces. */
+    var dw=null;
+    if(!mob&&o.t&&o.t.indexOf('<')<0){
+      var avail=rect.width-o.m.l-14,pxc=o.ts*0.52;
+      if(o.t.length*pxc>avail){dw=wrap(o.t,Math.max(20,Math.floor(avail/pxc)));}
+    }
     if(!mob){
-      if(first)return;                              /* first sight on desktop: nothing to undo */
-      var back={'title.text':o.t,'title.font.size':o.ts,
-        'margin.l':o.m.l,'margin.r':o.m.r,'margin.t':o.m.t,'margin.b':o.m.b,
+      if(first&&!dw)return;                         /* first sight on desktop, fits: nothing to do */
+      var dmt=o.m.t+(dw?(dw.split('<br>').length-1)*Math.round(o.ts*1.3):0);
+      if(first){                                    /* only the title moves; nothing else to undo */
+        try{Plotly.relayout(d,{'title.text':dw,'margin.t':dmt});}catch(e){}
+        return;}
+      var back={'title.text':dw||o.t,'title.font.size':o.ts,
+        'margin.l':o.m.l,'margin.r':o.m.r,'margin.b':o.m.b,
+        'margin.t':dmt,
         'legend.font.size':(o.lg.font&&o.lg.font.size)||null,
         'legend.orientation':o.lg.orientation||null,
         'legend.x':(o.lg.x===undefined?null:o.lg.x),
@@ -438,7 +465,7 @@ function tune(){
         'legend.yanchor':o.lg.yanchor||null};
       if(d._fullLayout.xaxis){back['xaxis.tickfont.size']=null;back['xaxis.title.font.size']=null;}
       if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
-        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=null;}
+        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=o.dt;}
       if(o.h)back['height']=o.h;
       o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
       modes(false);

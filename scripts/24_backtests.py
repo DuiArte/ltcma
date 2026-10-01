@@ -194,6 +194,42 @@ def _cap_decimals(html, max_dp=2):
     return _DEC.sub(rep, html)
 
 
+_RE = __import__("re")
+# Status emoji in the research tables (the site carries none) -> plain glyphs.
+_EMOJI = {"✅": "✓", "❌": "✗", "⚠️": "!", "⚠": "!",
+          "\U0001f7e2": "", "\U0001f7e1": "", "\U0001f534": ""}
+
+
+def _public_report(html, name):
+    """Three fixes the 2026-10-01 audit found on the live bt_*.html pages.
+
+    * The page heading was the REPORT.md's own working title, so the page the catalogue
+      calls "Static SPY / IEF / GLD Diversification" opened as "Momentum Rotation /
+      Tactical Asset Allocation". The heading is now the catalogue name the reader
+      clicked; the working title stays visible as the report it came from.
+    * `.tile{overflow:hidden}` cropped wide tables: bt_buy_the_dip lost its last column
+      ("vs S&P Calmar") at 1440px. Every table gets its own horizontal scroll box.
+    * The internal write-ups address their reader by name ("What should worry Carlos").
+    """
+    m = _RE.search(r"<h1[^>]*>(.*?)</h1>", html, _RE.S)
+    head = f"<h1>{esc(name)}</h1>"
+    if m:
+        orig = _RE.sub(r"<[^>]+>", "", m.group(1)).strip()
+        if orig and orig.lower() != name.lower():
+            head += (f'<p class="bt-src" style="color:#888;font-size:13px;margin:-.4rem 0 1.2rem">'
+                     f'Research report: {m.group(1)}</p>')
+        html = html[:m.start()] + head + html[m.end():]
+    else:
+        html = head + html
+    html = _RE.sub(r"<table", '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
+                              "<table", html)
+    html = html.replace("</table>", "</table></div>")
+    html = _RE.sub(r"\bCarlos\b", "the operator", html)
+    for k, v in _EMOJI.items():
+        html = html.replace(k, v)
+    return html
+
+
 def render_report_page(strat):
     """Convert a strategy's REPORT.md to docs/bt_<key>.html. Returns the
     filename if written, else None."""
@@ -210,6 +246,7 @@ def render_report_page(strat):
         raw = open(md_path, encoding="utf-8").read()
         html = "<pre>" + esc(raw) + "</pre>"
     html = _cap_decimals(html)
+    html = _public_report(html, strat["name"])
     body = (f'<main class="container"><article class="tile report">'
             f'<a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a>'
             f'{html}</article></main>')

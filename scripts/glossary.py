@@ -13,7 +13,9 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="projects.html">Projects</a>'
        '<a href="glossary.html">Glossary</a>'
        '<a href="index.html#about">About</a></nav>'
-       """<script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+       """<script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
@@ -279,14 +281,17 @@ def bt_load():
     import os
     import pandas as pd
     H = os.path.expanduser("~")
+    # Colours from design_system's shared palette: NAVY, TEAL, SLATE, SEQ[4]. Until
+    # 2026-10-01 DUO was an off-palette purple (#8a3ffc) and BARS the POS green, which is
+    # semantic only ("this number is positive"), never a series.
     DEFS = {
         "SARS": ("Adaptive US Equity", "#0a2540", 0.045, "S&P 500",
                  f"{H}/SARS/data/backtest/backtest_returns.csv", "SARS", "SP500"),
-        "DUO":  ("Balanced Multi-strategy", "#8a3ffc", 0.045, "S&P 500",
+        "DUO":  ("Balanced Multi-strategy", "#0f766e", 0.045, "S&P 500",
                  f"{H}/DUO/data/duo_returns.csv", "DUO", "SPY"),
-        "MARS": ("Defensive Multi-asset", "#6b7280", 0.045, "S&P 500",
+        "MARS": ("Defensive Multi-asset", "#5b7c99", 0.045, "S&P 500",
                  f"{H}/MARS/data/backtest/backtest_returns.csv", "MARS", "SP500"),
-        "BARS": ("Mexican Equity Rotation", "#0a5d3a", 0.09, "IPC",
+        "BARS": ("Mexican Equity Rotation", "#7e97b3", 0.09, "IPC",
                  f"{H}/BARS/data/backtest/backtest_returns.csv", "BARS", "IPC"),
     }
     try:

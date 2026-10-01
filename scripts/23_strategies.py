@@ -15,7 +15,12 @@ from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 import pandas as pd
 INK, BLUE, GOLD, GREEN = "#111111", "#0a2540", "#6b7280", "#0a5d3a"
-RED, GREY, PURPLE = "#7c2d12", "#888888", "#8a3ffc"
+RED, GREY = "#7c2d12", "#888888"
+# Series colours come from the shared palette. Until 2026-10-01 the S&P was drawn in RED
+# (the site's one alarm colour, semantic only), the Mexican strategy in the POS green and
+# EMBER / Balanced in an off-palette purple #8a3ffc -- four pages' worth of "which colour
+# means what" that the design system had already settled.
+from design_system import NAVY, SLATE, TEAL, BENCH
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -57,7 +62,7 @@ for k in usd:
     f_eq.add_scatter(x=common, y=bt_g100(aligned[k]), mode="lines", name=data[k]["name"],
                      line=dict(color=data[k]["color"], width=2.4))
 f_eq.add_scatter(x=common, y=bt_g100(spy), mode="lines", name="S&P 500",
-                 line=dict(color=RED, width=1.8, dash="dot"))
+                 line=dict(color=BENCH, width=1.8, dash="dot"))
 f_eq.update_layout(title="Growth of 100 — USD strategies vs S&P 500",
                    legend=dict(orientation="h", y=-0.16), yaxis_type="log")
 
@@ -67,8 +72,8 @@ for k in usd:
     f_dd.add_scatter(x=common, y=bt_dd(aligned[k]), mode="lines",
                      name=data[k]["name"], line=dict(color=data[k]["color"], width=1.8))
 f_dd.add_scatter(x=common, y=bt_dd(spy), mode="lines", name="S&P 500",
-                 line=dict(color=RED, width=1.4, dash="dot"), fill="tozeroy",
-                 fillcolor="rgba(218,30,40,0.06)")
+                 line=dict(color=BENCH, width=1.4, dash="dot"), fill="tozeroy",
+                 fillcolor="rgba(154,165,177,0.12)")
 f_dd.update_layout(title="Drawdown (%) — USD strategies vs S&P 500",
                    legend=dict(orientation="h", y=-0.16))
 
@@ -76,9 +81,9 @@ f_dd.update_layout(title="Drawdown (%) — USD strategies vs S&P 500",
 bd = data["BARS"]
 f_bars = go.Figure()
 f_bars.add_scatter(x=bd["dates"], y=bt_g100(bd["s"]), mode="lines", name="Mexican Equity Rotation",
-                   line=dict(color=GREEN, width=2.4))
+                   line=dict(color=NAVY, width=2.4))
 f_bars.add_scatter(x=bd["dates"], y=bt_g100(bd["b"]), mode="lines", name="IPC (NAFTRAC)",
-                   line=dict(color=GREY, width=1.8, dash="dot"))
+                   line=dict(color=BENCH, width=1.8, dash="dot"))
 f_bars.update_layout(title="Growth of 100 (MXN) — Mexican Equity Rotation vs IPC",
                      legend=dict(orientation="h", y=-0.16), yaxis_type="log")
 
@@ -471,12 +476,18 @@ def _ember_section():
         e_last, b_last = ye[-1], yb[-1]
         fe = go.Figure()
         fe.add_scatter(x=xs, y=ye, mode="lines+markers", name="EMBER 4-Sleeve Ensemble",
-                       line=dict(color=PURPLE, width=2.4), marker=dict(size=5))
+                       line=dict(color=NAVY, width=2.4), marker=dict(size=5))
         fe.add_scatter(x=xs, y=yb, mode="lines+markers", name="Static 50/30/20 reference",
-                       line=dict(color=BLUE, width=1.8, dash="dot"), marker=dict(size=4))
+                       line=dict(color=BENCH, width=1.8, dash="dot"), marker=dict(size=4))
         fe.update_layout(title="Growth of 100 — EMBER ensemble vs Static 50/30/20 (live paper-track)",
                          legend=dict(orientation="h", y=-0.18))
-        chart = f'<div class="tile chart wide"><div class="ch">{div(fe, "ember")}</div></div>'
+        # div id is NOT "ember": the <section> already carries id="ember" (the nav anchor),
+        # and with two ids Plotly.newPlot("ember") drew into the SECTION at height 0 --
+        # the paper-track chart rendered for nobody from launch until 2026-10-01.
+        # The div id is NOT "ember": the <section> already carries id="ember" (the nav
+        # anchor), and with two equal ids Plotly.newPlot("ember") drew into the SECTION at
+        # height 0 -- the paper-track chart rendered for nobody until 2026-10-01.
+        chart = f'<div class="tile chart wide"><div class="ch">{div(fe, "ember-chart")}</div></div>'
         rel = e_last - b_last
         statline = (f'<p class="note">Since inception <b>{start}</b> ({n} trading '
                     f'day{"s" if n != 1 else ""}, as of {asof}): ensemble at '
@@ -508,11 +519,10 @@ def _ember_section():
 
     return (
         '<section class="block" id="ember"><h2>EMBER 4-Sleeve Ensemble &mdash; Live Paper-Track</h2>'
-        '<div class="ember-flag"><b>&#128993; PAPER-TRACK &mdash; NOT LIVE CAPITAL.</b> '
+        '<div class="ember-flag"><b>PAPER-TRACK &mdash; NOT LIVE CAPITAL.</b> '
         'A monitoring track, started 18&nbsp;Jun&nbsp;2026, of the proposed portfolio-layer '
         'ensemble (research Finding&nbsp;#38). Capital remains on the deployed flagship until '
-        'this track confirms live and a crisis-inclusive (GFC) test is possible. '
-        'No <code>strategies.json</code> change.</div>'
+        'this track confirms live and a crisis-inclusive (GFC) test is possible.</div>'
         '<p class="note">The 2026 rotation wave produced three low-correlation paper-track '
         'candidates &mdash; a rates/curve sleeve, a crypto sleeve and an emerging-market sleeve. '
         'Stacked on the deployed Static&nbsp;50/30/20 flagship (the &ldquo;Anchor&rdquo;), the '
@@ -550,8 +560,8 @@ def _ember_section():
 
 EMBER_SECTION = _ember_section()
 EMBER_CSS = r"""
-.ember-flag{background:#fffbe6;border:1px solid #e8d98a;border-left:3px solid #b59a00;
-padding:14px 18px;margin:6px 0 18px;font-size:13.5px;color:#5c4a00;line-height:1.55}
+.ember-flag{background:rgba(10,37,64,.045);border:1px solid #e5e5e5;border-left:3px solid #0a2540;
+padding:14px 18px;margin:6px 0 18px;font-size:13.5px;color:#333;line-height:1.55}
 .ember-flag code{background:rgba(0,0,0,.05);padding:1px 5px;font-size:12px}
 .ember-wts{font-family:'Spectral',Georgia,serif;font-size:17px;color:#111;
 text-align:center;margin:14px 0 4px;letter-spacing:.01em}
