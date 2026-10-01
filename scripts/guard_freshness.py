@@ -41,6 +41,11 @@ PAYLOAD = re.compile(r"(<script\b.*?</script>|<style\b.*?</style>)", re.S | re.I
 KNOWN_DEBT = {  # page -> why it is allowed to be old; must be cleared by a human
     "report.html": "hand-written report/LTCMA_2026.md; decision gate D-20260924-004 (TAB_RESYNC)",
 }
+# 2026-10-01: while report/LTCMA_2026.md lags the model, 17 publishes it as a dated,
+# bannered edition under docs/archive/ and report.html redirects there. An archived page
+# is honest by construction (it says it is old), but the resync is still OWED, so it is
+# scanned and reported like KNOWN_DEBT -- moving the page must not make the debt vanish.
+ARCHIVE_DEBT = "archived edition; republish via TAB_RESYNC (D-20260924-004)"
 BUDGET_DAYS = [(re.compile(r"(?i)model"), 10)]
 
 
@@ -101,6 +106,8 @@ def check(pages, now):
                 fresh.append(row)
             elif name in KNOWN_DEBT:
                 owed.append(row + (KNOWN_DEBT[name],))
+            elif name.startswith("archive/"):
+                owed.append(row + (ARCHIVE_DEBT,))
             else:
                 stale.append(row)
     return stale, owed, fresh, unstamped
@@ -173,10 +180,11 @@ def _selftest():
         "d.html": "<p>no stamp here</p>",
         "report.html": "<p>As of 11 August 2026</p>",
         "e.html": "<script>var x='As of 2020-01-01'</script><p>As of 2026-09-30</p>",
+        "archive/report_2026-08-11.html": "<p>As of 11 August 2026</p>",
     }
     stale, owed, fresh, un = check(pages, now)
     assert [s[:2] for s in stale] == [("a.html", "Performance as of")], stale
-    assert [o[0] for o in owed] == ["report.html"], owed
+    assert [o[0] for o in owed] == ["report.html", "archive/report_2026-08-11.html"], owed
     assert "d.html" in un and len(fresh) == 4, (fresh, un)
     row = lambda t, p: (f"<tr><td data-s='{t}'>{t}</td><td data-s='1'>1</td>"
                         f"<td data-s='1'>1</td><td data-s='{p}'>x</td></tr>")
@@ -196,6 +204,9 @@ def main():
     _selftest()
     local = "--local" in sys.argv
     names = sorted(f for f in os.listdir(DOCS) if f.endswith(".html"))
+    _ad = os.path.join(DOCS, "archive")
+    if os.path.isdir(_ad):
+        names += sorted(f"archive/{f}" for f in os.listdir(_ad) if f.endswith(".html"))
     pages, unreachable = {}, []
     for n in names:
         try:
