@@ -50,6 +50,28 @@ MODEL_ASOF = (pd.Timestamp(_meta["model_built"]).strftime("%d %b %Y")
 VAL_ASOF = (pd.Timestamp(_meta["us_cape_asof"]).strftime("%d %b %Y")
             if _meta.get("us_cape_asof") else None)
 
+# Decision D-20260924-004 (2026-10-01, option b). The report's figures are hand-written in
+# report/LTCMA_2026.md and only move on a manual TAB_RESYNC; the model moves weekly. The
+# page said "2026 Edition / Model as-of 11 August 2026" under a site whose dashboard was on
+# the 27 Sep model -- 47 days, two sets of numbers, nothing telling a reader which to trust.
+# Until the edition is resynced it is published for what it is: a dated, bannered archive
+# at archive/report_<date>.html; report.html redirects there so every existing link lands.
+# A resync that updates the "Model as-of date" line brings report.html back automatically.
+# The tolerance is a month: the model's quarter-end anchors are when the numbers move.
+import re as _re
+_rm = _re.search(r"Model as-of date:\**\s*(\d{1,2} [A-Z][a-z]+ \d{4})",
+                open(f"{REP}/LTCMA_2026.md", encoding="utf-8").read())
+REPORT_ASOF = pd.Timestamp(_rm.group(1)) if _rm else None
+_built = pd.Timestamp(_meta["model_built"]) if _meta.get("model_built") else None
+REPORT_ARCHIVED = bool(REPORT_ASOF is not None and _built is not None
+                       and (_built - REPORT_ASOF).days > 31)
+ARCHIVE_PATH = f"archive/report_{REPORT_ASOF:%Y-%m-%d}.html" if REPORT_ASOF is not None else None
+_REPORT_BTN = (f"Open the archived report ({REPORT_ASOF:%d %b %Y} edition)" if REPORT_ARCHIVED
+               else "Open the full LTCMA report")
+_REPORT_NOTE = (f" The written edition dates from {REPORT_ASOF:%d %B %Y} and is kept as an "
+                f"archive until it is resynced; the figures on this page are current."
+                if REPORT_ARCHIVED else "")
+
 # The regime-switching Monte Carlo (07/11) is a separate, GPU-only stage that
 # neither the daily refresh nor a plain model rebuild re-runs, so it carries
 # its own vintage. 11_montecarlo_regime.py writes mc_meta.json; the fallback is
@@ -183,9 +205,12 @@ f3.update_layout(title="Valuation dispersion — CAPE / P/E by equity market",
 # ---------- 4. expected return by lambda ----------
 eqr = ret[ret["class"] == "Equity"].sort_values("ER_lambda0.5")
 f4 = go.Figure()
+# Legend in words, not the column names ("lambda=0.0" read as leaked code).
+_LAM = {"ER_lambda0.0": "λ 0 · valuations persist", "ER_lambda0.5": "λ 0.5 · base case",
+        "ER_lambda1.0": "λ 1 · full reversion"}
 for lam, c in [("ER_lambda0.0", GREY), ("ER_lambda0.5", BLUE), ("ER_lambda1.0", GOLD)]:
     f4.add_bar(y=[i.replace("_", " ") for i in eqr.index], x=eqr[lam] * 100,
-               name=f"lambda={lam[-3:]}", orientation="h", marker_color=c)
+               name=_LAM[lam], orientation="h", marker_color=c)
 f4.update_layout(title="Equity expected return across the valuation-reversion dial",
                  barmode="group", xaxis_title="expected return (%)")
 
@@ -251,9 +276,10 @@ CHARTS = [
  ("valuation", f3, False, "How expensive each stock market is today. Taller "
   "bars mean a pricier market with less room to rise."),
  ("lambda", f4, False, "How the expected return shifts depending on how "
-  "strongly we assume expensive markets cool back down (the 'lambda' dial)."),
- ("correlation", f5, True, "Which assets move together (red) and which move in "
-  "opposite directions (blue). Opposites are what makes diversification work."),
+  "strongly we assume expensive markets cool back down (the λ dial: 0 = today's "
+  "valuations persist, 1 = they fully revert to their long-run norm)."),
+ ("correlation", f5, True, "Which assets move together (dark blue) and which move in "
+  "opposite directions (teal). Opposites are what makes diversification work."),
  ("regimes", f6, True, "Two news-based gauges of how tense the world is. "
   "Shaded bands are 'stress' months when markets get jumpier."),
  ("montecarlo", f7, False, "The range of where a 12-year investment could "
@@ -471,7 +497,8 @@ try:
         ("S&P 500", _pp(_pk["spy_tr"]), _pp(_pk["spy_tr"]),
          "index total return, USD"),
         ("Alpha", f"{(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp",
-         f"{(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp", "TWRR less the index"),
+         f"{(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp",
+         f"USD TWRR ({_pp(_pk['twrr_usd'])}) less the index"),
     ]
     _cells = "".join(
         f'<div class="metric"><div class="mv">'
@@ -540,8 +567,8 @@ definitions are in the <a href="glossary.html">Glossary</a>.</p>
 {STRATBT}
 <section class="block"><h2>Full Written Report</h2>
 <p>Complete analysis — methodology, macro backdrop, return tables, the
-strategic-edge scan, the methodology backtest and limitations.</p>
-<a class="btn" href="report.html">Open the full LTCMA report &rarr;</a></section>
+strategic-edge scan, the methodology backtest and limitations.{_REPORT_NOTE}</p>
+<a class="btn" href="{ARCHIVE_PATH if REPORT_ARCHIVED else 'report.html'}">{_REPORT_BTN} &rarr;</a></section>
 <section class="block" id="about"><h2>About — Carlos Alberto Duarte Morales</h2>
 <p class="lede2">Financial advisor and systems engineer specialised in
 quantitative systems, risk management and data pipelines for financial
@@ -563,20 +590,43 @@ open(f"{DOCS}/index.html", "w", encoding="utf-8").write(INDEX)
 # ---------- report.html ----------
 for f in os.listdir(f"{REP}/figures"):
     shutil.copy(f"{REP}/figures/{f}", f"{DOCS}/figures/{f}")
-body = markdown.markdown(open(f"{REP}/LTCMA_2026.md", encoding="utf-8").read(),
-                         extensions=["tables", "fenced_code", "sane_lists"])
+_md = open(f"{REP}/LTCMA_2026.md", encoding="utf-8").read()
+body = markdown.markdown(_md, extensions=["tables", "fenced_code", "sane_lists"])
+
+_banner = ""
+if REPORT_ARCHIVED:
+    _banner = (f'<div class="archive-note"><b>Archived edition &mdash; figures as of '
+               f'{REPORT_ASOF:%d %B %Y}.</b> This report is written by hand and has not been '
+               f'resynced to the current model run ({MODEL_ASOF}); its numbers are kept '
+               f'unchanged as a dated record. Current expected returns, risk and market '
+               f'signals are on the <a href="index.html">Dashboard</a>.</div>')
 REPORT = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Carlos Duarte — Full Report</title>
+{'<base href="../">' if REPORT_ARCHIVED else ''}
+<title>Carlos Duarte — {"Report (archived " + f"{REPORT_ASOF:%d %b %Y}" + ")" if REPORT_ARCHIVED else "Full Report"}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-<main class="container"><article class="tile report">{body}</article></main>
+<main class="container"><article class="tile report">{_banner}{body}</article></main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment
 advice.</p></div></footer></body></html>"""
-open(f"{DOCS}/report.html", "w", encoding="utf-8").write(REPORT)
+if REPORT_ARCHIVED:
+    os.makedirs(f"{DOCS}/archive", exist_ok=True)
+    open(f"{DOCS}/{ARCHIVE_PATH}", "w", encoding="utf-8").write(REPORT)
+    open(f"{DOCS}/report.html", "w", encoding="utf-8").write(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        f'<meta http-equiv="refresh" content="0; url={ARCHIVE_PATH}">'
+        f'<link rel="canonical" href="{ARCHIVE_PATH}">'
+        '<title>Full Report — archived edition</title><meta name="robots" content="noindex">'
+        '</head><body><p style="font-family:sans-serif;margin:3rem">The full report is '
+        f'currently an <a href="{ARCHIVE_PATH}">archived edition ({REPORT_ASOF:%d %B %Y})</a>. '
+        'Redirecting…</p></body></html>')
+    print(f"  report.html -> {ARCHIVE_PATH} (edition {REPORT_ASOF:%d %b %Y} vs model "
+          f"{MODEL_ASOF}: archived until TAB_RESYNC, D-20260924-004)")
+else:
+    open(f"{DOCS}/report.html", "w", encoding="utf-8").write(REPORT)
 
 # ---------- glossary.html ----------
 gloss_html = ""
@@ -756,6 +806,10 @@ main{padding:4rem 0 5rem}
    row or a two-card panel it glued the caption to the border (strategies, regime,
    portfolio, 2026-10-01 audit). */
 .tile+.note,.tile+p,.metrics+.note,.metrics+p,.twonote+p,.twonote+.note{margin-top:.9rem}
+.archive-note{background:var(--accent-tint);border:1px solid var(--line);
+  border-left:3px solid var(--accent);padding:14px 18px;margin:0 0 1.6rem;font-size:14px;
+  line-height:1.55;color:var(--sec)}
+.archive-note b{color:var(--ink)}
 
 /* ---- metric tiles ---- */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;
