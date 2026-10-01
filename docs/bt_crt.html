@@ -4,7 +4,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
@@ -33,7 +35,7 @@ function tune(){
     if(!rect.width)return;
     /* re-tune when the width BUCKET changes, not on every pixel: 375->414 must
        re-wrap the title, but a scroll-driven 1px reflow must not relayout. */
-    var key=mob?('m'+Math.round(rect.width/30)):'d';
+    var key=(mob?'m':'d')+Math.round(rect.width/30);
     if(d.__tk===key)return;
     var first=!d.__tk; d.__tk=key;
     var o=st.get(d);
@@ -62,10 +64,25 @@ function tune(){
       if(!mob&&!(o.md||[]).some(function(m){return m&&m.indexOf('text')>=0;}))return;
       try{Plotly.restyle(d,{mode:arr});}catch(e){}
     }
+    /* Above the breakpoint a chart can still be narrow: the two-up grid puts a 405px
+       chart on a 1024px screen, and "Equity expected return across the valuation-
+       reversion dial" ran off its right edge, cropped by the tile (audit 2026-10-01;
+       same on regime-line at 864px). Wrap the title against the chart's OWN width.
+       Titles carrying markup are left alone -- wrap() splits on spaces. */
+    var dw=null;
+    if(!mob&&o.t&&o.t.indexOf('<')<0){
+      var avail=rect.width-o.m.l-14,pxc=o.ts*0.52;
+      if(o.t.length*pxc>avail){dw=wrap(o.t,Math.max(20,Math.floor(avail/pxc)));}
+    }
     if(!mob){
-      if(first)return;                              /* first sight on desktop: nothing to undo */
-      var back={'title.text':o.t,'title.font.size':o.ts,
-        'margin.l':o.m.l,'margin.r':o.m.r,'margin.t':o.m.t,'margin.b':o.m.b,
+      if(first&&!dw)return;                         /* first sight on desktop, fits: nothing to do */
+      var dmt=o.m.t+(dw?(dw.split('<br>').length-1)*Math.round(o.ts*1.3):0);
+      if(first){                                    /* only the title moves; nothing else to undo */
+        try{Plotly.relayout(d,{'title.text':dw,'margin.t':dmt});}catch(e){}
+        return;}
+      var back={'title.text':dw||o.t,'title.font.size':o.ts,
+        'margin.l':o.m.l,'margin.r':o.m.r,'margin.b':o.m.b,
+        'margin.t':dmt,
         'legend.font.size':(o.lg.font&&o.lg.font.size)||null,
         'legend.orientation':o.lg.orientation||null,
         'legend.x':(o.lg.x===undefined?null:o.lg.x),
@@ -130,15 +147,15 @@ var tid;function later(){clearTimeout(tid);tid=setTimeout(tune,160);}
 window.addEventListener('resize',later);window.addEventListener('orientationchange',later);
 })();</script>
 </div></header>
-<main class="container"><article class="tile report"><a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a><h1>CRT (Candle Range Theory) Backtest — Report</h1>
+<main class="container"><article class="tile report"><a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a><h1>Candle Range Theory (CRT) + Regime Filter</h1><p class="bt-src" style="color:#888;font-size:13px;margin:-.4rem 0 1.2rem">Research report: CRT (Candle Range Theory) Backtest — Report</p>
 <p><strong>Date:</strong> 2026-05-26
 <strong>Author:</strong> Claude (Dispatch agent)
-<strong>For:</strong> Carlos Duarte
+<strong>For:</strong> the operator Duarte
 <strong>Instruments:</strong> EURUSD, USDJPY, XAU/USD (Gold), XAG/USD (Silver) — FxPro M5 OHLC, 2016 → 2026-05-19
 <strong>Risk model:</strong> 1% of equity per trade. Walk-forward IS = 2016–2022; OOS = 2023-01-01 → 2026-05-19.
 <strong>Cost model:</strong> Per-bar broker spread from the FxPro CSVs (half spread on entry, half on exit) + fixed slippage on stop fills (3 points EURUSD/USDJPY, 10 GOLD, 20 SILVER).</p>
 <hr />
-<h2>⚠️ Caveat on strategy rules (read first)</h2>
+<h2>! Caveat on strategy rules (read first)</h2>
 <p>The audio your partner sent (<code>4db4db10-Carloz.m4a</code>) <strong>was not on disk</strong> at backtest time. I searched the entire mount — uploads folder empty, no <code>.m4a/.mp3/.wav/.opus/.aac</code> anywhere with that name or any matching pattern. <strong>I did not fabricate a transcription.</strong></p>
 <p>I implemented the <strong>standard ICT 3-candle Candle Range Theory</strong> as the documented baseline:</p>
 <ol>
@@ -149,7 +166,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <p>If your partner's CRT differs (different timeframes, different filters, different "ranges" — e.g. session-based Asia/London/NY treating sessions as C1/C2/C3), <strong>re-send the audio and I'll re-run.</strong> The harness is parameterized — swapping the entry rule and re-running takes minutes.</p>
 <hr />
 <h2>TL;DR — honest verdict</h2>
-<table>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table>
 <thead>
 <tr>
 <th>Question</th>
@@ -171,7 +188,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 </tr>
 <tr>
 <td>Is this worth trading live?</td>
-<td><strong>Probably not in isolation.</strong> Calmar 0.33 is below most decent systematic strategies. The OOS holds up but the 2026 YTD is mildly negative (−1.6 R over 18 trades). Same architectural pattern Carlos already uses (regime + walk-forward — see LTCMA / SARS / MARS) handles this kind of edge as one signal in a multi-strategy ensemble; CRT alone doesn't carry a portfolio.</td>
+<td><strong>Probably not in isolation.</strong> Calmar 0.33 is below most decent systematic strategies. The OOS holds up but the 2026 YTD is mildly negative (−1.6 R over 18 trades). Same architectural pattern the operator already uses (regime + walk-forward — see LTCMA / SARS / MARS) handles this kind of edge as one signal in a multi-strategy ensemble; CRT alone doesn't carry a portfolio.</td>
 </tr>
 <tr>
 <td>Edge on EURUSD?</td>
@@ -186,8 +203,8 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <td>(a) Intra-day CRT (1H / 4H HTF): all variations net-negative. (b) Session-filtered daily CRT (london/ny only) — daily candle opens at 00:00 broker time, so the filter excludes all entries. (c) <code>opp_range</code> target with daily HTF on EUR/USDJPY/Silver.</td>
 </tr>
 </tbody>
-</table>
-<p><strong>Brutal honest paragraph:</strong> Carlos asked for an honest verdict, not a curve-fit win. The pattern here is the same one you've seen before — a "system" that looks like a strategy is really a noisy edge that only becomes tradeable once you condition it on macro/regime context. CRT in isolation is a coin flip with worse-than-coin-flip win rate. The 3R asymmetric payoff drags performance positive on Gold and USDJPY at daily HTF, and trend alignment doubles that edge. None of the 384 regime variations cracked a Sharpe of 1. Your partner's CRT may have nuances I missed without the audio — but the standard 3-candle interpretation, on this data, with this cost model, <strong>does not beat your existing regime-adaptive multi-strategy work</strong>.</p>
+</table></div>
+<p><strong>Brutal honest paragraph:</strong> the operator asked for an honest verdict, not a curve-fit win. The pattern here is the same one you've seen before — a "system" that looks like a strategy is really a noisy edge that only becomes tradeable once you condition it on macro/regime context. CRT in isolation is a coin flip with worse-than-coin-flip win rate. The 3R asymmetric payoff drags performance positive on Gold and USDJPY at daily HTF, and trend alignment doubles that edge. None of the 384 regime variations cracked a Sharpe of 1. Your partner's CRT may have nuances I missed without the audio — but the standard 3-candle interpretation, on this data, with this cost model, <strong>does not beat your existing regime-adaptive multi-strategy work</strong>.</p>
 <hr />
 <h2>Method</h2>
 <h3>Data</h3>
@@ -197,7 +214,7 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <li>Per-bar spread is in points; embedded directly in the cost model.</li>
 </ul>
 <h3>Strategy parameter grid (vanilla)</h3>
-<table>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table>
 <thead>
 <tr>
 <th>Parameter</th>
@@ -234,12 +251,12 @@ window.addEventListener('resize',later);window.addEventListener('orientationchan
 <td>both</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>= <strong>144 combos × 4 instruments = 576 runs</strong> (some 0-trade due to filter intersections → 448 evaluated).</p>
 <h3>Regime overlay grid (Layer 2)</h3>
 <p>Base: Daily HTF, 2R + 3R, with/without 200-EMA bias, with/without min-sweep.
 Overlay (post-hoc filter on base trades):</p>
-<table>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table>
 <thead>
 <tr>
 <th>Overlay</th>
@@ -260,7 +277,7 @@ Overlay (post-hoc filter on base trades):</p>
 <td>off / on</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>= <strong>24 overlays × 8 bases × 4 instruments = 768 runs</strong> (384 unique evaluated).</p>
 <h3>Risk + cost model</h3>
 <ul>
@@ -287,7 +304,7 @@ Overlay (post-hoc filter on base trades):</p>
 <li><strong>Net% &gt; 0 in BOTH IS and OOS:</strong> 3 / 448 = 0.7%.</li>
 <li>All 3 IS+OOS winners are Daily HTF, 3R target, on Gold or USDJPY.</li>
 </ul>
-<table>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table>
 <thead>
 <tr>
 <th>symbol</th>
@@ -340,7 +357,7 @@ Overlay (post-hoc filter on base trades):</p>
 <td>+25.5</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Everything else either lost money in-sample or fell off the cliff out-of-sample. EURUSD and Silver were uniformly losers.</p>
 <h3>CRT + Regime overlay</h3>
 <ul>
@@ -350,7 +367,7 @@ Overlay (post-hoc filter on base trades):</p>
 <li>The dominant useful overlay is <strong><code>trend=with</code></strong> — only take CRT entries in the direction of the daily 200-EMA. It alone moves ~70% of GOLD and SILVER base variations from losing to winning.</li>
 <li>ATR-<code>high</code> regime helps on Silver specifically (where high-vol ranges are deeper); ATR-<code>low</code> helps on Gold for low-MDD subsets.</li>
 </ul>
-<table>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table>
 <thead>
 <tr>
 <th>symbol</th>
@@ -439,9 +456,9 @@ Overlay (post-hoc filter on base trades):</p>
 <td>+17.0</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <h3>Per-symbol verdict</h3>
-<table>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table>
 <thead>
 <tr>
 <th>Symbol</th>
@@ -471,7 +488,7 @@ Overlay (post-hoc filter on base trades):</p>
 <td><strong>Strong but thin.</strong> Best PF 1.75 at 143 trades over 10y (~14/y). Statistically light; outsized R hits possible.</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <hr />
 <h2>Sanity checks on the headline winner (GOLD D_3R_all + trendwith)</h2>
 <pre><code>Total trades:                    507  (49/year over 10.3 years)

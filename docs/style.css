@@ -52,6 +52,10 @@ main{padding:4rem 0 5rem}
   line-height:1.25}
 .note{color:var(--sec);font-size:14px;margin:-.4rem 0 1.2rem;line-height:1.55;max-width:52em}
 .note a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+/* .note's negative top margin is for a note directly under an h2. Under a tile, a tile
+   row or a two-card panel it glued the caption to the border (strategies, regime,
+   portfolio, 2026-10-01 audit). */
+.tile+.note,.tile+p,.metrics+.note,.metrics+p,.twonote+p,.twonote+.note{margin-top:.9rem}
 
 /* ---- metric tiles ---- */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;
@@ -242,9 +246,25 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
 }
 
 /* ---- responsive ---- */
+/* A grid item defaults to min-width:auto, so a tile refuses to shrink below its widest
+   number. portfolio.html's 5-across rows ("+3,999,743" in 26px mono) pushed the page
+   68px sideways at 1024. Tiles may shrink; 5-across rows step to 3 below 1100px. */
+.metric{min-width:0}
+@media(max-width:1100px){
+  .metrics[style*="repeat(5"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  /* 10 tabs at 13px/13px padding need ~930px; at 1024 the last one ("About") wrapped
+     onto a line of its own. Tighter tabs keep one row down to ~900px. */
+  nav a{padding:6px 8px;font-size:12.5px}
+}
+@media(max-width:900px) and (min-width:561px){
+  nav{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+      -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
+  nav::-webkit-scrollbar{display:none}
+  nav a{white-space:nowrap;flex:0 0 auto}
+}
 @media(max-width:820px){
   .grid{grid-template-columns:minmax(0,1fr)}
-  .metrics{grid-template-columns:repeat(2,1fr)!important}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .hero{padding:3.5rem 0 2.5rem}
 }
 @media(max-width:560px){
