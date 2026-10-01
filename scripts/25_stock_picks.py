@@ -335,7 +335,7 @@ future returns.</p></div></section>
 
     html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
-            f'<title>Stock Research — Picks, Analysis &amp; Signals</title>{FONTS}'
+            f'<title>Carlos Duarte — Stock Research</title>{FONTS}'
             f'{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{PAGE_CSS}</style>'
             f'<script src="{PLOTLY}"></script></head><body>'
             f'<header class="shell"><div class="shell-in">'

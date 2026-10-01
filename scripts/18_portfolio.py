@@ -1656,15 +1656,18 @@ def pkval(mxn, usd, dec=0, signed=False):
 KPI_MONEY = [
     ("Peak capital deployed", pkval(PK["base_mxn"] * SCALE, PK["base_usd"] * SCALE),
      "the most the book ever had at work at one moment"),
+    # These two tiles differ from the Snapshot's "Total Market Value" / "Total P&L" a
+    # screen above by exactly the GMEXICO B line, which the peak curve leaves out (it
+    # is peso-quoted). Two different totals with no reason given read as an error.
     ("Market value", pkval(PK["mv_mxn"] * SCALE, PK["mv_usd"] * SCALE),
-     "open positions, marked today"),
+     "open positions, marked today &middot; ex-GMEXICO&nbsp;B"),
     ("Realized since inception",
      pkval(PK["real_mxn"] * SCALE, PK["real_usd"] * SCALE, signed=True),
      "locked in on closed sales"),
     ("Unrealized", pkval(PK["unreal_mxn"] * SCALE, PK["unreal_usd"] * SCALE, signed=True),
      "open positions vs cost"),
     ("Total P&amp;L", pkval(PK["pl_mxn"] * SCALE, PK["pl_usd"] * SCALE, signed=True),
-     "realized + unrealized"),
+     "realized + unrealized &middot; ex-GMEXICO&nbsp;B"),
 ]
 def pkpct(usd, mxn, dec=2, unit="%"):
     """A return that reads differently in each currency, and says so when toggled."""
@@ -1681,8 +1684,10 @@ KPI_RET = [
     ("TWRR", pkpct(PK["twrr_usd"], PK["twrr_mxn"]),
      "time-weighted &mdash; what the decisions earned"),
     ("S&amp;P 500", _pct(PK["spy_tr"]), "index total return in USD, same window"),
+    # In the MXN view the TWRR tile reads the peso figure (+33%) beside "+12 pp", and the
+    # subtraction a reader does in their head comes out wrong. Name the operand.
     ("vs index", f"{(PK['twrr_usd']-PK['spy_tr'])*100:+.2f} pp",
-     "TWRR less the index, in USD"),
+     f"USD TWRR ({_pct(PK['twrr_usd'])}) less the index"),
     ("Capital in use", f"{PK['util_now']*100:.0f}%", "of peak, today"),
 ]
 kpi_money = "".join(
@@ -1972,7 +1977,7 @@ PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stock Portfolio Tracker</title>
+<title>Carlos Duarte — Portfolio</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script>
 <style>
