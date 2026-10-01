@@ -974,20 +974,34 @@ def _ret_cell(tk, fallback):
 #    the ledger merge that feeds its buy/sell markers (search `_MK_SRC`). Everything it
 #    needs from here (`ts`, `dates`) is final at this point and is not touched again.
 
-# 1b. drawdown from the running peak (%) \u2014 currency-independent, range-linked
-_pk = ts["total"].cummax()
-_ddpct = (ts["total"] / _pk - 1.0) * 100.0
+# 1b. drawdown of the time-weighted index (%), range-linked to the value chart
+# 2026-10-01: this was drawn on MARKET VALUE (`ts["total"].cummax()`), and market value
+# falls whenever the book SELLS. The 2026-09-23 sales took it to -60% "below peak" and the
+# June sales to -50% -- a chart that told a stranger the book had lost 60% when it had
+# moved cash out. A drawdown is a statement about RETURNS, so it is drawn on the
+# time-weighted index (flows removed), the same series the TWRR chart and tiles use.
+_twi = {c: (1.0 + _pc[f"twr_{c}"].astype(float)) for c in ("usd", "mxn")}
+_dd = {c: (_twi[c] / _twi[c].cummax() - 1.0) * 100.0 for c in _twi}
+_ddpct = _dd["usd"]
 # Drawdown was drawn in RED, the same token the holdings table spends on a negative
 # return. One colour doing two semantic jobs on one page teaches the reader nothing; a
 # drawdown chart is ALREADY entirely negative, so the colour carries no information at
 # all. Navy, like every other series about this book.
 f1b = go.Figure()
-f1b.add_scatter(x=dates, y=_ddpct, mode="lines", name="Drawdown",
+f1b.add_scatter(x=dates, y=_dd["usd"], mode="lines", name="USD",
                 line=dict(color=BLUE, width=1.6), fill="tozeroy",
                 fillcolor="rgba(10,37,64,0.07)",
-                hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra></extra>")
-f1b.update_layout(title="How far below its own high-water mark the book has been",
-                  yaxis_title="below peak (%)", height=235, showlegend=False)
+                hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra>USD</extra>")
+f1b.add_scatter(x=dates, y=_dd["mxn"], mode="lines", name="MXN",
+                line=dict(color=BLUE, width=1.2, dash="dot"),
+                hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra>MXN</extra>")
+f1b.update_layout(title="Drawdown of the decisions (time-weighted, flows removed)",
+                  yaxis_title="below prior high (%)", height=260, showlegend=True,
+                  legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="right",
+                              x=1, font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
+print(f"  drawdown (TWR, flows removed): max {_dd['usd'].min():.2f}% USD / "
+      f"{_dd['mxn'].min():.2f}% MXN  (market-value 'drawdown' would read "
+      f"{(ts['total'] / ts['total'].cummax() - 1).min() * 100:.2f}%)")
 
 # 2. per-holding return vs portfolio -- NOT currency-independent, see _ret_cell above.
 # Bars were coloured green/red by sign. The sign is already given three times over --
@@ -2084,8 +2098,10 @@ entry to hide a series.</p>
 </div><span class="btlbl">window &middot; hover for daily detail</span></div>
 <div class="tile chart"><div class="ch">{div(f1, "pf-value")}</div></div>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f1b, "pf-dd")}</div></div>
-<p class="note" style="margin-top:.8rem">Drawdown is measured from the running
-peak of market value; it reads identically in either currency. Trade markers come
+<p class="note" style="margin-top:.8rem">Drawdown is measured on the time-weighted
+return, not on market value: selling a position lowers market value without losing
+anything, so a market-value drawdown would read every sale as a loss. Dollars and
+pesos differ by the peso&rsquo;s move. Trade markers come
 from the same broker transaction ledger as the realized table below; share counts
 and peso amounts in the hover carry the page&rsquo;s display scaling, prices do
 not. <b>NEW</b> flags the first purchase of a name, <b>CLOSE</b> a sale that takes

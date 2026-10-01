@@ -88,7 +88,9 @@ def main():
     # ---- market data from the anchor day on --------------------------------------------
     start = (asof_a - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
     try:
-        spy = _closes("SPY", start)
+        # from the curve's first day: spy_tr is cross-checked against Yahoo end to end
+        spy = _closes("SPY", (pd.Timestamp(A["curve"][0]["d"]) - pd.Timedelta(days=7))
+                      .strftime("%Y-%m-%d"))
         fx = _closes("MXN=X", start)
         px = {}
         for p in A["positions"]:
@@ -128,8 +130,24 @@ def main():
 
     fx_a = at(fxd, asof_a)
     spy_a = at(spy, asof_a)
-    L = A["curve"][-1]
+    L = dict(A["curve"][-1])
     assert L["d"] == A["as_of"], "anchor curve does not end at its own as_of"
+
+    # The anchor's own SPY level can be the PREVIOUS session's close: peak_curves.py
+    # downloads with an exclusive end=as_of, so the 2026-09-23 anchor carried 09-22's
+    # 773.38 (real 09-23 close 767.81). Every rolled day scales from that level, so the
+    # whole post-anchor SPY series ran +0.72% hot and the site published S&P +13.56%
+    # against a real +12.74% (02-13 -> 09-30), understating alpha by 0.8 pp. Re-derive
+    # the anchor-day level from the previous anchor row by the REAL close ratio (ratio,
+    # not level, so a dividend re-adjustment of Yahoo's history cannot bite), and keep
+    # the flow-matched share count, which the stale price did not affect.
+    P0 = A["curve"][-2]
+    spy_fix = P0["spy"] * spy_a / at(spy, pd.Timestamp(P0["d"]))
+    if abs(spy_fix / L["spy"] - 1) > 1e-4:
+        print(f"  SPY anchor re-based: {L['spy']:.2f} -> {spy_fix:.2f} "
+              f"({(spy_fix / L['spy'] - 1) * 100:+.2f}%; peak_curves end= is exclusive)")
+        sh = L["spy_mv"] / L["spy"]
+        L["spy"], L["spy_mv"] = spy_fix, sh * spy_fix
 
     # LEVEL marks, exactly as the broker values a position: shares x today's quote.
     # sum(shares x px_mxn) over the SIC names reproduces the anchor curve's mv_mxn to the
@@ -147,7 +165,7 @@ def main():
             return at(sic[t], d), ".MX"
         return at(px[t], d) * at(fxd, d), "US x FX"
 
-    curve = list(A["curve"])
+    curve = list(A["curve"][:-1]) + [L]
     prev = dict(L)
     spy_sh = L["spy_mv"] / L["spy"]
     for d in days:
@@ -187,6 +205,12 @@ def main():
         P[f"unreal_{c}"] = prev[f"mv_{c}"] - prev[f"cost_{c}"]
         P[f"real_{c}"] = prev[f"real_{c}"]
     P["spy_tr"] = curve[-1]["spy"] / curve[0]["spy"] - 1
+    # cross-check against the market itself, same window, no curve in between
+    _spy_mkt = at(spy, last) / at(spy, pd.Timestamp(curve[0]["d"])) - 1 \
+        if spy.index.min() <= pd.Timestamp(curve[0]["d"]) else None
+    if _spy_mkt is not None:
+        assert abs(P["spy_tr"] - _spy_mkt) < 5e-4, \
+            f"SPY TR {P['spy_tr']:.4%} disagrees with Yahoo {_spy_mkt:.4%} over the same window"
     P["spy_pl"] = prev["spy_mv"] - prev["spy_cost"] + prev["spy_real"]
     P["spy_mwrr"] = P["spy_pl"] / A["spy_peak"]
     P["spy_mwrr_common"] = P["spy_pl"] / A["base_usd"]
