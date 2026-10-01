@@ -91,6 +91,18 @@ def div(fig, name):
                                "doubleClick": False, "showAxisDragHandles": False,
                                "responsive": True})
 
+def _headroom(fig, ys):
+    """Room above (and below) the tallest bar for its 'outside' label. Plotly sizes the
+    axis to the bars, not to their text, so the top label sat half outside the plot:
+    "117%" over NVDA's ROE and "28.9" over its P/E were cut (audit 2026-10-01)."""
+    ys = [y for y in ys if y is not None]
+    if not ys:
+        return
+    hi, lo = max(max(ys), 0), min(min(ys), 0)
+    pad = (hi - lo) * 0.14 or 1
+    fig.update_yaxes(range=[lo - (pad if lo < 0 else 0), hi + pad])
+    fig.update_traces(cliponaxis=False)
+
 def num(x):  return x if isinstance(x, (int, float)) and x == x else None
 def pct(x):  return f"{x*100:.1f}%" if num(x) is not None else "n/a"
 def rt(x):   return f"{x:.2f}" if num(x) is not None else "n/a"
@@ -187,7 +199,11 @@ def analyze(ticker):
             targets["Justified leading P/E"] = just_lpe * fwd_eps
     if just_pb and bvps:
         targets["Justified P/B"] = just_pb * bvps
-    if ddm:
+    # The DDM values the dividend stream too, so the payout gate above applies to it for
+    # the same reason. Ungated, a 0.4% yield put a $22.93 "fair value" on NVDA at $228
+    # and dragged the headline target to -75% (audit 2026-10-01) -- on a page whose own
+    # methodology note said dividend methods were for mature payers only.
+    if ddm and payout >= 0.30:
         targets["Two-stage DDM"] = ddm
     if fcfe_2s:
         targets["Two-stage FCFE"] = fcfe_2s
@@ -241,6 +257,7 @@ def analyze(ticker):
                           marker_color=BLUE, text=[f"{v*100:.0f}%" for _, v in prof],
                           textposition="outside"))
     c2.update_layout(title="Profitability (%)", yaxis_title="%")
+    _headroom(c2, [v * 100 for _, v in prof])
 
     mult = [("P/E", pe), ("Fwd P/E", fpe), ("P/B", pb_now),
             ("P/S", num(info.get("priceToSalesTrailing12Months"))),
@@ -250,6 +267,7 @@ def analyze(ticker):
                           marker_color=GOLD, text=[f"{v:.1f}" for _, v in mult],
                           textposition="outside"))
     c3.update_layout(title="Valuation multiples", yaxis_title="x")
+    _headroom(c3, [v for _, v in mult])
 
     # --- verdict ---
     bits = []
@@ -306,8 +324,9 @@ def analyze(ticker):
 estimates; the synthesized target is their average. Dividend-discount and FCFE
 use a <b>two-stage growth model</b> &mdash; the analyst-implied near-term rate
 for five years, then a 4.5% terminal rate &mdash; which avoids the single-stage
-pessimism on high-growth firms. Justified-P/E methods are applied only for
-mature dividend payers (payout &ge; 30%). The shaded band is the &plusmn;1
+pessimism on high-growth firms. Methods that value only the dividend stream
+(dividend-discount, justified P/E) are applied only to mature dividend payers
+(payout &ge; 30%). The shaded band is the &plusmn;1
 standard-deviation range (one-year realised vol ~{vol_a*100:.0f}%). Definitions
 in the <a href="glossary.html">Glossary</a>.</p>
 <div class="grid">
@@ -362,7 +381,10 @@ def _two_stage_iv(cf0, g1, r, g2=G_CAP, n=5):
     return pv1 + tv / (1 + r) ** n
 
 def _intrinsic(info, price):
-    """Blend of two-stage FCFE/DDM and justified P/E — mirrors analyze().
+    """Blend of two-stage FCFE/DDM and justified P/E for the 40-name table.
+    NOTE 2026-10-01: analyze() now gates the DDM at payout >= 30%; this blend does not
+    yet (it feeds the picker, so changing it moves the ranking -- left for a deliberate
+    methodology pass, AUDIT_REPORT_2026-09-30 section 7).
     The discount rate is floored so the terminal spread (r - g2) is at least 3%,
     which avoids the Gordon-growth blow-up for low-beta names where r approaches
     the terminal growth rate."""

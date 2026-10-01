@@ -15,7 +15,7 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="index.html#about">About</a></nav>'
        """<script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
 // sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
-if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
@@ -655,6 +655,8 @@ def _bt_redact(text):
         return text
     for rx, repl in _BT_REDACT:
         text = rx.sub(repl, text)
+    # the private verdict lines are typed in a terminal: " -- " is an em dash on the page
+    text = _re.sub(r"\s--\s", " — ", text)
     return _re.sub(r"\[assets\](?:\s*[/+,&-]?\s*\[assets\])+", "[assets]", text)
 
 

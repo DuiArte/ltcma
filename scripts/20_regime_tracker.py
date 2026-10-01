@@ -243,7 +243,7 @@ snap_html = "".join(
 # ---------- HTML page ----------
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Regime Tracker — when to adjust the strategy</title>
+<title>Carlos Duarte — Regime Tracker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">

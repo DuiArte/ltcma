@@ -418,7 +418,7 @@ function tune(){
          ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
          m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
          lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
-         h:FL.height,dt:(L.yaxis&&L.yaxis.dtick)||null,
+         h:FL.height,dt:(L.yaxis&&L.yaxis.dtick)||null,sh:d.style.height,
          an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
          md:(d.data||[]).map(function(t){return t.mode;})};
       st.set(d,o);}
@@ -467,6 +467,7 @@ function tune(){
       if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
         if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=o.dt;}
       if(o.h)back['height']=o.h;
+      d.style.height=o.sh;
       o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
       modes(false);
       try{Plotly.relayout(d,back);Plotly.Plots.resize(d);}catch(e){}
@@ -509,6 +510,10 @@ function tune(){
     var ncat=hbar?Math.max.apply(null,(d.data||[]).map(function(t){return (t.y||[]).length;})):0;
     if(o.h&&o.h>360&&!(hbar&&ncat>8))up['height']=340;
     modes(true);
+    /* to_html writes the layout height INLINE on the div (style height 640px for the
+       heatmap). relayout shrinks the SVG, not that box, so the tile kept 300px of blank
+       under the matrix on phones (audit 2026-10-01). Move the box with the figure. */
+    if(up['height'])d.style.height=up['height']+'px';
     try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
   });
 }
