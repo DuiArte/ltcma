@@ -53,10 +53,10 @@ CROSS-CHECK MERGE (`_SELL_SRC` / `_BUY_SRC`)
     is safe. Guards abort on a fill claimed twice, on the same ticker/shares/price two
     dates <=5 days apart, and on any fill-count disagreement with the sidecar.
 
-RETURN BANNERS
-    Realized / Unrealized / Combined, each against the cost basis it earned on. That
-    makes Combined the cost-weighted blend of the other two; an assert enforces it.
-    Ratios are scale-invariant, so these publish the REAL returns.
+SNAPSHOT BLOCK (removed 2026-10-06)
+    The cost-basis Snapshot tiles + Realized/Unrealized/Combined banners duplicated
+    the Performance panel on a different denominator. Performance (peak capital) is
+    the only headline block; do not reintroduce a second one.
 """
 import json
 import os
@@ -1656,9 +1656,8 @@ def pkval(mxn, usd, dec=0, signed=False):
 KPI_MONEY = [
     ("Peak capital deployed", pkval(PK["base_mxn"] * SCALE, PK["base_usd"] * SCALE),
      "the most the book ever had at work at one moment"),
-    # These two tiles differ from the Snapshot's "Total Market Value" / "Total P&L" a
-    # screen above by exactly the GMEXICO B line, which the peak curve leaves out (it
-    # is peso-quoted). Two different totals with no reason given read as an error.
+    # These tiles differ from the Holdings TOTAL row by exactly the GMEXICO B line,
+    # which the peak curve leaves out (it is peso-quoted) -- hence the label.
     ("Market value", pkval(PK["mv_mxn"] * SCALE, PK["mv_usd"] * SCALE),
      "open positions, marked today &middot; ex-GMEXICO&nbsp;B"),
     ("Realized since inception",
@@ -1797,49 +1796,17 @@ percentages and per-share prices are exact.</p>
 <th>Realized Stock</th><th>Realized FX</th><th>Total</th></tr></thead>
 <tbody>{realized_rows}</tbody><tfoot>{realized_foot}</tfoot></table></div></section>"""
 
-# ---------- metrics (cost-basis return + Stock/FX + realized since inception) ----------
-_pnl_now = float(tot_val - tot_cost)                       # unrealized P/L (scaled MXN)
-_since_incep = REAL_TOTAL * SCALE + float(tot_val - _tot_cost_disp)   # coherente con el tile de Cost
-SNAP = [("Total Market Value", cval(tot_val)),
-        ("Total Cost Basis", cval(_tot_cost_disp)),
-        ("Total P&amp;L Since Inception", cval(_since_incep, signed=True)),
-        ("Stock contribution", f"{stock_pct:+.2f}%"),
-        ("FX contribution", f"{fx_pct:+.2f}%")]
-snap = "".join(
-    f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
-    for k, v in SNAP)
-
-# ---------- return banners: realized / unrealized / combined ----------
-# Every ratio here is scale-invariant -- SCALE cancels -- so these are the REAL returns
-# even though the $ tiles above are scaled. Each leg is measured against the cost basis
-# it earned on, which makes Combined the cost-weighted blend of the other two rather
-# than an unrelated third number. ("Return on Cost" was the unrealized leg under a
-# vaguer name; it lives here now.)
-_real_cost = sum(r["avg_cost"]*r["sh"] for r in _RROWS) * SCALE  # all-in cost of shares sold
-_real_pnl  = REAL_TOTAL * SCALE
-_ret_real  = (_real_pnl / _real_cost) if _real_cost else 0.0
-# 2026-09-24: el denominador del leg NO REALIZADO es el COST BASIS QUE SE MUESTRA, no el
-# real. Desde que el Avg Cost lleva jitter (2026-09-23) el tile `Total Cost Basis` imprime
-# `_tot_cost_disp` (suma de la columna jitterizada) mientras este ratio usaba `tot_cost`:
-# quien dividia los dos tiles obtenia +1.01% y la pagina decia +1.05% -- 3.7 bp de
-# incoherencia VISIBLE, justo lo que Carlos noto. Una pagina tiene que cuadrar con lo que
-# ella misma muestra; el numero real vive en el XLSX privado, que no lleva jitter.
+# ---------- unrealized return on the displayed cost basis (Holdings TOTAL row) ----------
+# The Snapshot block (Market Value / Cost / P&L tiles + Realized/Unrealized/Combined
+# banners) was removed 2026-10-06 at Carlos's call: it re-stated the Performance panel
+# on a different denominator (cost basis vs peak capital) and read as contradicting it.
+# Only the unrealized leg survives, in the Holdings TOTAL row.
+# 2026-09-24: el denominador es el COST BASIS QUE SE MUESTRA (`_tot_cost_disp`, suma de la
+# columna Avg Cost jitterizada), no el real -- la pagina tiene que cuadrar con lo que ella
+# misma muestra; el numero real vive en el XLSX privado, que no lleva jitter.
 _pnl_disp  = float(tot_val - _tot_cost_disp)
 _ret_unr   = (_pnl_disp / _tot_cost_disp) if _tot_cost_disp else 0.0
-_comb_cost = _real_cost + _tot_cost_disp
-_ret_comb  = ((_real_pnl + _pnl_disp) / _comb_cost) if _comb_cost else 0.0
-if _comb_cost:                                                 # blend identity must hold
-    _w = _real_cost / _comb_cost
-    assert abs(_ret_comb - (_w*_ret_real + (1-_w)*_ret_unr)) < 1e-9, "return banners disagree"
-print(f"  returns: realized {_ret_real*100:+.2f}% (cost {_real_cost/SCALE:,.0f}) | "
-      f"unrealized {_ret_unr*100:+.2f}% (cost {tot_cost/SCALE:,.0f}) | "
-      f"combined {_ret_comb*100:+.2f}%")
-BANNERS = [("Realized return", _ret_real), ("Unrealized return", _ret_unr),
-           ("Combined return", _ret_comb)]
-banners = "".join(
-    f'<div class="metric {"m-calm" if v >= 0 else "m-stress"}">'
-    f'<div class="mv">{v*100:+.2f}%</div><div class="mk">{k}</div></div>'
-    for k, v in BANNERS)
+print(f"  unrealized return {_ret_unr*100:+.2f}% (cost {tot_cost/SCALE:,.0f})")
 # holdings TOTAL row (placed in <tfoot> so the sort/filter JS leaves it pinned)
 holdings_total = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>"
     f"<td class='n'>{cval(_tot_cost_disp)}</td><td class='n'>{cval(tot_val)}</td>"
@@ -2017,22 +1984,13 @@ P/L = market value &minus; cost. (Stock here folds in a small price&times;FX
 interaction term, itemized separately in <b>FX Attribution</b> below.) The MXN money-fund
 cash sleeve, FX positions and non-custodian bank cash are excluded from the equity
 book.</div>
-<section class="block"><h2>Snapshot</h2>
+<section class="block"><h2>Performance</h2>
 <div class="ccy-toggle">
 <button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
 <button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
-<p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; returns read the same
-in either currency. Total Return is on cost basis (market value &divide; cost
-&minus; 1); the Stock and FX contributions decompose where the peso P/L came
-from. Definitions in the <a href="glossary.html">Glossary</a>.</p>
-<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{snap}</div>
-<div class="metrics" style="grid-template-columns:repeat(3,1fr);margin-top:1.5rem">{banners}</div>
-<p class="note" style="margin-top:.8rem"><b>Realized</b> is closed sales against the
-cost basis of the shares sold; <b>Unrealized</b> is open positions against the cost
-basis still held; <b>Combined</b> weights the two by their cost bases, so it sits
-between them. All three are exact &mdash; the display scaling cancels in a
-ratio, unlike the peso tiles above.</p></section>
-<section class="block"><h2>Performance</h2>
+<p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; the toggle switches every
+peso figure on this page; returns are quoted in the currency each one names.
+Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
 &middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
 {PK['fx_today']:.4f} (fixed at build)</p>

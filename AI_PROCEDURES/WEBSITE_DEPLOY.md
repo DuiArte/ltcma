@@ -155,21 +155,16 @@ P&L**. Do not "just point it at the newest export."
   back in (2026-07-09, Carlos's call). Their absence was also masking a latent unit
   bug: without the pre-split 17-Mar fill, VGT's averages happened to stay coherent.
 
-## Return banners (Realized / Unrealized / Combined)
+## Snapshot block — removed 2026-10-06
 
-Each leg is measured against **the cost basis it earned on** — realized against the
-cost of shares sold, unrealized against the cost still held. That makes Combined the
-cost-weighted blend of the other two rather than an unrelated third number, and an
-`assert` enforces the identity at build time:
-
-```
-combined = w·realized + (1−w)·unrealized,   w = sold_cost / (sold_cost + held_cost)
-```
-
-Ratios are **scale-invariant** — `SCALE` cancels — so the banners publish the real
-returns even though the peso tiles beside them are scaled. Stock + FX contribution
-still sum to the unrealized leg. Both rows use `.metrics`, so the existing ≤820px /
-≤560px breakpoints apply; no bespoke CSS.
+`portfolio.html` used to open with a "Snapshot" block (Market Value / Cost Basis /
+P&L-since-inception tiles, Stock/FX contribution, Realized / Unrealized / Combined
+return banners). It restated the Performance panel on a **cost-basis** denominator
+while Performance uses **peak concurrent capital**, so the two blocks showed
+different totals and returns side by side. Carlos's call: removed. Performance is the
+single headline block; the MXN/USD toggle now sits at its top (it drives every
+`.cval` span on the page). Unrealized return on cost survives only in the Holdings
+TOTAL row. Do not reintroduce a second headline block.
 
 ## Build / deploy
 
