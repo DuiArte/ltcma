@@ -1988,9 +1988,6 @@ book.</div>
 <div class="ccy-toggle">
 <button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
 <button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
-<p class="note">Currency: <b id="ccy-label">MXN</b> &mdash; the toggle switches every
-peso figure on this page; returns are quoted in the currency each one names.
-Definitions in the <a href="glossary.html">Glossary</a>.</p>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
 &middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
 {PK['fx_today']:.4f} (fixed at build)</p>
