@@ -249,6 +249,10 @@ try {
     # techo de 2 decimales en todo lo visible (Carlos, 2026-09-24). Corre AL FINAL:
     # tiene que ver el HTML ya publicado por todos los generadores de arriba.
     Run-Step 'guard_decimals.py'     -LoadBearing | Out-Null
+    # Snapshot block retired 2026-10-06 (Carlos). Stale clones/jobs have resurrected
+    # deleted content before; this fails the refresh BEFORE commit if it reappears.
+    # Every writer of docs/ is listed in AI_PROCEDURES\WEBSITE_PUSH_SOURCES.md.
+    Run-Step 'guard_no_snapshot.py'  -LoadBearing | Out-Null
     Pop-Location
     Log "Site rebuild complete."
 
