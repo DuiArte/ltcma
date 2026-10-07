@@ -395,9 +395,10 @@ STREET_OUT = os.path.join(DOCS, "street-ltcma.html")
 
 
 def render_street():
-    """Compiled consensus of every firm with numbers, AGGREGATES ONLY: rows with >= 5 firms, trimmed
-    mean (no single firm's figure can be read off), dispersion as a standard deviation. Built off-repo
-    by Trading_Index/market_intel (export_street_ltcma.py -> publish_street_ltcma.py); render-only here."""
+    """Compiled consensus of every firm with numbers, AGGREGATES ONLY: trimmed mean at 0.1, firm count
+    and list; rows withheld unless no single firm's figure can be narrowed from them (disclosure gate,
+    correction C-20261007-02: no dispersion, no unrounded gap). Built off-repo by
+    Trading_Index/market_intel (export_street_ltcma.py -> publish_street_ltcma.py); render-only here."""
     if not os.path.exists(STREET_SRC):
         print("street LTCMA: no street_ltcma_public.json yet - page not built")
         return
@@ -414,12 +415,11 @@ def render_street():
             firms = e(", ".join(r["firms"]))
             rows_html += (f'<tr><td style="text-align:left">{e(r["label"])}{star}</td>'
                           f'<td><b>{pct(r["street_ltcma"])}%</b></td><td>{r["n_firms"]}</td>'
-                          f'<td>{r["dispersion_sd_bp"]}</td><td>{site}</td><td>{gap}</td>'
+                          f'<td>{site}</td><td>{gap}</td>'
                           f'<td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">{firms}</td></tr>')
         else:
-            why = "no firm reports it separately" if r["n_firms"] == 0 else "fewer than 5 firms"
             rows_html += (f'<tr style="color:var(--muted)"><td style="text-align:left">{e(r["label"])}{star}</td>'
-                          f'<td colspan="3" style="font-style:italic">{why}</td><td>{site}</td><td>—</td><td></td></tr>')
+                          f'<td colspan="2" style="font-style:italic">withheld (see Method)</td><td>{site}</td><td>—</td><td></td></tr>')
     eds = ""
     for x in idx.get("editions", []):
         dd = date.fromisoformat(x["date"]).strftime("%d %b %Y")
@@ -444,19 +444,19 @@ def render_street():
 in the same asset classes as this site's own LTCMA. Each figure is a consensus across firms, never a single
 firm's forecast. This site's model is shown next to it as a cross-check, and every monthly edition stays
 available for download below.</p>
-<p class="asof">Street consensus as of {asof} &middot; {"preliminary edition" if s.get("edition") == "preliminary" else "monthly edition"} &middot; {n_pub} asset classes ({n_site} of this site's 24) with at least 5 firms</p>
+<p class="asof">Street consensus as of {asof} &middot; {"preliminary edition" if s.get("edition") == "preliminary" else "monthly edition"} &middot; {n_pub} asset classes published ({n_site} of this site's 24)</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#table">The Street LTCMA</a><a href="#editions">Editions &amp; downloads</a><a href="#method">Method</a></div>
 
 <section class="block" id="table"><h2>Expected annual return, % nominal (USD)</h2>
 <p class="note"><b>Street LTCMA</b> = trimmed mean across firms (the single highest and lowest estimates are dropped),
-published only where at least 5 firms give a figure. <b>Dispersion</b> = standard deviation across firms, in bp.
-<b>Gap</b> = Street minus this site's LTCMA, in bp, computed from unrounded values (positive: this site is below
-the Street). &#9733; = an asset class of this site's LTCMA. Firm-by-firm figures are on the
-<a href="ltcma-consensus.html">Market Intel</a> grid for the firms whose material may be republished.</p>
+rounded to 0.1. <b>Gap</b> = Street minus this site's LTCMA, both as shown, in bp (positive: this site is below
+the Street). &#9733; = an asset class of this site's LTCMA. A withheld row does not meet the publication rule
+(see Method). Firm-by-firm figures are on the <a href="ltcma-consensus.html">Market Intel</a> grid for the firms
+whose material may be republished.</p>
 <div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Asset class</th>
-<th>Street LTCMA</th><th>Firms</th><th>Dispersion (bp)</th><th>This site's LTCMA</th><th>Gap (bp)</th>
+<th>Street LTCMA</th><th>Firms</th><th>This site's LTCMA</th><th>Gap (bp)</th>
 <th style="text-align:left">Contributing firms</th></tr></thead><tbody>{rows_html}</tbody></table></div></section>
 
 <section class="block" id="editions"><h2>Editions &amp; downloads</h2>
@@ -472,9 +472,12 @@ document. Figures are put on one basis: US dollars, nominal, geometric (compound
 nominal with the firm's own inflation assumption, and arithmetic averages are converted with the firm's own
 volatility. Each firm counts once per asset class, using the horizon closest to 12 years; non-USD figures are left out.
 A trimmed mean is used rather than a median so that no single firm's number can be read off the table; for the
-same reason no minimum, maximum or quartile is shown, and rows with fewer than 5 firms are withheld.
+same reason no minimum, maximum, quartile or spread is shown, and every figure is rounded to 0.1.
 Some contributing firms do not permit their figures to be republished individually; they appear here only
-inside these aggregates. This consensus is a cross-check: it is never an input to this site's LTCMA model.
+inside these aggregates. A row is therefore published only when at least 5 firms give a figure, either none or
+at least 3 of them are such firms, and an automated check confirms that none of their figures can be narrowed
+to within &plusmn;0.5 percentage points from everything published on this site, earlier editions included.
+Other rows are withheld. This consensus is a cross-check: it is never an input to this site's LTCMA model.
 Not investment advice.</p></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Aggregated from the published capital market assumptions of the
