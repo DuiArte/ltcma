@@ -1,7 +1,15 @@
 """Shared site components: the navigation bar, the plain-language glossary,
 and the currency badge. Imported by 17/18/19 so there is one source of truth.
 """
+import os
+
 from design_system import MOBILE_CHARTS_JS
+
+# Street LTCMA tab only while its data is published: it was taken down 2026-10-07 (Market Intel
+# correction C-20261007-02) and a nav link to a withdrawn page 404s on every page. It comes back by
+# itself once market-intel-monthly republishes the JSON.
+_STREET = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data",
+                                      "market_intel", "street_ltcma_public.json"))
 
 NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
@@ -11,8 +19,8 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="stocks.html">Stock Research</a>'
        '<a href="regime.html">Regime Tracker</a>'
        '<a href="ltcma-consensus.html">Market Intel</a>'
-       '<a href="street-ltcma.html">Street LTCMA</a>'
-       '<a href="projects.html">Projects</a>'
+       + ('<a href="street-ltcma.html">Street LTCMA</a>' if _STREET else '')
+       + '<a href="projects.html">Projects</a>'
        '<a href="glossary.html">Glossary</a>'
        '<a href="index.html#about">About</a></nav>'
        """<script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
