@@ -51,8 +51,13 @@ bad, ok = [], []
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from design_system import guard_plotly_html, _selftest_guard
 _selftest_guard()
+# 2026-10-07: + docs/internal/ (freshness dashboard). Unlinked is not private; same 2dp rule.
+_INT = os.path.join(DOCS, "internal")
+PAGES = sorted(f for f in os.listdir(DOCS) if f.endswith(".html")) + (
+    ["internal/" + f for f in sorted(os.listdir(_INT)) if f.endswith(".html")]
+    if os.path.isdir(_INT) else [])
 chart_fail, n_charts = [], 0
-for fn in sorted(os.listdir(DOCS)):
+for fn in PAGES:
     if fn.endswith(".html"):
         try:
             n_charts += guard_plotly_html(
@@ -65,7 +70,7 @@ if chart_fail:
 print("OK charts: %d Plotly charts -- sin flag '+', ejes de fecha con formato de fecha, "
       "sin trace numerico sin formato" % n_charts)
 
-for fn in sorted(os.listdir(DOCS)):
+for fn in PAGES:
     if not fn.endswith(".html"):
         continue
     t = visible(open(os.path.join(DOCS, fn), encoding="utf-8", errors="replace").read())

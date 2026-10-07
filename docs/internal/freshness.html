@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Site Freshness</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../_design_system/tokens.css"><link rel="stylesheet" href="../_design_system/base.css"><link rel="stylesheet" href="../style.css">
+<style>
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 48px}
+.sum{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 22px}
+.sum div{border:1px solid #e5e5e5;background:#fff;padding:10px 16px;min-width:0}
+.sum b{font-family:'JetBrains Mono',monospace;font-size:20px;margin-right:6px}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e5e5;background:#fff;min-width:0}
+table.fr{border-collapse:collapse;width:100%;min-width:720px;font-size:13.5px}
+.fr th{text-align:left;font-weight:500;color:#555;border-bottom:1px solid #d4d4d4;padding:9px 10px;white-space:nowrap}
+.fr td{border-bottom:1px solid #eee;padding:9px 10px;vertical-align:top}
+.fr td.tab{white-space:nowrap;font-weight:500}
+.fr td.why{color:#444;line-height:1.5}
+.m{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:12.5px}
+.n{text-align:right}
+.chip{display:inline-block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border:1px solid;white-space:nowrap}
+.chip.g{color:#0a5d3a;border-color:rgba(10,93,58,.35)}
+.chip.a{color:#8a5a00;border-color:rgba(138,90,0,.4)}
+.chip.r{color:#7c2d12;border-color:rgba(124,45,18,.45)}
+.chip.i{color:#6b7280;border-color:#e5e5e5}
+.note{color:#555;font-size:13.5px;line-height:1.6;max-width:62em}
+ul.ev{font-size:13.5px;color:#333;line-height:1.7;padding-left:18px}
+</style></head>
+<body><main class="wrap">
+<p class="note"><a href="../index.html">&larr; Back to the site</a></p>
+<h1 style="margin:.2em 0 .1em">Site freshness</h1>
+<p class="asof">As of 07 Oct 2026 &middot; audited 00:38 CDMX &middot; internal status page, not linked from the site</p>
+<p class="note">Every tab is re-rendered each weekday, so a fresh &ldquo;As of&rdquo; stamp
+proves nothing about what a page says. <b>Content</b> grades the newest dated content on
+each page against its own service level: a research batch, a project&rsquo;s last push, the
+end of a backtest, the newest regime input. <b>Build</b> grades whether the page was
+regenerated on schedule. <i>Behind</i> needs attention; <i>Stale</i> needs action.</p>
+<div class="sum"><div><b>8</b>current</div><div><b>3</b>behind</div><div><b>1</b>stale</div></div>
+<div class="tbl"><table class="fr"><thead><tr><th>Tab</th><th>Content</th><th>Newest content</th>
+<th style="text-align:right">Age (days)</th><th>Build</th><th>What it says</th></tr></thead>
+<tbody><tr><td class="tab"><a href="../report.html">Full Report</a></td><td><span class="chip r">Stale</span></td><td class="m">2026-08-11</td><td class="m n">57</td><td><span class="chip r">Stale</span></td><td class="why">published as the archived edition of 2026-08-11: 57 days old (SLA: amber after 45, red after 120)<br>hand-written: owed a manual resync</td></tr><tr><td class="tab"><a href="../strategies.html">Backtest reports</a></td><td><span class="chip a">Behind</span></td><td class="m">2026-05-19</td><td class="m n">141</td><td><span class="chip g">Current</span></td><td class="why">Buy-the-Dip: backtest ends 2026-05-26, not extended live (134 days behind)<br>Static Diversification: backtest ends 2026-05-26, not extended live (134 days behind)<br>CRT: backtest ends 2026-05-19, not extended live (141 days behind)</td></tr><tr><td class="tab"><a href="../projects.html">Projects</a></td><td><span class="chip a">Behind</span></td><td class="m">2026-06-04</td><td class="m n">125</td><td><span class="chip g">Current</span></td><td class="why">DuiArte/ltcma-methodology last updated 2026-06-04 (125 days)<br>DuiArte/static-drift-weight last updated 2026-06-04 (125 days)<br>DuiArte/signallib-framework last updated 2026-06-04 (125 days)<br>DuiArte/terse last updated 2026-05-28 (132 days)</td></tr><tr><td class="tab"><a href="../stocks.html">Stock pages</a></td><td><span class="chip a">Behind</span></td><td class="m">2026-10-06</td><td class="m n">1</td><td><span class="chip g">Current</span></td><td class="why">held without a research page (9): LLY, CCJ, GMEXICOB, HD, COST, WMT, ASTS, UBER, RKLB</td></tr><tr><td class="tab"><a href="../glossary.html">Glossary</a></td><td><span class="chip g">Current</span></td><td class="m">&ndash;</td><td class="m n"></td><td><span class="chip g">Current</span></td><td class="why">on cadence</td></tr><tr><td class="tab"><a href="../index.html">Dashboard</a></td><td><span class="chip g">Current</span></td><td class="m">2026-10-06</td><td class="m n">1</td><td><span class="chip g">Current</span></td><td class="why">home portfolio card, book as of 2026-10-06: 1 days old (SLA: amber after 4, red after 7)</td></tr><tr><td class="tab"><a href="../portfolio.html">Portfolio</a></td><td><span class="chip g">Current</span></td><td class="m">2026-10-06</td><td class="m n">1</td><td><span class="chip g">Current</span></td><td class="why">Performance as of 2026-10-06: 1 days old (SLA: amber after 4, red after 7)</td></tr><tr><td class="tab"><a href="../regime.html">Regime Tracker</a></td><td><span class="chip g">Current</span></td><td class="m">2026-10-06</td><td class="m n">1</td><td><span class="chip g">Current</span></td><td class="why">newest regime input 2026-10-06: 1 days old (SLA: amber after 5, red after 10)</td></tr><tr><td class="tab"><a href="../research.html">Research Notes</a></td><td><span class="chip g">Current</span></td><td class="m">2026-10-06</td><td class="m n">1</td><td><span class="chip g">Current</span></td><td class="why">newest content 2026-10-06: 1 days old (SLA: amber after 60, red after 120)</td></tr><tr><td class="tab"><a href="../stocks.html">Stock Research</a></td><td><span class="chip g">Current</span></td><td class="m">&ndash;</td><td class="m n"></td><td><span class="chip g">Current</span></td><td class="why">on cadence</td></tr><tr><td class="tab"><a href="../strategies.html">Strategies</a></td><td><span class="chip g">Current</span></td><td class="m">2026-10-06</td><td class="m n">1</td><td><span class="chip g">Current</span></td><td class="why">EMBER vs Static 50/30/20 live paper-track as of 2026-10-06: 1 days old (SLA: amber after 5, red after 10)</td></tr><tr><td class="tab">Redirect stubs</td><td><span class="chip g">Current</span></td><td class="m">&ndash;</td><td class="m n"></td><td><span class="chip g">Current</span></td><td class="why">on cadence</td></tr></tbody></table></div>
+<h2 style="margin-top:2rem">Regime changes</h2>
+<ul class="ev"><li>No regime change in the last 7 days.</li></ul>
+<p class="note">Service levels live in the content manifest and are audited daily before
+publication; a stale tab or a regime change also raises a desktop alert. This page is
+regenerated with the site.</p>
+</main></body></html>

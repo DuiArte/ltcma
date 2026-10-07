@@ -246,6 +246,11 @@ try {
     Run-Step '26_real_numbers_refresh.py' | Out-Null
     Run-Step '22_ai_copies.py'       | Out-Null
     Run-Step '24_backtests.py'       | Out-Null
+    # Content-age audit (2026-10-07): runs pipeline v2 layer 7 against what was JUST built and
+    # emits docs/internal/freshness.html (unlinked). Must follow every generator. Best-effort:
+    # host-only inputs; on failure the committed page stays and shows its own stamp. Layer 7
+    # raises Scripts\logs\WEBSITE_ALERT.txt (+ a toast on a regime change); the watchdog reads it.
+    Run-Step '34_site_freshness.py'  | Out-Null
     # techo de 2 decimales en todo lo visible (Carlos, 2026-09-24). Corre AL FINAL:
     # tiene que ver el HTML ya publicado por todos los generadores de arriba.
     Run-Step 'guard_decimals.py'     -LoadBearing | Out-Null
