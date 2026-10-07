@@ -1621,9 +1621,22 @@ f5.add_scatter(x=_pcd, y=_pc["twr_mxn"] * 100, mode="lines", name="This book · 
                line=dict(color=NAVY, width=1.5, dash="dot"),
                hovertemplate="%{y:.2f}%<extra>Book · MXN</extra>")
 _spytr = (_pc["spy"] / float(_pc["spy"].iloc[0]) - 1.0) * 100.0
-f5.add_scatter(x=_pcd, y=_spytr, mode="lines", name="S&P 500 (SPY, total return)",
+# SPY in pesos = the same dollar total return carried through the walk's OWN daily USD/MXN
+# (curve `fx`), start to each day -- what a peso investor in SPY actually got. Not
+# spy_tr x today's rate. Matches Portfolio_YTD_Real Q_Table "S&P TR MXN" by construction.
+_spyx = _pc["spy"].astype(float) * _pc["fx"].astype(float)
+_spytr_mxn = (_spyx / float(_spyx.iloc[0]) - 1.0) * 100.0
+SPY_TR_USD = float(_spytr.iloc[-1]) / 100.0
+SPY_TR_MXN = float(_spytr_mxn.iloc[-1]) / 100.0
+assert abs(SPY_TR_USD - PK["spy_tr"]) < 1e-9, "SPY TR from the curve disagrees with the sidecar"
+print(f"  S&P 500 TR: USD {SPY_TR_USD*100:+.2f}% | MXN {SPY_TR_MXN*100:+.2f}% "
+      f"(fx {float(_pc['fx'].iloc[0]):.4f} -> {float(_pc['fx'].iloc[-1]):.4f})")
+f5.add_scatter(x=_pcd, y=_spytr, mode="lines", name="S&P 500 · USD",
                line=dict(color=BENCH, width=1.8),
-               hovertemplate="%{y:.2f}%<extra>S&P 500</extra>")
+               hovertemplate="%{y:.2f}%<extra>S&P 500 · USD</extra>")
+f5.add_scatter(x=_pcd, y=_spytr_mxn, mode="lines", name="S&P 500 · MXN",
+               line=dict(color=BENCH, width=1.3, dash="dot"),
+               hovertemplate="%{y:.2f}%<extra>S&P 500 · MXN</extra>")
 f5.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
 f5.update_layout(title="Investment decisions vs the index (flows removed)",
                  yaxis_title="cumulative return (%)", hovermode="x unified", height=330,
@@ -1674,19 +1687,27 @@ def pkpct(usd, mxn, dec=2, unit="%"):
             f'data-usd="{usd*100:+.{dec}f}{unit}">{usd*100:+.{dec}f}{unit}</span>')
 
 
-# The S&P tiles do not toggle: SPY is a dollar index and its return is a dollar fact.
-# Restating it in pesos would silently fold the peso's move into the benchmark and make
-# the comparison dishonest in exactly the direction that flatters the book.
+def pktxt(usd, mxn):
+    """Static wording that has to name the currency the tile beside it is showing."""
+    return f'<span class="cval" data-mxn="{mxn}" data-usd="{usd}">{usd}</span>'
+
+
+# The S&P tiles toggle WITH the book (Carlos, 2026-10-06). Like for like is the only honest
+# pairing: book USD vs SPY USD, book MXN vs SPY MXN (SPY carried through the walk's daily
+# USD/MXN). The old "SPY is a dollar fact" rule left the MXN view comparing a peso TWRR
+# against a dollar index -- the mismatch it claimed to prevent, just mirrored.
 KPI_RET = [
     ("MWRR", pkpct(PK["mwrr_usd"], PK["mwrr_mxn"]),
      "money-weighted &mdash; what the capital earned"),
     ("TWRR", pkpct(PK["twrr_usd"], PK["twrr_mxn"]),
      "time-weighted &mdash; what the decisions earned"),
-    ("S&amp;P 500", _pct(PK["spy_tr"]), "index total return in USD, same window"),
-    # In the MXN view the TWRR tile reads the peso figure (+33%) beside "+12 pp", and the
-    # subtraction a reader does in their head comes out wrong. Name the operand.
-    ("vs index", f"{(PK['twrr_usd']-PK['spy_tr'])*100:+.2f} pp",
-     f"USD TWRR ({_pct(PK['twrr_usd'])}) less the index"),
+    ("S&amp;P 500", pkpct(SPY_TR_USD, SPY_TR_MXN),
+     pktxt("index total return in USD, same window",
+           "index total return in MXN (SPY &times; USD/MXN), same window")),
+    # Name the operand: a reader subtracts in their head, so the tile says which TWRR.
+    ("vs index", pkpct(PK["twrr_usd"] - SPY_TR_USD, PK["twrr_mxn"] - SPY_TR_MXN, unit=" pp"),
+     pktxt(f"USD TWRR ({_pct(PK['twrr_usd'])}) less the index in USD",
+           f"MXN TWRR ({_pct(PK['twrr_mxn'])}) less the index in MXN")),
     ("Capital in use", f"{PK['util_now']*100:.0f}%", "of peak, today"),
 ]
 kpi_money = "".join(
