@@ -1,5 +1,5 @@
 LTCMA SYSTEMATIC STRATEGIES — AI COPY (low-token)
-asof=06 Oct 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
+asof=07 Oct 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
 names public-safe (no mechanism exposed); rf USD=4.5% BARS=9%
 interactive: site lets reader re-base start date; values below = full window
 fields: code|name|bench|window|metrics...
@@ -10,5 +10,5 @@ BARS|Mexican Equity Rotation|vs IPC|2008-05..2026-04(204m)|CAGR=11.4%|vol=14.2%|
 EMBER 4-SLEEVE ENSEMBLE — LIVE PAPER-TRACK (Finding #38; NOT live capital)
 inception=2026-06-18; asof=2026-10-06; days=76; indexed-to-100; vs Static 50/30/20 reference basket
 weights inverse-vol: Anchor 33pct, Rates 42pct, Crypto 7pct, EM 18pct
-latest: ensemble=104.83 reference=100.24
+latest: ensemble=101.32 reference=100.24
 backtest 2017-26: Sharpe=1.79 OOS (+0.44 vs flagship), PBO=0.20; caveats: GFC untestable, benign window, crypto rho 0.48, ~69pct lift = rates sleeve

@@ -101,6 +101,27 @@ def set_units(weights, value, prices):
     return {t: value * w / prices[t] for t, w in weights.items()}
 
 
+def fetch_splits(tickers, since):
+    """{(ticker, 'YYYY-MM-DD'): ratio} for every split after `since`.
+
+    The closes are auto-adjusted, so a split restates the whole price history by its ratio.
+    Held units must be multiplied by the same ratio on the ex-date (2:1 -> x2, a 1:3 reverse
+    split -> x1/3) or the position's value jumps by it. Not handling this cost the public
+    paper-track a phantom +3.66% day: ETHA's 1:3 reverse split on 2026-10-06 tripled the ETHA
+    line while the market moved +0.17% (found 2026-10-07)."""
+    out = {}
+    for t in tickers:
+        s = yf.Ticker(t).splits
+        if s is None or len(s) == 0:
+            continue
+        s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+        for d, r in s.items():
+            k = d.strftime("%Y-%m-%d")
+            if k > since and r and float(r) > 0:
+                out[(t, k)] = float(r)
+    return out
+
+
 def main():
     try:
         closes = fetch_closes()
@@ -132,10 +153,39 @@ def main():
         }
         print(f"  seeded EMBER paper-track at {d0} (NAV=100)")
     else:
+        held = sorted(set(st["units"]["ember"]) | set(st["units"]["baseline"]))
+        try:
+            splits = fetch_splits(held, st["start_date"])
+        except Exception as e:                           # noqa: BLE001
+            # fail SAFE: a day marked without its split is wrong for good; a skipped day is
+            # only late (the content-age monitor flags the paper-track after 5 days)
+            print(f"  (warn: split feed failed: {e}); leaving prior state untouched")
+            return 0
+        applied = {tuple(x) for x in st.get("splits_applied", [])}
+        # Repair a split that landed on a day ALREADY stored with pre-split units. Exact only
+        # while no rebalance happened since (a rebalance re-derives units from a wrong NAV), so
+        # anything older stops the track loudly instead of guessing.
+        missed = sorted((k for k in splits if k not in applied
+                         and k[1] <= st["series"][-1]["date"]), key=lambda k: k[1])
+        if missed:
+            reb_day = next(r["date"] for r in st["series"]
+                           if r["date"][:7] == st["rebalance_month"])
+            if missed[0][1] < reb_day:
+                raise SystemExit(f"EMBER paper-track: split(s) {missed} predate the last rebalance "
+                                 f"({reb_day}); cannot repair exactly - rebuild by hand")
+            st["series"] = [r for r in st["series"] if r["date"] < missed[0][1]]
+            print(f"  repaired: split(s) {missed} were never applied; re-marking from {missed[0][1]}")
         last = st["series"][-1]["date"]
         new_dates = [d for d in dates if d > last]
         for d in new_dates:
             prices = {t: float(closes.loc[pd.Timestamp(d)][t]) for t in closes.columns}
+            for (t, k), r in sorted(splits.items()):
+                if k == d and (t, k) not in applied:
+                    for book in ("ember", "baseline"):
+                        if t in st["units"][book]:
+                            st["units"][book][t] *= r
+                    applied.add((t, k))
+                    print(f"  split applied: {t} x{r:.6g} on {d}")
             # monthly rebalance: on the first trading day of a new month, mark
             # NAV with the carried units (continuity), then reset to target wts.
             if d[:7] != st["rebalance_month"]:
@@ -152,6 +202,7 @@ def main():
             print(f"  appended {len(new_dates)} day(s): {new_dates[0]}..{new_dates[-1]}")
         else:
             print(f"  no new trading days since {last}")
+        st["splits_applied"] = sorted([list(k) for k in applied], key=lambda k: (k[1], k[0]))
 
     st["asof"] = dates[-1]
     st["weights"] = {"anchor": 33, "rates": 42, "crypto": 7, "em": 18}
