@@ -126,6 +126,7 @@ def load_catalog():
                 safe = copy.deepcopy(data)
                 for s in safe.get("strategies", []):
                     s.pop("paths", None)
+                safe = _redact_private(safe)       # free-text fields carried paths too (10-07)
                 os.makedirs(os.path.dirname(FALLBACK), exist_ok=True)
                 with open(FALLBACK, "w", encoding="utf-8") as out:
                     json.dump(safe, out, indent=2, ensure_ascii=False)
@@ -203,6 +204,34 @@ def _cap_decimals(html, max_dp=2):
 
 
 _RE = __import__("re")
+
+# 2026-10-07: both PUBLIC outputs of this script (the bt_*.html pages, rendered verbatim from
+# private REPORT.md files, and the committed catalog fallback) carried private material: an
+# absolute C:\Users\... path in the static-drift catalog entry, a SignalLib\... report path on
+# its page, and a personal audio file name on the CRT page. Redact paths and personal file
+# names at the source so a future report cannot reintroduce them. Prose and numbers untouched.
+_PRIVATE = [
+    (_RE.compile(r"[A-Za-z]:[\\/]+(?:Users|users)[\\/][^\s<>\"'`|,;)]+"), "[private path]"),
+    (_RE.compile(r"(?:/home/[\w.-]+|/mnt/c/Users/[\w.-]+|~/LTCMA)[^\s<>\"'`|,;)]*"), "[private path]"),
+    (_RE.compile(r"\b(?:SignalLib|Trading_Index|real_numbers|GBM_Account_Archive|Account_Archive)"
+                 r"[\\/]+[^\s<>\"'`|,;)]+"), "[private path]"),
+    (_RE.compile(r"[\w-][\w.-]*\.(?:m4a|mp3|wav|opus|aac|ogg)\b", _RE.I), "[audio file]"),
+]
+
+
+def _redact_private(obj):
+    """Redact private paths / personal file names in a string, or recursively in a JSON-like object."""
+    if isinstance(obj, str):
+        for rx, rep in _PRIVATE:
+            obj = rx.sub(rep, obj)
+        return obj
+    if isinstance(obj, list):
+        return [_redact_private(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _redact_private(v) for k, v in obj.items()}
+    return obj
+
+
 # Status emoji in the research tables (the site carries none) -> plain glyphs.
 _EMOJI = {"✅": "✓", "❌": "✗", "⚠️": "!", "⚠": "!",
           "\U0001f7e2": "", "\U0001f7e1": "", "\U0001f534": ""}
@@ -403,7 +432,7 @@ def render_report_page(strat):
     except Exception:
         raw = open(md_path, encoding="utf-8").read()
         html = "<pre>" + esc(raw) + "</pre>"
-    html = _cap_decimals(html)
+    html = _cap_decimals(_redact_private(html))
     oos, has_chart = replay_section(strat)
     html = _public_report(html, strat["name"], after_head=oos)
     body = (f'<main class="container"><article class="tile report">'
