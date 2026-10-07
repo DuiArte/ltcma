@@ -41,6 +41,7 @@ TABS = {  # surface id -> (tab name on the site, page)
     "research": ("Research Notes", "research.html"), "stocks": ("Stock Research", "stocks.html"),
     "stock_pages": ("Stock pages", "stocks.html"), "regime": ("Regime Tracker", "regime.html"),
     "projects": ("Projects", "projects.html"), "glossary": ("Glossary", "glossary.html"),
+    "ltcma-consensus": ("Market Intel", "ltcma-consensus.html"),
     "stubs": ("Redirect stubs", None),
 }
 GRADE_CLS = {"GREEN": "g", "AMBER": "a", "RED": "r", "INFO": "i"}

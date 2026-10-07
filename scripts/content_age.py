@@ -170,11 +170,12 @@ def _held_tickers(repo):
 
 
 def ex_stock_pages(repo, rule, today):
-    """Per-name research pages: each page's own price date, plus the portfolio linkage.
+    """Per-name research pages: each page's own price date.
     The analysis on these pages is recomputed from Yahoo on every build (price, consensus,
     valuation), so there is no hand-written thesis to go stale; the date that can go stale is the
-    price date the page prints. Linkage is REPORTED, never acted on: the page set is a research
-    watchlist (19_stock_analysis.DEFAULT); adding or archiving names is Carlos's call."""
+    price date the page prints. The page set is a research watchlist (19_stock_analysis.DEFAULT),
+    deliberately independent of the portfolio -- Carlos, 2026-10-07: "los holdings son algo
+    aparte". Portfolio linkage is graded only if a rule opts in with `linkage: true`."""
     a, r = rule.get("amber_days"), rule.get("red_days")
     pages = sorted(glob.glob(os.path.join(repo, "docs", "stock_*.html")))
     per, out, g = {}, [], GREEN
@@ -192,7 +193,7 @@ def ex_stock_pages(repo, rule, today):
     if not stale and per:
         out.append([GREEN, "%d pages, oldest price date %s" % (len(per), asof)])
     facts = {"pages": sorted(per)}
-    held = _held_tickers(repo)
+    held = _held_tickers(repo) if rule.get("linkage") else None
     if held is not None:
         funds = {x.upper() for x in rule.get("not_single_stocks", [])}
         single = [t for t in held if t not in funds]
