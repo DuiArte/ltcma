@@ -85,11 +85,14 @@ def main():
         if r["id"] in debts:
             shown.append("hand-written: owed a manual resync")
         link = f'<a href="../{page}">{esc(name)}</a>' if page else esc(name)
+        # Status = layer 7's overall grade (render + content + manual debts); Content = the
+        # content-age grade alone. One column per question - a report that rendered fine but
+        # owes a resync must not read "content stale" or "build stale".
         rows.append(
             f'<tr><td class="tab">{link}</td><td>{chip(r["grade"])}</td>'
-            f'<td class="m">{esc(c.get("content_asof") or "&ndash;") if c.get("content_asof") else "&ndash;"}</td>'
+            f'<td>{chip(c["grade"]) if c else "&ndash;"}</td>'
+            f'<td class="m">{esc(c["content_asof"]) if c.get("content_asof") else "&ndash;"}</td>'
             f'<td class="m n">{"" if c.get("age_days") is None else c["age_days"]}</td>'
-            f'<td>{chip(r.get("render_grade", r["grade"]))}</td>'
             f'<td class="why">{"<br>".join(esc(x) for x in shown[:4])}</td></tr>')
     n = {g: sum(1 for r in st["surfaces"] if r["grade"] == g) for g in ("GREEN", "AMBER", "RED")}
     ev = [e for e in (st.get("events") or [])]
@@ -131,11 +134,12 @@ ul.ev{{font-size:13.5px;color:#333;line-height:1.7;padding-left:18px}}
 <p class="note">Every tab is re-rendered each weekday, so a fresh &ldquo;As of&rdquo; stamp
 proves nothing about what a page says. <b>Content</b> grades the newest dated content on
 each page against its own service level: a research batch, a project&rsquo;s last push, the
-end of a backtest, the newest regime input. <b>Build</b> grades whether the page was
-regenerated on schedule. <i>Behind</i> needs attention; <i>Stale</i> needs action.</p>
+end of a backtest, the newest regime input. <b>Status</b> adds whether the page was
+regenerated on schedule and any hand-written update it is owed. <i>Behind</i> needs
+attention; <i>Stale</i> needs action.</p>
 <div class="sum"><div><b>{n['GREEN']}</b>current</div><div><b>{n['AMBER']}</b>behind</div><div><b>{n['RED']}</b>stale</div></div>
-<div class="tbl"><table class="fr"><thead><tr><th>Tab</th><th>Content</th><th>Newest content</th>
-<th style="text-align:right">Age (days)</th><th>Build</th><th>What it says</th></tr></thead>
+<div class="tbl"><table class="fr"><thead><tr><th>Tab</th><th>Status</th><th>Content</th>
+<th>Newest content</th><th style="text-align:right">Age (days)</th><th>What it says</th></tr></thead>
 <tbody>{''.join(rows)}</tbody></table></div>
 <h2 style="margin-top:2rem">Regime changes</h2>
 <ul class="ev">{ev_html}</ul>

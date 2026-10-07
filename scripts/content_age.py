@@ -88,8 +88,8 @@ def _result(asof, today, grade, findings, facts=None):
 
 
 def _sla_text(age, amber, red):
-    return "%s days old (SLA: amber after %s, red after %s)" % (
-        "?" if age is None else age, amber, red)
+    return "%s old (SLA: amber after %s, red after %s days)" % (
+        "age unknown" if age is None else ("1 day" if age == 1 else "%d days" % age), amber, red)
 
 
 # ---------------------------------------------------------------- extractors
@@ -280,7 +280,7 @@ def ex_github_projects(repo, rule, today):
         gg = _grade_age(_age(today, pushed), a, r)
         if archived:
             gg = worst(gg, AMBER)
-        out.append([gg, "%s last updated %s (%s days)%s" % (
+        out.append([gg, "%s last pushed %s (%s days ago)%s" % (
             handle, pushed or "?", _age(today, pushed), " - archived on GitHub" if archived else "")])
         g = worst(g, gg)
     if not cards:
