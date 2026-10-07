@@ -5,10 +5,12 @@ Negative results are the expensive part of quantitative research; publishing
 them is the point. Every card body is written public-safe (statistics stay —
 they are scale-invariant; tickers, parameters, thresholds and paths do not
 appear) and additionally routed through the _bt_redact backstop.
-Static content: update the FINDINGS / BATCHES blocks when STRATEGY_LOG gains
-a new finding, then re-run (the daily refresh also re-runs this).
+FINDINGS / BATCHES are hand-curated (update them when STRATEGY_LOG gains a new
+finding); the funnel tiles are DERIVED from them, and the automated-pipeline row is
+read from pipeline v2's verdict files on every build.
 """
 import os
+import re
 import pandas as pd
 from glossary import NAV, _bt_redact
 
@@ -16,14 +18,14 @@ from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 from design_system import CSS_LINKS
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 
-# ── the funnel (headline numbers — keep in sync with STRATEGY_LOG tally) ─────
-FUNNEL = [
-    ("14", "discovery batches — every one negative"),
-    ("~181", "signals & strategies tested"),
-    ("1", "durable feature-level edge found"),
-    ("3", "strategies that cleared the survival bar"),
-    ("18", "load-bearing findings published"),
-]
+# ── the funnel is DERIVED, never typed (Carlos, 2026-10-07) ────────────────
+# Until 2026-10-07 these five tiles were literals "kept in sync with STRATEGY_LOG" by hand;
+# the "~181 signals" tile could not be reproduced from anything on the page (the batch
+# table summed to 146). Every tile now counts something a reader can audit below it.
+# The single exception is DURABLE_EDGES: "durable" is a judgement, not a count -- it is
+# the 5-day mean-reversion feature named in "What survives" (#9, #10). Change it only
+# with a new Finding.
+DURABLE_EDGES = 1
 
 # ── the batch record (axis tested · trials · outcome) ────────────────────────
 BATCHES = [
@@ -188,13 +190,92 @@ FINDINGS = [
 TAG_LABEL = {"closed": "Axis closed", "method": "Protocol rule", "positive": "Positive result"}
 TAG_COLOR = {"closed": "#7c2d12", "method": "#0a2540", "positive": "#0a5d3a"}
 
+# ── the automated pipeline's record, read from its own per-idea verdicts ─────
+# Strategy pipeline v2 (Scripts\pipeline_v2, since 2026-09-24) writes one JSON verdict per
+# idea under Trading_Index\pipeline\backtests. This row is COMPUTED from those files on
+# every build, so the page can never again sit on a June batch while the pipeline works:
+# when it screens nothing new, the row's date stops moving and the content-age monitor
+# (pipeline v2 layer 7, content_rule "research") flags it. Counts only -- titles, tickers
+# and parameters never leave the private tree.
+def _pipeline_row():
+    import glob, json
+    from paths import cuser
+    rows = []
+    for f in glob.glob(str(cuser("Trading_Index", "pipeline", "backtests", "*.json"))):
+        try:
+            d = json.load(open(f, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if d.get("written_at"):
+            rows.append(d)
+    if not rows:
+        return None
+    first = min(r["written_at"] for r in rows)[:10]
+    last = max(r["written_at"] for r in rows)[:10]
+    full = [r for r in rows if not r.get("gate")]          # reached a full backtest
+    rej = sum(1 for r in rows if r.get("gate") == "gate0-prescreen")
+    promoted = sum(1 for r in full if str(r.get("verdict", "")).upper() in
+                   ("PROMOTE", "PASS", "PROMOTED", "PAPER-TRACK"))
+    f0, f1 = pd.Timestamp(first), pd.Timestamp(last)
+    span = (f1.strftime("%b %Y") if f0.to_period("M") == f1.to_period("M")
+            else f"{f0.strftime('%b')}&ndash;{f1.strftime('%b %Y')}")
+    return dict(code="auto", date=span, last=last, full=len(full), screened=len(rows),
+                promoted=promoted,
+                axis=(f"Automated pipeline &mdash; {len(rows)} published ideas screened "
+                      f"({rej} rejected before any compute, {len(rows)-rej-len(full)} "
+                      f"mapped to an already-closed family or blocked by data)"),
+                trials=str(len(full)),
+                outcome=(f"{promoted}/{len(full)} &mdash; no fully backtested idea beat its "
+                         f"own best-of-N null. Updates itself from the pipeline's verdicts; "
+                         f"last verdict {f1.strftime('%d %b %Y')}."))
+
+
+PIPE = None
+try:
+    PIPE = _pipeline_row()
+except Exception as _e:                                    # host-only source; never fatal
+    print(f"  research: pipeline row skipped ({_e})")
+
+
+def _n(t):
+    """Leading integer of a trials cell: "~20" -> 20, "4 pilots" -> 4, "—" -> 0."""
+    m = re.match(r"\s*~?(\d+)", str(t))
+    return int(m.group(1)) if m else 0
+
+
+def _deployable():
+    import json
+    from paths import DATA
+    S = json.load(open(DATA / "backtests_strategies.json", encoding="utf-8"))["strategies"]
+    return sum(1 for x in S if str(x.get("verdict", "")).startswith("Deployable"))
+
+
+N_BATCHES = len(BATCHES) + (1 if PIPE else 0)
+N_TRIALS = sum(_n(b[3]) for b in BATCHES) + (PIPE["full"] if PIPE else 0)
+N_FINDINGS = len(FINDINGS)
+N_STRAT = _deployable()
+_WORDS = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
+FUNNEL = [
+    (str(N_BATCHES), "discovery batches &mdash; every one negative"),
+    (str(N_TRIALS), "signals &amp; strategies tested, counted from the batch record"),
+    (str(DURABLE_EDGES), "durable feature-level edge found"),
+    (str(N_STRAT), "strategies that cleared the survival bar"),
+    (str(N_FINDINGS), "load-bearing findings published"),
+]
+# newest content on the page: the pipeline's last verdict, else the last manual batch month
+_last_manual = pd.Timestamp("1 " + BATCHES[-1][1]) + pd.offsets.MonthEnd(0)
+CONTENT_ASOF = max(filter(None, [PIPE and pd.Timestamp(PIPE["last"]), _last_manual]))
+print(f"  research: {N_BATCHES} batches | {N_TRIALS} trials | {N_FINDINGS} findings | "
+      f"{N_STRAT} deployable | content as of {CONTENT_ASOF.date()}")
+
 # ── render ───────────────────────────────────────────────────────────────────
 funnel_html = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div></div>'
     for v, k in FUNNEL)
 
 batch_rows = ""
-for code, date, axis, trials, outcome in BATCHES:
+for code, date, axis, trials, outcome in BATCHES + ([(PIPE["code"], PIPE["date"], PIPE["axis"],
+                                                     PIPE["trials"], PIPE["outcome"])] if PIPE else []):
     batch_rows += (f'<tr><td>{code}</td><td>{date}</td>'
                    f'<td class="ax">{_bt_redact(axis)}</td><td>{trials}</td>'
                    f'<td class="neg" style="text-align:center">0</td>'
@@ -212,7 +293,7 @@ for num, tag, date, title, body in FINDINGS:
         f'</article>')
 
 PILLS = ('<div class="pills" data-group="findings">'
-         '<button class="pill on" data-f="all">All 18</button>'
+         f'<button class="pill on" data-f="all">All {N_FINDINGS}</button>'
          '<button class="pill" data-f="closed">Axes closed</button>'
          '<button class="pill" data-f="method">Protocol rules</button>'
          '<button class="pill" data-f="positive">Positive results</button>'
@@ -267,6 +348,7 @@ document.querySelectorAll('.pills').forEach(function(grp){
 
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ltcma-content-asof" content="{CONTENT_ASOF.date()}">
 <title>Carlos Duarte — Research Notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{CSS}</style></head>
@@ -276,16 +358,16 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <section class="hero"><div class="container">
 <h1>Research Notes — the full record</h1>
 <p class="lede">What was tested, what failed, and the little that survived.
-Roughly 181 signals and strategies across 14 discovery batches have produced
-exactly one durable feature-level edge and three deployable strategies — and
+{N_TRIALS} signals and strategies across {N_BATCHES} discovery batches have produced
+exactly {_WORDS.get(DURABLE_EDGES, DURABLE_EDGES).lower()} durable feature-level edge and {_WORDS.get(N_STRAT, N_STRAT).lower()} deployable strategies — and
 every batch since the first has promoted nothing. That is the honest base rate
 of systematic-edge discovery, and hiding it would misstate how hard this is.
-The 18 load-bearing findings below are the working capital of the program.</p>
+The {N_FINDINGS} load-bearing findings below are the working capital of the program.</p>
 <p class="asof">As of {ASOF} &middot; negative results published by design</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#funnel">The funnel</a><a href="#batches">Batch record</a>
-<a href="#findings">The 18 findings</a><a href="#survives">What survives</a></div>
+<a href="#findings">The {N_FINDINGS} findings</a><a href="#survives">What survives</a></div>
 
 <section class="block" id="funnel"><h2>The discovery funnel</h2>
 <p class="note">Most ideas die. The protocol is built so they die in research,
@@ -294,7 +376,7 @@ Monte Carlo &rarr; held-out window &rarr; benchmark gate &rarr; sub-10% drawdown
 What the funnel has produced so far:</p>
 <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">{funnel_html}</div></section>
 
-<section class="block" id="batches"><h2>The batch record — 14 consecutive negatives</h2>
+<section class="block" id="batches"><h2>The batch record — {N_BATCHES} consecutive negatives</h2>
 <p class="note">Each batch is a pre-registered set of trials on one axis, run
 under the full protocol with pessimistic retail costs. A batch "promotes" a
 signal only if it clears every bar. None has. Each negative closed an axis or
@@ -305,7 +387,7 @@ hardened a rule — the lessons compound even when the P&amp;L column doesn't.</
 <th>Trials</th><th>Promoted</th><th style="text-align:left">Outcome</th></tr></thead>
 <tbody>{batch_rows}</tbody></table></div></section>
 
-<section class="block" id="findings"><h2>The 18 findings</h2>
+<section class="block" id="findings"><h2>The {N_FINDINGS} findings</h2>
 <p class="note">Written so a reader (or the next research agent) can act on them
 without re-deriving anything. <span style="color:#7c2d12;font-weight:600">Red</span>
 = an axis tested and closed &middot; <span style="color:#0a2540;font-weight:600">blue</span>
@@ -317,8 +399,8 @@ mechanics stay internal.</p>
 <div class="btgrid">{cards}</div></section>
 
 <section class="block" id="survives"><h2>What survives</h2>
-<p class="note">After 14 batches, the program's honest position:</p>
-<div class="survive"><b>Three deployable strategies</b> cleared the full survival
+<p class="note">After {N_BATCHES} batches, the program's honest position:</p>
+<div class="survive"><b>{_WORDS.get(N_STRAT, N_STRAT)} deployable strategies</b> cleared the full survival
 protocol — led by the flagship <b>Static Drift-Weight 50/30/20</b> (Sharpe 1.33,
 GFC-tested, sub-10% drawdown with headroom). Curves, drawdowns and the complete
 indicator set are on the <a href="strategies.html">Strategies</a> page, alongside
@@ -351,4 +433,4 @@ for num, tag, date, title, body in FINDINGS:
 ai.append("batches: " + "; ".join(f"{c}={t} trials,0 promoted" for c, _, _, t, _ in BATCHES))
 open(f"{DOCS}/research.ai.txt", "w", encoding="utf-8").write("\n".join(ai) + "\n")
 
-print(f"research.html built ({len(FINDINGS)} findings, {len(BATCHES)} batches) + research.ai.txt")
+print(f"research.html built ({N_FINDINGS} findings, {N_BATCHES} batches) + research.ai.txt")
