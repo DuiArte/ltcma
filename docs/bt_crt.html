@@ -2,9 +2,27 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Candle Range Theory (CRT) + Regime Filter — Backtest Report</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"></head>
+<link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"><style>
+.oos{margin:.4rem 0 2.6rem;padding-bottom:1.4rem;border-bottom:1px solid var(--line)}
+.oos>h2{margin-top:1.4rem}
+.oos-tag{display:inline-block;font:500 10.5px 'Inter',sans-serif;letter-spacing:.06em;
+text-transform:uppercase;color:#fff;background:#0a2540;padding:3px 9px;margin:0 0 .2rem}
+.oos-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:#e5e5e5;
+border:1px solid #e5e5e5;margin:1rem 0}
+.oos-stats>div{min-width:0;background:#fff;padding:10px 8px;text-align:center}
+.oos-v{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;
+font-size:16px;font-weight:500;color:#111;overflow-wrap:anywhere}
+.oos-v.neg{color:#7c2d12}
+.oos-k{font-size:9.5px;color:#888;margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.report .oos-foot{font-size:12.5px;color:#888;line-height:1.55}
+.oos .tile.chart{padding:8px 8px 4px;margin:0 0 .4rem}
+.oos-frozen{background:rgba(10,37,64,.045);border:1px solid #e5e5e5;border-left:3px solid #0a2540;
+padding:14px 18px;margin:.4rem 0 2.2rem}
+.report .oos-frozen p{margin:.2rem 0;font-size:14px}
+@media(max-width:560px){.oos-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="street-ltcma.html">Street LTCMA</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
 // sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
 if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
@@ -152,7 +170,7 @@ var tid;function later(){clearTimeout(tid);tid=setTimeout(tune,160);}
 window.addEventListener('resize',later);window.addEventListener('orientationchange',later);
 })();</script>
 </div></header>
-<main class="container"><article class="tile report"><a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a><h1>Candle Range Theory (CRT) + Regime Filter</h1><p class="bt-src" style="color:#888;font-size:13px;margin:-.4rem 0 1.2rem">Research report: CRT (Candle Range Theory) Backtest — Report</p>
+<main class="container"><article class="tile report"><a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a><h1>Candle Range Theory (CRT) + Regime Filter</h1><p class="bt-src" style="color:#888;font-size:13px;margin:-.4rem 0 1.2rem">Research report: CRT (Candle Range Theory) Backtest — Report</p><div class="oos-frozen" id="oos"><span class="oos-tag">Frozen</span><p><b>No comparable data; not carried forward.</b> The result was measured on an intraday broker data feed that is closed by design, and the rules in use now trade hourly, four-hour and daily bars only, so there is no comparable data to replay it on. Broader later re-tests read its headline figures as a product of the 2016&ndash;2026 gold rally rather than a durable edge. The report stays as a research record; it is not extended.</p></div>
 <p><strong>Date:</strong> 2026-05-26
 <strong>Author:</strong> Claude (Dispatch agent)
 <strong>For:</strong> the operator Duarte
