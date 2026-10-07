@@ -4,14 +4,14 @@
  "month": "2026-10",
  "first_official": "2026-11-01",
  "summary": [
-  "Equity medians: US large cap 6.3 (n=7) and small cap 6.0 (n=6) trail global 6.8 (n=5) and EM 8.1 (n=6); private equity tops every row at 9.7 (n=5).",
-  "Fixed-income medians: cash 3.6 (n=6), intermediate Treasuries 4.8 (n=7), US aggregate 4.6 (n=6); credit steps up: IG 5.2 (n=5), high yield 5.5 (n=7), EM USD sovereigns 5.7 (n=8), private credit 6.6 (n=4).",
-  "Widest disagreements, ranked by IQR among rows with n≥4: commodities 225bp (n=7), US small cap 188bp (n=6), private equity 155bp (n=5), private credit 143bp (n=4), EM equity 123bp (n=6).",
-  "On rows with n≥4, this site's LTCMA departs most on commodities, 3.5 vs a 5.2 median (170bp below, n=7, near State Street and Invesco), and US TIPS, 4.5 vs 3.8 (72bp above, n=4).",
-  "The largest gap overall, UK equity, rests on two publishers: this site's LTCMA 7.0 vs 9.0 (191bp below); gold, 3.3 vs 1.6 (170bp above), rests on one.",
-  "Fed-easing calls for this year (Goldman Sachs AM's possible two cuts, UBS GWM CIO, Mercer) clash with markets: zero cuts at 95.7% (Kalshi) and 95.8% (Polymarket); exactly two at 1.3% and 1.0% respectively.",
-  "Next FOMC: hold at 83.0% (Kalshi) and 82.5% (Polymarket), a 25bp hike at 16.5% on both venues, consistent with Vanguard's higher-for-longer and Invesco's possibly hawkish path. BlackRock Investment Institute argues markets overprice hikes.",
-  "US recession odds of 3.5% for a start this year (Kalshi) and 6.5% by year-end (Polymarket) sit closer to the expansion regimes most managers describe than to PIMCO's late-cycle or Lazard's fragile-growth readings."
+  "Equity medians (geometric, nominal USD): US large cap 6.3% (n=7), US small cap 6.0% (n=6), global equity 6.8% (n=5), EM equity 8.1% (n=6), the last with a 3.0-8.8 range.",
+  "Bond medians: US cash 3.6% (n=6), US aggregate 4.6% (n=6), intermediate Treasuries 4.8% (n=7), IG corporate 5.2% (n=5), high yield 5.5% (n=7), EM USD sovereign 5.7% (n=8); IQRs 56-90bp.",
+  "Alternatives: private equity's 9.7% median (n=5) is the highest of any row; private credit 6.6% (n=4), hedge funds 5.6% (n=4), commodities 5.2% (n=7).",
+  "Widest disagreements, ranked by IQR (rows with at least four publishers): commodities 225bp (n=7), US small cap 188bp (n=6), private equity 155bp (n=5), private credit 143bp (n=4), EM equity 123bp (n=6).",
+  "This site's LTCMA differs most on UK equity (7.0% vs 9.0%, two publishers only), commodities (3.5% vs 5.2% median, n=7), gold (3.3% vs one publisher's 1.6%), US TIPS (4.5% vs 3.8%, n=4).",
+  "Prediction markets price zero Fed cuts in 2026 at 95.7% (Kalshi) and 95.8% (Polymarket); two cuts, flagged by Goldman Sachs AM, trade at 1.3% and 1.0%; UBS GWM CIO and Mercer expected easing.",
+  "Next FOMC: hold priced at 83.0% (Kalshi) and 82.5% (Polymarket), a 25bp hike at 16.5% on both, while BlackRock Investment Institute argues markets overprice Fed hikes.",
+  "US recession in 2026 priced at 3.5% (Kalshi) and 6.5% (Polymarket; contract terms differ), siding with the resilient-growth calls of Vanguard, Invesco and Mercer over Lazard's doubts on US resilience."
  ],
  "publishers": [
   {
@@ -398,6 +398,8 @@
    [
     "US_REITs",
     "Global_REITs_exUS",
+    "Global_REITs",
+    "Private_RE",
     "Infrastructure",
     "Commodities",
     "Gold",
@@ -454,7 +456,9 @@
   "EUR": "Euro",
   "JPY": "Japanese yen",
   "EM_FX": "EM currencies",
-  "Oil": "Oil"
+  "Oil": "Oil",
+  "Global_REITs": "Global REITs (incl. US)",
+  "Private_RE": "Private real estate"
  },
  "matrix": {
   "Global_Eq": {
@@ -1800,6 +1804,54 @@
     "why": "Attractive yield relative to volatility and improving fundamentals; also a highest-conviction expression of inflation and scarcity themes."
    }
   },
+  "Global_REITs": {
+   "A01": {
+    "v": 4.398,
+    "ccy": "LOCAL",
+    "hz": 10,
+    "basis": "nominal",
+    "comp": "geometric (converted)",
+    "flags": [
+     "arithmetic -> geometric (sigma 17.9%)",
+     "global listed REITs incl. US"
+    ],
+    "page": 4,
+    "label": "Global Real Estate (REITs) - FTSE EPRA/NAREIT Developed - 10+ years",
+    "dir": null,
+    "in_stats": false,
+    "why": "REIT returns between bonds and stocks; dividend yield plus capital appreciation."
+   },
+   "A10": {
+    "v": 7.75,
+    "ccy": "USD",
+    "hz": 5,
+    "basis": "nominal",
+    "comp": "geometric",
+    "flags": [
+     "global listed REITs incl. US"
+    ],
+    "page": 3,
+    "label": "Listed real estate",
+    "dir": "up",
+    "in_stats": true,
+    "why": "Listed real estate for a USD investor, region unspecified so no exact key; strongest REIT outlook since 2014."
+   },
+   "A33": {
+    "v": 6.7,
+    "ccy": "USD",
+    "hz": 5,
+    "basis": "nominal",
+    "comp": "geometric",
+    "flags": [
+     "global listed REITs incl. US"
+    ],
+    "page": 5,
+    "label": "REITs",
+    "dir": "up",
+    "in_stats": true,
+    "why": "FTSE EPRA/NAREIT Developed covers global developed REITs including US, so neither REIT key fits; no specific commentary."
+   }
+  },
   "Commodities": {
    "A01": {
     "v": 3.155,
@@ -2130,6 +2182,55 @@
     "conv": "medium",
     "view_only": true,
     "restricted": true
+   }
+  },
+  "Private_RE": {
+   "A01": {
+    "v": 7.395,
+    "ccy": "USD",
+    "hz": 10,
+    "basis": "nominal",
+    "comp": "geometric (converted)",
+    "flags": [
+     "arithmetic -> geometric (sigma 11%)",
+     "private real estate"
+    ],
+    "page": 4,
+    "label": "Direct Real Estate—US - Burgiss Real Estate - 10+ years",
+    "dir": "up",
+    "in_stats": true,
+    "why": "Private US real estate funds forecast net of fees."
+   },
+   "A07": {
+    "v": 5.5,
+    "ccy": "USD",
+    "hz": 10,
+    "basis": "real",
+    "comp": "geometric",
+    "flags": [
+     "real->nominal (publisher inflation)",
+     "private real estate"
+    ],
+    "page": 15,
+    "label": "U.S. Real Estate (private, unlevered)",
+    "dir": "up",
+    "in_stats": true,
+    "why": "Unlevered US direct real estate (NCREIF): 4.6% NOI yield less capex, zero real growth; data as of Sep 2025."
+   },
+   "A33": {
+    "v": 8.9,
+    "ccy": "USD",
+    "hz": 5,
+    "basis": "nominal",
+    "comp": "geometric",
+    "flags": [
+     "private real estate"
+    ],
+    "page": 5,
+    "label": "Global Private Real Estate",
+    "dir": "up",
+    "in_stats": true,
+    "why": "NCREIF Property Index (no matching key); illiquidity premia support returns; alternatives expectations slightly lower year over year."
    }
   },
   "US_Cash_TBill": {
@@ -3290,6 +3391,36 @@
     "down": 0,
     "flat": 0
    }
+  },
+  "Global_REITs": {
+   "n": 2,
+   "median": 7.225,
+   "mean": 7.225,
+   "q25": 6.9625,
+   "q75": 7.4875,
+   "iqr_bp": 53,
+   "min": 6.7,
+   "max": 7.75,
+   "tally": {
+    "up": 0,
+    "down": 0,
+    "flat": 0
+   }
+  },
+  "Private_RE": {
+   "n": 3,
+   "median": 7.395,
+   "mean": 7.265,
+   "q25": 6.4475,
+   "q75": 8.1475,
+   "iqr_bp": 170,
+   "min": 5.5,
+   "max": 8.9,
+   "tally": {
+    "up": 0,
+    "down": 0,
+    "flat": 0
+   }
   }
  },
  "divergence_rule": "public IQR >= 150bp with n >= 4, or >= 1 overweight and >= 1 underweight stance",
@@ -3305,31 +3436,31 @@
     "down": 3,
     "flat": 0
    },
-   "headline": "US large cap: AI-led earnings growth versus valuation drag splits forecasts from 4.9 to 7.6 around a 6.3 median.",
+   "headline": "US large cap: AI-driven earnings optimism versus valuation drag; seven estimates span 4.9-7.6 around a 6.3 median.",
    "bull": {
     "publishers": [
      "BNY Investments",
-     "Fidelity International",
      "T. Rowe Price",
+     "Fidelity International",
      "Goldman Sachs AM",
      "BlackRock Investment Institute"
     ],
-    "argument": "BNY Investments 7.6, Fidelity International 6.4 and T. Rowe Price 6.4 (shorter horizon) sit above the median. BNY and Fidelity build in AI-boosted earnings or revenue growth, BNY with constant valuations, Fidelity net of a margin drag. Goldman Sachs AM is overweight on mega-cap earnings power and AI capex; BlackRock Investment Institute on AI-driven earnings outpacing higher rate expectations.",
-    "data_used": "Building blocks of income, inflation, real GDP and AI-boosted earnings or revenue growth, with constant multiples at BNY Investments; managers' read of mega-cap earnings momentum and AI capex."
+    "argument": "BNY Investments (7.6) assumes AI lifts earnings with valuations held flat; Fidelity International (6.4) counts on AI-aided revenue growth and payouts, net of a margin drag. Goldman Sachs AM and BlackRock Investment Institute, overweight, cite AI-driven earnings strength. T. Rowe Price (6.4) sits barely above the median, still citing rich valuations.",
+    "data_used": "Income, inflation and real-growth building blocks with an AI uplift to earnings; no valuation mean-reversion (BNY Investments); revenue growth, dividends, buybacks and margin normalization (Fidelity International)."
    },
    "bear": {
     "publishers": [
-     "Invesco",
-     "Vanguard",
      "State Street",
+     "Vanguard",
+     "Invesco",
      "PIMCO",
      "Lazard",
      "Amundi"
     ],
-    "argument": "Invesco 4.9, Vanguard 5.1 and State Street 5.5 sit below the median: elevated starting multiples impose a valuation drag that offsets earnings growth and shareholder yield. PIMCO sees little US equity risk premium and a better Sharpe ratio in bonds, without calling a correction. Lazard expects rotation away from US equities and doubts US resilience; Amundi is underweight.",
-    "data_used": "Starting multiples and assumed mean reversion, equity risk premium versus bond yields, prospective Sharpe ratios, dividend-plus-earnings-growth building blocks, and doubts over US growth resilience."
+    "argument": "Invesco (4.9) lets a steep multiple-compression drag offset real earnings growth and shareholder yield; Vanguard (5.1) says higher valuations cut returns; State Street (5.5) tempers its building blocks for valuation. PIMCO, underweight, sees almost no equity risk premium and a better bond Sharpe ratio; Lazard expects rotation away from US equities; Amundi is underweight.",
+    "data_used": "Starting multiples with assumed valuation mean-reversion, layered on dividend or shareholder yield, real earnings growth and inflation; equity risk premium versus bond yields (PIMCO)."
    },
-   "what_to_watch": "Realized index EPS growth versus forward P/E: AI-driven profit growth without de-rating would vindicate the higher forecasts; multiple compression or margins reverting to equilibrium, the lower ones."
+   "what_to_watch": "Whether AI-linked mega-cap earnings growth and margins hold up enough to sustain current multiples; P/E compression without matching earnings gains would support the lower-return camp."
   },
   {
    "asset": "US_SmallCap",
@@ -3342,27 +3473,27 @@
     "down": 0,
     "flat": 0
    },
-   "headline": "US small cap: widest equity IQR (188bp); rate-cut and earnings-acceleration case versus post-rally valuations and weak long-run growth.",
+   "headline": "US small cap: second-widest IQR of any row (188bp); valuation-anchored optimists versus rich-after-rally and weak-earnings views.",
    "bull": {
     "publishers": [
-     "BNY Investments",
      "AQR",
+     "BNY Investments",
      "T. Rowe Price",
      "Goldman Sachs AM"
     ],
-    "argument": "BNY Investments 7.5, AQR 7.4 and T. Rowe Price 6.3 (shorter horizon) sit above the median, although BNY's factor model assigns only a weak size premium because firms stay private longer. T. Rowe Price selectively upgraded small caps. Goldman Sachs AM is overweight on attractive valuations, expected rate cuts, accelerating earnings and reviving dealmaking.",
-    "data_used": "Factor-model and real-return-plus-inflation estimates (BNY Investments, AQR), valuation anchoring (T. Rowe Price), and Goldman Sachs AM's read of valuations, expected Fed cuts and earnings momentum."
+    "argument": "AQR (7.4) adds expected inflation to a valuation-based real return; BNY Investments (7.5) assumes a weak size premium as firms stay private longer, yet lands just under its broad-equity figure. T. Rowe Price (6.3, five-year horizon) upgraded the segment. Goldman Sachs AM, overweight, cites attractive valuations, expected Fed cuts, accelerating earnings and revived dealmaking.",
+    "data_used": "Valuation-based real return plus inflation (AQR); factor exposures and size premium (BNY Investments); valuation-anchored index forecast (T. Rowe Price); expected cuts, earnings momentum, M&A (Goldman Sachs AM)."
    },
    "bear": {
     "publishers": [
-     "Invesco",
      "State Street",
-     "Vanguard"
+     "Vanguard",
+     "Invesco"
     ],
-    "argument": "Invesco 4.5, State Street 5.1 and Vanguard 5.7 sit below the median. Invesco applies a lighter valuation drag than for large caps but assumes weak long-run earnings growth, ranking small caps behind mid-caps. Vanguard says a strong second-quarter rally lifted valuations and cut expected returns much as for large caps. State Street pairs its figure with higher volatility.",
-    "data_used": "Valuation-drag and long-run earnings-growth building blocks (Invesco), post-rally starting valuations (Vanguard), and a higher volatility assumption than for large caps (State Street)."
+    "argument": "Invesco (4.5, bottom of range) sees a smaller valuation drag than in large caps but weak long-run earnings growth, ranking small caps behind mid-caps; Vanguard (5.7) says the strong small-cap rally lifted valuations and cut expected returns much as for large caps; State Street (5.1) assumes higher volatility than for large caps.",
+    "data_used": "Starting valuations after the rally (Vanguard); long-run earnings growth and valuation drag in a building-block model (Invesco); volatility assumptions (State Street)."
    },
-   "what_to_watch": "Small-cap versus large-cap earnings growth, and the Fed path: pricing of zero cuts this year at 95.7% (Kalshi) and 95.8% (Polymarket) works against the higher case's rate-cut leg."
+   "what_to_watch": "Small-cap earnings versus Invesco's weak-growth assumption, and the Fed: Goldman Sachs AM leans on cuts; markets put zero cuts in 2026 at 95.7% (Kalshi) and 95.8% (Polymarket)."
   },
   {
    "asset": "US_HighYield",
@@ -3375,7 +3506,7 @@
     "down": 2,
     "flat": 0
    },
-   "headline": "US high yield: carry-led forecasts versus tight-spread caution; 90bp IQR around a 5.5 median (n=7).",
+   "headline": "US high yield: carry and contained defaults versus near-record-tight spreads and an emerging default cycle.",
    "bull": {
     "publishers": [
      "Invesco",
@@ -3383,21 +3514,21 @@
      "Fidelity International",
      "Goldman Sachs AM"
     ],
-    "argument": "Invesco 6.1, BNY Investments 6.1 and Fidelity International 5.9 sit above the median: high starting yields outweigh expected credit losses and tight-spread drag, and BNY gets there even assuming spreads widen back toward historical norms. Goldman Sachs AM is overweight on strong interest coverage, contained defaults, a better ratings mix, firm demand and supportive M&A.",
-    "data_used": "Starting yield less modeled default losses and spread-valuation drag, with BNY assuming spread widening; Goldman Sachs AM cites interest coverage, ratings mix, investor demand and M&A."
+    "argument": "Starting yield dominates: Invesco (6.1) nets credit losses and spread drag off a high average yield; BNY Investments (6.1) matches it while assuming spreads widen toward their long-run median; Fidelity International (5.9) keeps a modest premium over IG. Goldman Sachs AM, overweight, cites strong interest coverage, contained defaults, a better ratings mix and firm demand.",
+    "data_used": "Average yield minus expected credit losses; spread mean-reversion with defaults tied to spread (BNY Investments); interest coverage, ratings mix, defaults, M&A demand (Goldman Sachs AM)."
    },
    "bear": {
     "publishers": [
      "State Street",
-     "AQR",
      "Vanguard",
+     "AQR",
      "PIMCO",
      "Amundi"
     ],
-    "argument": "State Street 4.6, AQR 5.0 and Vanguard 5.2 sit below the median. Vanguard sees rich credit valuations offering little extra compensation; State Street's spread term structure and default probabilities leave a modest premium over investment grade. PIMCO is underweight: spreads near historic tights signal complacency as defaults rise, so it moves up in quality. Amundi is also underweight.",
-    "data_used": "Spread levels versus history, spread term structure and default-probability models, rising default trends, and AQR's real-return-plus-inflation framework."
+    "argument": "Compensation is thin: Vanguard (5.2) calls credit valuations rich; State Street (4.6, bottom of range) finds only a modest premium over IG from spread term structure and default probabilities; AQR (5.0) sits below the median. PIMCO, underweight, reads near-record-tight spreads as complacent while defaults climb, and leans up in quality; Amundi is also underweight.",
+    "data_used": "Spread term structure and default probabilities (State Street); credit valuations (Vanguard); spreads versus historic tights and rising defaults (PIMCO)."
    },
-   "what_to_watch": "Trailing default and recovery rates against current spreads: defaults staying contained would vindicate the higher forecasts; a default cycle with weak recoveries, the lower ones."
+   "what_to_watch": "High-yield default rates and spreads: rising defaults with widening spreads would confirm PIMCO's default-cycle call; contained defaults let starting carry dominate, as the higher camp assumes."
   },
   {
    "asset": "Commodities",
@@ -3410,26 +3541,26 @@
     "down": 0,
     "flat": 1
    },
-   "headline": "Commodities: widest IQR of any row, 225bp, as futures-premium, roll-return and dollar assumptions diverge.",
+   "headline": "Commodities: widest IQR of any row (225bp); AQR's futures premium versus State Street's roll-plus-collateral build; rationale often missing.",
    "bull": {
     "publishers": [
+     "Vanguard",
      "AQR",
-     "Robeco",
-     "Vanguard"
+     "Robeco"
     ],
-    "argument": "AQR 6.7, Robeco 5.8 (shorter horizon) and Vanguard 5.7 sit above the median. AQR assumes a persistent long-run excess return from equal-weighted futures over cash, plus the expected real cash return. Robeco ties outcomes to conflicts and the dollar for a USD investor. Vanguard's figure is model output with no commodity-specific commentary despite higher energy prices.",
-    "data_used": "Long-run futures excess-return premium plus expected real cash return (AQR); geopolitical conflict and USD path (Robeco); Bloomberg Commodity Index model output (Vanguard)."
+    "argument": "AQR (6.7, top of range) assumes equal-weighted futures keep earning a long-run excess return over cash, on top of a positive real cash return. Vanguard (5.7) reports a model output for a broad commodity index without commodity-specific commentary. Robeco (5.8, five-year horizon) ties outcomes to geopolitical conflicts and the dollar path.",
+    "data_used": "Long-run futures excess return over cash plus real cash yield (AQR); index-proxy model output (Vanguard); conflict and US dollar scenarios (Robeco)."
    },
    "bear": {
     "publishers": [
-     "BNY Investments",
      "State Street",
-     "Invesco"
+     "Invesco",
+     "BNY Investments"
     ],
-    "argument": "BNY Investments 2.3, State Street 3.2 and Invesco 3.8 sit below the median. State Street builds returns from US inflation and dollar forecasts, long-term roll return and collateral yield. Invesco edged its view up on a firmer real-asset outlook and stresses diversification, yet stays below. BNY pairs a low return with high volatility without explaining drivers.",
-    "data_used": "Inflation and USD forecasts, roll-return and collateral-return building blocks (State Street); real-asset outlook (Invesco); BNY Investments does not disclose drivers."
+    "argument": "State Street (3.2) builds returns from US inflation and dollar forecasts, a long-run roll return and collateral yield; Invesco (3.8) edged up on a firmer real-asset outlook and stresses diversifying return drivers; BNY Investments (2.3, bottom of range) expects low returns with high volatility, little changed, without explaining the drivers.",
+    "data_used": "Inflation, dollar, roll-return and collateral building blocks (State Street); real-asset outlook (Invesco); BNY Investments discloses no drivers."
    },
-   "what_to_watch": "Futures curve shape (roll yield in backwardation versus contango), T-bill collateral yields and the dollar trend; sustained contango with a firm dollar would vindicate the lower forecasts."
+   "what_to_watch": "Realized roll yield and collateral returns versus the long-run futures premium AQR assumes, plus the dollar path that both State Street and Robeco flag."
   },
   {
    "asset": "Global_Govt_Bonds",
@@ -3442,24 +3573,24 @@
     "down": 1,
     "flat": 1
    },
-   "headline": "Global government bonds: forecasts cluster (23bp IQR, n=3) while stances split on income and diversification versus fiscal strain.",
+   "headline": "Global government bonds: PIMCO's high-conviction overweight versus BNY Investments' fiscal-strain underweight; estimates tightly clustered (IQR 23bp, n=3).",
    "bull": {
     "publishers": [
      "Robeco",
      "PIMCO"
     ],
-    "argument": "Robeco's 5.3 (shorter horizon, USD-hedged developed sovereigns) sits above the median: higher yields have improved expected returns, though not without risk. PIMCO is overweight with high conviction, arguing desynchronized cycles and diverging policy create country and curve opportunities, while global sovereigns add income and diversification.",
-    "data_used": "Starting sovereign yields hedged to USD (Robeco); cross-country divergence in business cycles and monetary policy, curve shapes and diversification properties (PIMCO)."
+    "argument": "Higher starting yields have lifted expected returns: Robeco (5.3, top of range; USD-hedged, five-year horizon) makes that case while cautioning the gain is not costless. PIMCO, overweight with high conviction, sees desynchronized cycles and diverging central-bank paths creating country and curve opportunities, with global sovereigns adding income and diversification.",
+    "data_used": "Current sovereign yields hedged to USD (Robeco); cross-country divergence in business cycles and monetary policy (PIMCO)."
    },
    "bear": {
     "publishers": [
      "Fidelity International",
      "BNY Investments"
     ],
-    "argument": "Fidelity International's 4.8 sits marginally below the median, but the placement is mechanical: it is overweight, expecting higher yield curves to drive income and sovereigns to diversify in recessions. The substantive negative case is BNY Investments' underweight: fiscal strain makes sovereign debt less attractive risk-adjusted, so it looks to real assets and private markets for diversification.",
-    "data_used": "Fiscal strain, steeper curves and sovereign risk-adjusted returns (BNY Investments); yield-curve income building block (Fidelity International)."
+    "argument": "BNY Investments, underweight, argues fiscal strain makes sovereign debt less attractive on a risk-adjusted basis and looks to real assets and private markets for diversification. Fidelity International sits here only on its number, just below the median (4.8 vs 4.9); its stance is overweight, citing income from higher curves and diversification in recessionary shocks.",
+    "data_used": "Fiscal strain and expected curve steepening (BNY Investments); current government yield curves as the income driver (Fidelity International)."
    },
-   "what_to_watch": "Developed-market term premia and long-end yields against fiscal-deficit paths, and whether sovereigns rally during the next growth scare or equity drawdown, testing the diversification claim."
+   "what_to_watch": "How sovereigns trade in the next growth scare: falling yields would support the diversification case; rising term premia on fiscal news would support BNY Investments' caution."
   },
   {
    "asset": "Private_Equity",
@@ -3472,24 +3603,24 @@
     "down": 0,
     "flat": 0
    },
-   "headline": "Private equity: illiquidity-premium models sit above the 9.7 median, fee- and leverage-adjusted models well below; IQR 155bp.",
+   "headline": "Private equity: illiquidity-premium optimists versus leverage-adjusted, net-of-fee models; estimates span 6.6-10.5 around a 9.7 median.",
    "bull": {
     "publishers": [
      "BNY Investments",
      "T. Rowe Price"
     ],
-    "argument": "BNY Investments 10.5 and T. Rowe Price 9.8 (shorter horizon) sit above the median. BNY adds a strong illiquidity premium to public-equity factor exposure and is overweight, citing private capital's role in funding AI innovation and infrastructure. T. Rowe Price ranks private equity its highest-returning asset, crediting the illiquidity premium and active management versus public equity.",
-    "data_used": "Public-equity factor exposures plus an assumed illiquidity premium (BNY Investments); Cambridge Associates global PE benchmark and active-management uplift (T. Rowe Price)."
+    "argument": "BNY Investments (10.5, top of range), overweight, layers a large illiquidity premium on public-equity factor exposure and expects private capital to finance AI innovation and infrastructure. T. Rowe Price, on a five-year horizon, makes private equity its highest forecast, citing the illiquidity premium and active management relative to public equity.",
+    "data_used": "Public-equity factor exposures plus an illiquidity premium (BNY Investments); Cambridge Associates global PE benchmark (T. Rowe Price)."
    },
    "bear": {
     "publishers": [
-     "AQR",
-     "State Street"
+     "State Street",
+     "AQR"
     ],
-    "argument": "AQR 6.6 and State Street 8.2 sit below the median. AQR models US private equity with a levered dividend discount model net of fees; cheaper debt and higher assumed multiple expansion lifted its estimate, yet it remains the range floor, consistent with its view of compressed private-asset risk premia. State Street leverage-adjusts historical PE-versus-listed performance, net of fees.",
-    "data_used": "Levered dividend-discount model with debt costs, multiple assumptions and fees (AQR); leverage-adjusted historical PE versus listed-equity returns, net of fees (State Street)."
+    "argument": "AQR (6.6, bottom of range) models US buyouts as levered equity in a dividend discount model, net of fees; cheaper debt and more assumed multiple expansion lifted its estimate, yet it sees compressed private-asset premia versus positive real cash. State Street benchmarks historical private-equity returns to listed equities, adjusting for leverage and fees.",
+    "data_used": "Levered dividend-discount model with fee drag, debt cost and multiple assumptions (AQR); historical PE-versus-listed performance, leverage-adjusted and net of fees (State Street)."
    },
-   "what_to_watch": "Deal entry multiples and financing costs, exits and distributions relative to dry powder, and net-of-fee returns of recent vintages versus listed equity."
+   "what_to_watch": "Whether net-of-fee buyout returns keep a premium over listed equity after leverage adjustment, and the debt costs and exit multiples that drive AQR's model."
   },
   {
    "asset": "Private_Credit",
@@ -3502,7 +3633,7 @@
     "down": 1,
     "flat": 0
    },
-   "headline": "Private credit: overweights cite yield pickup, PIMCO flags direct-lending stress; forecasts span 5.0-9.2 around a 6.6 median (n=4).",
+   "headline": "Private credit: income and illiquidity-premium case versus PIMCO's stress warnings and AQR's fee arithmetic; estimates span 5.0-9.2 (n=4).",
    "bull": {
     "publishers": [
      "T. Rowe Price",
@@ -3511,19 +3642,19 @@
      "BlackRock Investment Institute",
      "Amundi"
     ],
-    "argument": "T. Rowe Price 9.2 (shorter horizon) and Fidelity International 6.9 sit above the median, citing an illiquidity premium, structural demand for private capital and higher-rate income, with Fidelity seeing no immediate stress. Goldman Sachs AM notes higher yields than public credit and historically lower defaults than syndicated loans; BlackRock Investment Institute favors cash-flow-backed, well-protected credit. Amundi is overweight.",
-    "data_used": "Yield premium over public credit, syndicated-loan default history, Cliffwater direct-lending benchmark (T. Rowe Price), floating-rate income at higher base rates, underwriting standards and lender protections."
+    "argument": "T. Rowe Price (9.2, five-year horizon) cites an illiquidity premium and structural demand for private capital; Fidelity International (6.9) sees higher-rate income and no immediate stress. Goldman Sachs AM (higher yields than public credit, historically fewer defaults than syndicated loans), BlackRock Investment Institute (selected deals with lender protections) and Amundi are overweight.",
+    "data_used": "Cliffwater Direct Lending index (T. Rowe Price); floating-rate income at elevated policy rates; historical default rates versus syndicated loans; underwriting and lender protections."
    },
    "bear": {
     "publishers": [
-     "AQR",
      "State Street",
+     "AQR",
      "PIMCO"
     ],
-    "argument": "AQR 5.0 and State Street 6.4 sit below the median. AQR treats direct lending as modestly levered floating-rate high yield whose fees absorb any illiquidity premium; State Street's senior-lending premium, net of fees, lands just under. PIMCO is underweight, citing maturity extensions, PIK usage and financial engineering, and expects recoveries to disappoint; it prefers asset-based finance.",
-    "data_used": "Spread and cash-rate levels with leverage and fee drag (AQR); public-credit premium net of fees (State Street); PIK usage, maturity extensions and recovery prospects (PIMCO)."
+    "argument": "AQR (5.0, bottom of range) models direct lending as levered floating-rate high yield whose fees absorb any illiquidity premium. State Street (6.4), just below the median, adds a senior-lending premium to public credit, net of fees. PIMCO, a high-conviction underweight outside asset-based finance, sees stress in middle-market direct lending and risk of poor recoveries.",
+    "data_used": "Public high-yield spreads, cash rates and fee drag in a levered model (AQR); senior-lending premium over public credit (State Street); PIK use, maturity extensions and recoveries (PIMCO)."
    },
-   "what_to_watch": "PIK-income share and non-accruals in direct-lending and BDC portfolios, default and recovery rates on recent vintages, and the base-rate path driving floating-rate income."
+   "what_to_watch": "Middle-market default, PIK and recovery data, plus the cash-rate path behind floating-rate income: rising stress would back PIMCO; benign credit with high rates, the income camp."
   }
  ],
  "diff_prior": {

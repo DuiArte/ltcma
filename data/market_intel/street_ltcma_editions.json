@@ -1,0 +1,13 @@
+{
+ "editions": [
+  {
+   "date": "2026-10-07",
+   "month": "2026-10",
+   "edition": "preliminary",
+   "rows_published": 21,
+   "firms": 13,
+   "csv": "street-ltcma/street_ltcma_2026-10-07.csv",
+   "xlsx": "street-ltcma/street_ltcma_2026-10-07.xlsx"
+  }
+ ]
+}

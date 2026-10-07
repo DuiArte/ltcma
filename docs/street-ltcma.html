@@ -1,0 +1,244 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ltcma-content-asof" content="2026-10-07">
+<title>Carlos Duarte — Street LTCMA</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css"><style>
+.toc{display:flex;flex-wrap:wrap;gap:0;border:1px solid #d4d4d4;margin:0 0 1.6rem;width:fit-content;max-width:100%}
+.toc a{font:500 12.5px 'Inter',sans-serif;color:#555;text-decoration:none;padding:8px 16px;
+border-right:1px solid #d4d4d4;letter-spacing:.01em;transition:background .12s,color .12s}
+.toc a:last-child{border-right:0}
+.toc a:hover{background:rgba(10,37,64,.05);color:#111}
+@media(max-width:560px){.toc{width:100%}.toc a{flex:1 1 auto;text-align:center;padding:8px 8px}}
+.mi-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.mi{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;min-width:100%}
+.mi th,.mi td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.mi th{font-weight:500;color:var(--sec);font-size:11px;letter-spacing:.02em;vertical-align:bottom}
+.mi th.pub{writing-mode:vertical-rl;transform:rotate(180deg);height:92px;text-align:left;padding:6px 4px}
+.mi td.a,.mi th.a{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1;min-width:150px}
+.mi tr.g td{background:#f4f4f2;font-weight:600;text-align:left;color:var(--ink,#111);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+.mi td.cons{min-width:150px}
+.mi td.v{font-family:var(--mono)}
+.mi td.x{color:var(--muted);font-style:italic}
+.mi td.q{color:var(--muted)}
+.ar.up{color:#0f766e}.ar.dn{color:#7c2d12}.ar.fl{color:#9aa5b1}
+.cv{font-size:9.5px;color:var(--muted);margin-left:1px}
+.rb{position:relative;height:10px;background:#eef0f2;margin:3px 0 0;border-radius:2px}
+.rb i{position:absolute;top:0;height:10px;background:#c7d3df}
+.rb b{position:absolute;top:-2px;width:2px;height:14px;background:#0a2540}
+.rb s{position:absolute;top:-3px;width:8px;height:8px;margin-left:-4px;border:2px solid #0f766e;background:#fff;transform:rotate(45deg);text-decoration:none}
+.cn{font-family:var(--mono);font-size:12px}
+.legend{font-size:12px;color:var(--sec);margin:.6rem 0 0;line-height:1.7}
+.legend .rb{display:inline-block;width:60px;vertical-align:middle;margin:0 4px}
+.dv{border:1px solid var(--line);background:var(--panel);padding:14px 16px;margin:0 0 14px}
+.dv h3{font-size:15px;margin:0 0 4px}
+.dv .meta{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-bottom:8px}
+.dv .sides{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dv .side{border-left:3px solid #c7d3df;padding-left:10px;font-size:13.5px;line-height:1.5}
+.dv .side.bull{border-color:#0f766e}.dv .side.bear{border-color:#7c2d12}
+.dv .who{font-size:11.5px;color:var(--sec);font-weight:600;margin-bottom:3px}
+.dv .data{font-size:12.5px;color:var(--sec);margin-top:5px}
+.dv .watch{font-size:13px;margin-top:9px;color:var(--sec)}
+.odds{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.odd{border:1px solid var(--line);background:var(--panel);padding:12px 14px}
+.odd h4{margin:0 0 6px;font-size:13.5px}
+.odd .ven{font-size:11px;color:var(--muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:.05em}
+.odd .row{display:flex;justify-content:space-between;font-size:13px;gap:8px}
+.odd .row span:last-child{font-family:var(--mono)}
+.odd .bar{height:4px;background:#eef0f2;margin:1px 0 4px}.odd .bar i{display:block;height:4px;background:#5b7c99}
+.sumlist li{margin:0 0 .55rem;line-height:1.55;max-width:60em}
+.badge{display:inline-block;font-size:10.5px;font-family:var(--mono);padding:1px 6px;border:1px solid var(--line);color:var(--sec);margin-left:6px;vertical-align:middle}
+.prelim{border:1px solid #c7d3df;background:#f5f8fb;padding:10px 14px;font-size:13.5px;margin:0 0 1.2rem;max-width:60em}
+@media (max-width:700px){.dv .sides{grid-template-columns:1fr}.mi th.pub{height:80px}}
+</style></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="street-ltcma.html">Street LTCMA</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+// subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
+try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
+document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoundingClientRect();if(r.top<window.innerHeight){el.classList.add('vis');return;}el.classList.add('rv');io.observe(el);});
+setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
+});</script><script>(function(){
+var MOB=640,st=new WeakMap();
+/* read the breakpoint from --bp-sm so CSS and JS cannot drift; 640 is the fallback
+   and the token resolves to that same 640, so both paths agree today. */
+try{var _bp=parseInt(getComputedStyle(document.documentElement)
+  .getPropertyValue('--bp-sm'),10);if(_bp>0)MOB=_bp;}catch(_e){}
+function wrap(t,cpl){
+  if(!t)return t;
+  var w=String(t).split(' '),ln=[],c='';
+  for(var i=0;i<w.length;i++){var n=c?c+' '+w[i]:w[i];
+    if(n.length>cpl&&c){ln.push(c);c=w[i];}else{c=n;}}
+  if(c)ln.push(c);
+  return ln.join('<br>');
+}
+function tune(){
+  if(!window.Plotly)return;
+  var mob=window.innerWidth<=MOB;
+  document.querySelectorAll('.plotly-graph-div').forEach(function(d){
+    if(!d._fullLayout)return;                       /* not rendered yet; a later retry gets it */
+    var rect=d.getBoundingClientRect();
+    if(!rect.width)return;
+    /* re-tune when the width BUCKET changes, not on every pixel: 375->414 must
+       re-wrap the title, but a scroll-driven 1px reflow must not relayout. */
+    var key=(mob?'m':'d')+Math.round(rect.width/30);
+    if(d.__tk===key)return;
+    var first=!d.__tk; d.__tk=key;
+    var o=st.get(d);
+    if(!o){var L=d.layout||{},FL=d._fullLayout;
+      o={t:(L.title&&L.title.text)||'',
+         ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
+         m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
+         lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
+         h:FL.height,dt:(L.yaxis&&L.yaxis.dtick)||null,sh:d.style.height,
+         an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
+         md:(d.data||[]).map(function(t){return t.mode;})};
+      st.set(d,o);}
+    /* Per-point text labels are unreadable once the plot is 283px wide: the
+       risk/return map packs 24 asset labels into that space and 22 of the 24
+       pairs overlap. Traces that carry many labels drop to markers-only on
+       mobile -- the class legend still identifies them and a tap still shows
+       the name on hover. The cutoff is 3, not 6: the 4-label Real Asset trace
+       still self-overlapped twice at 283px. */
+    function modes(mob){
+      var chg=false,arr=(d.data||[]).map(function(t,i){
+        var m=o.md[i];
+        if(!mob||!m||m.indexOf('text')<0)return m;
+        if(!t.text||t.text.length<=3)return m;
+        chg=true;return m.replace('+text','').replace('text+','').replace('text','markers');});
+      if(mob&&!chg)return;
+      if(!mob&&!(o.md||[]).some(function(m){return m&&m.indexOf('text')>=0;}))return;
+      try{Plotly.restyle(d,{mode:arr});}catch(e){}
+    }
+    /* Above the breakpoint a chart can still be narrow: the two-up grid puts a 405px
+       chart on a 1024px screen, and "Equity expected return across the valuation-
+       reversion dial" ran off its right edge, cropped by the tile (audit 2026-10-01;
+       same on regime-line at 864px). Wrap the title against the chart's OWN width.
+       Titles carrying markup are left alone -- wrap() splits on spaces. */
+    var dw=null;
+    if(!mob&&o.t&&o.t.indexOf('<')<0){
+      var avail=rect.width-o.m.l-14,pxc=o.ts*0.52;
+      if(o.t.length*pxc>avail){dw=wrap(o.t,Math.max(20,Math.floor(avail/pxc)));}
+    }
+    if(!mob){
+      if(first&&!dw)return;                         /* first sight on desktop, fits: nothing to do */
+      var dmt=o.m.t+(dw?(dw.split('<br>').length-1)*Math.round(o.ts*1.3):0);
+      if(first){                                    /* only the title moves; nothing else to undo */
+        try{Plotly.relayout(d,{'title.text':dw,'margin.t':dmt});}catch(e){}
+        return;}
+      var back={'title.text':dw||o.t,'title.font.size':o.ts,
+        'margin.l':o.m.l,'margin.r':o.m.r,'margin.b':o.m.b,
+        'margin.t':dmt,
+        'legend.font.size':(o.lg.font&&o.lg.font.size)||null,
+        'legend.orientation':o.lg.orientation||null,
+        'legend.x':(o.lg.x===undefined?null:o.lg.x),
+        'legend.xanchor':o.lg.xanchor||null,
+        'legend.y':(o.lg.y===undefined?null:o.lg.y),
+        'legend.yanchor':o.lg.yanchor||null};
+      if(d._fullLayout.xaxis){back['xaxis.tickfont.size']=null;back['xaxis.title.font.size']=null;}
+      if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
+        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=o.dt;}
+      if(o.h)back['height']=o.h;
+      d.style.height=o.sh;
+      o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
+      modes(false);
+      try{Plotly.relayout(d,back);Plotly.Plots.resize(d);}catch(e){}
+      return;}
+    /* SCALE the generator's margins, never replace them -- the correlation
+       heatmap carries 130px left/bottom margins for its asset labels, and a
+       flat 44px left margin would clip them off the chart entirely.
+       Margins resolve FIRST because the title is left-anchored at margin.l:
+       wrapping against the full div width let every title start 35px in and then
+       run 12-23px past the right edge, clipped by .tile{overflow:hidden}. */
+    var mL=Math.max(34,Math.round(o.m.l*0.72)),mR=Math.max(10,Math.round(o.m.r*0.5));
+    /* ~6.3px per char for Inter at 12.5px; the 8px pad keeps it off the edge. */
+    var cpl=Math.max(14,Math.floor((rect.width-mL-8)/6.3));
+    var txt=wrap(o.t,cpl),lines=txt?txt.split('<br>').length:0;
+    var up={'title.text':txt,'title.font.size':12.5,
+      'margin.l':mL,'margin.r':mR,
+      'margin.t':(lines>1?26+lines*15:Math.max(34,Math.round(o.m.t*0.8))),
+      'margin.b':Math.max(34,Math.round(o.m.b*0.82)),
+      'legend.font.size':9.5,'legend.orientation':'h',
+      'legend.x':0,'legend.xanchor':'left','legend.y':-0.24,'legend.yanchor':'top'};
+    if(d._fullLayout.xaxis){up['xaxis.tickfont.size']=10;up['xaxis.title.font.size']=10.5;}
+    if(d._fullLayout.yaxis){up['yaxis.tickfont.size']=10;up['yaxis.title.font.size']=10.5;}
+    /* config responsive:true only fires on window-resize EVENTS. A page loaded
+       straight into a 375px viewport therefore kept Plotly's default 700px SVG,
+       visually clipped to the 283px tile, ticks landing 360px past its right
+       edge. (Keep this comment free of `name=number` -- confscan greps it.) */
+    /* hline annotations ("stress threshold +0.5", "fed funds 3.63%") are drawn
+       INSIDE the plot area and sit on top of the data. At 283px they cover the
+       series they annotate. The dotted line itself stays -- only its caption is
+       hidden, and the surrounding prose already names the thresholds. This is
+       the one defect class the clip check cannot see: it never leaves the div. */
+    o.an.forEach(function(_,i){up['annotations['+i+'].visible']=false;});
+    /* A log y-axis renders minor decade labels (8, 9) that collide once the
+       plot is ~340px tall. Decades only on mobile. */
+    if(d._fullLayout.yaxis&&d._fullLayout.yaxis.type==='log')up['yaxis.dtick']=1;
+    /* Cap height so a chart is not a full portrait screen -- EXCEPT horizontal
+       bar charts with many categories, where the height IS the category axis and
+       shrinking it makes the labels collide instead. */
+    var hbar=(d.data||[]).some(function(t){return t.type==='bar'&&t.orientation==='h';});
+    var ncat=hbar?Math.max.apply(null,(d.data||[]).map(function(t){return (t.y||[]).length;})):0;
+    if(o.h&&o.h>360&&!(hbar&&ncat>8))up['height']=340;
+    modes(true);
+    /* to_html writes the layout height INLINE on the div (style height 640px for the
+       heatmap). relayout shrinks the SVG, not that box, so the tile kept 300px of blank
+       under the matrix on phones (audit 2026-10-01). Move the box with the figure. */
+    if(up['height'])d.style.height=up['height']+'px';
+    try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
+  });
+}
+/* Plotly renders from inline scripts and settles asynchronously (the 40x
+   under-report the old iframe gate hit), so poll a few times rather than
+   trusting one DOMContentLoaded pass. */
+function retry(){[0,250,900,2000,3500].forEach(function(ms){setTimeout(tune,ms);});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',retry);else retry();
+var tid;function later(){clearTimeout(tid);tid=setTimeout(tune,160);}
+window.addEventListener('resize',later);window.addEventListener('orientationchange',later);
+})();</script>
+</div></header>
+<section class="hero"><div class="container">
+<h1>Street LTCMA — the compiled consensus</h1>
+<p class="lede">One set of long-run capital market assumptions compiled from 13 asset managers and banks,
+in the same asset classes as this site's own LTCMA. Each figure is a consensus across firms, never a single
+firm's forecast. This site's model is shown next to it as a cross-check, and every monthly edition stays
+available for download below.</p>
+<p class="asof">Street consensus as of 07 Oct 2026 &middot; preliminary edition &middot; 21 asset classes (12 of this site's 24) with at least 5 firms</p>
+</div></section>
+<main class="container">
+<div class="toc"><a href="#table">The Street LTCMA</a><a href="#editions">Editions &amp; downloads</a><a href="#method">Method</a></div>
+
+<section class="block" id="table"><h2>Expected annual return, % nominal (USD)</h2>
+<p class="note"><b>Street LTCMA</b> = trimmed mean across firms (the single highest and lowest estimates are dropped),
+published only where at least 5 firms give a figure. <b>Dispersion</b> = standard deviation across firms, in bp.
+<b>Gap</b> = Street minus this site's LTCMA, in bp, computed from unrounded values (positive: this site is below
+the Street). &#9733; = an asset class of this site's LTCMA. Firm-by-firm figures are on the
+<a href="ltcma-consensus.html">Market Intel</a> grid for the firms whose material may be republished.</p>
+<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Asset class</th>
+<th>Street LTCMA</th><th>Firms</th><th>Dispersion (bp)</th><th>This site's LTCMA</th><th>Gap (bp)</th>
+<th style="text-align:left">Contributing firms</th></tr></thead><tbody><tr><td style="text-align:left">US large cap &#9733;</td><td><b>6.3%</b></td><td>12</td><td>114</td><td>6.0%</td><td>+33</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BNY Investments, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Northern Trust, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">US small cap &#9733;</td><td><b>6.6%</b></td><td>10</td><td>103</td><td>6.5%</td><td>+10</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, BNY Investments, BlackRock, Invesco, J.P. Morgan AM, Northern Trust, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr style="color:var(--muted)"><td style="text-align:left">Mexico equity &#9733;</td><td colspan="3" style="font-style:italic">no firm reports it separately</td><td>8.0%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">Brazil equity &#9733;</td><td colspan="3" style="font-style:italic">no firm reports it separately</td><td>8.8%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">China equity &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>7.4%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">Japan equity &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>6.4%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">UK equity &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>7.0%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">France equity &#9733;</td><td colspan="3" style="font-style:italic">no firm reports it separately</td><td>7.2%</td><td>—</td><td></td></tr><tr><td style="text-align:left">EM equity &#9733;</td><td><b>8.1%</b></td><td>8</td><td>192</td><td>8.0%</td><td>+8</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">BNY Investments, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Robeco, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">Developed ex-US equity &#9733;</td><td><b>7.5%</b></td><td>5</td><td>96</td><td>7.7%</td><td>-27</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">BNY Investments, BlackRock, J.P. Morgan AM, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">US cash / T-bills &#9733;</td><td><b>3.4%</b></td><td>11</td><td>39</td><td>3.3%</td><td>+7</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BlackRock, Fidelity International, J.P. Morgan AM, Northern Trust, Robeco, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">US Treasuries (intermediate) &#9733;</td><td><b>4.5%</b></td><td>12</td><td>42</td><td>4.5%</td><td>+4</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Northern Trust, Robeco, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr style="color:var(--muted)"><td style="text-align:left">US Treasuries (long) &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>4.8%</td><td>—</td><td></td></tr><tr><td style="text-align:left">US TIPS &#9733;</td><td><b>4.4%</b></td><td>8</td><td>61</td><td>4.5%</td><td>-12</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">BlackRock, Invesco, J.P. Morgan AM, Northern Trust, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">US IG corporate &#9733;</td><td><b>5.2%</b></td><td>10</td><td>40</td><td>5.0%</td><td>+17</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Northern Trust, Schroders, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">US high yield &#9733;</td><td><b>5.6%</b></td><td>12</td><td>54</td><td>5.0%</td><td>+61</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BNY Investments, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Northern Trust, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">EM sovereign (USD) &#9733;</td><td><b>5.7%</b></td><td>12</td><td>55</td><td>6.0%</td><td>-28</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BNY Investments, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Robeco, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr><td style="text-align:left">EM local debt &#9733;</td><td><b>5.6%</b></td><td>8</td><td>68</td><td>4.8%</td><td>+80</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">Amundi, BNY Investments, BlackRock, Fidelity International, J.P. Morgan AM, Robeco, Schroders, T. Rowe Price</td></tr><tr style="color:var(--muted)"><td style="text-align:left">Global agg ex-US (hedged) &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>3.8%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">Mexico govt (local) &#9733;</td><td colspan="3" style="font-style:italic">no firm reports it separately</td><td>6.3%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">US REITs &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>6.3%</td><td>—</td><td></td></tr><tr style="color:var(--muted)"><td style="text-align:left">Global REITs ex-US &#9733;</td><td colspan="3" style="font-style:italic">no firm reports it separately</td><td>6.4%</td><td>—</td><td></td></tr><tr><td style="text-align:left">Commodities &#9733;</td><td><b>4.8%</b></td><td>9</td><td>140</td><td>3.5%</td><td>+127</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, BNY Investments, Invesco, J.P. Morgan AM, Robeco, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr style="color:var(--muted)"><td style="text-align:left">Gold &#9733;</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>3.3%</td><td>—</td><td></td></tr><tr><td style="text-align:left">Global equity (ACWI)</td><td><b>7.2%</b></td><td>7</td><td>100</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">BNY Investments, BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Robeco, T. Rowe Price</td></tr><tr><td style="text-align:left">Europe equity</td><td><b>7.8%</b></td><td>5</td><td>40</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">BNY Investments, BlackRock, Invesco, J.P. Morgan AM, T. Rowe Price</td></tr><tr><td style="text-align:left">US aggregate bonds</td><td><b>4.8%</b></td><td>11</td><td>37</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, Amundi, BNY Investments, BlackRock, Invesco, J.P. Morgan AM, Northern Trust, Schroders, State Street, T. Rowe Price, Vanguard</td></tr><tr style="color:var(--muted)"><td style="text-align:left">Bank loans</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>—</td><td>—</td><td></td></tr><tr><td style="text-align:left">Global govt bonds</td><td><b>4.7%</b></td><td>5</td><td>39</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">BlackRock, Fidelity International, Invesco, J.P. Morgan AM, Robeco</td></tr><tr><td style="text-align:left">Private equity</td><td><b>9.7%</b></td><td>7</td><td>288</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, BNY Investments, BlackRock, Fidelity International, J.P. Morgan AM, State Street, T. Rowe Price</td></tr><tr><td style="text-align:left">Private credit</td><td><b>7.5%</b></td><td>6</td><td>167</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, BlackRock, Fidelity International, J.P. Morgan AM, State Street, T. Rowe Price</td></tr><tr><td style="text-align:left">Infrastructure</td><td><b>7.0%</b></td><td>5</td><td>308</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">Amundi, BNY Investments, BlackRock, J.P. Morgan AM, T. Rowe Price</td></tr><tr><td style="text-align:left">Hedge funds</td><td><b>5.8%</b></td><td>8</td><td>146</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">Amundi, BNY Investments, BlackRock, Invesco, J.P. Morgan AM, Schroders, State Street, T. Rowe Price</td></tr><tr style="color:var(--muted)"><td style="text-align:left">Global REITs (incl. US)</td><td colspan="3" style="font-style:italic">fewer than 5 firms</td><td>—</td><td>—</td><td></td></tr><tr><td style="text-align:left">Private real estate</td><td><b>7.3%</b></td><td>6</td><td>123</td><td>—</td><td>—</td><td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">AQR, BlackRock, J.P. Morgan AM, Schroders, State Street, T. Rowe Price</td></tr></tbody></table></div></section>
+
+<section class="block" id="editions"><h2>Editions &amp; downloads</h2>
+<p class="note">Every published edition is kept. Each file holds the aggregates exactly as shown above
+(no individual firm's figures).</p>
+<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Edition</th>
+<th>Type</th><th>Asset classes</th><th>Firms</th><th>CSV</th><th>Excel</th></tr></thead><tbody><tr><td style="text-align:left">07 Oct 2026</td><td>preliminary</td><td>21</td><td>13</td><td><a href="street-ltcma/street_ltcma_2026-10-07.csv" download>CSV</a></td><td><a href="street-ltcma/street_ltcma_2026-10-07.xlsx" download>XLSX</a></td></tr></tbody></table></div></section>
+
+<section class="block" id="method"><h2>Method</h2>
+<p class="note">Each firm's long-run expected returns are read from its own published capital market assumptions
+(collected monthly). Every number is quoted verbatim from the source and machine-checked against the
+document. Figures are put on one basis: US dollars, nominal, geometric (compound). Real forecasts are made
+nominal with the firm's own inflation assumption, and arithmetic averages are converted with the firm's own
+volatility. Each firm counts once per asset class, using the horizon closest to 12 years; non-USD figures are left out.
+A trimmed mean is used rather than a median so that no single firm's number can be read off the table; for the
+same reason no minimum, maximum or quartile is shown, and rows with fewer than 5 firms are withheld.
+Some contributing firms do not permit their figures to be republished individually; they appear here only
+inside these aggregates. This consensus is a cross-check: it is never an input to this site's LTCMA model.
+Not investment advice.</p></section>
+</main>
+<footer class="shell-foot"><div class="container"><p>Aggregated from the published capital market assumptions of the
+firms listed. Not investment advice.</p></div></footer>
+</body></html>
