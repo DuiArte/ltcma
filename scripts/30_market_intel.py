@@ -110,6 +110,12 @@ def main():
     pubs = d["publishers"]
     num_pubs = [p for p in pubs if p["numbers_shown"] and p.get("n_forecasts")]
     qual_pubs = [p for p in pubs if p not in num_pubs]
+    # count FIRMS, not documents (Schroders has a 10y and a 30y document; BlackRock = CMA data + BII
+    # weekly). C-20261007-01: the hero said "21 asset managers" for 21 documents from 19 firms.
+    firm = lambda p: p.get("firm") or p["publisher"]
+    n_docs, n_firms = len(pubs), len({firm(p) for p in pubs})
+    n_firms_num = len({firm(p) for p in num_pubs})
+    n_firms_qual = len({firm(p) for p in qual_pubs} - {firm(p) for p in num_pubs})
     cols = sorted(num_pubs, key=lambda p: p["short"]) + sorted(qual_pubs, key=lambda p: p["short"])
     carlos = {r["asset"]: r["carlos"] for r in d["diff_carlos"]["rows"]}
     allv = [st[k] for st in d["stats"].values() if st.get("n") for k in ("min", "max")] + list(carlos.values())
@@ -133,10 +139,11 @@ def main():
             inner += (f'<div class="ven">{e(v["venue"])} &middot; <a href="{e(v["url"])}" rel="noopener">market</a> '
                       f'&middot; volume ${v["volume"]:,.0f}</div>')
             for o in v["outcomes"][:4]:
-                p = o["prob"] * 100
-                # one decimal, as quoted in the summary text (no half-even rounding drift: 16.5 stays 16.5)
-                inner += (f'<div class="row"><span>{e(o["outcome"])}</span><span>{p:.1f}%</span></div>'
-                          f'<div class="bar"><i style="width:{p:.0f}%"></i></div>')
+                # Decimal half-up on the probability itself (0.0045 -> 0.5%, not the binary-float 0.4%)
+                p = Decimal(str(o["prob"])) * 100
+                shown = p.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+                inner += (f'<div class="row"><span>{e(o["outcome"])}</span><span>{shown}%</span></div>'
+                          f'<div class="bar"><i style="width:{float(shown):.1f}%"></i></div>')
         odds_html += f'<div class="odd"><h4>{e(t["label"])}</h4>{inner}</div>'
     taken = (pm.get("taken_at") or "")[:16].replace("T", " ")
 
@@ -188,7 +195,8 @@ def main():
                     cells += f'<td class="{cls}" title="{title}">{pct(c["v"])}{arrow}</td>'
                 elif c.get("stance"):
                     a, cls = ARROW[STANCE[c["stance"]]]
-                    cells += (f'<td class="q" title="{e(c["stance"])}, {e(c.get("conv"))} conviction — {tip}">'
+                    hover = f'{e(c["stance"])}, {e(c.get("conv"))} conviction' + (f" — {tip}" if tip else "")
+                    cells += (f'<td class="q" title="{hover}">'
                               f'<span class="ar {cls}">{a}</span><span class="cv">{CONV.get(c.get("conv"), "")}</span></td>')
                 else:
                     cells += "<td></td>"
@@ -203,8 +211,10 @@ def main():
             continue
         b, br = x.get("bull") or {}, x.get("bear") or {}
         hl = x["headline"]
-        for pre in (x["label"], x["label"].split(" (")[0], x["label"].split()[0]):
-            if hl.lower().startswith(pre.lower()):
+        # strip a repeated asset label only when the WHOLE label leads the headline (a first-word rule
+        # turned "US IG: five neutrals" into "IG: five neutrals" - numbers verifier 2026-10-07)
+        for pre in (x["label"], x["label"].split(" (")[0]):
+            if hl.lower().startswith(pre.lower() + ":") or hl.lower().startswith(pre.lower() + " "):
                 hl = hl[len(pre):].lstrip(" :—-").strip()
                 hl = hl[:1].upper() + hl[1:]
                 break
@@ -247,24 +257,35 @@ def main():
                    f'<th>Prior median</th><th>Now</th><th>Change (bp)</th></tr></thead><tbody>{ch}</tbody></table></div>')
 
     # ---- regimes
-    reg = "".join(f'<tr><td style="text-align:left">{e(r["publisher"])}</td><td>{e(r.get("risk_stance"))}</td>'
-                  f'<td style="text-align:left;white-space:normal">{e(r.get("cycle_phase"))}</td>'
-                  f'<td style="text-align:left;white-space:normal;min-width:260px">{e(r.get("summary"))}</td>'
-                  f'<td style="text-align:left;white-space:normal;min-width:200px">{e("; ".join(x for x in r.get("risks", []) if x))}</td></tr>'
-                  for r in d.get("regimes", []))
+    def reg_row(r):
+        if r.get("restricted"):          # stance only; the publisher's own text is not republished
+            call = '<span style="color:var(--muted)">not republished &mdash; see the original</span>'
+            risks = ""
+        else:
+            call, risks = e(r.get("summary")), e("; ".join(x for x in r.get("risks", []) if x))
+        return (f'<tr><td style="text-align:left">{e(r["publisher"])}</td><td>{e(r.get("risk_stance"))}</td>'
+                f'<td style="text-align:left;white-space:normal">{e(r.get("cycle_phase") or "—")}</td>'
+                f'<td style="text-align:left;white-space:normal;min-width:260px">{call}</td>'
+                f'<td style="text-align:left;white-space:normal;min-width:200px">{risks}</td></tr>')
+    reg = "".join(reg_row(r) for r in d.get("regimes", []))
 
     # ---- sources
+    def shown_label(p):
+        if not p["numbers_shown"]:
+            return "views only *"
+        return "numbers + views" if p.get("n_forecasts") else "views"
+
     src_rows = ""
     for p in sorted(pubs, key=lambda p: p["publisher"]):
         link = f'<a href="{e(p["url"])}" rel="noopener">original</a>' if p.get("url") else ""
         hz = f'{p["horizon"]:g}y' if isinstance(p.get("horizon"), (int, float)) else "—"
         src_rows += (f'<tr><td style="text-align:left">{e(p["publisher"])}</td><td style="text-align:left;white-space:normal">{e(p["product"])}</td>'
                      f'<td style="text-align:left;white-space:normal">{e(p.get("edition"))}</td><td>{hz}</td><td>{e(p.get("basis") or "—")}</td>'
-                     f'<td>{"numbers + views" if p["numbers_shown"] else "views only *"}</td><td>{link}</td></tr>')
+                     f'<td>{shown_label(p)}</td><td>{link}</td></tr>')
     pending = ", ".join(d.get("inbox_pending", []))
     prelim = ""
     if d.get("edition") == "preliminary":
-        prelim = (f'<div class="prelim"><b>Preliminary edition.</b> Built from the {len(pubs)} publishers that are '
+        prelim = (f'<div class="prelim"><b>Preliminary edition.</b> Built from {n_docs} documents by {n_firms} firms that are '
                   f'reachable today; the first official monthly run is {official}. Still to come through the manual '
                   f'channel: {e(pending)}.</div>')
 
@@ -279,11 +300,11 @@ def main():
 </div></header>
 <section class="hero"><div class="container">
 <h1>Market Intel — what the Street expects</h1>
-<p class="lede">Long-run expected returns and outlooks from {len(pubs)} asset managers and banks, put on one
+<p class="lede">Long-run expected returns and outlooks from {n_firms} asset managers and banks ({n_docs} documents), put on one
 grid in US dollars (nominal) and set against this site's own capital market assumptions. Where the
 publishers disagree, both sides of the argument are laid out with the evidence each one leans on.
 Prediction-market odds for the macro calls are shown alongside.</p>
-<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "monthly edition"} &middot; {len(num_pubs)} publishers with numbers shown, {len(qual_pubs)} as views only</p>
+<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "monthly edition"} &middot; {n_firms_num} firms with numbers shown, {n_firms_qual} with views only</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#summary">Summary</a><a href="#odds">Market-implied odds</a><a href="#matrix">The grid</a>
