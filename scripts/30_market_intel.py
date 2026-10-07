@@ -477,8 +477,8 @@ Some contributing firms do not permit their figures to be republished individual
 inside these aggregates. A row is therefore published only when at least 5 firms give a figure, either none or
 at least 3 of them are such firms, and an automated check confirms that none of their figures can be narrowed
 to within &plusmn;0.5 percentage points from everything published on this site, earlier editions included.
-Other rows are withheld. This consensus is a cross-check: it is never an input to this site's LTCMA model.
-Not investment advice.</p></section>
+Other rows are withheld. Firms whose material is not for public distribution are left out entirely. This
+consensus is a cross-check: it is never an input to this site's LTCMA model. Not investment advice.</p></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Aggregated from the published capital market assumptions of the
 firms listed. Not investment advice.</p></div></footer>
