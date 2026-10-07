@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Consolidate the full GBM trade-export universe into one clean, de-duplicated
-blotter -> ~/LTCMA/data/blotter_clean.csv (used by 18_portfolio.py for the
-entry/exit markers). The same trades are exported three ways (Operacion = trade
+blotter -> Documents/CarlosDuarteWebsite/real_numbers/blotter_clean.csv (PRIVATE).
+Until 2026-10-07 it was written to data/ and so served, unscaled, from the PUBLIC repo;
+it was moved out, git-ignored, and purged from the repo's history. Never write it
+under the repo again. (18_portfolio.py stopped reading it on 2026-08-12.) The same trades are exported three ways (Operacion = trade
 date, Liquidacion = settlement date, Homebroker history), so we de-duplicate by
 treating the MAX count of an identical (ticker,side,shares,price,importe) across
 files as the true fill count, and the MIN date as the operation date. Genuine
@@ -17,7 +19,7 @@ from collections import defaultdict
 
 import paths as _paths
 DL = _paths.cuser("Downloads")
-OUT = str(_paths.DATA / "blotter_clean.csv")
+OUT = str(_paths.DOCUMENTS / "CarlosDuarteWebsite" / "real_numbers" / "blotter_clean.csv")
 
 # The validated trade-export universe (add new exports here as they arrive).
 FILES = [

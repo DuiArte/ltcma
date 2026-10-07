@@ -10,6 +10,10 @@ data/longhistory/raw/
 bin/
 
 # never publish: broker / strategy data does not belong in this repo
+# (2026-10-07: the real, unscaled trade blotter was served from here for months; moved to
+#  Documents/CarlosDuarteWebsite/real_numbers/ and purged from history)
+data/blotter_clean.csv
+*blotter*.csv
 *fxpro_forex_m5*
 FxPro_M5_*.csv
 logs/

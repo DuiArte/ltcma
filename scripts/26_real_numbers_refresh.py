@@ -176,7 +176,8 @@ _epx = df.pivot_table(index="Fecha", columns="ticker", values="px_excel", aggfun
 
 _td = pd.DataFrame(columns=["date", "side", "shares", "text"])
 try:
-    _bl = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
+    # private since 2026-10-07 (it was served from the public repo, unscaled); see make_blotter.py
+    _bl = pd.read_csv(REAL / "blotter_clean.csv", parse_dates=["date"])
     _bl = _bl[_bl["date"] >= _first]
     _rows = []
     for (_d, _sd), _g in _bl.groupby(["date", "side"]):
@@ -274,7 +275,7 @@ if priced_at and len(ts):
 
 CAPITAL = BASELINE * SCALE
 try:
-    _blf = pd.read_csv(f"{DATA}/blotter_clean.csv", parse_dates=["date"])
+    _blf = pd.read_csv(REAL / "blotter_clean.csv", parse_dates=["date"])
     _blf["flow"] = _blf["shares"] * _blf["price"] * _blf["side"].map({"buy": 1.0, "sell": -1.0})
     _ninv = (_blf.groupby("date")["flow"].sum().sort_index().cumsum() * SCALE)
     _ninv = _ninv.reindex(ts.index, method="ffill").fillna(0.0)
