@@ -12,7 +12,7 @@ job, script or clone that writes here, check this list — and add yourself to i
 |---|---|---|
 | `daily_refresh.ps1` (this repo) | Task Scheduler `daily-website-refresh` | all generated `docs/` + `data/`; runs `scripts/*.py`, load-bearing guards (`guard_decimals`, `guard_no_snapshot`), then `git commit` + `git push origin main` |
 | `weekly_model_rebuild.ps1` (this repo) | Task Scheduler `weekly-model-rebuild` (Sun 22:00) | model outputs 01-04 + risk/MC; shares the `Global\LTCMA_REPO_LOCK` mutex with the daily job |
-| `C:\Users\carlo\Scripts\market_intel_monthly.ps1` (Market Intel Track A, added 2026-10-07) | Task Scheduler `market-intel-monthly` (day 1, 07:00) | **only** `data/market_intel/consensus_public.json` + `docs/ltcma-consensus.html` (and, since 2026-10-07, the Street LTCMA: `data/market_intel/street_ltcma_{public,editions}.json`, `docs/street-ltcma.html`, `docs/street-ltcma/` downloadable editions), via `git commit --only` on those paths, under the same `Global\LTCMA_REPO_LOCK` mutex, after `git pull --ff-only`. The daily refresh re-renders the same page from the same JSON (`scripts/30_market_intel.py`, render-only), so both writers emit the same bytes for a given JSON. Builds privately in `Documents\Market_Intel` first. Docs: `Documents\AI_PROCEDURES\MARKET_INTEL_SPEC.md`, `MARKET_INTEL_MONTHLY.md`. |
+| `C:\Users\carlo\Scripts\market_intel_monthly.ps1` (Market Intel Track A, added 2026-10-07) | Task Scheduler `market-intel-monthly` (day 1, 07:00) | **only** `data/market_intel/consensus_public.json` + `docs/ltcma-consensus.html` (and, since 2026-10-07, the Street LTCMA: `data/market_intel/street_ltcma_{public,editions}.json`, `docs/street-ltcma.html`, `docs/street-ltcma/street_ltcma_<date>_<hash>.{csv,xlsx}` downloadable editions — **held** since the C-20261007-02 take-down, `street.hold` in `config_a.yaml`), via `git commit --only` on those of its paths that exist, under the same `Global\LTCMA_REPO_LOCK` mutex, after `git pull --ff-only`. The daily refresh re-renders the same page from the same JSON (`scripts/30_market_intel.py`, render-only), so both writers emit the same bytes for a given JSON. Builds privately in `Documents\Market_Intel` first. Docs: `Documents\AI_PROCEDURES\MARKET_INTEL_SPEC.md`, `MARKET_INTEL_MONTHLY.md`. |
 
 `daily_refresh.ps1` also runs `scripts/34_site_freshness.py` (2026-10-07), which writes
 exactly one extra file, `docs/internal/freshness.html`, from pipeline v2 layer 7's content audit.
@@ -79,6 +79,13 @@ implement them, don't re-litigate them. The operational minimum:
   - Any future rewrite needs Carlos's explicit OK. Take `Global\LTCMA_REPO_LOCK`, abort if
     origin moved or the tree is dirty, rewrite `main` only, then push with
     `--force-with-lease=main:<old-sha>`.
+  - **Pending (2026-10-07):** purge commit `e971777`. It added the leaked first Street LTCMA
+    version: 9-decimal means, sd, downloads (Market Intel correction C-20261007-02).
+    - Carlos approved the purge, but Claude Code's auto-mode classifier blocks agents from
+      rewriting history.
+    - Strip only that commit's 5 Street blobs (a commit-targeted filter), so later commits keep
+      their trees.
+    - Then ask GitHub Support to drop cached views of the old SHA.
 - **Never write private data under this repo.** That means real or unscaled figures, broker
   exports, trade blotters and private code. Private outputs go to
   `Documents\CarlosDuarteWebsite\real_numbers\`. `.gitignore` blocks `*blotter*.csv`.
