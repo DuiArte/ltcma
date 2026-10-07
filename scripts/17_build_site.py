@@ -700,6 +700,18 @@ PROJECTS = [
      "parameters stay private.", "Research", True),
 ]
 _BADGE = {"Deployed": "badge-deployed", "Research": "badge-research", "Tooling": "badge-tooling"}
+# Each live card shows its repo's REAL last push (GitHub API). Until 2026-10-07 the page carried
+# no date at all, so a project untouched since June read as current. Worded "Last push", not
+# "Updated": guard_freshness.py grades every "updated <date>" as a page build stamp. Offline,
+# the line is omitted and pipeline v2 layer 7 (content_rule "projects") flags the missing date.
+from content_age import _gh_pushed
+_PUSHED = {}
+for _p in PROJECTS:
+    if _p[5]:
+        try:
+            _PUSHED[_p[1]] = _gh_pushed(_p[1])[0]
+        except Exception as _e:
+            print(f"  projects: no GitHub date for {_p[1]} ({type(_e).__name__})")
 proj_cards = ""
 for name, handle, url, desc, status, live in PROJECTS:
     klass = "proj-card" + ("" if live else " proj-soon")
@@ -711,7 +723,9 @@ for name, handle, url, desc, status, live in PROJECTS:
         f'<div class="proj-top">{_OCTO}<span class="proj-handle">{handle}</span></div>'
         f'<div class="proj-name">{name}</div>'
         f'<p class="proj-desc">{desc}</p>'
-        f'<div class="proj-foot">{badges}'
+        + (f'<div class="proj-updated">Last push &middot; '
+           f'{_PUSHED[handle].strftime("%d %b %Y")}</div>' if _PUSHED.get(handle) else '')
+        + f'<div class="proj-foot">{badges}'
         f'<span class="proj-cta">View on GitHub &#8599;</span></div></a>')
 
 PROJECTS_PAGE = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -732,6 +746,8 @@ padding:20px 22px;text-decoration:none;color:#111;transition:background .15s eas
 color:#0a2540;font-weight:500;word-break:break-all}}
 .proj-name{{font-family:'Spectral',Georgia,serif;font-size:18px;font-weight:500;margin-bottom:6px}}
 .proj-desc{{font-size:14px;color:#555;margin:0 0 16px;line-height:1.55}}
+.proj-updated{{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;
+font-size:11.5px;color:#888;margin:-6px 0 14px}}
 .proj-foot{{display:flex;align-items:center;gap:8px;flex-wrap:wrap}}
 .pbadge{{font-size:10.5px;font-weight:500;padding:3px 9px;border-radius:0;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent}}
 .badge-deployed{{background:none;color:#0a5d3a;border-color:rgba(10,93,58,.35)}}
