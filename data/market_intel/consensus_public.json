@@ -4,14 +4,14 @@
  "month": "2026-10",
  "first_official": "2026-11-01",
  "summary": [
-  "Equities: US large cap median 6.3% (n=7) trails global equity at 6.8% (n=5) and EM equity at 8.1% (n=6); US small cap sits at 6.0% (n=6). Private equity has the highest median, 9.7% (n=5).",
-  "Bonds: cash 3.6% (n=6), intermediate Treasuries 4.8% (n=7), IG corporate 5.2% (n=5), high yield 5.5% (n=7), EM USD sovereign 5.7% (n=8); credit adds little over Treasuries, matching tight-spread commentary.",
-  "Widest disagreements, ranked by IQR (rows with n≥4): commodities 225bp, US small cap 188bp, private equity 155bp, private credit 143bp, EM equity 122bp; tightest are US TIPS 37bp and EM local debt 41bp.",
-  "Stated stances lean underweight US large cap (six to one) and overweight EM (seven to one) and Japan equity (five to one); PIMCO's underweights in high yield, loans and private credit oppose GSAM's overweights.",
-  "This site's LTCMA sits furthest from a well-populated median on commodities: 3.5% vs 5.2% (170bp below, n=7). UK equity (7.0% vs 9.0%, two publishers) and gold (3.3% vs 1.6%, one publisher) are thin comparisons.",
-  "This site's LTCMA is above the public median on US TIPS (4.5% vs 3.8%, n=4), below on US high yield (5.0% vs 5.5%, n=7) and US large cap (6.0% vs 6.3%, n=7).",
-  "Next FOMC: a hold priced at 83.5% on both venues, a 25bp hike at 15.5-16.0%; zero 2026 cuts near-certain (95.8-95.9%), at odds with GSAM, UBS and BNY easing calls; Vanguard's higher-for-longer fits.",
-  "US recession in 2026 is priced at 3.5% (Kalshi) and 6.5% (Polymarket), consistent with GSAM's soft landing; Polymarket gives Democrats the House at 92.5% and Senate at 64.5%, relevant to fiscal-support calls."
+  "Equity medians: US large cap 6.3% (n=7), US small cap 6.0% (n=6), global equity 6.8% (n=5) and EM equity 8.1% (n=6, range down to 3.0%); private equity has the highest median, 9.7% (n=5).",
+  "Fixed income medians: US cash 3.6% (n=6), US aggregate 4.6% (n=6), intermediate Treasuries 4.8% (n=7), US IG corporates 5.2% (n=5), high yield 5.5% (n=7), EM USD sovereigns 5.7% (n=8); all IQRs 90bp or less.",
+  "Widest disagreements, ranked by IQR among rows with n≥4: commodities 225bp (n=7), US small cap 188bp (n=6), private equity 155bp (n=5), private credit 143bp (n=4), EM equity 122bp (n=6).",
+  "US large cap stances: BlackRock Investment Institute (high conviction) and Goldman Sachs AM overweight on AI earnings; PIMCO (vanishing equity risk premium), Lazard (rotation away from US equities) and Amundi underweight, each low conviction.",
+  "Where n≥4, this site's LTCMA departs most from public medians on commodities (3.5% vs 5.2%, 170bp below) and US TIPS (4.5% vs 3.8%, 72bp above); high yield and EM local debt sit 50bp below.",
+  "The largest gaps involve thin rows: this site's LTCMA has UK equity at 7.0% vs 9.0% from two publishers (191bp below) and gold at 3.3% vs 1.6% from a single publisher (170bp above).",
+  "Prediction markets (Kalshi, Polymarket): next-FOMC no change 82.5-83.0%, 25bp hike 16.5% on both, zero cuts this year 95.7-95.8%, at odds with the easing calls of Goldman Sachs AM, UBS GWM CIO and Mercer.",
+  "A US recession this year is priced at 3.5% (Kalshi) and 6.5% (Polymarket), in line with most managers' expansion base cases; hike odds fit Vanguard's higher-for-longer Fed, while BlackRock Investment Institute sees hikes overpriced."
  ],
  "publishers": [
   {
@@ -20,14 +20,14 @@
    "publisher": "AQR",
    "firm": "AQR",
    "product": "Capital Market Assumptions for Major Asset Classes",
-   "edition": "2026 Capital Market Assumptions (Alternative Thinking 2026 Issue 1, data 31 Dec 2025)",
+   "edition": "2026 CMA (Alternative Thinking 2026 Issue 1; data 31 Dec 2025)",
    "horizon": 10,
    "basis": "real",
    "currency": "local",
    "url": "https://www.aqr.com/-/media/AQR/Documents/Alternative-Thinking/AQR-Alternative-Thinking---2026-Capital-Market-Assumptions.pdf",
    "numbers_shown": true,
-   "n_forecasts": 57,
-   "n_views": 6,
+   "n_forecasts": 59,
+   "n_views": 2,
    "tier": "N"
   },
   {
@@ -43,7 +43,7 @@
    "url": "https://research-center.amundi.com/files/nuxeo/dl/6df1bf9d-44de-412e-aa5c-4578e393e8b0?inline=",
    "numbers_shown": false,
    "n_forecasts": null,
-   "n_views": 23,
+   "n_views": 5,
    "tier": "N"
   },
   {
@@ -52,13 +52,13 @@
    "publisher": "BNY Investments",
    "firm": "BNY Investments",
    "product": "10-year Capital Market Assumptions",
-   "edition": "2026 Capital Market Assumptions – Endurance Under Pressure (data 31 Oct 2025)",
+   "edition": "2026 CMA – Endurance Under Pressure (data 31 Oct 2025)",
    "horizon": 10,
    "basis": "nominal",
    "currency": "USD",
    "url": "https://www.bny.com/content/dam/imemea/pdfs/endurance-under-pressure-capital-market-assumptions-2026-full.pdf",
    "numbers_shown": true,
-   "n_forecasts": 26,
+   "n_forecasts": 32,
    "n_views": 9,
    "tier": "N"
   },
@@ -84,14 +84,14 @@
    "publisher": "BlackRock Investment Institute",
    "firm": "BlackRock",
    "product": "Weekly commentary (US individual edition)",
-   "edition": "Weekly commentary 5 Oct 2026 (data 1 Oct 2026)",
+   "edition": "BII Weekly commentary, 5 Oct 2026 (US individual edition; views at 5 Oct 2026, market data 1 Oct 2026)",
    "horizon": null,
    "basis": "unknown",
    "currency": "USD",
    "url": "https://www.blackrock.com/us/individual/literature/market-commentary/weekly-investment-commentary-en-us-20261005-us-dollar-surprisingly-resilient.pdf",
    "numbers_shown": true,
    "n_forecasts": 0,
-   "n_views": 26,
+   "n_views": 25,
    "tier": "Q"
   },
   {
@@ -132,10 +132,10 @@
    "publisher": "Goldman Sachs AM",
    "firm": "Goldman Sachs AM",
    "product": "Investment Outlook",
-   "edition": "Investment Outlook 2026 (first use 18 Nov 2025)",
+   "edition": "Investment Outlook 2026: Seeking Catalysts Amid Complexity (at 18 Nov 2025)",
    "horizon": 1,
    "basis": "unknown",
-   "currency": "USD",
+   "currency": null,
    "url": "https://am.gs.com/cms-assets/gsam-app/documents/insights/en/2025/Investment-Outlook-2026.pdf",
    "numbers_shown": true,
    "n_forecasts": 0,
@@ -148,14 +148,14 @@
    "publisher": "Invesco",
    "firm": "Invesco",
    "product": "Long-Term Capital Market Assumptions (USD)",
-   "edition": "2026 CMA Q2 Update (data 31 Mar 2026)",
+   "edition": "2026 CMA Q2 Update (USD, estimates at 31 Mar 2026)",
    "horizon": 10,
    "basis": "nominal",
    "currency": "USD",
    "url": "https://www.invesco.com/content/dam/invesco/emea/en/pdf/invesco-capital-market-assumption-usd.pdf",
    "numbers_shown": true,
    "n_forecasts": 34,
-   "n_views": 10,
+   "n_views": 0,
    "tier": "N"
   },
   {
@@ -180,14 +180,14 @@
    "publisher": "Lazard",
    "firm": "Lazard",
    "product": "Mid-Year Outlook",
-   "edition": "Global Mid-Year Outlook 2026 (published 24 June 2026)",
+   "edition": "Global Mid-Year Outlook 2026 (published 24 Jun 2026)",
    "horizon": null,
    "basis": "unknown",
    "currency": null,
    "url": "https://www.lazardassetmanagement.com/us/en_us/research-insights/investment-insights/investment-research/mid-year-outlook-2026",
    "numbers_shown": true,
    "n_forecasts": 0,
-   "n_views": 10,
+   "n_views": 3,
    "tier": "Q"
   },
   {
@@ -196,14 +196,14 @@
    "publisher": "Mercer",
    "firm": "Mercer",
    "product": "Economic & Market Outlook",
-   "edition": "Economic & Market Outlook 2026 (data 28 Oct 2025)",
+   "edition": "Economic and Market Outlook 2026 (data 28 Oct 2025)",
    "horizon": 1,
    "basis": "unknown",
    "currency": null,
    "url": "https://www.mercer.com/en-gb/insights/investments/market-outlook-and-trends/economic-and-market-outlook/",
    "numbers_shown": true,
    "n_forecasts": 0,
-   "n_views": 17,
+   "n_views": 11,
    "tier": "Q"
   },
   {
@@ -228,14 +228,14 @@
    "publisher": "PIMCO",
    "firm": "PIMCO",
    "product": "Secular Outlook",
-   "edition": "2026 Secular Outlook \"Rupture and Resilience\" (published 10 Jun 2026)",
+   "edition": "2026 Secular Outlook: Rupture and Resilience (published 10 Jun 2026)",
    "horizon": 5,
    "basis": "unknown",
-   "currency": "USD",
+   "currency": null,
    "url": "https://www.pimco.com/us/en/insights/rupture-and-resilience",
    "numbers_shown": true,
    "n_forecasts": 0,
-   "n_views": 15,
+   "n_views": 16,
    "tier": "Q"
   },
   {
@@ -244,14 +244,14 @@
    "publisher": "Robeco",
    "firm": "Robeco",
    "product": "Expected Returns (5-year) summary",
-   "edition": "5-Year Expected Returns 2027-2031 'The Great Rewiring' (16th edition, data Sep 2026)",
+   "edition": "Expected Returns 2027-2031 (16th edition, The Great Rewiring; source data September 2026)",
    "horizon": 5,
    "basis": "nominal",
    "currency": "EUR",
    "url": "https://www.robeco.com/files/docm/docu-summary-expected-returns-2027-2031-en.pdf",
    "numbers_shown": true,
-   "n_forecasts": 22,
-   "n_views": 6,
+   "n_forecasts": 44,
+   "n_views": 0,
    "tier": "N"
   },
   {
@@ -283,7 +283,7 @@
    "url": "https://mybrand.schroders.com/m/56e1048c0300075c/original/30-year-returns.pdf",
    "numbers_shown": false,
    "n_forecasts": null,
-   "n_views": 13,
+   "n_views": 0,
    "tier": "N"
   },
   {
@@ -308,14 +308,14 @@
    "publisher": "T. Rowe Price",
    "firm": "T. Rowe Price",
    "product": "Capital Market Assumptions (5-year)",
-   "edition": "2026 Capital Market Assumptions, Five-Year Perspective (USD), five years to 31 Dec 2030",
+   "edition": "2026 Capital Market Assumptions – Five-Year Perspective (USD)",
    "horizon": 5,
    "basis": "nominal",
    "currency": "USD",
    "url": "https://www.troweprice.com/content/dam/ide/articles/pdfs/2026/capital-market-assumptions-na.pdf",
    "numbers_shown": true,
    "n_forecasts": 46,
-   "n_views": 7,
+   "n_views": 0,
    "tier": "N"
   },
   {
@@ -324,14 +324,14 @@
    "publisher": "UBS GWM CIO",
    "firm": "UBS GWM CIO",
    "product": "Year Ahead forecasts",
-   "edition": "Year Ahead 2026 (data 12 Nov 2025)",
+   "edition": "Year Ahead 2026 forecasts (data 12 Nov 2025)",
    "horizon": 1,
    "basis": "unknown",
-   "currency": "USD",
+   "currency": null,
    "url": "https://www.ubs.com/global/en/wealthmanagement/insights/chief-investment-office/year-ahead/forecasts.html",
    "numbers_shown": true,
    "n_forecasts": 0,
-   "n_views": 6,
+   "n_views": 7,
    "tier": "Q"
   },
   {
@@ -340,14 +340,14 @@
    "publisher": "Vanguard",
    "firm": "Vanguard",
    "product": "VEMO 10-year return forecasts",
-   "edition": "Q2 2026 VCMM update (data 30 Jun 2026, published 22 Jul 2026)",
+   "edition": "VCMM 10-year forecasts, Q2 2026 update (published 22 Jul 2026; data 30 Jun 2026)",
    "horizon": 10,
    "basis": "nominal",
    "currency": "USD",
    "url": "https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/vemo-return-forecasts.html",
    "numbers_shown": true,
    "n_forecasts": 26,
-   "n_views": 7,
+   "n_views": 0,
    "tier": "N"
   }
  ],
@@ -481,10 +481,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "Global All Ctry (nominal)",
+    "label": "Global All",
     "dir": null,
     "in_stats": false,
-    "why": "Real estimate plus expected local inflation."
+    "why": "Exhibit 3C nominal (11th bar) for global all-country equities: local real return plus expected inflation."
    },
    "A09": {
     "v": 5.9,
@@ -493,11 +493,11 @@
     "basis": "nominal",
     "comp": "geometric",
     "flags": [],
-    "page": 4,
+    "page": 9,
     "label": "Global equity (MSCI ACWI)",
     "dir": null,
     "in_stats": true,
-    "why": "Rising US weight increases valuation headwind despite solid earnings and shareholder yield."
+    "why": "Solid earnings and shareholder yield offset by heavier valuation headwind as US reaches 63% of ACWI; down 0.2pp qoq."
    },
    "A10": {
     "v": 7.75,
@@ -509,24 +509,16 @@
      "MSCI World proxy (no ACWI row)"
     ],
     "page": 3,
-    "label": "Developed market equities (USD)",
+    "label": "Developed market equities",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "medium",
-    "why": "Earnings growth outweighs multiple compression from elevated valuations."
+    "why": "Developed equities for a USD investor, proxy for global; strong earnings growth outweighs expected multiple compression."
    },
    "A19": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Supportive economic backdrop, fiscal stimulus, fading tariff effects and AI capex expected to drive further equity gains in 2026."
-   },
-   "A23": {
-    "stance": "neutral",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Overall positioning broadly neutral as growth, inflation and policy converge to long-term averages; AI-driven earnings offset by elevated valuations."
+    "why": "Economic backdrop expected to support stocks in 2026 as confidence improves, fiscal stimulus gains traction and tariff effects fade."
    },
    "A31": {
     "v": 7.7,
@@ -539,7 +531,7 @@
     "label": "Global equities",
     "dir": null,
     "in_stats": true,
-    "why": "Market-cap weighted aggregation of regional Grinold-Kroner estimates."
+    "why": "Market-cap-weighted mix of regional income, earnings growth and currency estimates. Matches the median path of their Monte Carlo simulation."
    },
    "A33": {
     "v": 6.8,
@@ -552,7 +544,7 @@
     "label": "Global Equity",
     "dir": "up",
     "in_stats": true,
-    "why": "MSCI ACWI; elevated US valuations offset by improved EM earnings momentum."
+    "why": "MSCI ACWI; anchored on starting valuations; elevated developed-market valuations and slower growth partly offset by stronger EM earnings outlook."
    },
    "A37": {
     "v": 6.7,
@@ -570,13 +562,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "MSCI World-type exposure; higher returns from AI growth channel, margins above equilibrium."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Developed-market (MSCI World) equities; AI-driven GDP uplift supports returns while margins above equilibrium in most regions weigh."
    }
   },
   "DM_exUS_Eq": {
@@ -608,7 +594,7 @@
     "label": "Developed markets ex-U.S. equities (unhedged)",
     "dir": "up",
     "in_stats": true,
-    "why": "Developed ex-US markets became more expensive as the global rally broadened; range fell from 5.4%–7.4% yet stays slightly above US."
+    "why": "Developed ex-U.S. markets became more expensive after the ceasefire-driven global rally, so expected returns fell."
    },
    "A07": {
     "v": 6.9,
@@ -618,30 +604,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "Global Dev. ex US (nominal)",
+    "label": "Glob. Dev. ex US",
     "dir": null,
     "in_stats": false,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Real estimate plus expected local inflation."
-   },
-   "A09": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "DM ex-US offers better mix of earnings, shareholder yield and valuations; expected to outperform US."
-   },
-   "A16": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Core conviction that non-US equities' relative performance strengthens as the US/non-US performance gap narrows."
-   },
-   "A23": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "Developed equities see solid AI-led earnings growth, but valuations elevated and non-tech performance subdued."
+    "why": "Exhibit 3C nominal (6th bar): global developed ex-US local real return plus expected inflation."
    },
    "A31": {
     "v": 7.8,
@@ -656,7 +622,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "Largest upgrade; AI productivity gains and expected weaker US dollar lift unhedged USD returns."
+    "why": "Biggest upgrade from 2025. AI productivity gains and solid income, plus a weaker dollar adding currency return for USD investors."
    },
    "A33": {
     "v": 7.1,
@@ -669,7 +635,7 @@
     "label": "Developed Market ex-U.S. Equity",
     "dir": "up",
     "in_stats": true,
-    "why": "Less room for valuation-driven upside after 2025 rally; converging toward US expectations."
+    "why": "MSCI World ex-USA; reduced scope for valuation-driven upside outside the US, with expectations converging toward US equity returns."
    }
   },
   "US_LargeCap": {
@@ -701,9 +667,7 @@
     "label": "U.S. large-cap",
     "dir": "up",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Top third of Russell 1000 by market cap; valuations rose from elevated levels, with declines similar to the broad US market."
+    "why": "Higher valuations from already elevated levels cut expected returns, with similar declines for large- and small-cap stocks."
    },
    "A07": {
     "v": 6.3,
@@ -713,12 +677,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 16,
-    "label": "U.S. Large (nominal)",
+    "label": "U.S. Large",
     "dir": "up",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Local real return of 3.9% plus 2.4% expected US inflation."
+    "why": "Geometric nominal: 3.9% local real return plus 2.4% expected US inflation; the arithmetic version is higher."
    },
    "A09": {
     "v": 4.9,
@@ -731,33 +693,25 @@
     "label": "US large cap (S&P 500)",
     "dir": null,
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "medium",
-    "why": "Valuation mean reversion subtracts about 4.5% annually, offsetting strong earnings and buybacks."
-   },
-   "A10": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "US valuations particularly elevated; multiples expected to compress though earnings growth justifies some optimism."
+    "why": "Real earnings growth near 4% and shareholder yield offset by steep valuation drag around -4.5% from elevated multiples."
    },
    "A15": {
     "stance": "underweight",
     "conv": "low",
     "view_only": true,
-    "why": "Valuations stretched and US equity risk premium near zero; high quality bonds offer comparable Sharpe ratio; no imminent correction called."
+    "why": "Stretched valuations and near-zero US equity risk premium; bonds' prospective Sharpe ratio now better, so revisit drifted-up equity weights. No imminent correction call."
    },
    "A16": {
     "stance": "underweight",
-    "conv": "medium",
+    "conv": "low",
     "view_only": true,
-    "why": "Expects allocators to rotate away from US equities; AI tailwinds persist but US economic resilience looks increasingly doubtful."
+    "why": "US equities broadly, relative call: anticipates rotation away from US equities; AI tailwinds persist but economic resilience looks doubtful."
    },
    "A17": {
-    "stance": "neutral",
-    "conv": "medium",
+    "stance": "overweight",
+    "conv": "low",
     "view_only": true,
-    "why": "Earnings power of large AI leaders supports gains, but concentration and growing Mag 7 dispersion favor quality selection."
+    "why": "Mega-cap earnings power and durable AI capex may support further gains; favors quality firms with high margins and strong balance sheets amid rising dispersion."
    },
    "A31": {
     "v": 7.6,
@@ -770,7 +724,7 @@
     "label": "U.S. Equity",
     "dir": null,
     "in_stats": true,
-    "why": "Grinold-Kroner build: buyback-heavy income plus AI-boosted earnings growth, constant valuations assumed."
+    "why": "Broad U.S. equity. Built from income, inflation, real GDP and AI-boosted earnings-share growth, with valuations held constant."
    },
    "A33": {
     "v": 6.4,
@@ -783,9 +737,7 @@
     "label": "U.S. Large-Cap",
     "dir": "up",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Elevated valuations, especially US growth stocks, limit returns; slightly below last year."
+    "why": "Russell 1000; elevated valuations, especially in US growth stocks, and slower structural growth leave forecast slightly below the 2025 edition."
    },
    "A37": {
     "v": 6.4,
@@ -800,22 +752,16 @@
     "label": "US Equities",
     "dir": "up",
     "in_stats": true,
-    "why": "AI-boosted GDP growth offset by elevated margins and valuations reverting."
+    "why": "Inflation, AI-boosted real revenue growth, dividends and buybacks drive returns; profit margins above long-term equilibrium act as a drag."
    },
    "A06W": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "U.S. equities: strong AI-driven earnings and supportive macro outpace higher rate expectations; listed among highest-conviction views."
-   },
-   "A08L": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Broad US equities: AI-driven earnings strength and a favorable macro backdrop outpace higher rate expectations; listed among highest-conviction views."
    },
    "A36": {
-    "stance": "neutral",
+    "stance": "underweight",
     "conv": "low",
     "view_only": true,
     "restricted": true
@@ -850,7 +796,7 @@
     "label": "U.S. small-cap",
     "dir": "up",
     "in_stats": true,
-    "why": "Bottom two-thirds of Russell 3000 by market cap; strong Q2 small-cap gains raised valuations, cutting forecasts similarly to large caps."
+    "why": "Small caps rallied strongly in Q2; rising valuations lowered expected returns similarly to large caps."
    },
    "A07": {
     "v": 7.4,
@@ -860,10 +806,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "U.S. Small (nominal)",
+    "label": "U.S. Small",
     "dir": "up",
     "in_stats": true,
-    "why": "Real estimate plus expected US inflation."
+    "why": "Exhibit 3C expected nominal return (2nd bar): small-cap local real return plus US expected inflation."
    },
    "A09": {
     "v": 4.5,
@@ -872,19 +818,17 @@
     "basis": "nominal",
     "comp": "geometric",
     "flags": [],
-    "page": 4,
+    "page": 9,
     "label": "US small cap (S&P 600)",
     "dir": null,
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Less valuation drag but weak long-term earnings growth limits returns."
+    "why": "Smaller valuation drag (-2.7%) but weak long-term earnings growth (2.5%) leaves small caps less compelling than mid-caps."
    },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Attractive valuations, anticipated rate cuts, accelerating earnings and dealmaking revival; active selection needed."
+    "why": "Small caps (US and international) look attractive on valuations, expected rate cuts, accelerating earnings and a dealmaking revival; active stock selection essential."
    },
    "A31": {
     "v": 7.5,
@@ -897,9 +841,7 @@
     "label": "U.S. Small Cap",
     "dir": null,
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Factor model; muted size premium as early-stage growth shifts to private markets."
+    "why": "Factor model with a weak size premium because companies stay private longer, putting small caps slightly below broad U.S. equity."
    },
    "A33": {
     "v": 6.3,
@@ -909,10 +851,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "U.S. Small‑Cap",
+    "label": "U.S. Small-Cap",
     "dir": "up",
     "in_stats": true,
-    "why": "Selectively upgraded from last year, though still roughly in line with US large caps."
+    "why": "Russell 2000; among niche segments whose return expectation was selectively upgraded versus 2025; valuation-anchored forecast."
    }
   },
   "Europe_Eq": {
@@ -941,10 +883,10 @@
      "Eurozone/EU index, not MSCI Europe"
     ],
     "page": 5,
-    "label": "Eurozone (nominal)",
+    "label": "Eurozone",
     "dir": null,
     "in_stats": false,
-    "why": "Real estimate plus expected Eurozone inflation."
+    "why": "Exhibit 3C nominal (3rd bar, Euro-5): local real return plus eurozone expected inflation."
    },
    "A09": {
     "v": 7.2,
@@ -957,21 +899,13 @@
     "label": "Europe equity (MSCI Europe)",
     "dir": null,
     "in_stats": true,
-    "stance": "neutral",
-    "conv": "low",
-    "why": "Solid dividend yield and earnings growth, with valuation drag increased this quarter."
-   },
-   "A16": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "The Iran war derailed the expected 2026 recovery, but defense spending improves Europe's long-term growth prospects."
+    "why": "MSCI Europe including UK; solid dividend yield and earnings growth partly offset by valuation drag; total yield around 4.2%."
    },
    "A17": {
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Deep discount to US, fiscal expansion, defense and reindustrialization; banks may re-rate further."
+    "why": "Deep discount to US, fiscal expansion and reindustrialization; 2025 underperformance of quality names may allow selective adding; banks could re-rate further."
    },
    "A31": {
     "v": 8.1,
@@ -983,10 +917,10 @@
      "Eurozone/EU index, not MSCI Europe"
     ],
     "page": 25,
-    "label": "European Union",
+    "label": "European Union equity",
     "dir": null,
     "in_stats": true,
-    "why": "Solid income and expected euro strength versus a weaker dollar."
+    "why": "European Union equities in unhedged USD. Solid income and euro appreciation make up for modest real GDP growth."
    },
    "A33": {
     "v": 8.1,
@@ -999,7 +933,7 @@
     "label": "Europe Equity",
     "dir": "up",
     "in_stats": true,
-    "why": "Expected for US investors, including dividends, earnings growth, currency and valuation components."
+    "why": "MSCI Europe in USD; built from dividend, earnings, currency and valuation components for US investors; no region-specific commentary."
    },
    "A37": {
     "v": 6.9,
@@ -1015,23 +949,17 @@
     "label": "Euro Area Equities",
     "dir": null,
     "in_stats": false,
-    "why": "Euro area equities in local currency; growth, buybacks and dividends."
+    "why": "Euro Area (EMU) equities mapped to Europe; inflation, revenue growth, dividends and buybacks, less margin normalisation."
    },
    "A06W": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Needs more business-friendly policy and deeper capital markets to outperform; favors financials, infrastructure and industrials."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Outperformance needs more business-friendly policy and deeper capital markets; within Europe favors financials, infrastructure and industrials."
    },
    "A36": {
     "stance": "overweight",
-    "conv": "medium",
+    "conv": "low",
     "view_only": true,
     "restricted": true
    }
@@ -1065,9 +993,7 @@
     "label": "Emerging markets equities (unhedged)",
     "dir": "down",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Strong emerging markets rally lifted valuations; range dropped from 3.6%–5.6%, now the weakest equity forecast with the highest volatility."
+    "why": "Strong second-quarter emerging market rally raised valuations, pushing expected returns down notably from the prior quarter."
    },
    "A07": {
     "v": 7.4,
@@ -1077,10 +1003,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "All EM (nominal)",
+    "label": "All EM",
     "dir": null,
     "in_stats": false,
-    "why": "Real estimate plus expected local inflation."
+    "why": "Exhibit 3C nominal (10th bar) for all EM: local real return plus EM expected inflation."
    },
    "A09": {
     "v": 7.1,
@@ -1089,13 +1015,11 @@
     "basis": "nominal",
     "comp": "geometric",
     "flags": [],
-    "page": 5,
+    "page": 9,
     "label": "EM equity (MSCI EM)",
     "dir": null,
     "in_stats": true,
-    "stance": "neutral",
-    "conv": "low",
-    "why": "Smaller valuation drag and better currency contribution, still below DM ex-US."
+    "why": "Up 0.9pp qoq on improved valuations (-1.8% drag) and larger currency contribution (0.8%), yet below DM ex-US."
    },
    "A10": {
     "v": 8.75,
@@ -1105,24 +1029,16 @@
     "comp": "geometric",
     "flags": [],
     "page": 3,
-    "label": "Emerging market equities (USD)",
+    "label": "Emerging market equities",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "medium",
-    "why": "Top-returning asset class; EM and middle powers benefit from rewiring of trade."
+    "why": "Top-returning asset for a USD investor; broader EM return drivers and the rise of middle powers."
    },
    "A17": {
     "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Weaker dollar, easing inflation, dovish Fed and ~40% P/E discount to US with strong earnings profiles."
-   },
-   "A23": {
-    "stance": "neutral",
     "conv": "low",
     "view_only": true,
-    "why": "Mixed: AI exposure and weaker dollar help some markets while tariff and trade uncertainty weigh on others."
+    "why": "Softer dollar, lower oil, easing inflation and Fed cuts support EM; ~40% P/E discount to US could narrow on strong earnings."
    },
    "A31": {
     "v": 8.1,
@@ -1137,7 +1053,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "Higher growth, AI benefits and dollar weakness support improved emerging equity expectations."
+    "why": "Largest real GDP boost to earnings growth, plus modest currency gains from a weaker dollar, offsetting a lower income yield."
    },
    "A33": {
     "v": 8.7,
@@ -1150,9 +1066,7 @@
     "label": "EM Equity",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Upgraded as earnings momentum improved and forward earnings expectations rebounded."
+    "why": "MSCI Emerging Markets; higher return assumption as earnings momentum improved and forward earnings expectations rebounded."
    },
    "A37": {
     "v": 8,
@@ -1167,19 +1081,13 @@
     "label": "Emerging Markets Equities",
     "dir": "up",
     "in_stats": true,
-    "why": "Higher growth economies and cheaper valuations drive higher expected return."
+    "why": "Highest public equity forecast, reflecting stronger emerging-market growth such as China, alongside the highest volatility."
    },
    "A06W": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "Strong earnings and cheaper valuations; likes AI scarcity plays across Asia and Latin America; a stable or weaker dollar adds support."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Strong earnings and cheaper valuations; likes AI-scarcity plays in Asia and Latin America; a stable or softer dollar would reinforce it."
    },
    "A36": {
     "stance": "overweight",
@@ -1212,10 +1120,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 6,
-    "label": "Global Dev. 10-Year (nominal)",
+    "label": "Global Dev. 10-Year",
     "dir": null,
     "in_stats": false,
-    "why": "Yield plus rolldown."
+    "why": "Exhibit 4B nominal (6th bar) for global developed 10-year govt bonds: yield plus rolldown."
    },
    "A09": {
     "v": 4.9,
@@ -1228,7 +1136,7 @@
     "label": "Global tsy (BBG global tsy)",
     "dir": null,
     "in_stats": true,
-    "why": "Elevated global sovereign yields support income-driven returns."
+    "why": "Global government bonds; roughly 4.1% total yield reflects sovereign yields that remain elevated versus recent history."
    },
    "A10": {
     "v": 5.25,
@@ -1238,24 +1146,28 @@
     "comp": "geometric",
     "flags": [],
     "page": 3,
-    "label": "Developed global government bonds (hedged) (USD)",
+    "label": "Developed global government bonds (hedged)",
     "dir": "flat",
     "in_stats": true,
-    "stance": "neutral",
-    "conv": "low",
-    "why": "Developed sovereigns hedged to USD; hedge carry adds to euro-based return."
+    "why": "Developed sovereigns hedged to USD; higher yields have improved expected returns but are not a free lunch."
    },
    "A15": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "Desynchronized cycles and diverging policy create diversification and active country/curve opportunities; non-US debt diversifies US fiscal risk."
+    "why": "Desynchronized business cycles and diverging monetary policy create country-selection and curve opportunities; global sovereign exposure adds income and diversification."
    },
    "A23": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Global government bonds viewed neutrally amid broadly accommodative but diverging monetary policy."
+    "why": "Global government bonds explicitly viewed neutrally, consistent with the broadly neutral overall market positioning for 2026."
+   },
+   "A31": {
+    "stance": "underweight",
+    "conv": "low",
+    "view_only": true,
+    "why": "Says sovereign debt may be less attractive risk-adjusted given fiscal strain, and suggests real assets and private markets for diversification."
    },
    "A37": {
     "v": 4.8,
@@ -1272,19 +1184,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "Higher government yield curves support returns; diversifier in recessions."
-   },
-   "A08L": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Higher government yield curves make income the key driver; sovereigns expected to diversify during recessionary shocks."
    }
   },
   "US_Treas_Interm": {
@@ -1317,7 +1217,7 @@
     "label": "U.S. intermediate-term Treasury bonds",
     "dir": "flat",
     "in_stats": true,
-    "why": "Intermediate Treasury index; sovereign yields stable near March levels, forecast sits below long Treasuries and aggregate bonds."
+    "why": "Treasury yields remained near March levels while markets priced a higher-for-longer Federal Reserve stance."
    },
    "A07": {
     "v": 4.8,
@@ -1327,10 +1227,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 6,
-    "label": "U.S. 10-Year (nominal)",
+    "label": "U.S. 10-Year",
     "dir": "up",
     "in_stats": true,
-    "why": "Starting yield 4.2% plus 0.6% rolldown under unchanged curve."
+    "why": "Rolling yield of constant-maturity 10-year Treasuries: 4.2% starting yield plus 0.6% rolldown, assuming an unchanged curve."
    },
    "A09": {
     "v": 5,
@@ -1343,7 +1243,7 @@
     "label": "US tsy (BBG US tsy)",
     "dir": null,
     "in_stats": true,
-    "why": "Elevated starting Treasury yields drive returns, with modest roll return and small yield-curve valuation gain."
+    "why": "Broad BBG US Treasury index; roughly 4% average yield plus roll return and small yield-curve gain drive return."
    },
    "A10": {
     "v": 5,
@@ -1352,26 +1252,25 @@
     "basis": "nominal",
     "comp": "geometric",
     "flags": [
-     "broad US Treasury index",
      "broad Treasury index"
     ],
     "page": 3,
-    "label": "Domestic government bonds (USD)",
+    "label": "Domestic government bonds",
     "dir": "flat",
     "in_stats": true,
-    "why": "US government bonds, maturity unspecified; higher yields reflect inflation and fiscal uncertainty."
+    "why": "US Treasuries for a USD investor, maturity unspecified; higher yields improve returns but reflect inflation and fiscal uncertainty."
    },
    "A15": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "Five- to 10-year segment of global curves offers attractive yield, roll-down and risk balance versus cash and the long end."
+    "why": "Highest-conviction idea: five- to ten-year segment of global curves, US included, well paid in yield and roll-down versus cash and the long end."
    },
    "A17": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Neutral on US rates, though Treasuries could rally if labor market weakness deepens; front end benefits from expected Fed cuts."
+    "why": "Neutral on US rates; Treasuries could rally if labor-market weakness deepens; soft-landing base case with gradual Fed easing."
    },
    "A33": {
     "v": 3.6,
@@ -1384,7 +1283,7 @@
     "label": "U.S. Treasury",
     "dir": "down",
     "in_stats": true,
-    "why": "Broad Treasury index, closest to intermediate; most respondents expect the 10-year yield to rise."
+    "why": "Broad Bloomberg US Treasury index; lower starting yields and majority expectation of higher 10-year yields trimmed forecast versus 2025."
    },
    "A37": {
     "v": 4.8,
@@ -1400,19 +1299,13 @@
     "label": "USD Government Bonds",
     "dir": "up",
     "in_stats": true,
-    "why": "Broad USD government index; return driven by higher starting yields and income."
+    "why": "Broad USD government bonds mapped to intermediate Treasuries; income from higher yields is the main driver, aided by roll-down."
    },
    "A06W": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Short U.S. Treasuries row: neutral, but prefers short- and medium-term Treasuries over long bonds for attractive risk-adjusted income."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Short US Treasuries row; neutral overall but prefers short- and medium-term Treasuries for attractive risk-adjusted income versus long bonds."
    }
   },
   "US_Agg": {
@@ -1444,7 +1337,7 @@
     "label": "U.S. aggregate bonds",
     "dir": "up",
     "in_stats": true,
-    "why": "Treasury yields held near March levels despite higher-for-longer Fed pricing; aggregate bond expected returns rose modestly."
+    "why": "Yields held near March levels as markets priced a higher-for-longer Fed; expected returns rose modestly."
    },
    "A07": {
     "v": 4.9,
@@ -1454,10 +1347,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 6,
-    "label": "U.S. Agg. (nominal)",
+    "label": "U.S. Aggregate",
     "dir": "up",
     "in_stats": true,
-    "why": "Yield plus rolldown and convexity adjustments."
+    "why": "Exhibit 4B nominal (8th bar) for US Aggregate: yield plus rolldown with convexity and variance adjustments."
    },
    "A09": {
     "v": 5.3,
@@ -1470,9 +1363,13 @@
     "label": "US agg (BBG US agg)",
     "dir": null,
     "in_stats": true,
+    "why": "Higher current yields (about 4.6% average) plus roll return; up 0.2pp qoq as markets priced fewer Fed cuts."
+   },
+   "A15": {
     "stance": "overweight",
-    "conv": "low",
-    "why": "Current yields rose as markets priced fewer Fed cuts, lifting expected return 0.2% qoq."
+    "conv": "high",
+    "view_only": true,
+    "why": "Core high-quality bonds offer elevated starting yields competitive with long-run equity returns at lower volatility, plus diversification and upside in downturns."
    },
    "A31": {
     "v": 4.3,
@@ -1485,7 +1382,7 @@
     "label": "U.S. Aggregate",
     "dir": null,
     "in_stats": true,
-    "why": "Moderated on lower starting yields; starting yield historically a strong predictor of 10-year returns."
+    "why": "Tied to starting yields, which have historically tracked 10-year returns closely. Cut from last year because starting yields are lower."
    },
    "A33": {
     "v": 4,
@@ -1498,7 +1395,7 @@
     "label": "U.S. Aggregate",
     "dir": "flat",
     "in_stats": true,
-    "why": "Starting yields drive return, with modest drag from curve and spread changes."
+    "why": "Starting yields drive returns; modest negative contribution assumed from yield curve movements and spread widening."
    }
   },
   "US_HighYield": {
@@ -1530,9 +1427,7 @@
     "label": "U.S. high-yield corporate bonds",
     "dir": "up",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Credit valuations remain rich; high yield offers only a modest premium over Treasuries for considerably higher volatility."
+    "why": "Credit valuations remain rich, providing limited extra compensation for bearing additional credit risk."
    },
    "A07": {
     "v": 5,
@@ -1542,10 +1437,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 7,
-    "label": "U.S. High Yield (nominal)",
+    "label": "U.S. Corp. HY",
     "dir": "up",
     "in_stats": true,
-    "why": "Real estimate plus expected inflation."
+    "why": "Exhibit 5B nominal for US high yield: real return plus expected US inflation."
    },
    "A09": {
     "v": 6.1,
@@ -1558,19 +1453,19 @@
     "label": "US HY corps (BBG US HY)",
     "dir": null,
     "in_stats": true,
-    "why": "High total yield of 8% reduced by expected credit losses and spread widening."
+    "why": "Average yield around 8% offset by expected credit losses near 1.7% and spread valuation drag."
    },
    "A15": {
     "stance": "underweight",
-    "conv": "high",
+    "conv": "medium",
     "view_only": true,
-    "why": "Credit loss cycle beginning; tight spreads reflect complacency; cautious on lower-quality, economically sensitive, highly levered credit."
+    "why": "Spreads near historic tights reflect complacency as defaults rise; caution on lower-quality, economically sensitive corporate credit and an up-in-quality bias."
    },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Strong credit metrics, contained defaults, improved ratings mix and supportive M&A make high yield an income source."
+    "why": "Income opportunity: strong interest coverage, contained defaults, improved ratings mix, firm demand and supportive M&A underpin high yield."
    },
    "A31": {
     "v": 6.1,
@@ -1583,9 +1478,7 @@
     "label": "U.S. High Yield",
     "dir": null,
     "in_stats": true,
-    "stance": "neutral",
-    "conv": "low",
-    "why": "Yield less defaults; spreads expected to widen from tight levels toward 20-year median."
+    "why": "Yield minus defaults (set at 30% of projected spread). Spreads assumed to widen back toward their 20-year median."
    },
    "A33": {
     "v": 5.5,
@@ -1598,9 +1491,7 @@
     "label": "U.S. High Yield",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Credit stays comparatively attractive; carry outweighs expected spread widening."
+    "why": "Credit-oriented asset; higher carry expected to be only partially offset by potential spread widening."
    },
    "A37": {
     "v": 5.9,
@@ -1615,23 +1506,11 @@
     "label": "USD High Yield Bonds",
     "dir": "up",
     "in_stats": true,
-    "why": "Higher income offset by credit losses and tight spreads."
-   },
-   "A06W": {
-    "stance": "neutral",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Global high yield row: attractive income; prefers higher-rated U.S. and European high yield over IG; expects rising return dispersion."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Higher spread income partly offset by default losses and tight spreads, leaving a modest premium over investment grade."
    },
    "A36": {
     "stance": "underweight",
-    "conv": "medium",
+    "conv": "low",
     "view_only": true,
     "restricted": true
    }
@@ -1665,7 +1544,7 @@
     "label": "U.S. TIPS",
     "dir": "flat",
     "in_stats": true,
-    "why": "1–10 year TIPS index; forecast slightly below intermediate nominal Treasuries, with the model assuming 1.5%–2.5% US inflation."
+    "why": "1-10 year inflation-linked Treasury proxy; nominal forecast with Treasury yields near March levels."
    },
    "A09": {
     "v": 5.1,
@@ -1678,13 +1557,13 @@
     "label": "US TIPS (BBG US TIPS)",
     "dir": null,
     "in_stats": true,
-    "why": "Average yield near 4% plus roll return; return comparable to nominal Treasuries."
+    "why": "Average yield near 4% plus roll return and modest yield-curve valuation gain underpin the TIPS estimate."
    },
    "A15": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Inflation-linked bonds with historically positive real yields buffer fatter inflation tails and energy geopolitical risk."
+    "why": "Inflation-linked bonds (generic, incl. TIPS) cushion fatter inflation tails and energy-related geopolitical risk; real yields look attractive versus history."
    },
    "A33": {
     "v": 3.7,
@@ -1697,7 +1576,7 @@
     "label": "U.S. TIPS",
     "dir": "flat",
     "in_stats": true,
-    "why": "Inflation-linked yields, with persistent inflation as backdrop."
+    "why": "Yield-driven forecast for inflation-linked Treasuries; expected modest rise in yields weighs on duration returns."
    }
   },
   "EM_USD_Sov": {
@@ -1729,7 +1608,7 @@
     "label": "Emerging markets sovereign bonds (hedged)",
     "dir": "up",
     "in_stats": true,
-    "why": "USD EM sovereign index, 10% country capped, shown hedged; highest fixed income forecast, alongside the highest fixed income volatility."
+    "why": "Bloomberg EM USD sovereign index, country capped; model output without EM debt-specific commentary."
    },
    "A07": {
     "v": 5.6,
@@ -1739,10 +1618,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 7,
-    "label": "EM USD Sov. (nominal)",
+    "label": "EM USD Sov.",
     "dir": "up",
     "in_stats": true,
-    "why": "Real estimate plus expected inflation."
+    "why": "Exhibit 5B nominal for EM USD sovereigns: real return plus expected US inflation."
    },
    "A09": {
     "v": 6.2,
@@ -1757,7 +1636,7 @@
     "label": "EM agg (BBG EM agg)",
     "dir": null,
     "in_stats": true,
-    "why": "High yields near 6.8% partly offset by spread drag and credit losses; USD EM aggregate proxy."
+    "why": "USD-denominated BBG EM aggregate; roughly 6.8% average yield less spread valuation drag and credit losses near 0.8% each."
    },
    "A10": {
     "v": 5.25,
@@ -1767,28 +1646,22 @@
     "comp": "geometric",
     "flags": [],
     "page": 3,
-    "label": "Emerging government debt (hard) (USD)",
+    "label": "Emerging government debt (hard)",
     "dir": "flat",
     "in_stats": true,
-    "why": "USD sovereign EM yields; sensitive to bear-case stagflation."
+    "why": "Hard-currency EM sovereigns for a USD investor; wide scenario dispersion and climate vulnerability temper returns."
    },
    "A15": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Select sovereign and quasi-sovereign credit, especially commodity exporters, offers spread more than compensating idiosyncratic risk."
-   },
-   "A16": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Expects growing demand for EM debt as allocators diversify; the type of EM debt is not specified."
+    "why": "Select hard-currency sovereign and quasi-sovereign credit, notably commodity-exporting frontier and IG issuers, offers spreads that often more than compensate idiosyncratic risk."
    },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "EM debt a source of income and alpha given dollar softness, issuer resilience and Fed easing enabling EM cuts."
+    "why": "EM debt seen as strong income and alpha source given differentiation, US dollar softness and resilient sovereign and corporate issuers."
    },
    "A31": {
     "v": 5.8,
@@ -1801,7 +1674,7 @@
     "label": "EM Sovereign USD",
     "dir": null,
     "in_stats": true,
-    "why": "Lowered; spreads assumed to normalize wider with default haircut at 30% of spread."
+    "why": "Spread over Treasuries assumed to widen toward its normal level, and defaults are deducted, so lower than the prior edition."
    },
    "A33": {
     "v": 4.5,
@@ -1814,7 +1687,7 @@
     "label": "EM Sovereign",
     "dir": "flat",
     "in_stats": true,
-    "why": "EMBI hard-currency debt; yield-driven return in the 4% to 5% range."
+    "why": "JPM EMBI Global Diversified; yield-driven return with modest negative spread and curve contributions."
    },
    "A37": {
     "v": 6.2,
@@ -1829,13 +1702,13 @@
     "label": "EMD Sovereign (HC)",
     "dir": "up",
     "in_stats": true,
-    "why": "Hard-currency sovereign yields plus spreads; income-driven."
+    "why": "Hard-currency EM sovereign debt; US Treasury yields plus sovereign spread income drive returns."
    },
    "A06W": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Emerging hard-currency debt: fundamentals improved, but EM local debt offers a more attractive risk-reward profile."
+    "why": "EM hard-currency debt: fundamentals have improved, but EM local debt offers a more attractive risk-reward profile."
    }
   },
   "EM_Local_Debt": {
@@ -1862,24 +1735,22 @@
     "comp": "geometric",
     "flags": [],
     "page": 3,
-    "label": "Emerging government debt (local) (USD)",
+    "label": "Emerging government debt (local)",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Highest fixed income return for USD investor from high local yields."
+    "why": "Local-currency EM sovereigns for a USD investor; top fixed income return, tempered by EM debt climate vulnerability."
    },
    "A15": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Starting yields among best in a decade; potential secular dollar weakness a tailwind; diversifies DM-originated risks."
+    "why": "Starting yields among the best in over a decade, potential secular dollar weakness as tailwind, and diversification against DM fiscal and policy risks."
    },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Fed easing allows EM rate cuts without major currency weakness; subdued dollar and lower oil support local bonds."
+    "why": "Fed easing allows EM central banks to cut without major currency weakness, benefiting local bonds; EM debt flagged as income opportunity."
    },
    "A31": {
     "v": 5.3,
@@ -1892,7 +1763,7 @@
     "label": "EM Sovereign Local",
     "dir": null,
     "in_stats": true,
-    "why": "Higher local yields with currency component in unhedged USD."
+    "why": "EM local-currency government bonds in unhedged USD. Higher local yields plus currency effect, minus the default assumption."
    },
    "A33": {
     "v": 5.3,
@@ -1905,7 +1776,7 @@
     "label": "EM Sovereign Local",
     "dir": "up",
     "in_stats": true,
-    "why": "Higher local yields; EM fixed income return expectations were raised."
+    "why": "JPM GBI-EM Global Diversified; higher starting yields support returns, with currency a return component for USD investors."
    },
    "A37": {
     "v": 4.6,
@@ -1920,19 +1791,13 @@
     "label": "EMD local currency",
     "dir": "up",
     "in_stats": true,
-    "why": "Local yields in USD terms; currency effects weigh on returns."
+    "why": "Local-currency EM government bonds in USD terms; local yields and currency effects give the lowest EMD projection."
    },
    "A06W": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "Attractive yield relative to volatility and improving fundamentals; also cited as an inflation-and-scarcity expression among highest-conviction views."
-   },
-   "A36": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Attractive yield relative to volatility and improving fundamentals; also a highest-conviction expression of inflation and scarcity themes."
    }
   },
   "Commodities": {
@@ -1964,7 +1829,7 @@
     "label": "Commodities",
     "dir": "up",
     "in_stats": true,
-    "why": "Bloomberg Commodity Index; no specific commentary, though higher energy prices are flagged as an inflation risk."
+    "why": "Bloomberg Commodity Index proxy; model output, no explicit commodity commentary despite higher energy prices."
    },
    "A07": {
     "v": 6.7,
@@ -1979,9 +1844,7 @@
     "label": "Commodities (equal-weighted futures)",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Long-run ~3% excess return of diversified futures basket since 1877 plus US real cash."
+    "why": "Long-run ~3% geometric excess return over cash of equal-weighted commodity futures, plus the expected US real cash return."
    },
    "A09": {
     "v": 3.8,
@@ -1994,7 +1857,7 @@
     "label": "GS commodities (S&P GSCI)",
     "dir": null,
     "in_stats": true,
-    "why": "Diversifying return driver with slight qoq improvement but lowest expected return."
+    "why": "Slight qoq improvement on a more supportive real-asset outlook; offers distinct diversifying return drivers."
    },
    "A10": {
     "v": 5.75,
@@ -2004,16 +1867,16 @@
     "comp": "geometric",
     "flags": [],
     "page": 3,
-    "label": "Commodities (USD)",
+    "label": "Commodities",
     "dir": "up",
     "in_stats": true,
-    "why": "Geopolitical supply disruptions and dollar dynamics drive returns."
+    "why": "Commodities for a USD investor; outcomes hinge on conflicts and the US dollar."
    },
    "A23": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Commodity exposure neutral overall."
+    "why": "Commodity exposure explicitly neutral; gold supported by central-bank demand while oil expected to trade within a moderate range."
    },
    "A31": {
     "v": 2.3,
@@ -2026,7 +1889,7 @@
     "label": "Commodities",
     "dir": null,
     "in_stats": true,
-    "why": "Low expected return roughly unchanged from prior year."
+    "why": "Low long-run return with high volatility, little changed from 2025. The document does not explain the drivers."
    },
    "A33": {
     "v": 5.2,
@@ -2039,7 +1902,7 @@
     "label": "Commodities",
     "dir": "up",
     "in_stats": true,
-    "why": "Bloomberg Commodity Index; moderate return with equity-like volatility."
+    "why": "Bloomberg Commodity Index; no asset-specific rationale given in the document."
    }
   },
   "Hedge_Funds": {
@@ -2058,12 +1921,6 @@
     "in_stats": true,
     "why": "Modest premium over cash with bond-like volatility."
    },
-   "A07": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Diversified long/short factor premia and portable alpha seen as attractive ways to address low expected market returns amid high concentration."
-   },
    "A09": {
     "v": 5.3,
     "ccy": "USD",
@@ -2075,9 +1932,7 @@
     "label": "HFRI hedge funds (HFRI HF)",
     "dir": null,
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Low volatility gives high return-to-risk; returns moderating after strong 2025."
+    "why": "Efficient risk allocation with return-to-risk near 1.4; expected to moderate after exceptional 2025 performance."
    },
    "A31": {
     "v": 5.8,
@@ -2090,7 +1945,9 @@
     "label": "Hedge Funds",
     "dir": null,
     "in_stats": true,
-    "why": "Factor model with small alpha premium for manager skill; diversifier amid concentrated public markets."
+    "stance": "overweight",
+    "conv": "low",
+    "why": "Factor model (cash, equity beta, size, value, dollar) plus a small manager-skill premium. Index-level estimate, not manager-specific."
    },
    "A33": {
     "v": 6.5,
@@ -2103,19 +1960,13 @@
     "label": "Hedge Funds",
     "dir": "up",
     "in_stats": true,
-    "why": "Opportunities for active management; slightly lower as cash yields declined."
+    "why": "HFRI Fund of Funds; active-management opportunities support returns, though lower cash yields trimmed expectations slightly."
    },
    "A06W": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "Macro outcomes matter again in the new regime, favoring macro hedge funds and market-neutral strategies as alpha sources."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Macro hedge funds and market-neutral strategies favored for alpha as macro outcomes matter again in the new regime."
    }
   },
   "Private_Equity": {
@@ -2147,13 +1998,7 @@
     "label": "U.S. Buyouts",
     "dir": "up",
     "in_stats": true,
-    "why": "Levered DDM net of 3.5% fees; lower debt cost and multiple expansion raised estimate. Data Sep 2025."
-   },
-   "A17": {
-    "stance": "neutral",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Valuations elevated but not grossly overvalued; multiples range-bound; returns dispersion favors manager selection."
+    "why": "US buyouts net of 3.5% fees via a levered DDM; lower debt cost and higher multiple expansion lifted the estimate; data Sep 2025."
    },
    "A31": {
     "v": 10.5,
@@ -2168,7 +2013,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "Raised sharply on illiquidity premium and private capital's role funding AI and infrastructure."
+    "why": "Public equity factor exposure plus a strong illiquidity premium, with private capital funding AI-driven innovation and infrastructure."
    },
    "A33": {
     "v": 9.8,
@@ -2181,9 +2026,7 @@
     "label": "Private Equity",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Highest forecast; illiquidity premium over public equity, though slightly lower year over year."
+    "why": "Cambridge Associates Global PE; highest forecast, as illiquidity premium and active management keep it attractive versus public equity."
    },
    "A37": {
     "v": 9.7,
@@ -2200,19 +2043,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "Equity plus illiquidity premium net of fees; manager selection key."
-   },
-   "A06W": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Venture capital specifically named as an alpha opportunity in the new macro regime; broader private equity not addressed."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Highest projected return, net of fees; manager selection key given higher rates and elevated dry powder."
    }
   },
   "Private_Credit": {
@@ -2244,25 +2075,19 @@
     "label": "U.S. Private Credit",
     "dir": "up",
     "in_stats": true,
-    "why": "Modeled as levered floating-rate HY; narrower spreads and lower cash rates cut estimate."
+    "why": "Modeled as floating-rate high yield with 1.2x leverage; fees offset any illiquidity premium; narrower spreads and lower cash rates cut it."
    },
    "A15": {
     "stance": "underweight",
     "conv": "high",
     "view_only": true,
-    "why": "Stress emerging in private corporate credit and middle-market direct lending; maturity extensions, PIK use, financial engineering."
+    "why": "Private corporate and middle-market direct lending showing stress: maturity extensions, PIK, financial engineering; recoveries may disappoint. Asset-based finance excluded (favored)."
    },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Still yields above public markets with lower historical defaults; mezzanine, ABF, Asia direct lending and secondaries attractive."
-   },
-   "A31": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "Growing portfolio role but relative performance expected to moderate as rates normalize."
+    "why": "Still yields more than public credit with historically lower defaults than syndicated loans; favor strong underwriting, limited 2021-vintage exposure, mezzanine as alpha."
    },
    "A33": {
     "v": 9.2,
@@ -2275,9 +2100,7 @@
     "label": "Private Credit",
     "dir": "up",
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Illiquidity premium and structural demand for private capital keep it attractive versus public credit."
+    "why": "Cliffwater Direct Lending; illiquidity premium and structural demand for private capital keep returns attractive versus public credit."
    },
    "A37": {
     "v": 6.9,
@@ -2292,15 +2115,15 @@
     "label": "Global Direct Lending",
     "dir": "up",
     "in_stats": true,
-    "stance": "neutral",
+    "stance": "overweight",
     "conv": "low",
-    "why": "Net of fees; higher-rate backdrop supports floating income, needs monitoring."
+    "why": "Direct lending net of fees benefits from higher-rate income; no immediate stress seen but the sector warrants monitoring."
    },
    "A06W": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Selected private credit favored for alpha; prefers credit with clear cash flows, lender protections and recovery value amid tight spreads."
+    "why": "Selected private credit cited among alpha opportunities; favors credit with clear cash flows, lender protections and recovery value."
    },
    "A36": {
     "stance": "overweight",
@@ -2338,7 +2161,7 @@
     "label": "U.S. cash",
     "dir": null,
     "in_stats": true,
-    "why": "3-month constant-maturity Treasury proxy; reflects the expected short-rate path, with markets pricing a higher-for-longer Fed."
+    "why": "3-month Treasury proxy; reflects market pricing of a higher-for-longer Federal Reserve policy stance."
    },
    "A07": {
     "v": 3.7,
@@ -2348,10 +2171,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 16,
-    "label": "Nominal USD Cash",
+    "label": "U.S. (cash)",
     "dir": null,
     "in_stats": true,
-    "why": "Real cash return plus expected US inflation."
+    "why": "Nominal USD cash assumption from the unit-translation exhibit: real cash return plus 2.4% expected inflation."
    },
    "A10": {
     "v": 4.25,
@@ -2361,10 +2184,16 @@
     "comp": "geometric",
     "flags": [],
     "page": 3,
-    "label": "Domestic cash (USD)",
+    "label": "Domestic cash",
     "dir": null,
     "in_stats": true,
-    "why": "US cash above 3.0% USD inflation assumption as neutral real rates drift higher."
+    "why": "Domestic cash for a USD-based investor, i.e. US T-bills; no US-specific driver discussed in the summary."
+   },
+   "A15": {
+    "stance": "underweight",
+    "conv": "medium",
+    "view_only": true,
+    "why": "Bond yields, particularly in the five- to ten-year segment, look more attractive than cash for only a modest increase in risk."
    },
    "A33": {
     "v": 3.7,
@@ -2377,7 +2206,7 @@
     "label": "U.S. Cash",
     "dir": null,
     "in_stats": true,
-    "why": "Slightly lower cash rates; survey forecasts of five-year-forward cash yields ranged widely, from 2.8% to 5.0%."
+    "why": "1-3 month T-bills; slightly lower than 2025 as cash rates eased; survey forecasts of future cash yields widely dispersed."
    },
    "A37": {
     "v": 3,
@@ -2392,13 +2221,7 @@
     "label": "USD Cash",
     "dir": null,
     "in_stats": true,
-    "why": "Policy rate expected near 3% with real rates close to zero."
-   },
-   "A08L": {
-    "stance": "underweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Tracks an expected US policy rate averaging about 3.0% over ten years; real rates seen staying near zero."
    }
   },
   "US_REITs": {
@@ -2415,7 +2238,7 @@
     "label": "U.S. REITs",
     "dir": "flat",
     "in_stats": true,
-    "why": "FTSE/NAREIT US Real Estate index; no specific commentary, with the model forecast below broad US equities."
+    "why": "FTSE/NAREIT U.S. real estate proxy; model output with no REIT-specific commentary in this update."
    },
    "A09": {
     "v": 7.1,
@@ -2428,15 +2251,7 @@
     "label": "US REITs (FTSE NAREIT equity)",
     "dir": null,
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "low",
-    "why": "Above-history expected return and better return-to-risk than US large caps."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Distinct diversifying drivers; return-to-risk of 0.5 beats US large caps and expected return exceeds 10-year history."
    }
   },
   "Global_Agg_exUS": {
@@ -2453,7 +2268,13 @@
     "label": "Global ex-U.S. aggregate bonds (hedged)",
     "dir": "up",
     "in_stats": true,
-    "why": "USD-hedged Bloomberg Global Aggregate ex-USD; sovereign yields stable, so international bond forecasts were little changed."
+    "why": "Sovereign yields broadly stable; global and international bond forecasts little changed; USD-hedged basis."
+   },
+   "A15": {
+    "stance": "overweight",
+    "conv": "medium",
+    "view_only": true,
+    "why": "With the US on an unsustainable long-term debt path, holding non-US bonds is viewed as a prudent diversifier."
    },
    "A33": {
     "v": 3.3,
@@ -2466,7 +2287,7 @@
     "label": "Global Aggregate ex-U.S. (Hdg)",
     "dir": "down",
     "in_stats": true,
-    "why": "Hedged non-US bonds; lower DM yields, apart from Japan, limit returns."
+    "why": "USD-hedged; starting yields drive returns, lower across most developed markets except Japan; modest negative curve and spread contributions."
    }
   },
   "US_Treas_Long": {
@@ -2483,31 +2304,19 @@
     "label": "U.S. long-term Treasury bonds",
     "dir": "up",
     "in_stats": true,
-    "why": "Long Treasury index; highest Treasury forecast with yields steady, but roughly double the volatility of intermediate Treasuries."
+    "why": "Long-term sovereign yields stayed relatively stable; longer duration carries higher expected return and volatility."
    },
    "A15": {
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Fiscal dynamics and term premium uncertainty argue for caution at the long end of curves."
-   },
-   "A16": {
-    "stance": "underweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Developed-market yield curves expected to steepen, which hurts long-duration government bonds relative to the short end."
+    "why": "Fiscal dynamics and term-premium uncertainty warrant caution at the long end of yield curves, especially given the unsustainable US debt path."
    },
    "A17": {
     "stance": "underweight",
     "conv": "low",
     "view_only": true,
-    "why": "Steepening bias in US and Europe; long-end yields vulnerable to fiscal concerns and inflation expectations."
-   },
-   "A31": {
-    "stance": "underweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Fiscal strain and weaker long-end demand imply structurally higher term premia, steeper curves and volatility."
+    "why": "Curve-steepening bias in US and Europe; long-end yields seen vulnerable to fiscal concerns and inflation expectations (relative tilt, not outright duration call)."
    },
    "A33": {
     "v": 3.2,
@@ -2520,15 +2329,13 @@
     "label": "U.S. Long Treasury",
     "dir": "down",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Most muted, because longer duration suffers if yields rise as most respondents expect."
+    "why": "Longer-duration sectors most affected by expectations of higher yields; lower starting yields offer less cushion."
    },
    "A06W": {
     "stance": "underweight",
     "conv": "high",
     "view_only": true,
-    "why": "Investors demand more compensation amid persistent inflation and high debt; long bonds are less reliable diversifiers in the new regime."
+    "why": "Investors want more term compensation amid persistent inflation and high debt; long bonds are rate-sensitive and less reliable diversifiers."
    }
   },
   "US_IG_Corp": {
@@ -2545,9 +2352,7 @@
     "label": "U.S. credit",
     "dir": "up",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Bloomberg US Credit index (IG corporate plus government-related); rich valuations leave no forecast premium over the Treasury index."
+    "why": "Bloomberg U.S. Credit (investment grade) proxy; rich valuations offer limited compensation for incremental credit risk."
    },
    "A07": {
     "v": 5.2,
@@ -2557,10 +2362,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 7,
-    "label": "U.S. I.G. (nominal)",
+    "label": "U.S. Corp. IG",
     "dir": "up",
     "in_stats": true,
-    "why": "Real estimate plus expected inflation."
+    "why": "Exhibit 5B nominal for US IG: real return plus 2.4% expected inflation."
    },
    "A09": {
     "v": 5.5,
@@ -2573,25 +2378,13 @@
     "label": "US IG corp (BBG US IG)",
     "dir": null,
     "in_stats": true,
-    "why": "Higher total yield than Treasuries supports returns, with limited credit losses."
-   },
-   "A15": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "IG spreads near tight end of history; up-in-quality bias favored but structure-reliant ratings warrant scrutiny."
+    "why": "Return anchored by roughly 5.1% total yield on investment-grade corporates amid elevated government bond yields."
    },
    "A17": {
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Mid-cycle IG fundamentals; value in select segments such as banks; rate cuts boost total returns; cautious on utilities."
-   },
-   "A23": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "Credit supported by strong fundamentals but tight spreads limit upside."
+    "why": "Selective value in investment grade, especially banks, for income; mid-cycle fundamentals and rate cuts help, but cautious on utilities."
    },
    "A33": {
     "v": 4.1,
@@ -2604,7 +2397,7 @@
     "label": "U.S. IG Corporate",
     "dir": "flat",
     "in_stats": true,
-    "why": "Tighter starting spreads and expected modest widening lower forecast slightly."
+    "why": "Slightly lower than 2025; tight spreads and expected modest IG spread widening partly offset higher carry."
    },
    "A37": {
     "v": 5.4,
@@ -2619,27 +2412,7 @@
     "label": "USD Investment Grade Bonds",
     "dir": "up",
     "in_stats": true,
-    "stance": "neutral",
-    "conv": "low",
-    "why": "Rates income plus spread carry, though tight spreads limit upside."
-   },
-   "A06W": {
-    "stance": "neutral",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Short-term IG credit: spreads tight on corporate strength; could widen if issuance rises or risk appetite shifts."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
-   },
-   "A36": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Treasury yield plus credit spread income, net of expected credit losses; tight spreads limit the excess return."
    }
   },
   "USD": {
@@ -2656,63 +2429,37 @@
     "label": "Vanguard U.S. dollar index",
     "dir": "down",
     "in_stats": true,
-    "stance": "underweight",
-    "conv": "low",
-    "why": "Equity-cap-weighted dollar basket vs euro, yen, pound, Canadian and Australian dollars; model embeds modest depreciation despite recent USD strength."
-   },
-   "A07": {
-    "stance": "underweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "For non-US investors, large USD exposure, elevated valuation and safe-haven doubts argue for partial hedging."
-   },
-   "A15": {
-    "stance": "underweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Dollar remains dominant but valuation may gradually adjust as global portfolios rebalance and hard-asset demand rises."
+    "why": "Despite recent dollar strength, the model still embeds modest U.S. dollar depreciation over the medium term."
    },
    "A16": {
     "stance": "underweight",
-    "conv": "high",
+    "conv": "medium",
     "view_only": true,
-    "why": "Core conviction: the dollar is likely to weaken, driven by deficits and global diversification away from US assets."
+    "why": "Core conviction: the dollar should weaken, linked to US deficits and diversification themes."
    },
    "A19": {
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Persistent US twin deficits and falling US rates expected to weigh on the dollar while rates elsewhere stay stable."
+    "why": "Persistent US twin deficits and declining US rates expected to keep weighing on the dollar; CIO favors long EUR, AUD, NOK versus USD."
    },
    "A23": {
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Softer US dollar expected as Fed eases and rate differentials narrow."
+    "why": "Softer US dollar expected as Fed easing narrows rate differentials against the euro and yen."
    },
    "A31": {
     "stance": "underweight",
-    "conv": "high",
+    "conv": "medium",
     "view_only": true,
-    "why": "Strategic bias for weaker dollar: trade rebalancing, growth convergence, rising FX hedging and rich valuation versus PPP/REER."
+    "why": "Expects a weaker dollar over the decade, citing trade rebalancing, more FX hedging, converging growth, and rich valuation against PPP and REER."
    },
    "A37": {
     "stance": "underweight",
     "conv": "low",
     "view_only": true,
-    "why": "Dollar may not provide the return tailwinds or safe-haven qualities of recent decades."
-   },
-   "A06W": {
-    "stance": "neutral",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Dollar sits above fundamentals-implied level and markets overprice Fed hikes; expects stable to somewhat weaker dollar, neither sustained rally nor debasement."
-   },
-   "A36": {
-    "stance": "underweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "The US dollar may no longer provide the return tailwinds or safe-haven qualities of recent decades."
    }
   },
   "UK_Eq": {
@@ -2724,10 +2471,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "U.K. (nominal)",
+    "label": "U.K.",
     "dir": null,
     "in_stats": false,
-    "why": "Real estimate plus expected UK inflation."
+    "why": "Exhibit 3C nominal (4th bar): UK local real return plus UK expected inflation."
    },
    "A09": {
     "v": 8.6,
@@ -2737,12 +2484,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 4,
-    "label": "Aggregate UK equities",
+    "label": "UK equity (aggregate UK equities)",
     "dir": null,
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "medium",
-    "why": "Strongest real earnings growth and high dividend yield, partly offset by valuation drag."
+    "why": "Strongest real earnings growth (5.8%) and 3.4% dividend yield, partly offset by -2.9% valuation drag; down 0.5pp qoq."
    },
    "A31": {
     "v": 9.3,
@@ -2752,10 +2497,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 25,
-    "label": "UK",
+    "label": "UK equity",
     "dir": null,
     "in_stats": true,
-    "why": "High dividend income yield and currency appreciation versus USD."
+    "why": "Highest regional equity estimate: high dividend and buyback income plus expected sterling gains against the dollar (unhedged USD)."
    },
    "A37": {
     "v": 6.9,
@@ -2770,13 +2515,13 @@
     "label": "UK Equities",
     "dir": null,
     "in_stats": false,
-    "why": "Dividend yield and inflation support local-currency returns."
+    "why": "UK equities in sterling; inflation, real revenue growth, dividends and buybacks, with margins above equilibrium weighing."
    },
    "A06W": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Valuations attractive versus the U.S., but few near-term catalysts to trigger a shift."
+    "why": "Valuations still attractive relative to the US, but few near-term catalysts to drive a shift."
    }
   },
   "Japan_Eq": {
@@ -2788,10 +2533,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "Japan (nominal)",
+    "label": "Japan",
     "dir": null,
     "in_stats": false,
-    "why": "Real estimate plus expected Japan inflation."
+    "why": "Exhibit 3C nominal (5th bar): Japan local real return plus lower Japanese expected inflation."
    },
    "A09": {
     "v": 8.6,
@@ -2800,31 +2545,23 @@
     "basis": "nominal",
     "comp": "geometric",
     "flags": [],
-    "page": 4,
+    "page": 9,
     "label": "Japan equity (MSCI JP)",
     "dir": null,
     "in_stats": true,
-    "stance": "overweight",
-    "conv": "medium",
-    "why": "Improved valuations, stable earnings growth and positive currency adjustment."
-   },
-   "A16": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Japan's corporate reform agenda continues to deliver results."
+    "why": "Stable real earnings (4.3%), reduced valuation drag (-2.8%) and about 2% currency tailwind; up 0.8pp qoq."
    },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Takaichi fiscal support, wage-driven spending, governance reforms, buybacks and retail shift to risk assets."
+    "why": "Positive tailwinds despite above-average valuations: Takaichi fiscal support, wage-driven spending, capex, governance reforms lifting payouts, and NISA-driven household inflows."
    },
    "A23": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Bright spot thanks to governance reform, improving profitability and attractive valuations."
+    "why": "Called a bright spot, helped by corporate governance reform, improving profitability and attractive valuations."
    },
    "A31": {
     "v": 6.3,
@@ -2834,10 +2571,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 25,
-    "label": "Japan",
+    "label": "Japan equity",
     "dir": null,
     "in_stats": true,
-    "why": "Lower real growth outlook partly offset by yen appreciation assumption."
+    "why": "Lowest regional estimate because real GDP growth is near zero, partly offset by income and yen appreciation (unhedged USD)."
    },
    "A33": {
     "v": 6.4,
@@ -2850,9 +2587,7 @@
     "label": "Japan Equity",
     "dir": "up",
     "in_stats": true,
-    "stance": "neutral",
-    "conv": "low",
-    "why": "Strong 2025 outperformance cuts scope for rerating; modest multiple contraction assumed."
+    "why": "MSCI Japan; strong 2025 outperformance reduced scope for further valuation expansion, with modest multiple contraction assumed."
    },
    "A37": {
     "v": 6.5,
@@ -2867,25 +2602,13 @@
     "label": "Japan Equities",
     "dir": null,
     "in_stats": false,
-    "why": "Buybacks, governance reform and reflation support local returns."
+    "why": "Japanese equities in yen; around 2% inflation, AI-supported growth, dividends and buybacks drive returns."
    },
    "A06W": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Strong corporate balance sheets and governance reforms supportive; prefers targeted exposure to physical AI and buildout bottlenecks."
-   },
-   "A08L": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
-   },
-   "A36": {
-    "stance": "underweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Strong balance sheets and governance reforms remain supportive; prefers targeted exposure to physical AI and AI-buildout bottlenecks."
    }
   },
   "China_Eq": {
@@ -2897,10 +2620,10 @@
     "comp": "geometric",
     "flags": [],
     "page": 5,
-    "label": "China (nominal)",
+    "label": "China",
     "dir": null,
     "in_stats": false,
-    "why": "Real estimate plus expected local inflation."
+    "why": "Exhibit 3C nominal (9th bar): China local real return plus low expected Chinese inflation."
    },
    "A09": {
     "v": 5.8,
@@ -2909,23 +2632,17 @@
     "basis": "nominal",
     "comp": "geometric",
     "flags": [],
-    "page": 5,
+    "page": 9,
     "label": "China equity (MSCI China)",
     "dir": null,
     "in_stats": true,
-    "why": "Strongest currency tailwind of 2.5% offsets weak earnings growth and negative buyback yield."
-   },
-   "A16": {
-    "stance": "underweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "China's apparent stability hides deeper weaknesses that need meaningful government intervention to fix."
+    "why": "Strongest currency tailwind (2.5%) offsets weak earnings growth and negative buyback yield; up 0.4pp qoq."
    },
    "A17": {
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Attractive valuations and light positioning, but sustainability hinges on earnings; tariff and policy shock risks."
+    "why": "Stimulus, liquidity, light global positioning and attractive relative valuations support China, but stock selection key given tariff and policy risks."
    },
    "A33": {
     "v": 8.7,
@@ -2938,7 +2655,7 @@
     "label": "China Equity",
     "dir": "up",
     "in_stats": true,
-    "why": "High expected return alongside highest equity volatility; benefits from EM earnings rebound."
+    "why": "MSCI China; supported by improved EM earnings momentum and rebounding forward earnings; carries the highest equity volatility assumption."
    },
    "A37": {
     "v": 6.1,
@@ -2950,67 +2667,16 @@
      "compounding not stated"
     ],
     "page": 13,
-    "label": "China (equity return breakdown, local currency)",
+    "label": "China",
     "dir": null,
     "in_stats": false,
-    "why": "Strong real growth offset by low inflation; local-currency total return."
+    "why": "China equities in local currency; strong 4.4% projected GDP growth tempered by low 1.1% expected inflation."
    },
    "A06W": {
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Sees physical AI opportunities; cheap open-source AI may spur adoption without necessarily delivering AI-provider profitability."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
-   }
-  },
-  "Gold": {
-   "A07": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "Useful tail hedge historically but forgoes diversification of broad commodity basket; no return estimate."
-   },
-   "A15": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Serves as neutral store of value amid partial confidence in fiat currencies."
-   },
-   "A19": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "Price path forecast up to mid-2026 then easing back by year-end; no explicit preference stated."
-   },
-   "A23": {
-    "stance": "neutral",
-    "conv": "low",
-    "view_only": true,
-    "why": "Within neutral commodities, gold supported by central-bank demand."
-   },
-   "A33": {
-    "v": 1.6,
-    "ccy": "USD",
-    "hz": 5,
-    "basis": "nominal",
-    "comp": "geometric",
-    "flags": [],
-    "page": 5,
-    "label": "Gold",
-    "dir": "down",
-    "in_stats": true,
-    "why": "Lowest expected return in the set, likely reflecting elevated starting prices."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+    "why": "Sees physical-AI opportunities, but cheap open-source AI may drive adoption without translating into AI-provider profitability."
    }
   },
   "Bank_Loans": {
@@ -3025,19 +2691,13 @@
     "label": "US brd synd loans (CSFB leverage loan)",
     "dir": null,
     "in_stats": true,
-    "why": "High floating-rate yield near 8% partly offset by expected credit losses."
+    "why": "High average yield near 7.9% on syndicated loans, reduced by expected credit losses of about 0.9%."
    },
    "A15": {
     "stance": "underweight",
-    "conv": "medium",
+    "conv": "high",
     "view_only": true,
-    "why": "Expect significantly higher losses in leveraged lending with floating-rate structures and high leverage."
-   },
-   "A17": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Lower rates ease interest burdens for floating-rate leveraged loan issuers, improving coverage."
+    "why": "Leveraged lending flagged for significantly higher losses; aggressive underwriting, high leverage and floating-rate structures leave borrowers exposed as refinancing costs stay elevated."
    },
    "A33": {
     "v": 6,
@@ -3050,47 +2710,36 @@
     "label": "U.S. Bank Loans",
     "dir": "up",
     "in_stats": true,
-    "why": "Floating-rate carry with little duration exposure; highest among public US fixed income."
+    "why": "Credit-oriented asset with high carry, only partially offset by potential spread widening; comparatively attractive within fixed income."
    }
   },
-  "JPY": {
-   "A16": {
+  "Gold": {
+   "A15": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Rising Japanese rates and policy normalization could strengthen the yen against the dollar and other currencies."
+    "why": "Gold serves as a neutral store of value amid only partial confidence in fiat currencies; part of selective real-asset exposure in resilient portfolios."
    },
-   "A19": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Implied by USDJPY forecast falling from 155 to 146 by end-2026 alongside BoJ hikes; not an explicit call."
-   },
-   "A23": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "why": "Yen strength expected as BoJ hikes narrow rate differentials with the US."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+   "A33": {
+    "v": 1.6,
+    "ccy": "USD",
+    "hz": 5,
+    "basis": "nominal",
+    "comp": "geometric",
+    "flags": [],
+    "page": 5,
+    "label": "Gold",
+    "dir": "down",
+    "in_stats": true,
+    "why": "S&P GSCI Gold Total Return; lowest forecast in the set; document gives no specific rationale."
    }
   },
   "Infrastructure": {
-   "A16": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Expects heightened investor interest in real assets as allocators recalibrate."
-   },
    "A17": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Power demand, energy transition, circular economy and logistics; middle market cheaper than large-cap assets."
+    "why": "Middle-market and value-add infrastructure more attractive than large-cap (lower multiples); opportunities in power, grids, circular economy and transport beyond AI."
    },
    "A31": {
     "v": 6.7,
@@ -3105,7 +2754,7 @@
     "in_stats": true,
     "stance": "overweight",
     "conv": "medium",
-    "why": "Listed infrastructure via factor model; supported by AI-driven energy and grid investment."
+    "why": "Global listed infrastructure from the factor model. AI-related power and grid investment supports demand for real assets."
    },
    "A33": {
     "v": 6.3,
@@ -3118,19 +2767,13 @@
     "label": "Infrastructure",
     "dir": "up",
     "in_stats": true,
-    "why": "Listed infrastructure index; return close to broad equities."
+    "why": "S&P Global Infrastructure (listed); alternatives expectations trimmed slightly as cash yields fell and equity risk premia compress."
    },
    "A06W": {
     "stance": "overweight",
     "conv": "high",
     "view_only": true,
-    "why": "Preferred expression of scarcity-driven inflation risks from secure supply and power demand; also a favored sector within European equities."
-   },
-   "A36": {
-    "stance": "overweight",
-    "conv": "medium",
-    "view_only": true,
-    "restricted": true
+    "why": "Highest-conviction expression, alongside energy bottlenecks and real-asset-linked exposures, of inflation risks from scarcity, supply security and power demand."
    }
   },
   "EUR": {
@@ -3138,35 +2781,47 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Favor long euro versus USD; EURUSD forecast rising to 1.20 by mid-2026."
+    "why": "CIO favors long euro versus USD as US rates fall while euro-area rates stay stable; EURUSD seen at 1.20 by end-2026."
    },
    "A23": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Euro favoured on narrowing rate differentials and improved European fiscal momentum."
+    "why": "Outlook favours euro strength versus a softer dollar on narrowing rate differentials and improved European fiscal momentum."
    },
-   "A36": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "restricted": true
+   "A31": {
+    "v": 1.2,
+    "ccy": "USD",
+    "hz": 10,
+    "basis": "nominal",
+    "comp": "geometric",
+    "flags": [],
+    "page": 40,
+    "label": "EUR (FX vs. USD)",
+    "dir": null,
+    "in_stats": true,
+    "why": "Expected yearly euro gain against USD from the inflation gap (PPP) and reversion of an overvalued dollar (REER). Carry not included."
    }
   },
-  "EM_FX": {
-   "A19": {
-    "stance": "overweight",
-    "conv": "low",
-    "view_only": true,
-    "why": "Preference for high-yielding currencies as risk appetite broadens in FX markets; not specifically framed as EM."
-   }
-  },
-  "Oil": {
+  "JPY": {
    "A23": {
-    "stance": "neutral",
-    "conv": "low",
+    "stance": "overweight",
+    "conv": "medium",
     "view_only": true,
-    "why": "Oil expected to trade within a moderate range."
+    "why": "Outlook favours yen strength against a softer US dollar as rate differentials narrow with Bank of Japan tightening."
+   },
+   "A31": {
+    "v": 0.9,
+    "ccy": "USD",
+    "hz": 10,
+    "basis": "nominal",
+    "comp": "geometric",
+    "flags": [],
+    "page": 40,
+    "label": "JPY (FX vs. USD)",
+    "dir": null,
+    "in_stats": true,
+    "why": "Expected yearly yen gain against USD from PPP and REER reversion as dollar overvaluation fades. Carry not included."
    }
   }
  },
@@ -3181,9 +2836,9 @@
    "min": 4.9,
    "max": 7.6,
    "tally": {
-    "up": 1,
-    "down": 6,
-    "flat": 4
+    "up": 2,
+    "down": 3,
+    "flat": 0
    }
   },
   "US_SmallCap": {
@@ -3197,7 +2852,7 @@
    "max": 7.5,
    "tally": {
     "up": 1,
-    "down": 2,
+    "down": 0,
     "flat": 0
    }
   },
@@ -3211,8 +2866,8 @@
    "min": 5.8,
    "max": 8.7,
    "tally": {
-    "up": 2,
-    "down": 1,
+    "up": 1,
+    "down": 0,
     "flat": 1
    }
   },
@@ -3226,9 +2881,9 @@
    "min": 6.3,
    "max": 8.6,
    "tally": {
-    "up": 5,
-    "down": 1,
-    "flat": 2
+    "up": 2,
+    "down": 0,
+    "flat": 1
    }
   },
   "UK_Eq": {
@@ -3241,7 +2896,7 @@
    "min": 8.6,
    "max": 9.3,
    "tally": {
-    "up": 1,
+    "up": 0,
     "down": 0,
     "flat": 1
    }
@@ -3256,9 +2911,9 @@
    "min": 3.0,
    "max": 8.75,
    "tally": {
-    "up": 7,
-    "down": 1,
-    "flat": 2
+    "up": 4,
+    "down": 0,
+    "flat": 0
    }
   },
   "DM_exUS_Eq": {
@@ -3271,9 +2926,9 @@
    "min": 5.5,
    "max": 7.8,
    "tally": {
-    "up": 4,
+    "up": 1,
     "down": 0,
-    "flat": 1
+    "flat": 0
    }
   },
   "US_Cash_TBill": {
@@ -3301,7 +2956,7 @@
    "min": 3.6,
    "max": 5,
    "tally": {
-    "up": 2,
+    "up": 1,
     "down": 0,
     "flat": 2
    }
@@ -3317,7 +2972,7 @@
    "max": 5.7,
    "tally": {
     "up": 0,
-    "down": 6,
+    "down": 3,
     "flat": 0
    }
   },
@@ -3346,9 +3001,9 @@
    "min": 4.1,
    "max": 5.5,
    "tally": {
-    "up": 2,
-    "down": 1,
-    "flat": 5
+    "up": 1,
+    "down": 0,
+    "flat": 0
    }
   },
   "US_HighYield": {
@@ -3361,9 +3016,9 @@
    "min": 4.649,
    "max": 6.1,
    "tally": {
-    "up": 3,
-    "down": 3,
-    "flat": 2
+    "up": 1,
+    "down": 2,
+    "flat": 0
    }
   },
   "EM_USD_Sov": {
@@ -3376,7 +3031,7 @@
    "min": 4.5,
    "max": 6.2,
    "tally": {
-    "up": 3,
+    "up": 2,
     "down": 0,
     "flat": 1
    }
@@ -3391,9 +3046,9 @@
    "min": 4.6,
    "max": 6.25,
    "tally": {
-    "up": 4,
+    "up": 3,
     "down": 0,
-    "flat": 1
+    "flat": 0
    }
   },
   "Global_Agg_exUS": {
@@ -3406,7 +3061,7 @@
    "min": 3.3,
    "max": 5.0,
    "tally": {
-    "up": 0,
+    "up": 1,
     "down": 0,
     "flat": 0
    }
@@ -3421,7 +3076,7 @@
    "min": 4.4,
    "max": 7.1,
    "tally": {
-    "up": 2,
+    "up": 0,
     "down": 0,
     "flat": 0
    }
@@ -3436,7 +3091,7 @@
    "min": 2.3,
    "max": 6.7,
    "tally": {
-    "up": 1,
+    "up": 0,
     "down": 0,
     "flat": 1
    }
@@ -3451,9 +3106,9 @@
    "min": 1.6,
    "max": 1.6,
    "tally": {
-    "up": 2,
+    "up": 1,
     "down": 0,
-    "flat": 3
+    "flat": 0
    }
   },
   "Global_Eq": {
@@ -3466,9 +3121,9 @@
    "min": 5.9,
    "max": 7.75,
    "tally": {
-    "up": 4,
+    "up": 2,
     "down": 0,
-    "flat": 1
+    "flat": 0
    }
   },
   "Europe_Eq": {
@@ -3481,9 +3136,9 @@
    "min": 7.2,
    "max": 8.1,
    "tally": {
-    "up": 3,
+    "up": 2,
     "down": 0,
-    "flat": 3
+    "flat": 1
    }
   },
   "US_Agg": {
@@ -3511,7 +3166,7 @@
    "min": 6,
    "max": 6.9,
    "tally": {
-    "up": 1,
+    "up": 0,
     "down": 1,
     "flat": 0
    }
@@ -3526,9 +3181,9 @@
    "min": 4.8,
    "max": 5.25,
    "tally": {
-    "up": 3,
-    "down": 0,
-    "flat": 3
+    "up": 2,
+    "down": 1,
+    "flat": 1
    }
   },
   "Private_Equity": {
@@ -3541,9 +3196,9 @@
    "min": 6.6,
    "max": 10.5,
    "tally": {
-    "up": 5,
+    "up": 2,
     "down": 0,
-    "flat": 1
+    "flat": 0
    }
   },
   "Private_Credit": {
@@ -3558,7 +3213,7 @@
    "tally": {
     "up": 4,
     "down": 1,
-    "flat": 2
+    "flat": 0
    }
   },
   "Infrastructure": {
@@ -3571,7 +3226,7 @@
    "min": 6.3,
    "max": 6.7,
    "tally": {
-    "up": 5,
+    "up": 3,
     "down": 0,
     "flat": 0
    }
@@ -3586,7 +3241,7 @@
    "min": 4.549,
    "max": 6.5,
    "tally": {
-    "up": 4,
+    "up": 2,
     "down": 0,
     "flat": 0
    }
@@ -3602,40 +3257,38 @@
    "max": -0.7,
    "tally": {
     "up": 0,
-    "down": 9,
-    "flat": 1
+    "down": 5,
+    "flat": 0
    }
   },
   "EUR": {
-   "n": 0,
+   "n": 1,
+   "median": 1.2,
+   "mean": 1.2,
+   "q25": 1.2,
+   "q75": 1.2,
+   "iqr_bp": 0,
+   "min": 1.2,
+   "max": 1.2,
    "tally": {
-    "up": 3,
+    "up": 2,
     "down": 0,
     "flat": 0
    }
   },
   "JPY": {
-   "n": 0,
-   "tally": {
-    "up": 4,
-    "down": 0,
-    "flat": 0
-   }
-  },
-  "EM_FX": {
-   "n": 0,
+   "n": 1,
+   "median": 0.9,
+   "mean": 0.9,
+   "q25": 0.9,
+   "q75": 0.9,
+   "iqr_bp": 0,
+   "min": 0.9,
+   "max": 0.9,
    "tally": {
     "up": 1,
     "down": 0,
     "flat": 0
-   }
-  },
-  "Oil": {
-   "n": 0,
-   "tally": {
-    "up": 0,
-    "down": 0,
-    "flat": 1
    }
   }
  },
@@ -3648,198 +3301,68 @@
    "iqr_bp": 110,
    "n": 7,
    "tally": {
-    "up": 1,
-    "down": 6,
-    "flat": 4
+    "up": 2,
+    "down": 3,
+    "flat": 0
    },
-   "headline": "US large cap: stances lean underweight six to one; public numbers split 4.9-5.5% versus 6.4-7.6% around a 6.3% median.",
+   "headline": "US large cap: 4.9-7.6% range around a 6.3% median (n=7) splits on valuation drag versus AI-driven earnings.",
    "bull": {
     "publishers": [
      "BNY Investments",
-     "Fidelity International",
      "T. Rowe Price",
+     "Fidelity International",
+     "Goldman Sachs AM",
      "BlackRock Investment Institute"
     ],
-    "argument": "BNY's Grinold-Kroner build, the range high at 7.6%, pairs buyback-heavy income with AI-boosted earnings growth at constant valuations. Fidelity's 6.4% weighs AI-boosted GDP growth against elevated margins and reverting valuations. BII's high-conviction overweight cites AI-driven earnings and supportive macro. T. Rowe Price's 6.4% (five-year) sits just above the median despite an underweight stance.",
-    "data_used": "Net payout yield (dividends plus buybacks), AI-driven earnings and GDP growth, constant or only partly reverting valuation multiples."
+    "argument": "BNY Investments (7.6%, top of range) sums income, inflation, real GDP growth and AI-driven profit-share gains, valuations held flat; Fidelity International adds AI-lifted revenue, dividends and share repurchases net of a margin drag. Goldman Sachs AM and BlackRock Investment Institute are overweight on AI-driven earnings power. T. Rowe Price edges above the median despite citing rich growth valuations.",
+    "data_used": "Income, inflation and real earnings growth, with AI lifting revenues and profit share; valuations held constant or only modestly penalized."
    },
    "bear": {
     "publishers": [
-     "Invesco",
-     "Vanguard",
      "State Street",
+     "Vanguard",
+     "Invesco",
      "PIMCO",
-     "Lazard"
+     "Lazard",
+     "Amundi"
     ],
-    "argument": "Invesco's 4.9%, the range low, nets a large valuation mean-reversion drag against strong earnings and buybacks; Vanguard's 5.1% reflects valuations rising from already elevated levels; State Street's 5.5% tempers its building blocks for valuation. PIMCO sees a near-zero equity risk premium, with high-quality bonds offering a comparable Sharpe ratio; Lazard expects allocators to rotate away from US equities.",
-    "data_used": "Starting valuations with mean reversion, equity risk premium versus high-quality bond yields, dividend yield plus real earnings growth plus inflation."
+    "argument": "Starting valuations dominate: Invesco (4.9%, bottom of range) sees real earnings growth and shareholder yield overwhelmed by multiple compression; Vanguard and State Street also cut returns for elevated valuations. PIMCO, underweight, sees a vanishing equity risk premium and better prospective Sharpe ratios in bonds; Lazard expects rotation out of US equities, doubting US resilience. Amundi is also underweight.",
+    "data_used": "Elevated starting multiples with assumed mean reversion, the equity risk premium versus bond yields, and doubts about US growth resilience."
    },
-   "what_to_watch": "Whether forward multiples compress while AI-led earnings growth holds, and the earnings-yield gap over Treasuries; the split is mostly a valuation-path assumption."
+   "what_to_watch": "Whether AI-linked earnings growth keeps pace with multiples: mega-cap forward earnings revisions versus P/E, and the earnings yield's spread over Treasury yields."
   },
   {
    "asset": "US_SmallCap",
    "label": "US small cap",
-   "type": "both",
+   "type": "numeric",
    "iqr_bp": 188,
    "n": 6,
    "tally": {
     "up": 1,
-    "down": 2,
+    "down": 0,
     "flat": 0
    },
-   "headline": "US small cap: IQR of 188bp, second only to commodities; numbers 4.5-7.5% split on earnings growth and size premium.",
+   "headline": "US small cap: widest equity IQR (188bp, n=6); views split on small-cap earnings growth and starting valuations.",
    "bull": {
     "publishers": [
-     "BNY Investments",
      "AQR",
+     "BNY Investments",
      "T. Rowe Price",
      "Goldman Sachs AM"
     ],
-    "argument": "GSAM is overweight on attractive valuations, anticipated rate cuts, accelerating earnings and a dealmaking revival. AQR's 7.4% and T. Rowe Price's 6.3% (five-year, a selective upgrade) also sit above the median. BNY has the range high, 7.5%, yet is underweight, citing a muted size premium as early-stage growth shifts to private markets.",
-    "data_used": "Relative valuation versus large caps, expected rate cuts, earnings acceleration and M&A (GSAM); real return plus inflation (AQR); factor-model size premium (BNY)."
+    "argument": "BNY Investments (7.5%, top of range) sees a slim size premium because firms stay private longer, leaving small caps just under broad US equity; AQR's real-return build lands well above the median. T. Rowe Price selectively raised its small-cap expectation. Goldman Sachs AM, overweight, cites appealing valuations, anticipated Fed cuts, faster profit growth and reviving deal activity.",
+    "data_used": "Factor-model size premium, local real-return estimates plus inflation, relative valuations, and an assumed Fed easing path with M&A recovery."
    },
    "bear": {
     "publishers": [
-     "Invesco",
+     "State Street",
      "Vanguard",
-     "State Street"
+     "Invesco"
     ],
-    "argument": "Invesco (underweight, 4.5%, the range low) sees less valuation drag than large caps but weak long-run earnings growth. Vanguard's 5.7% reflects a second-quarter rally that raised valuations, cutting its forecast much as for large caps. State Street's 5.1% sits below its own large-cap 5.5%, with higher volatility. All three are below the 6.0% median.",
-    "data_used": "Post-rally starting valuations, long-run earnings growth of smaller firms, higher expected volatility."
+    "argument": "Invesco (4.5%, bottom of range) sees a lighter valuation penalty than in large caps offset by weak long-run profit growth, ranking small caps behind mid-caps. Vanguard says the strong rally lifted valuations and trimmed expected returns much as in large caps; State Street also lands below the median, expecting higher volatility.",
+    "data_used": "Post-rally starting valuations, weak long-run small-cap earnings growth, and higher expected volatility."
    },
-   "what_to_watch": "Small-cap earnings growth versus large caps, relative valuation after the rally, and policy rates: zero 2026 Fed cuts are priced at 95.8-95.9% across Kalshi and Polymarket."
-  },
-  {
-   "asset": "China_Eq",
-   "label": "China equity",
-   "type": "directional",
-   "iqr_bp": 145,
-   "n": 2,
-   "tally": {
-    "up": 2,
-    "down": 1,
-    "flat": 1
-   },
-   "headline": "China equity: only two public numbers, 5.8% and 8.7%; overweights cite valuations, Lazard sees fragility needing intervention.",
-   "bull": {
-    "publishers": [
-     "T. Rowe Price",
-     "Goldman Sachs AM",
-     "Amundi"
-    ],
-    "argument": "GSAM is overweight on attractive valuations and light positioning, while warning that durability depends on earnings and flagging tariff and policy shocks. Amundi is overweight because lagging performance left valuations attractive. T. Rowe Price's 8.7% (five-year) pairs a high return with its highest equity volatility, helped by an EM earnings rebound.",
-    "data_used": "Starting valuations and investor positioning (GSAM, Amundi); EM earnings rebound and a high volatility assumption (T. Rowe Price, five-year horizon)."
-   },
-   "bear": {
-    "publishers": [
-     "Invesco",
-     "Lazard"
-    ],
-    "argument": "Lazard is underweight, arguing that China's apparent stability masks deeper weaknesses requiring meaningful government intervention. Invesco's 5.8% leans on its strongest currency tailwind to offset weak earnings growth and a negative buyback yield.",
-    "data_used": "Earnings growth, buyback yield (negative) and currency assumptions (Invesco); structural and policy assessment (Lazard)."
-   },
-   "what_to_watch": "Chinese earnings revisions, net share issuance, the yuan against the dollar and the scale of policy support."
-  },
-  {
-   "asset": "Japan_Eq",
-   "label": "Japan equity",
-   "type": "directional",
-   "iqr_bp": 115,
-   "n": 3,
-   "tally": {
-    "up": 5,
-    "down": 1,
-    "flat": 2
-   },
-   "headline": "Japan equity: five overweights, mostly on governance reform, versus one underweight; public numbers 6.3-8.6%, median 6.4% (n=3).",
-   "bull": {
-    "publishers": [
-     "Invesco",
-     "Lazard",
-     "Goldman Sachs AM",
-     "Mercer",
-     "Schroders"
-    ],
-    "argument": "Invesco (overweight, 8.6%, the range high) cites improved valuations, stable earnings growth and a positive currency adjustment. Lazard and Mercer point to governance reform delivering results and improving profitability; GSAM adds Takaichi fiscal support, wage-led spending, buybacks and a retail shift into risk assets. Schroders is also overweight.",
-    "data_used": "Governance and profitability trends, buybacks, starting valuations, yen appreciation via currency adjustment, fiscal and wage dynamics."
-   },
-   "bear": {
-    "publishers": [
-     "BNY Investments",
-     "Amundi"
-    ],
-    "argument": "Amundi is underweight, arguing the strong rally has stretched valuations despite solid fundamentals. BNY's 6.3%, just under the 6.4% median (n=3), reflects a lower real growth outlook only partly offset by an assumed yen appreciation.",
-    "data_used": "Post-rally valuations (Amundi); real growth outlook and yen appreciation assumption (BNY)."
-   },
-   "what_to_watch": "Japanese ROE and buyback follow-through versus post-rally multiples, and USD/JPY, since Invesco's and BNY's numbers both lean on yen appreciation."
-  },
-  {
-   "asset": "EM_Eq",
-   "label": "EM equity",
-   "type": "directional",
-   "iqr_bp": 122,
-   "n": 6,
-   "tally": {
-    "up": 7,
-    "down": 1,
-    "flat": 2
-   },
-   "headline": "EM equity: seven overweights against Vanguard's 3.0% outlier; other public numbers cluster at 7.1-8.8%.",
-   "bull": {
-    "publishers": [
-     "Robeco",
-     "T. Rowe Price",
-     "BNY Investments",
-     "Goldman Sachs AM",
-     "BlackRock Investment Institute",
-     "Schroders",
-     "Amundi"
-    ],
-    "argument": "Robeco's 8.8% (five-year) makes EM its top asset class on trade rewiring; T. Rowe Price's 8.7% follows improving earnings momentum; BNY's 8.1% (overweight) cites growth, AI and dollar weakness. GSAM and BII add strong earnings, cheaper valuations and a softer dollar. Schroders and Amundi are overweight on stance.",
-    "data_used": "EM earnings momentum and growth premium, P/E discount to the US, dollar path, AI-related exposure, trade realignment."
-   },
-   "bear": {
-    "publishers": [
-     "Vanguard",
-     "Invesco",
-     "Fidelity International"
-    ],
-    "argument": "Vanguard (underweight) has the range low, 3.0%: the strong EM rally lifted valuations, making EM its weakest equity forecast with the highest volatility. Invesco's 7.1% (neutral) sees a smaller valuation drag and better currency contribution, still below developed ex-US; Fidelity's 8.0% sits just under the median despite citing faster growth and cheaper valuations.",
-    "data_used": "Post-rally starting valuations and volatility (Vanguard); valuation drag and currency contribution (Invesco); growth and valuation inputs (Fidelity)."
-   },
-   "what_to_watch": "EM forward earnings revisions against the post-rally re-rating, and the dollar's direction; Vanguard's gap to peers is a starting-valuation dispute."
-  },
-  {
-   "asset": "US_IG_Corp",
-   "label": "US IG corporate",
-   "type": "directional",
-   "iqr_bp": 60,
-   "n": 5,
-   "tally": {
-    "up": 2,
-    "down": 1,
-    "flat": 5
-   },
-   "headline": "US IG: five neutrals on tight spreads; public numbers 4.1-5.5% hinge on spread-widening versus carry assumptions.",
-   "bull": {
-    "publishers": [
-     "Invesco",
-     "Fidelity International",
-     "Goldman Sachs AM",
-     "Schroders"
-    ],
-    "argument": "Invesco's 5.5%, the range high, rests on a higher total yield than Treasuries with limited credit losses; Fidelity's 5.4% combines rates income and spread carry, though it stays neutral given tight spreads. GSAM is overweight on mid-cycle fundamentals, value in segments such as banks and rate cuts lifting total returns. Schroders is also overweight.",
-    "data_used": "All-in yield over Treasuries, spread carry net of expected defaults and downgrades, mid-cycle credit fundamentals, expected rate cuts (GSAM)."
-   },
-   "bear": {
-    "publishers": [
-     "Vanguard",
-     "T. Rowe Price"
-    ],
-    "argument": "Vanguard is underweight: rich valuations leave its credit index (IG corporate plus government-related) with no forecast premium over Treasuries, at 4.8%. T. Rowe Price's 4.1% (five-year), the range low, reflects tight starting spreads and expected modest widening. Both sit below the 5.2% median.",
-    "data_used": "Starting spreads near historical tights, expected spread widening, forecast premium of credit over the Treasury index."
-   },
-   "what_to_watch": "IG spreads relative to historical tights and issuance volume; widening would back the low-end forecasts, stable spreads the carry-based ones."
+   "what_to_watch": "Small-cap earnings growth relative to large caps, and whether the rate cuts Goldman Sachs AM expects arrive; zero cuts this year are priced at 95.7-95.8% across venues."
   },
   {
    "asset": "US_HighYield",
@@ -3848,34 +3371,33 @@
    "iqr_bp": 90,
    "n": 7,
    "tally": {
-    "up": 3,
-    "down": 3,
-    "flat": 2
+    "up": 1,
+    "down": 2,
+    "flat": 0
    },
-   "headline": "US high yield: three overweights versus three underweights; carry from high yields against PIMCO's credit-loss-cycle warning.",
+   "headline": "US high yield: 4.6-6.1% range (n=7) splits on whether high carry outweighs tight spreads and rising defaults.",
    "bull": {
     "publishers": [
      "Invesco",
      "BNY Investments",
      "Fidelity International",
-     "Goldman Sachs AM",
-     "Schroders"
+     "Goldman Sachs AM"
     ],
-    "argument": "Invesco and BNY (both 6.1%, the range high) start from high all-in yields and still net out credit losses and expected spread widening; BNY is neutral on stance. Fidelity's 5.9% balances higher income against losses and tight spreads. GSAM is overweight on strong credit metrics, contained defaults, a better ratings mix and supportive M&A. Schroders is also overweight.",
-    "data_used": "All-in yield, expected default and recovery losses, assumed spread widening (Invesco, BNY), credit metrics and ratings mix (GSAM)."
+    "argument": "Carry dominates even after haircuts: Invesco and BNY Investments (both 6.1%, top of range) start from high all-in yields and net off expected credit losses and spread widening. Fidelity International sees spread income only partly offset by default losses. Goldman Sachs AM, overweight, cites healthy interest coverage, contained defaults, an upgraded ratings mix, solid demand and M&A support.",
+    "data_used": "Starting all-in yield minus expected default losses and spread-widening haircuts; issuer fundamentals such as interest coverage and ratings mix, plus demand and M&A."
    },
    "bear": {
     "publishers": [
      "State Street",
-     "AQR",
      "Vanguard",
+     "AQR",
      "PIMCO",
      "Amundi"
     ],
-    "argument": "PIMCO is underweight with high conviction: a credit loss cycle is beginning and tight spreads reflect complacency, notably in lower-quality, levered credit. Amundi, underweight, notes spreads near historic tights. Vanguard (5.2%, underweight) sees only a modest premium over Treasuries for higher volatility; State Street's 4.6%, the range low, models spread term structure and defaults; AQR is at 5.0%.",
-    "data_used": "Spreads near historical tights, default-cycle onset (PIMCO), spread term structure and default probabilities (State Street), premium versus Treasuries per unit of volatility."
+    "argument": "Tight spreads underpay for risk: State Street (4.6%, bottom of range) sees default-adjusted spreads leaving little extra return over IG; Vanguard judges credit expensive; AQR also sits below the median. PIMCO, underweight, reads near-record-tight spreads as complacent while defaults climb and leans toward higher quality. Amundi is also underweight.",
+    "data_used": "Current spreads versus history, the spread term structure and default probabilities, and an emerging rise in defaults."
    },
-   "what_to_watch": "Default and recovery rates among lower-rated, levered issuers and the direction of HY spreads; US recession in 2026 is priced at 3.5% (Kalshi) and 6.5% (Polymarket)."
+   "what_to_watch": "Speculative-grade default rates and HY spreads: rising defaults with spreads still near historic tights would vindicate the lower estimates; contained defaults would favor the carry view."
   },
   {
    "asset": "Commodities",
@@ -3884,60 +3406,60 @@
    "iqr_bp": 225,
    "n": 7,
    "tally": {
-    "up": 1,
+    "up": 0,
     "down": 0,
     "flat": 1
    },
-   "headline": "Commodities: widest IQR of any row (225bp), with estimates split into 2.3-3.8% and 5.7-6.7% clusters.",
+   "headline": "Commodities: widest IQR of any row (225bp, n=7); estimates hinge on futures risk premium and roll-return assumptions.",
    "bull": {
     "publishers": [
      "AQR",
      "Robeco",
      "Vanguard"
     ],
-    "argument": "AQR (6.7%, the range high, overweight) adds a long-run diversified-futures excess return, measured over more than a century, to real cash. Robeco's 5.8% (five-year) rests on geopolitical supply disruptions and dollar dynamics. Vanguard's 5.7% on the Bloomberg Commodity Index comes without specific commentary, though it flags higher energy prices as an inflation risk.",
-    "data_used": "Long-history futures excess return plus real cash yield (AQR); geopolitical supply shocks and the dollar (Robeco); energy-led inflation risk (Vanguard)."
+    "argument": "AQR (6.7%, top of range) adds a persistent long-run excess return of equal-weighted commodity futures over cash to its expected cash return. Robeco ties outcomes to conflicts and the dollar, within a base case of investment-led expansion with higher inflation. Vanguard's figure is pure model output, above the median but without commodity-specific commentary despite higher energy prices.",
+    "data_used": "Long-run excess return of diversified futures over cash, expected cash (collateral) returns, inflation, and geopolitical and dollar drivers."
+   },
+   "bear": {
+    "publishers": [
+     "State Street",
+     "Invesco",
+     "BNY Investments"
+    ],
+    "argument": "BNY Investments (2.3%, bottom of range) projects weak returns with high volatility and gives no drivers. State Street combines inflation and dollar projections with long-run roll and collateral returns. Invesco nudged its view up on a more supportive real-asset outlook yet stays below the median, stressing commodities' distinct diversifying return sources.",
+    "data_used": "Inflation and dollar forecasts, long-term roll return and collateral return; BNY Investments discloses no rationale."
+   },
+   "what_to_watch": "Realized roll yield (backwardation versus contango), T-bill yields that set collateral return, and the dollar's path, which Robeco and State Street both cite."
+  },
+  {
+   "asset": "Global_Govt_Bonds",
+   "label": "Global govt bonds",
+   "type": "directional",
+   "iqr_bp": 23,
+   "n": 3,
+   "tally": {
+    "up": 2,
+    "down": 1,
+    "flat": 1
+   },
+   "headline": "Global govt bonds: tight 23bp IQR (n=3) masks a directional split over fiscal strain versus income and diversification.",
+   "bull": {
+    "publishers": [
+     "Robeco",
+     "PIMCO"
+    ],
+    "argument": "Robeco (5.3%, top of range, developed sovereigns hedged to USD) says higher yields have improved expected returns, though not without risk. PIMCO, overweight with high conviction, expects out-of-sync economies and divergent central-bank paths to open country and curve opportunities, with global sovereigns adding income and diversification.",
+    "data_used": "Current sovereign yields hedged to USD, cross-country divergence in cycles and monetary policy, and curve shape."
    },
    "bear": {
     "publishers": [
      "BNY Investments",
-     "State Street",
-     "Invesco"
+     "Fidelity International"
     ],
-    "argument": "BNY's 2.3%, the range low, is roughly unchanged from last year, with little stated rationale. State Street's 3.2% builds from US inflation and dollar forecasts, long-term roll return and collateral return. Invesco's 3.8% is its lowest expected return of any asset class, framed as a diversifying return driver after a slight quarter-on-quarter improvement.",
-    "data_used": "Building blocks: collateral (cash) return, long-term roll return, US inflation and dollar forecasts (State Street); limited published rationale from BNY and Invesco."
+    "argument": "BNY Investments, underweight, argues fiscal strain may weaken sovereign bonds' risk-adjusted appeal and looks to real assets and private markets for diversification. Fidelity International is here only on its number (4.8%, bottom of range); it is overweight, expecting income from higher curves and diversification in recessionary shocks.",
+    "data_used": "Fiscal strain on sovereign balance sheets and risk-adjusted comparison with real assets and private markets; for Fidelity, income from higher yield curves."
    },
-   "what_to_watch": "Roll yield (futures curve shape), collateral cash rates and whether energy-driven inflation persists; this site's LTCMA (3.5%) sits with the lower cluster."
-  },
-  {
-   "asset": "Bank_Loans",
-   "label": "Bank loans",
-   "type": "directional",
-   "iqr_bp": 45,
-   "n": 2,
-   "tally": {
-    "up": 1,
-    "down": 1,
-    "flat": 0
-   },
-   "headline": "Bank loans: two public numbers (6.0%, 6.9%); GSAM's rate-relief overweight against PIMCO's leveraged-loss underweight.",
-   "bull": {
-    "publishers": [
-     "Invesco",
-     "Goldman Sachs AM"
-    ],
-    "argument": "GSAM is overweight: lower policy rates would ease interest burdens for floating-rate leveraged-loan issuers and improve coverage. Invesco's 6.9%, the higher of the two public numbers, starts from a high floating-rate yield partly offset by expected credit losses.",
-    "data_used": "Floating-rate all-in yield, expected credit losses, assumed policy-rate cuts improving interest coverage (GSAM)."
-   },
-   "bear": {
-    "publishers": [
-     "T. Rowe Price",
-     "PIMCO"
-    ],
-    "argument": "PIMCO is underweight, expecting significantly higher losses in leveraged lending where floating-rate structures meet high leverage. T. Rowe Price's 6.0% (five-year) is the lower public number, though T. Rowe Price still ranks loans highest among public US fixed income on floating-rate carry with little duration.",
-    "data_used": "Leverage and floating-rate debt-service burden, expected loss rates (PIMCO); carry versus duration exposure (T. Rowe Price)."
-   },
-   "what_to_watch": "Leveraged-loan default and recovery rates and interest coverage; GSAM's relief case needs cuts, while zero 2026 Fed cuts are priced at 95.8% (Kalshi) and 95.9% (Polymarket)."
+   "what_to_watch": "Term premia and long-end yields under fiscal pressure, and whether sovereigns rally in the next growth scare or fall alongside risk assets."
   },
   {
    "asset": "Private_Equity",
@@ -3946,30 +3468,28 @@
    "iqr_bp": 155,
    "n": 5,
    "tally": {
-    "up": 5,
+    "up": 2,
     "down": 0,
-    "flat": 1
+    "flat": 0
    },
-   "headline": "Private equity: highest median at 9.7% (n=5), but estimates span 6.6-10.5% on leverage, fee and premium assumptions.",
+   "headline": "Private equity: 6.6-10.5% range (n=5) turns on whether an illiquidity premium survives fees and leverage costs.",
    "bull": {
     "publishers": [
      "BNY Investments",
-     "T. Rowe Price",
-     "Amundi",
-     "BlackRock Investment Institute"
+     "T. Rowe Price"
     ],
-    "argument": "BNY's 10.5%, the range high, was raised sharply on the illiquidity premium and private capital's role funding AI and infrastructure. T. Rowe Price's 9.8% (five-year) rests on an illiquidity premium over public equity. Amundi is overweight on an illiquidity premium net of fees but flags slower distributions. BII's overweight covers venture capital only.",
-    "data_used": "Illiquidity premium over listed equity net of fees; private capital's role in AI and infrastructure financing (BNY)."
+    "argument": "BNY Investments (10.5%, top of range), overweight, adds a sizable illiquidity premium to public-equity factor exposure, arguing private capital is financing AI-related innovation and infrastructure. T. Rowe Price ranks private equity top among its forecasts on illiquidity and active-management advantages over listed equity.",
+    "data_used": "Public-equity factor exposure plus an assumed illiquidity premium, manager skill, and private-capital demand from AI and infrastructure build-outs."
    },
    "bear": {
     "publishers": [
-     "AQR",
-     "State Street"
+     "State Street",
+     "AQR"
     ],
-    "argument": "AQR's 6.6%, the range low, comes from a levered dividend-discount model net of fees, even after lower debt costs and multiple expansion lifted its estimate. State Street's 8.2% leverage-adjusts historical PE performance against listed equities, net of fees. Both sit below the 9.7% median.",
-    "data_used": "Levered dividend-discount model with explicit fee drag (AQR); leverage-adjusted historical PE-versus-listed performance (State Street)."
+    "argument": "AQR (6.6%, bottom of range) models US private equity as levered equity in a dividend-discount framework net of sizable fees; cheaper debt and multiple expansion lifted its estimate, yet it sees private-asset risk premia compressed against positive real cash and bond yields. State Street uses PE's historical performance versus listed equity, leverage-adjusted and net of fees.",
+    "data_used": "Levered dividend-discount model with fee drag and debt costs; leverage-adjusted historical private-equity returns versus listed equities."
    },
-   "what_to_watch": "Realized net-of-fee PE returns versus listed equity, distribution pace, exit multiples and leveraged-financing costs."
+   "what_to_watch": "Distributions and exit activity versus reported marks, acquisition financing costs, and whether net private-equity returns keep a margin over public equity after fees."
   },
   {
    "asset": "Private_Credit",
@@ -3980,9 +3500,9 @@
    "tally": {
     "up": 4,
     "down": 1,
-    "flat": 2
+    "flat": 0
    },
-   "headline": "Private credit: four overweights versus PIMCO's high-conviction underweight; public numbers 5.0-9.2%, median 6.6% (n=4).",
+   "headline": "Private credit: overweights outnumber PIMCO's high-conviction underweight; estimates span 5.0-9.2% (n=4) on fees and defaults.",
    "bull": {
     "publishers": [
      "T. Rowe Price",
@@ -3991,19 +3511,19 @@
      "BlackRock Investment Institute",
      "Amundi"
     ],
-    "argument": "T. Rowe Price's 9.2% (five-year), the range high, cites an illiquidity premium and structural demand for private capital; Fidelity's 6.9% (neutral) relies on floating income. GSAM sees yields above public markets with lower historical defaults; BII prefers credit with clear cash flows and lender protections. Amundi sees an attractive risk-adjusted alternative to liquid credit.",
-    "data_used": "Illiquidity premium, floating-rate yields net of fees and losses, historical default experience, structural demand for private capital."
+    "argument": "T. Rowe Price (9.2%, top of range) cites an illiquidity premium and lasting demand for private capital; Fidelity International sees higher rates lifting net-of-fee income and no immediate stress. Goldman Sachs AM, BlackRock Investment Institute and Amundi are overweight; Goldman cites extra yield over public credit and lower historical defaults than syndicated loans, BII lender protections and recovery value.",
+    "data_used": "Floating-rate income at elevated base rates, illiquidity premium, historical default rates versus syndicated loans, and underwriting and lender-protection quality."
    },
    "bear": {
     "publishers": [
-     "AQR",
      "State Street",
+     "AQR",
      "PIMCO"
     ],
-    "argument": "PIMCO is underweight with high conviction, citing emerging stress in private corporate credit and middle-market direct lending: maturity extensions, PIK use and financial engineering. AQR's 5.0%, the range low, models it as levered floating-rate high yield, cut by narrower spreads and lower cash rates; State Street's 6.4% covers senior direct lending net of fees.",
-    "data_used": "Credit-stress indicators (PIK usage, maturity extensions); levered high-yield proxy with current spreads and cash rates (AQR); senior direct-lending premium (State Street)."
+    "argument": "AQR (5.0%, bottom of range) treats direct lending as modestly levered floating-rate high yield whose illiquidity premium is consumed by fees, with narrower spreads and lower cash rates cutting returns. PIMCO, underweight, sees middle-market stress in extended maturities, payment-in-kind usage and financial engineering, and flags recovery risk, while favoring asset-based finance. State Street also sits below the median.",
+    "data_used": "Modeled levered high yield net of fees, spread compression and lower cash rates; observed payment-in-kind usage, maturity extensions and recovery prospects."
    },
-   "what_to_watch": "PIK share, non-accruals and amend-and-extend activity in middle-market direct lending, plus realized defaults and recoveries versus public high yield."
+   "what_to_watch": "Direct-lending non-accruals, payment-in-kind share of income and realized recoveries; rising stress would support PIMCO's underweight, stable credit quality the overweights."
   }
  ],
  "diff_prior": {
@@ -4338,11 +3858,11 @@
   {
    "publisher": "Vanguard",
    "id": "A04",
-   "cycle_phase": "Resilient expansion with AI-related investment, energy-driven inflation risks, and a higher-for-longer Fed",
+   "cycle_phase": "Resilient growth; inflation-focused central banks; higher-for-longer Fed; stretched valuations after Q2 risk rally",
    "risk_stance": "unclear",
-   "summary": "Q2 risk rally stretched equity valuations and lowered long-run return forecasts; yields stable, credit rich. Vanguard stresses valuations are poor short-term timing signals and takes no tactical stance.",
+   "summary": "Sharp Q2 rally in risk assets stretched equity valuations and lowered expected returns; sovereign yields stable, credit rich. No explicit risk tilt; valuations not deemed a basis for reallocating.",
    "risks": [
-    "Inflation and energy prices",
+    "Inflation and higher-for-longer rates",
     "Stretched equity valuations",
     "Rich credit valuations"
    ]
@@ -4350,85 +3870,85 @@
   {
    "publisher": "AQR",
    "id": "A07",
-   "cycle_phase": "Late-stage equity rally (third straight up year) with compressed risk premia and positive real cash rates",
+   "cycle_phase": "No cycle call; valuation-based view after a third straight equity rally, with rich US equities and positive real cash rates.",
    "risk_stance": "neutral",
-   "summary": "Equity premia remain compressed, especially in the US, while bonds and cash offer positive real yields; AQR expects lower future equity excess returns but says estimates are not for market timing.",
+   "summary": "No market-timing call. Risk premia look compressed for equities and private assets relative to positive real cash and bond yields, and AQR expects lower equity excess returns.",
    "risks": [
-    "Compressed equity risk premia",
-    "Over-extrapolation of US growth",
-    "Forecast uncertainty"
+    "Forecast uncertainty",
+    "Rich US equity valuations",
+    "Compressed risk premia"
    ]
   },
   {
    "publisher": "Invesco",
    "id": "A09",
-   "cycle_phase": "Resilient growth with moderating inflation; elevated yields and possible further tightening",
+   "cycle_phase": "Resilient growth, moderating inflation, elevated yields; uncertain and possibly hawkish policy path",
    "risk_stance": "neutral",
-   "summary": "Volatile markets amid geopolitics and Fed uncertainty under Warsh; resilient US earnings, elevated bond yields aiding income and diversification, rally broadening to small caps.",
+   "summary": "Elevated valuations temper US equity returns; non-US developed markets look relatively better; higher yields lift bond expectations, narrowing the equity-bond gap and reinforcing fixed income diversification.",
    "risks": [
-    "US valuation derating",
-    "Monetary policy uncertainty",
-    "Inflation and energy prices"
+    "Geopolitics and energy prices",
+    "Further policy tightening",
+    "Fed leadership and reduced guidance"
    ]
   },
   {
    "publisher": "Robeco",
    "id": "A10",
-   "cycle_phase": "Mid-cycle rejuvenated expansion; bull market only six years old, potentially as long as 2009-2019 expansion",
+   "cycle_phase": "Mid-cycle: rejuvenated expansion, less late-cycle than widely believed",
    "risk_stance": "risk-on",
-   "summary": "Base case 'Great Rewiring' (50%): AI-driven, investment-led expansion with higher inflation; next five years supportive for risk-taking, not as late-cycle as widely believed.",
+   "summary": "Base case Great Rewiring (50%): AI- and investment-led rejuvenated expansion with higher inflation, supportive for risk-taking; bull Luminous Renaissance 15%, bear Synaptic Decay 35%.",
    "risks": [
-    "Synaptic Decay bear case (35%)",
-    "Stagflation hitting bonds",
-    "Geopolitical chokepoints"
+    "Bear case: Synaptic Decay (35% probability)",
+    "Elevated equity valuations",
+    "Inflation and fiscal uncertainty"
    ]
   },
   {
    "publisher": "PIMCO",
    "id": "A15",
-   "cycle_phase": "Late cycle with credit loss cycle beginning; resilient but fragmenting global economy amid geopolitical rupture and AI capex boom",
+   "cycle_phase": "Late cycle: resilient but downside-skewed growth, with a credit default cycle now beginning amid geopolitical rupture",
    "risk_stance": "risk-off",
-   "summary": "Baseline resilient growth with fat tails both ways; downside growth risks; favor high quality fixed income over reaching for risk.",
+   "summary": "Geopolitical rupture, fragmentation, fiscal strain and an AI capex boom widen outcome tails; PIMCO favors resilience over reach via high-quality, globally diversified bonds and up-in-quality credit.",
    "risks": [
-    "Geopolitical and energy shocks",
-    "Credit default cycle",
-    "Fiscal sustainability"
+    "Geopolitical rupture and energy shocks",
+    "Fiscal strain and debt sustainability",
+    "Credit loss cycle"
    ]
   },
   {
    "publisher": "Lazard",
    "id": "A16",
-   "cycle_phase": "Late-cycle US slowdown hidden by AI-driven gains; geopolitical shock from the Iran war; policy normalizing in Japan",
-   "risk_stance": "neutral",
-   "summary": "Structural shifts: a weaker dollar, non-US outperformance and steeper developed-market curves. US resilience is doubtful, China is fragile, Europe's recovery is delayed and Japan is normalizing.",
+   "cycle_phase": "Not explicitly stated; fragile growth and structural transition amid the Iran-war shock",
+   "risk_stance": "unclear",
+   "summary": "Beyond Iran headlines, Lazard sees structural shifts: a weaker dollar, improving non-US equity relative performance, and steeper developed-market curves, while US economic resilience looks increasingly doubtful.",
    "risks": [
     "Iran war / geopolitics",
-    "US economic fragility",
-    "China vulnerabilities"
+    "Fragile US economy",
+    "China structural vulnerabilities"
    ]
   },
   {
    "publisher": "Goldman Sachs AM",
    "id": "A17",
-   "cycle_phase": "Mid-cycle with Fed easing; soft landing base case",
-   "risk_stance": "neutral",
-   "summary": "Base case soft landing with Fed cutting ~75bps by end-2026; AI capex and fiscal support offset labor weakness; elevated valuations call for active, diversified positioning.",
+   "cycle_phase": "Mid-cycle; soft landing with policy easing",
+   "risk_stance": "risk-on",
+   "summary": "Soft-landing base case: gradual Fed easing with possibly two cuts in 2026; credit mid-cycle; easing, AI capex and dealmaking are catalysts amid elevated valuations and fiscal risks.",
    "risks": [
-    "Labor market / hard landing",
-    "Fiscal and debt concerns",
-    "AI capex and earnings disappointment"
+    "Fiscal deficits and debt sustainability",
+    "Tariffs and US-China tensions",
+    "AI capex disappointment and market concentration"
    ]
   },
   {
    "publisher": "UBS GWM CIO",
    "id": "A19",
-   "cycle_phase": "Mid-cycle expansion with easing policy rates; growth uneven early 2026 then improving",
+   "cycle_phase": "Expansion: uneven growth entering 2026, improving through the year as confidence recovers, fiscal stimulus gains traction, tariff effects fade and the Fed eases.",
    "risk_stance": "risk-on",
-   "summary": "UBS expects a supportive 2026 backdrop: improving confidence, fiscal stimulus, fading tariffs, Fed cuts and AI capex driving equity gains, with a weaker dollar.",
+   "summary": "Constructive: supportive economic backdrop for stocks, AI capex and adoption driving gains, Fed easing toward 3.33%, weaker dollar; political noise seen as short-lived for markets.",
    "risks": [
     "AI disappointment",
-    "Inflation resurgence",
-    "US-China rivalry"
+    "Inflation resurgence or persistence",
+    "Entrenched US-China rivalry"
    ]
   },
   {
@@ -4446,49 +3966,49 @@
   {
    "publisher": "Mercer",
    "id": "A23",
-   "cycle_phase": "Mid-cycle / steady expansion with easing policy",
+   "cycle_phase": "Steady expansion with broadly easing policy; growth, inflation and rates converging toward long-term averages",
    "risk_stance": "neutral",
-   "summary": "Steady 2026 global growth led by resilient US (fiscal stimulus, AI capex), inflation stabilising near targets, broadly accommodative policy; overall market positioning neutral.",
+   "summary": "Mercer expects steady 2026 global growth led by a resilient, AI- and fiscally-supported US, inflation near targets and easing policy, keeping overall market positioning broadly neutral.",
    "risks": [
-    "AI overinvestment",
+    "AI overinvestment and valuations",
     "Trade and semiconductor tariffs",
-    "US policy uncertainty"
+    "US policy uncertainty and Fed independence"
    ]
   },
   {
    "publisher": "BNY Investments",
    "id": "A31",
-   "cycle_phase": "Growth re-accelerating with policy support; diverging monetary/fiscal paths and gradual DM rate easing",
-   "risk_stance": "neutral",
-   "summary": "Expects re-accelerating growth backed by fiscal and monetary policy, AI-driven productivity gains, a structurally weaker dollar, and rising sovereign debt pressure steepening yield curves.",
+   "cycle_phase": "Growth re-accelerating into 2026 with fiscal and monetary support, as policy diverges across regions",
+   "risk_stance": "risk-on",
+   "summary": "Moderately constructive long-run view: AI productivity lifts equity and private-market returns, while fiscal strain, steeper curves and a weaker dollar favor global diversification over sovereign duration.",
    "risks": [
-    "Sovereign debt sustainability",
-    "Weak demand for long-duration bonds",
-    "Supply-shock inflation"
+    "Developed-market fiscal strain",
+    "Weak demand for long-duration government bonds",
+    "Supply-shock inflation and stock-bond correlation"
    ]
   },
   {
    "publisher": "T. Rowe Price",
    "id": "A33",
-   "cycle_phase": "Post-shock normalization: activity has stabilized after higher rates, but inflation persists and the outlook is uncertain",
+   "cycle_phase": "Stabilizing, more balanced but still uncertain phase after markets absorbed higher rates",
    "risk_stance": "neutral",
-   "summary": "Markets have absorbed higher rates and entered a more balanced but uncertain phase. Returns are stable to modestly lower, the fixed income outlook is less forgiving, and volatility assumptions are slightly higher.",
+   "summary": "Markets have absorbed higher rates and activity has stabilized; valuations mostly normalized but elevated in US growth; returns stable to modestly lower, fixed income less forgiving.",
    "risks": [
-    "Rising yields",
-    "Credit spread widening",
-    "Elevated equity valuations"
+    "Elevated equity valuations",
+    "Rising yields and duration",
+    "Credit spread widening"
    ]
   },
   {
    "publisher": "Fidelity International",
    "id": "A37",
-   "cycle_phase": "Structural: fragmentation, high debt and AI revolution; elevated macro volatility and inflation",
+   "cycle_phase": "Not specified; long-term structural regime of geopolitical fragmentation and AI-driven growth with elevated inflation and volatility",
    "risk_stance": "neutral",
-   "summary": "AI lifts long-term GDP growth and equity returns, but fragmentation, debt and energy transitions keep inflation and macro volatility above pre-Covid levels.",
+   "summary": "Fragmentation, high debt and tech/energy transitions keep macro volatility and inflation above pre-Covid norms; AI lifts long-run GDP growth, supporting equities while bonds stay attractive.",
    "risks": [
     "Persistent inflation",
     "Elevated equity-bond correlation",
-    "Profit margin mean reversion"
+    "Profit margins and AI uncertainty"
    ]
   },
   {
@@ -4503,13 +4023,13 @@
   {
    "publisher": "BlackRock Investment Institute",
    "id": "A06W",
-   "cycle_phase": "Expansion with renewed Fed tightening; AI-led growth amid structurally higher long-term yields",
+   "cycle_phase": "Expansion with renewed Fed tightening: strong US growth and AI buildout, softer jobs data, and long yields at their highest since 2002.",
    "risk_stance": "risk-on",
-   "summary": "Pro-risk: overweight U.S. and EM equities on AI-driven earnings; markets overprice further Fed hikes; structural forces keep long yields high, so avoid long bonds; dollar stable-to-weaker.",
+   "summary": "BII stays risk-on, overweighting US and EM equities on AI-driven earnings; sees markets overpricing Fed hikes, a dollar above fundamentals with limited upside, and structurally elevated long yields.",
    "risks": [
-    "Fed tightening and rate volatility",
+    "Fed tightening repricing",
     "Structurally higher long-term yields",
-    "U.S. fiscal strain"
+    "US fiscal deterioration"
    ]
   },
   {
@@ -4550,7 +4070,7 @@
   }
  ],
  "prediction": {
-  "taken_at": "2026-10-07T02:48:47",
+  "taken_at": "2026-10-07T06:43:31",
   "topics": [
    {
     "id": "fed_next",
@@ -4562,19 +4082,19 @@
       "event_id": "KXFEDDECISION-26OCT",
       "url": "https://kalshi.com/markets/kxfeddecision",
       "close": "2026-10-28T17:59:00Z",
-      "volume": 8156809,
+      "volume": 8192727,
       "outcomes": [
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.835,
+        "prob": 0.83,
         "basis": "mid",
-        "volume": 3550469
+        "volume": 3585981
        },
        {
         "outcome": "Hike 25bps",
-        "prob": 0.16,
+        "prob": 0.165,
         "basis": "mid",
-        "volume": 2558289
+        "volume": 2558694
        },
        {
         "outcome": "Cut >25bps",
@@ -4602,37 +4122,37 @@
       "event_id": "fed-decision-in-october-20260617190323537",
       "url": "https://polymarket.com/event/fed-decision-in-october-20260617190323537",
       "close": "2026-10-29T03:59:00Z",
-      "volume": 27360733,
+      "volume": 27715786,
       "outcomes": [
        {
         "outcome": "No change",
-        "prob": 0.835,
+        "prob": 0.825,
         "basis": "mid",
-        "volume": 7716845
+        "volume": 7762743
        },
        {
         "outcome": "25 bps increase",
-        "prob": 0.155,
+        "prob": 0.165,
         "basis": "mid",
-        "volume": 6562432
+        "volume": 6604596
        },
        {
         "outcome": "25 bps decrease",
-        "prob": 0.0045,
+        "prob": 0.0035,
         "basis": "mid",
-        "volume": 4874076
+        "volume": 5060958
        },
        {
         "outcome": "50+ bps increase",
         "prob": 0.0035,
         "basis": "mid",
-        "volume": 3772432
+        "volume": 3772676
        },
        {
         "outcome": "50+ bps decrease",
         "prob": 0.0015,
         "basis": "mid",
-        "volume": 4434947
+        "volume": 4514812
        }
       ]
      }
@@ -4648,31 +4168,31 @@
       "event_id": "KXRATECUTCOUNT-26DEC31",
       "url": "https://kalshi.com/markets/kxratecutcount",
       "close": "2027-01-01T04:59:00Z",
-      "volume": 10323913,
+      "volume": 10324202,
       "outcomes": [
        {
         "outcome": "Exactly 0 cuts",
-        "prob": 0.9575,
+        "prob": 0.9565,
         "basis": "mid",
-        "volume": 2660996
+        "volume": 2661047
        },
        {
         "outcome": "Exactly 1 cut",
-        "prob": 0.0375,
+        "prob": 0.039,
         "basis": "mid",
-        "volume": 1170968
+        "volume": 1171124
        },
        {
         "outcome": "Exactly 2 cuts",
-        "prob": 0.0145,
+        "prob": 0.013,
         "basis": "mid",
-        "volume": 967417
+        "volume": 967458
        },
        {
         "outcome": "Exactly 3 cuts",
         "prob": 0.0025,
         "basis": "mid",
-        "volume": 650591
+        "volume": 650632
        },
        {
         "outcome": "Exactly 14 cuts",
@@ -4694,19 +4214,19 @@
       "event_id": "how-many-fed-rate-cuts-in-2026",
       "url": "https://polymarket.com/event/how-many-fed-rate-cuts-in-2026",
       "close": "2027-01-01T04:59:00Z",
-      "volume": 53907647,
+      "volume": 53912850,
       "outcomes": [
        {
         "outcome": "0 (0 bps)",
-        "prob": 0.9585,
+        "prob": 0.9575,
         "basis": "mid",
-        "volume": 8801722
+        "volume": 8806357
        },
        {
         "outcome": "1 (25 bps)",
-        "prob": 0.018,
+        "prob": 0.0175,
         "basis": "mid",
-        "volume": 3468315
+        "volume": 3468794
        },
        {
         "outcome": "2 (50 bps)",
@@ -4718,13 +4238,13 @@
         "outcome": "3 (75 bps)",
         "prob": 0.0025,
         "basis": "mid",
-        "volume": 2953651
+        "volume": 2953661
        },
        {
         "outcome": "4 (100 bps)",
         "prob": 0.0025,
         "basis": "mid",
-        "volume": 2748858
+        "volume": 2748937
        },
        {
         "outcome": "5 (125 bps)",
@@ -4746,13 +4266,13 @@
       "event_id": "KXRECSSNBER-26",
       "url": "https://kalshi.com/markets/kxrecssnber",
       "close": "2027-01-31T13:25:00Z",
-      "volume": 3632198,
+      "volume": 3632270,
       "outcomes": [
        {
         "outcome": "Starts",
         "prob": 0.035,
         "basis": "mid",
-        "volume": 3632198
+        "volume": 3632270
        }
       ]
      },
@@ -4800,13 +4320,13 @@
        },
        {
         "outcome": "Hike 50bps",
-        "prob": 0.035,
+        "prob": 0.03,
         "basis": "mid",
         "volume": 5492
        },
        {
         "outcome": "Cut 25bps",
-        "prob": 0.03,
+        "prob": 0.025,
         "basis": "mid",
         "volume": 3192
        },
@@ -4840,13 +4360,13 @@
        },
        {
         "outcome": "25 bps increase",
-        "prob": 0.035,
+        "prob": 0.04,
         "basis": "mid",
         "volume": 5160
        },
        {
         "outcome": "25 bps decrease",
-        "prob": 0.019,
+        "prob": 0.0165,
         "basis": "mid",
         "volume": 2464
        },
@@ -4876,19 +4396,19 @@
       "event_id": "which-party-will-win-the-house-in-2026",
       "url": "https://polymarket.com/event/which-party-will-win-the-house-in-2026",
       "close": "2026-11-04T04:59:00Z",
-      "volume": 14580281,
+      "volume": 14586724,
       "outcomes": [
        {
         "outcome": "Democratic Party",
         "prob": 0.925,
         "basis": "mid",
-        "volume": 8268608
+        "volume": 8269383
        },
        {
         "outcome": "Republican Party",
         "prob": 0.075,
         "basis": "mid",
-        "volume": 6311673
+        "volume": 6317341
        }
       ]
      }
@@ -4904,19 +4424,19 @@
       "event_id": "which-party-will-win-the-senate-in-2026",
       "url": "https://polymarket.com/event/which-party-will-win-the-senate-in-2026",
       "close": "2026-11-04T04:59:00Z",
-      "volume": 5933455,
+      "volume": 5935287,
       "outcomes": [
        {
         "outcome": "Democratic Party",
         "prob": 0.645,
         "basis": "mid",
-        "volume": 3467505
+        "volume": 3467844
        },
        {
         "outcome": "Republican Party",
         "prob": 0.355,
         "basis": "mid",
-        "volume": 2465950
+        "volume": 2467443
        }
       ]
      }
