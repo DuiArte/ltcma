@@ -385,6 +385,104 @@ linked to the originals. Not investment advice.</p></div></footer>
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(page)
     print(f"ltcma-consensus.html built ({len(pubs)} publishers, {len(d['matrix'])} rows, {len(d.get('divergences', []))} divergences)")
+    render_street()
+
+
+# ---- Street LTCMA page (decision D14, Carlos 2026-10-07) -------------------------------------
+STREET_SRC = os.path.join(DATA, "market_intel", "street_ltcma_public.json")
+STREET_IDX = os.path.join(DATA, "market_intel", "street_ltcma_editions.json")
+STREET_OUT = os.path.join(DOCS, "street-ltcma.html")
+
+
+def render_street():
+    """Compiled consensus of every firm with numbers, AGGREGATES ONLY: rows with >= 5 firms, trimmed
+    mean (no single firm's figure can be read off), dispersion as a standard deviation. Built off-repo
+    by Trading_Index/market_intel (export_street_ltcma.py -> publish_street_ltcma.py); render-only here."""
+    if not os.path.exists(STREET_SRC):
+        print("street LTCMA: no street_ltcma_public.json yet - page not built")
+        return
+    s = json.load(open(STREET_SRC, encoding="utf-8"))
+    idx = json.load(open(STREET_IDX, encoding="utf-8")) if os.path.exists(STREET_IDX) else {"editions": []}
+    ed = date.fromisoformat(s["edition_date"])
+    asof = ed.strftime("%d %b %Y")
+    rows_html = ""
+    for r in s["rows"]:
+        site = pct(r.get("site_ltcma")) + "%" if r.get("site_ltcma") is not None else "—"
+        star = " &#9733;" if r.get("in_site_ltcma") else ""
+        if r["published"]:
+            gap = f'{r["gap_bp"]:+d}' if r.get("gap_bp") is not None else "—"
+            firms = e(", ".join(r["firms"]))
+            rows_html += (f'<tr><td style="text-align:left">{e(r["label"])}{star}</td>'
+                          f'<td><b>{pct(r["street_ltcma"])}%</b></td><td>{r["n_firms"]}</td>'
+                          f'<td>{r["dispersion_sd_bp"]}</td><td>{site}</td><td>{gap}</td>'
+                          f'<td style="text-align:left;white-space:normal;min-width:240px;font-size:12px;color:var(--sec)">{firms}</td></tr>')
+        else:
+            why = "no firm reports it separately" if r["n_firms"] == 0 else "fewer than 5 firms"
+            rows_html += (f'<tr style="color:var(--muted)"><td style="text-align:left">{e(r["label"])}{star}</td>'
+                          f'<td colspan="3" style="font-style:italic">{why}</td><td>{site}</td><td>—</td><td></td></tr>')
+    eds = ""
+    for x in idx.get("editions", []):
+        dd = date.fromisoformat(x["date"]).strftime("%d %b %Y")
+        tag = "preliminary" if x.get("edition") == "preliminary" else "monthly"
+        eds += (f'<tr><td style="text-align:left">{dd}</td><td>{tag}</td><td>{x["rows_published"]}</td>'
+                f'<td>{x["firms"]}</td><td><a href="{e(x["csv"])}" download>CSV</a></td>'
+                f'<td><a href="{e(x["xlsx"])}" download>XLSX</a></td></tr>')
+    n_pub = sum(1 for r in s["rows"] if r["published"])
+    n_site = sum(1 for r in s["rows"] if r["published"] and r.get("in_site_ltcma"))
+    page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ltcma-content-asof" content="{s['edition_date']}">
+<title>Carlos Duarte — Street LTCMA</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{CSS}</style></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
+</div></header>
+<section class="hero"><div class="container">
+<h1>Street LTCMA — the compiled consensus</h1>
+<p class="lede">One set of long-run capital market assumptions compiled from {s['n_firms_total']} asset managers and banks,
+in the same asset classes as this site's own LTCMA. Each figure is a consensus across firms, never a single
+firm's forecast. This site's model is shown next to it as a cross-check, and every monthly edition stays
+available for download below.</p>
+<p class="asof">Street consensus as of {asof} &middot; {"preliminary edition" if s.get("edition") == "preliminary" else "monthly edition"} &middot; {n_pub} asset classes ({n_site} of this site's 24) with at least 5 firms</p>
+</div></section>
+<main class="container">
+<div class="toc"><a href="#table">The Street LTCMA</a><a href="#editions">Editions &amp; downloads</a><a href="#method">Method</a></div>
+
+<section class="block" id="table"><h2>Expected annual return, % nominal (USD)</h2>
+<p class="note"><b>Street LTCMA</b> = trimmed mean across firms (the single highest and lowest estimates are dropped),
+published only where at least 5 firms give a figure. <b>Dispersion</b> = standard deviation across firms, in bp.
+<b>Gap</b> = Street minus this site's LTCMA, in bp, computed from unrounded values (positive: this site is below
+the Street). &#9733; = an asset class of this site's LTCMA. Firm-by-firm figures are on the
+<a href="ltcma-consensus.html">Market Intel</a> grid for the firms whose material may be republished.</p>
+<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Asset class</th>
+<th>Street LTCMA</th><th>Firms</th><th>Dispersion (bp)</th><th>This site's LTCMA</th><th>Gap (bp)</th>
+<th style="text-align:left">Contributing firms</th></tr></thead><tbody>{rows_html}</tbody></table></div></section>
+
+<section class="block" id="editions"><h2>Editions &amp; downloads</h2>
+<p class="note">Every published edition is kept. Each file holds the aggregates exactly as shown above
+(no individual firm's figures).</p>
+<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Edition</th>
+<th>Type</th><th>Asset classes</th><th>Firms</th><th>CSV</th><th>Excel</th></tr></thead><tbody>{eds}</tbody></table></div></section>
+
+<section class="block" id="method"><h2>Method</h2>
+<p class="note">Each firm's long-run expected returns are read from its own published capital market assumptions
+(collected monthly). Every number is quoted verbatim from the source and machine-checked against the
+document. Figures are put on one basis: US dollars, nominal, geometric (compound). Real forecasts are made
+nominal with the firm's own inflation assumption, and arithmetic averages are converted with the firm's own
+volatility. Each firm counts once per asset class, using the horizon closest to 12 years; non-USD figures are left out.
+A trimmed mean is used rather than a median so that no single firm's number can be read off the table; for the
+same reason no minimum, maximum or quartile is shown, and rows with fewer than 5 firms are withheld.
+Some contributing firms do not permit their figures to be republished individually; they appear here only
+inside these aggregates. This consensus is a cross-check: it is never an input to this site's LTCMA model.
+Not investment advice.</p></section>
+</main>
+<footer class="shell-foot"><div class="container"><p>Aggregated from the published capital market assumptions of the
+firms listed. Not investment advice.</p></div></footer>
+</body></html>"""
+    with open(STREET_OUT, "w", encoding="utf-8") as f:
+        f.write(page)
+    print(f"street-ltcma.html built ({n_pub} rows, {len(idx.get('editions', []))} edition(s))")
 
 
 if __name__ == "__main__":
