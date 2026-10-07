@@ -114,8 +114,13 @@ def main():
     # weekly). C-20261007-01: the hero said "21 asset managers" for 21 documents from 19 firms.
     firm = lambda p: p.get("firm") or p["publisher"]
     n_docs, n_firms = len(pubs), len({firm(p) for p in pubs})
-    n_firms_num = len({firm(p) for p in num_pubs})
-    n_firms_qual = len({firm(p) for p in qual_pubs} - {firm(p) for p in num_pubs})
+    # what is ACTUALLY rendered per document (labels must not promise views that are not on the grid)
+    has_num = {pid for row in d["matrix"].values() for pid, c in row.items() if "v" in c}
+    has_arrow = {pid for row in d["matrix"].values() for pid, c in row.items() if c.get("stance")}
+    f_num = {firm(p) for p in pubs if p["id"] in has_num}
+    f_view = {firm(p) for p in pubs if p["id"] in has_arrow} - f_num
+    f_stance = {firm(p) for p in pubs} - f_num - f_view
+    n_firms_num, n_firms_view, n_firms_stance = len(f_num), len(f_view), len(f_stance)
     cols = sorted(num_pubs, key=lambda p: p["short"]) + sorted(qual_pubs, key=lambda p: p["short"])
     carlos = {r["asset"]: r["carlos"] for r in d["diff_carlos"]["rows"]}
     allv = [st[k] for st in d["stats"].values() if st.get("n") for k in ("min", "max")] + list(carlos.values())
@@ -257,13 +262,19 @@ def main():
                    f'<th>Prior median</th><th>Now</th><th>Change (bp)</th></tr></thead><tbody>{ch}</tbody></table></div>')
 
     # ---- regimes
+    by_id = {p["id"]: p for p in pubs}
+    dup = {n for n in [p["publisher"] for p in pubs] if [q["publisher"] for q in pubs].count(n) > 1}
+
     def reg_row(r):
+        p = by_id.get(r.get("id"), {})
+        name = p.get("short") if r["publisher"] in dup else r["publisher"]     # "Schroders 10y" vs "Schroders 30y"
         if r.get("restricted"):          # stance only; the publisher's own text is not republished
-            call = '<span style="color:var(--muted)">not republished &mdash; see the original</span>'
+            orig = (f'<a href="{e(p["url"])}" rel="noopener">see the original</a>' if p.get("url") else "see the original")
+            call = f'<span style="color:var(--muted)">not republished &mdash; {orig}</span>'
             risks = ""
         else:
             call, risks = e(r.get("summary")), e("; ".join(x for x in r.get("risks", []) if x))
-        return (f'<tr><td style="text-align:left">{e(r["publisher"])}</td><td>{e(r.get("risk_stance"))}</td>'
+        return (f'<tr><td style="text-align:left">{e(name)}</td><td>{e(r.get("risk_stance"))}</td>'
                 f'<td style="text-align:left;white-space:normal">{e(r.get("cycle_phase") or "—")}</td>'
                 f'<td style="text-align:left;white-space:normal;min-width:260px">{call}</td>'
                 f'<td style="text-align:left;white-space:normal;min-width:200px">{risks}</td></tr>')
@@ -271,9 +282,11 @@ def main():
 
     # ---- sources
     def shown_label(p):
-        if not p["numbers_shown"]:
-            return "views only *"
-        return "numbers + views" if p.get("n_forecasts") else "views"
+        # from what the grid ACTUALLY shows (verifier 2026-10-07: "numbers + views" was printed for
+        # publishers with no arrows on the page)
+        parts = (["numbers"] if p["id"] in has_num else []) + (["stated views"] if p["id"] in has_arrow else [])
+        label = " + ".join(parts) if parts else "regime stance only"
+        return label + ("" if p["numbers_shown"] else " *")
 
     src_rows = ""
     for p in sorted(pubs, key=lambda p: p["publisher"]):
@@ -304,7 +317,7 @@ def main():
 grid in US dollars (nominal) and set against this site's own capital market assumptions. Where the
 publishers disagree, both sides of the argument are laid out with the evidence each one leans on.
 Prediction-market odds for the macro calls are shown alongside.</p>
-<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "monthly edition"} &middot; {n_firms_num} firms with numbers shown, {n_firms_qual} with views only</p>
+<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "monthly edition"} &middot; {n_firms_num} firms with numbers shown, {n_firms_view} with stated views only, {n_firms_stance} with a regime stance only</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#summary">Summary</a><a href="#odds">Market-implied odds</a><a href="#matrix">The grid</a>
@@ -339,7 +352,9 @@ paraphrased from the publishers' own documents.</p>{divs}</section>
 <p class="note">This site's headline expected return (12-year horizon, blend &lambda;=0.5; model version
 {e(d["diff_carlos"].get("model_built"))}, captured at the consensus run) against the public median. The comparison is a cross-check: no
 publisher number is ever an input to this site's model. Band = middle half of the public estimates
-(full range when fewer than four).</p>
+(full range when fewer than four). Gap (bp) = public median minus this site, computed from unrounded
+values (so it can differ slightly from the rounded percentages shown); positive means this site is below
+the median.</p>
 <div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Asset class</th>
 <th>This site</th><th>Public median</th><th>Gap (bp)</th><th>Band</th><th style="text-align:left">Position</th></tr></thead>
 <tbody>{car_rows}</tbody></table></div></section>
