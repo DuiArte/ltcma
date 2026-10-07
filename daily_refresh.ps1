@@ -236,6 +236,10 @@ try {
     Run-Step '17_build_site.py'      -LoadBearing | Out-Null
     Run-Step '23_strategies.py'      -LoadBearing | Out-Null
     Run-Step '27_research_notes.py'  | Out-Null
+    # Market Intel consensus page (2026-10-07): RENDER ONLY from data/market_intel/consensus_public.json,
+    # which the monthly task market-intel-monthly produces off-repo. Best-effort: a render failure
+    # must not block the other pages. MARKET_INTEL_SPEC.md / WEBSITE_PIPELINES_GAPS.md.
+    Run-Step '30_market_intel.py'    | Out-Null
     Run-Step '25_stock_picks.py'     | Out-Null
     Run-Step '21_stock_signals.py'   | Out-Null
     # LoadBearing: portfolio.html has a HARD as-of gate below, so a best-effort 18 is a

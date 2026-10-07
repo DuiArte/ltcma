@@ -46,7 +46,10 @@ KNOWN_DEBT = {  # page -> why it is allowed to be old; must be cleared by a huma
 # is honest by construction (it says it is old), but the resync is still OWED, so it is
 # scanned and reported like KNOWN_DEBT -- moving the page must not make the debt vanish.
 ARCHIVE_DEBT = "archived edition; republish via TAB_RESYNC (D-20260924-004)"
-BUDGET_DAYS = [(re.compile(r"(?i)model"), 10)]
+BUDGET_DAYS = [(re.compile(r"(?i)model"), 10),
+               # ltcma-consensus.html is a MONTHLY edition (Market Intel, task market-intel-monthly,
+               # day 1); 38 d = one month + a missed-run margin. MARKET_INTEL_SPEC.md 2/8.
+               (re.compile(r"(?i)consensus"), 38)]
 
 
 def _parse(s):
