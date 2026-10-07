@@ -12,6 +12,7 @@ import html
 import json
 import os
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 
 from glossary import NAV
 from design_system import CSS_LINKS
@@ -78,7 +79,11 @@ def e(s):
 
 
 def pct(x, nd=1):
-    return "" if x is None else f"{x:.{nd}f}"
+    """Decimal half-up (8.95 -> 9.0, 8.05 -> 8.1). Plain f"{x:.1f}" rounds the binary float, so 8.95
+    printed 8.9 while 8.05 printed 8.1 (claims audit 2026-10-07). The summary text uses the same rule."""
+    if x is None:
+        return ""
+    return str(Decimal(str(x)).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_HALF_UP))
 
 
 def range_bar(st, carlos, lo_ax, hi_ax):
@@ -129,7 +134,8 @@ def main():
                       f'&middot; volume ${v["volume"]:,.0f}</div>')
             for o in v["outcomes"][:4]:
                 p = o["prob"] * 100
-                inner += (f'<div class="row"><span>{e(o["outcome"])}</span><span>{p:.0f}%</span></div>'
+                # one decimal, as quoted in the summary text (no half-even rounding drift: 16.5 stays 16.5)
+                inner += (f'<div class="row"><span>{e(o["outcome"])}</span><span>{p:.1f}%</span></div>'
                           f'<div class="bar"><i style="width:{p:.0f}%"></i></div>')
         odds_html += f'<div class="odd"><h4>{e(t["label"])}</h4>{inner}</div>'
     taken = (pm.get("taken_at") or "")[:16].replace("T", " ")
