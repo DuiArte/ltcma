@@ -18,6 +18,7 @@
    "id": "A07",
    "short": "AQR",
    "publisher": "AQR",
+   "firm": "AQR",
    "product": "Capital Market Assumptions for Major Asset Classes",
    "edition": "2026 Capital Market Assumptions (Alternative Thinking 2026 Issue 1, data 31 Dec 2025)",
    "horizon": 10,
@@ -33,6 +34,7 @@
    "id": "A36",
    "short": "Amundi",
    "publisher": "Amundi",
+   "firm": "Amundi",
    "product": "Asset class return forecasts (H2 2026 update)",
    "edition": "2026 CMA H2 update (data 30 Jun 2026)",
    "horizon": 10,
@@ -48,6 +50,7 @@
    "id": "A31",
    "short": "BNY",
    "publisher": "BNY Investments",
+   "firm": "BNY Investments",
    "product": "10-year Capital Market Assumptions",
    "edition": "2026 Capital Market Assumptions – Endurance Under Pressure (data 31 Oct 2025)",
    "horizon": 10,
@@ -63,6 +66,7 @@
    "id": "A05",
    "short": "BlackRock",
    "publisher": "BlackRock",
+   "firm": "BlackRock",
    "product": "Capital Market Assumptions (data download)",
    "edition": "BlackRock CMA August 2026 (data 30 Jun 2026)",
    "horizon": null,
@@ -78,6 +82,7 @@
    "id": "A06W",
    "short": "BII weekly",
    "publisher": "BlackRock Investment Institute",
+   "firm": "BlackRock",
    "product": "Weekly commentary (US individual edition)",
    "edition": "Weekly commentary 5 Oct 2026 (data 1 Oct 2026)",
    "horizon": null,
@@ -93,6 +98,7 @@
    "id": "A22",
    "short": "Bridgewater",
    "publisher": "Bridgewater",
+   "firm": "Bridgewater",
    "product": "Research & Insights (public)",
    "edition": "Research & Insights landing page (accessed Oct 2026; latest item 21 Sep 2026)",
    "horizon": null,
@@ -108,6 +114,7 @@
    "id": "A37",
    "short": "Fidelity Intl",
    "publisher": "Fidelity International",
+   "firm": "Fidelity International",
    "product": "Capital Market Assumptions (half-yearly)",
    "edition": "H1 2026 CMA update (data 31 Mar 2026)",
    "horizon": 10,
@@ -123,6 +130,7 @@
    "id": "A17",
    "short": "GSAM",
    "publisher": "Goldman Sachs AM",
+   "firm": "Goldman Sachs AM",
    "product": "Investment Outlook",
    "edition": "Investment Outlook 2026 (first use 18 Nov 2025)",
    "horizon": 1,
@@ -138,6 +146,7 @@
    "id": "A09",
    "short": "Invesco",
    "publisher": "Invesco",
+   "firm": "Invesco",
    "product": "Long-Term Capital Market Assumptions (USD)",
    "edition": "2026 CMA Q2 Update (data 31 Mar 2026)",
    "horizon": 10,
@@ -153,6 +162,7 @@
    "id": "A02",
    "short": "JPM",
    "publisher": "J.P. Morgan AM",
+   "firm": "J.P. Morgan AM",
    "product": "Long-Term Capital Market Assumptions (US matrix, USD)",
    "edition": "2026 LTCMA (data 30 Sep 2025)",
    "horizon": 12.5,
@@ -168,6 +178,7 @@
    "id": "A16",
    "short": "Lazard",
    "publisher": "Lazard",
+   "firm": "Lazard",
    "product": "Mid-Year Outlook",
    "edition": "Global Mid-Year Outlook 2026 (published 24 June 2026)",
    "horizon": null,
@@ -183,6 +194,7 @@
    "id": "A23",
    "short": "Mercer",
    "publisher": "Mercer",
+   "firm": "Mercer",
    "product": "Economic & Market Outlook",
    "edition": "Economic & Market Outlook 2026 (data 28 Oct 2025)",
    "horizon": 1,
@@ -198,6 +210,7 @@
    "id": "A34",
    "short": "Northern Trust",
    "publisher": "Northern Trust",
+   "firm": "Northern Trust",
    "product": "Capital Market Assumptions 2026 (data download)",
    "edition": "2026 CMA (data download)",
    "horizon": 10,
@@ -213,6 +226,7 @@
    "id": "A15",
    "short": "PIMCO",
    "publisher": "PIMCO",
+   "firm": "PIMCO",
    "product": "Secular Outlook",
    "edition": "2026 Secular Outlook \"Rupture and Resilience\" (published 10 Jun 2026)",
    "horizon": 5,
@@ -228,6 +242,7 @@
    "id": "A10",
    "short": "Robeco",
    "publisher": "Robeco",
+   "firm": "Robeco",
    "product": "Expected Returns (5-year) summary",
    "edition": "5-Year Expected Returns 2027-2031 'The Great Rewiring' (16th edition, data Sep 2026)",
    "horizon": 5,
@@ -243,6 +258,7 @@
    "id": "A08",
    "short": "Schroders 10y",
    "publisher": "Schroders",
+   "firm": "Schroders",
    "product": "10-year public markets return forecasts",
    "edition": "June 2026 (10-year forecasts, 2026–35)",
    "horizon": 10,
@@ -258,6 +274,7 @@
    "id": "A08L",
    "short": "Schroders 30y",
    "publisher": "Schroders",
+   "firm": "Schroders",
    "product": "30-year return forecasts",
    "edition": "30-year return forecasts 2026–55 (January 2026)",
    "horizon": 30,
@@ -273,6 +290,7 @@
    "id": "A01",
    "short": "SSGA",
    "publisher": "State Street",
+   "firm": "State Street",
    "product": "Long-term asset class forecasts",
    "edition": "Q3 2026 (data 30 Jun 2026)",
    "horizon": 10,
@@ -288,6 +306,7 @@
    "id": "A33",
    "short": "T. Rowe",
    "publisher": "T. Rowe Price",
+   "firm": "T. Rowe Price",
    "product": "Capital Market Assumptions (5-year)",
    "edition": "2026 Capital Market Assumptions, Five-Year Perspective (USD), five years to 31 Dec 2030",
    "horizon": 5,
@@ -303,6 +322,7 @@
    "id": "A19",
    "short": "UBS CIO",
    "publisher": "UBS GWM CIO",
+   "firm": "UBS GWM CIO",
    "product": "Year Ahead forecasts",
    "edition": "Year Ahead 2026 (data 12 Nov 2025)",
    "horizon": 1,
@@ -318,6 +338,7 @@
    "id": "A04",
    "short": "Vanguard",
    "publisher": "Vanguard",
+   "firm": "Vanguard",
    "product": "VEMO 10-year return forecasts",
    "edition": "Q2 2026 VCMM update (data 30 Jun 2026, published 22 Jul 2026)",
    "horizon": 10,
@@ -438,7 +459,7 @@
  "matrix": {
   "Global_Eq": {
    "A01": {
-    "v": 5.71,
+    "v": 5.705,
     "ccy": "LOCAL",
     "hz": 10,
     "basis": "nominal",
@@ -555,7 +576,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Edged down from [n] mainly on weaker EM; premium over G[n]bonds narrowed to [n]."
+    "restricted": true
    }
   },
   "DM_exUS_Eq": {
@@ -653,7 +674,7 @@
   },
   "US_LargeCap": {
    "A01": {
-    "v": 5.5,
+    "v": 5.504,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -791,18 +812,18 @@
     "stance": "neutral",
     "conv": "low",
     "view_only": true,
-    "why": "Gordon growth model; yield now includes net buybacks and earnings growth is stronger, lifting the forecast; transition adds [n]pp."
+    "restricted": true
    },
    "A36": {
     "stance": "neutral",
     "conv": "low",
     "view_only": true,
-    "why": "Upgraded on stronger fundamentals. Narrative cites around [n], matching the arithmetic column rather than geometric."
+    "restricted": true
    }
   },
   "US_SmallCap": {
    "A01": {
-    "v": 5.09,
+    "v": 5.095,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -1006,18 +1027,18 @@
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Europe ex-UK used as Europe proxy; [n] dividend yield plus productivity-linked dividend growth."
+    "restricted": true
    },
    "A36": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Slightly below US in local terms but preferred over US once currency effects are considered."
+    "restricted": true
    }
   },
   "EM_Eq": {
    "A01": {
-    "v": 5.77,
+    "v": 5.772,
     "ccy": "LOCAL",
     "hz": 10,
     "basis": "nominal",
@@ -1158,18 +1179,18 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "EPS growth scaled below productivity for dilution; stranded assets hit China; premium over DM narrowed to [n]pp."
+    "restricted": true
    },
    "A36": {
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Aggregate deteriorated as AI-related markets' strong rally left valuations expensive; currency effects help for EUR/USD investors."
+    "restricted": true
    }
   },
   "Global_Govt_Bonds": {
    "A01": {
-    "v": 3.8,
+    "v": 3.803,
     "ccy": "LOCAL",
     "hz": 10,
     "basis": "nominal",
@@ -1257,18 +1278,18 @@
     "stance": "neutral",
     "conv": "low",
     "view_only": true,
-    "why": "Cap-weighted US, UK, eurozone and Japan [n]-year bonds used as global sovereign proxy; benchmark for [n] equity risk premium."
+    "restricted": true
    },
    "A36": {
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Global sovereign index (USD-hedged ticker); higher developed-market yields and term premia improve carry."
+    "restricted": true
    }
   },
   "US_Treas_Interm": {
    "A01": {
-    "v": 4.26,
+    "v": 4.265,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -1391,7 +1412,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Higher starting yields lift carry and valuation; US and UK lead sovereigns. Page[n]chart shows [n]."
+    "restricted": true
    }
   },
   "US_Agg": {
@@ -1482,7 +1503,7 @@
   },
   "US_HighYield": {
    "A01": {
-    "v": 4.65,
+    "v": 4.649,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -1606,18 +1627,18 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Treasury return plus spread less default losses; defaults higher as US growth forecast fell; lowered with cash returns."
+    "restricted": true
    },
    "A36": {
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Spreads near historic tights; modest extra return versus risk. Charts on pages [n]and [n]show [n]."
+    "restricted": true
    }
   },
   "US_TIPS": {
    "A01": {
-    "v": 3.77,
+    "v": 3.769,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -1819,7 +1840,7 @@
   },
   "EM_Local_Debt": {
    "A01": {
-    "v": 5.38,
+    "v": 5.385,
     "ccy": "LOCAL",
     "hz": 10,
     "basis": "nominal",
@@ -1911,12 +1932,12 @@
     "stance": "neutral",
     "conv": "low",
     "view_only": true,
-    "why": "GBI-EM in unhedged USD including EM FX view; attractive carry partly offset by relatively rich valuations."
+    "restricted": true
    }
   },
   "Commodities": {
    "A01": {
-    "v": 3.15,
+    "v": 3.155,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -2023,7 +2044,7 @@
   },
   "Hedge_Funds": {
    "A01": {
-    "v": 4.55,
+    "v": 4.549,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -2094,12 +2115,12 @@
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Fund of hedge funds in USD, net of fees; effective portfolio diversifier."
+    "restricted": true
    }
   },
   "Private_Equity": {
    "A01": {
-    "v": 8.25,
+    "v": 8.249,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -2191,12 +2212,12 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Double-digit return from illiquidity premium, net of fees; slower capital distributions remain a constraint."
+    "restricted": true
    }
   },
   "Private_Credit": {
    "A01": {
-    "v": 6.4,
+    "v": 6.396,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -2285,12 +2306,12 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Blend of EU private credit and US direct lending; attractive risk-adjusted alternative to liquid credit, net of fees."
+    "restricted": true
    }
   },
   "US_Cash_TBill": {
    "A01": {
-    "v": 3.0,
+    "v": 2.998,
     "ccy": "USD",
     "hz": 10,
     "basis": "nominal",
@@ -2377,7 +2398,7 @@
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Positive US real neutral rate plus [n] inflation; trimmed versus last year as higher carbon pricing lowered productivity growth."
+    "restricted": true
    }
   },
   "US_REITs": {
@@ -2415,7 +2436,7 @@
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "USD figure; equals US private property return, as no REIT discount applies given leverage and riskier assets. Appendix row mislabelled EU REITs."
+    "restricted": true
    }
   },
   "Global_Agg_exUS": {
@@ -2612,13 +2633,13 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Treasury return plus spread net of default and downgrade losses, from regression on climate-adjusted growth; lowered with cash forecasts."
+    "restricted": true
    },
    "A36": {
     "stance": "neutral",
     "conv": "low",
     "view_only": true,
-    "why": "Spreads near historic tights; upgrade mainly reflects more attractive Treasury valuations, leaving a compressed premium over government bonds."
+    "restricted": true
    }
   },
   "USD": {
@@ -2691,7 +2712,7 @@
     "stance": "underweight",
     "conv": "low",
     "view_only": true,
-    "why": "Dollar rich versus euro, sterling and yen fair values; FX effects favour Europe and EM over US assets."
+    "restricted": true
    }
   },
   "UK_Eq": {
@@ -2858,13 +2879,13 @@
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Low local return reflects low Japanese inflation and rates; transition adds [n]pp; USD-hedged equivalent is [n]."
+    "restricted": true
    },
    "A36": {
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Outlook weaker as the strong rally stretched valuations despite solid fundamentals."
+    "restricted": true
    }
   },
   "China_Eq": {
@@ -2944,7 +2965,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Sharply upgraded; lagging performance created attractive valuations, giving the highest equity forecast despite high volatility."
+    "restricted": true
    }
   },
   "Gold": {
@@ -2989,7 +3010,7 @@
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Key mid-risk diversifier; no explicit return drivers discussed."
+    "restricted": true
    }
   },
   "Bank_Loans": {
@@ -3055,7 +3076,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Yen undervalued by more than [n] versus long-term fair value against the dollar."
+    "restricted": true
    }
   },
   "Infrastructure": {
@@ -3109,7 +3130,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Premium over liquid assets of similar risk from illiquidity; in USD, net of fees."
+    "restricted": true
    }
   },
   "EUR": {
@@ -3129,7 +3150,7 @@
     "stance": "overweight",
     "conv": "low",
     "view_only": true,
-    "why": "Euro remains modestly undervalued versus USD fair value, supporting European assets for dollar investors."
+    "restricted": true
    }
   },
   "EM_FX": {
@@ -4310,11 +4331,9 @@
    "id": "A02",
    "cycle_phase": "not stated",
    "risk_stance": "unclear",
-   "summary": "The matrix gives only numeric long-term assumptions, with no cycle or regime commentary. Non-US equities, real assets and alternatives are projected to return more than US large caps.",
-   "risks": [
-    "Model and estimation uncertainty",
-    "Alternative manager dispersion"
-   ]
+   "summary": null,
+   "risks": [],
+   "restricted": true
   },
   {
    "publisher": "Vanguard",
@@ -4477,11 +4496,9 @@
    "id": "A05",
    "cycle_phase": "Not stated (data-only release)",
    "risk_stance": "unclear",
-   "summary": "No explicit cycle or risk stance. Data show US equities leading over [n]years, while EM and China equities lead over [n][n]years; private markets carry the highest expected returns.",
-   "risks": [
-    "Wide return uncertainty",
-    "Equity volatility"
-   ]
+   "summary": null,
+   "risks": [],
+   "restricted": true
   },
   {
    "publisher": "BlackRock Investment Institute",
@@ -4498,46 +4515,38 @@
   {
    "publisher": "Schroders",
    "id": "A08",
-   "cycle_phase": "Not stated (strategic [n]-year assumptions)",
+   "cycle_phase": null,
    "risk_stance": "unclear",
-   "summary": "No cyclical or tactical regime view; a systematic, market-based long-term forecast update. Forecasts imply stronger prospects for EM, Japanese and UK equities than for US or euro equities.",
-   "risks": [
-    "Model and assumption uncertainty",
-    "Bond yield path and reinvestment",
-    "Central bank distortion of term premia"
-   ]
+   "summary": null,
+   "risks": [],
+   "restricted": true
   },
   {
    "publisher": "Schroders",
    "id": "A08L",
-   "cycle_phase": "Structural [n]-year view; no cyclical call (Delayed Transition climate scenario)",
+   "cycle_phase": null,
    "risk_stance": "risk-on",
-   "summary": "Equities still expected to beat bonds and cash despite a narrower [n] premium; investors incentivised to move up the risk curve amid an inflationary, disorderly climate transition.",
-   "risks": [
-    "Disorderly climate transition",
-    "Transition-driven inflation",
-    "Weaker productivity and lower rates"
-   ]
+   "summary": null,
+   "risks": [],
+   "restricted": true
   },
   {
    "publisher": "Northern Trust",
    "id": "A34",
    "cycle_phase": "Not stated",
    "risk_stance": "unclear",
-   "summary": "Data-only file without macro commentary. Table shows US equity forecast cut to [n] from [n] while most bond forecasts rose, narrowing the stock-bond return gap.",
-   "risks": []
+   "summary": null,
+   "risks": [],
+   "restricted": true
   },
   {
    "publisher": "Amundi",
    "id": "A36",
-   "cycle_phase": "Regime of overlapping structural ruptures: persistent energy shock, sticky inflation, wider fiscal deficits, AI-driven growth",
+   "cycle_phase": null,
    "risk_stance": "neutral",
-   "summary": "Structural ruptures are confirmed: Iran war energy shock, entrenched inflation and fiscal expansion, with AI as growth engine; higher yields boost bonds, diversification stays essential.",
-   "risks": [
-    "Geopolitical energy shock",
-    "Sticky inflation and fiscal expansion",
-    "Tight credit spreads"
-   ]
+   "summary": null,
+   "risks": [],
+   "restricted": true
   }
  ],
  "prediction": {
@@ -4916,13 +4925,13 @@
   ]
  },
  "inbox_pending": [
-  "BlackRock Investment Institute",
-  "Callan",
-  "Charles Schwab",
-  "GMO",
-  "Goldman Sachs Research",
-  "Morgan Stanley",
-  "Horizon Actuarial"
+  "BlackRock Investment Institute (Global Outlook (attestation-gated PDF))",
+  "Callan (Capital Market Assumptions)",
+  "Charles Schwab (Long-Term Capital Market Expectations)",
+  "GMO (7-Year Asset Class Forecast)",
+  "Goldman Sachs Research (Macro Outlook)",
+  "Morgan Stanley (GIC Capital Market Assumptions)",
+  "Horizon Actuarial (Survey of Capital Market Assumptions)"
  ],
  "config": {
   "statistic": "median",
