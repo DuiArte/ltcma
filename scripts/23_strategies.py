@@ -9,7 +9,8 @@ import json
 import numpy as np
 import plotly.graph_objects as go
 from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT_JS,
-                      bt_catalog, bt_card, BT_CARD_CSS, _bt_redact)
+                      bt_catalog, bt_card, BT_CARD_CSS, _bt_redact, bt_oos_note, bt_replay,
+                      BT_FROZEN)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
@@ -207,13 +208,21 @@ for s in _order:
         xref = ('<b>Flagship deployable strategy</b> — a validated building block of the '
                 'live regime-adaptive book above.' if s.get("gfc_test_passed")
                 else 'Deployable building block behind the live book above.')
+    elif st == "research" and s["key"] in BT_FROZEN:
+        # A frozen card's own note says later re-tests read the result as a data-era artifact,
+        # so "used as one signal inside the live book" would contradict it. What the deployed
+        # book actually trades is the daily trend gate (its regime sleeve), not the pattern.
+        xref = ('Ensemble component in the backtests; the live book trades only its daily '
+                'trend gate (the regime sleeve), not the pattern itself.')
     elif st == "research":
         xref = 'Ensemble component — used as one signal inside the live book.'
     else:
         les = _lesson(s)
         xref = (f'<b>Lesson learned:</b> {_bt_redact(les)}' if les
                 else 'Archived — no deployable edge.')
-    card = bt_card(s, rl, xref)
+    # one line per public card: the out-of-sample replay since the backtest ended
+    # (data/bt_replay/<key>.json from 35_bt_replay.py), or the frozen notice
+    card = bt_card(s, rl, xref, note=bt_oos_note(s["key"], rl) if s.get("public") else "")
     card = card.replace('<article class="btcard ',
                         f'<article data-status="{st}" class="btcard st-{st} ', 1)
     _bt_cards += card
@@ -455,8 +464,13 @@ document.querySelectorAll('.pills').forEach(function(grp){
 
 # ── EMBER 4-Sleeve Ensemble — live paper-track (Finding #38) ──────────────────
 # Renders the accumulating daily mark-to-market equity curve produced by
-# 28_ember_ensemble.py (data/ember_papertrack.json) vs a Static 50/30/20 (SPY/IEF/
-# GLD) reference basket. Confidentiality: sleeves are described by ASSET CLASS only
+# 28_ember_ensemble.py (data/ember_papertrack.json) vs a fixed 50/30/20 SPY/IEF/GLD
+# reference basket (28's ANCHOR_W). That basket is an ASSET-CLASS STAND-IN, NOT the
+# deployed Static Drift-Weight 50/30/20 strategy (50% buy-the-dip blend / 30% static
+# blend / 20% gold-regime sleeve): the page said "the live Static 50/30/20" for both
+# until 2026-10-07. The deployed strategy's own forward curve is its out-of-sample
+# replay on bt_static_drift_weights.html (35_bt_replay.py).
+# Confidentiality: sleeves are described by ASSET CLASS only
 # — NO tickers reach this page (rule 4/7); the curve carries dates + NAV numbers,
 # the 4-sleeve allocation is shown as the headline ratio (the 50/30/20 precedent).
 def _ember_section():
@@ -477,13 +491,10 @@ def _ember_section():
         fe = go.Figure()
         fe.add_scatter(x=xs, y=ye, mode="lines+markers", name="EMBER 4-Sleeve Ensemble",
                        line=dict(color=NAVY, width=2.4), marker=dict(size=5))
-        fe.add_scatter(x=xs, y=yb, mode="lines+markers", name="Static 50/30/20 reference",
+        fe.add_scatter(x=xs, y=yb, mode="lines+markers", name="50/30/20 reference basket",
                        line=dict(color=BENCH, width=1.8, dash="dot"), marker=dict(size=4))
-        fe.update_layout(title="Growth of 100 — EMBER ensemble vs Static 50/30/20 (live paper-track)",
+        fe.update_layout(title="Growth of 100 — EMBER vs 50/30/20 reference basket (live paper-track)",
                          legend=dict(orientation="h", y=-0.18))
-        # div id is NOT "ember": the <section> already carries id="ember" (the nav anchor),
-        # and with two ids Plotly.newPlot("ember") drew into the SECTION at height 0 --
-        # the paper-track chart rendered for nobody from launch until 2026-10-01.
         # The div id is NOT "ember": the <section> already carries id="ember" (the nav
         # anchor), and with two equal ids Plotly.newPlot("ember") drew into the SECTION at
         # height 0 -- the paper-track chart rendered for nobody until 2026-10-01.
@@ -491,7 +502,7 @@ def _ember_section():
         rel = e_last - b_last
         statline = (f'<p class="note">Since inception <b>{start}</b> ({n} trading '
                     f'day{"s" if n != 1 else ""}, as of {asof}): ensemble at '
-                    f'<b>{e_last:.2f}</b> vs reference <b>{b_last:.2f}</b> '
+                    f'<b>{e_last:.2f}</b> vs the reference basket <b>{b_last:.2f}</b> '
                     f'(<b>{rel:+.2f}</b> relative, both indexed to 100 at inception). '
                     'Marked to market daily; the curve extends with each daily refresh.</p>')
     else:
@@ -504,8 +515,10 @@ def _ember_section():
         '<table class="ptable"><thead><tr><th style="text-align:left">Sleeve</th>'
         '<th>Weight</th><th style="text-align:left">What it holds (asset class)</th></tr></thead><tbody>'
         '<tr><td style="text-align:left"><b>Anchor</b> — deployed flagship</td><td>33%</td>'
-        '<td style="text-align:left">The live Static 50/30/20 defensive core: broad US equity, '
-        'intermediate Treasuries and gold.</td></tr>'
+        '<td style="text-align:left">In the backtest, the deployed Static Drift-Weight 50/30/20 '
+        'strategy. Tracked here by a fixed 50/30/20 basket of broad US equity, intermediate '
+        'Treasuries and gold &mdash; an asset-class stand-in, not the flagship&rsquo;s own three '
+        'sleeves.</td></tr>'
         '<tr><td style="text-align:left"><b>Rates / curve</b> (#35)</td><td>42%</td>'
         '<td style="text-align:left">A US Treasury duration ladder (bills &rarr; long bonds) plus '
         'inflation-linked, volatility-targeted.</td></tr>'
@@ -550,8 +563,11 @@ def _ember_section():
         'ensemble inherits that status.</li>'
         '<li><b>Live track is a transparent proxy.</b> Each sleeve is tracked as an '
         'equal-weight basket of its asset class, monthly-rebalanced; the sleeves&rsquo; internal '
-        'regime/trend gates are not reproduced here. The reference line is the Static&nbsp;50/30/20 '
-        'basket, a reproducible stand-in for the deployed book.</li>'
+        'regime/trend gates are not reproduced here. The anchor sleeve and the reference line are '
+        'a fixed 50/30/20 equity / Treasury / gold basket &mdash; <i>not</i> the deployed Static '
+        'Drift-Weight 50/30/20 strategy (an equity trend ensemble, a static multi-asset blend and '
+        'a regime overlay), whose own out-of-sample replay is on its '
+        '<a href="bt_static_drift_weights.html#oos">backtest page</a>.</li>'
         '</ul>'
         '<p class="note" style="color:#888">Hypothetical monitoring track, not actual trading; '
         'past performance does not guarantee future results. Methodology proprietary &mdash; '
@@ -666,13 +682,31 @@ try:
     if _ser:
         ai += ["EMBER 4-SLEEVE ENSEMBLE — LIVE PAPER-TRACK (Finding #38; NOT live capital)",
                f"inception={_es.get('start_date','2026-06-18')}; asof={_es.get('asof','')}; "
-               f"days={len(_ser)}; indexed-to-100; vs Static 50/30/20 reference basket",
+               f"days={len(_ser)}; indexed-to-100; vs a fixed 50/30/20 equity/Treasury/gold "
+               "reference basket (an asset-class stand-in, NOT the deployed Static Drift-Weight "
+               "50/30/20 strategy)",
                "weights inverse-vol: Anchor 33pct, Rates 42pct, Crypto 7pct, EM 18pct",
                f"latest: ensemble={_ser[-1]['ember']:.2f} reference={_ser[-1]['baseline']:.2f}",
                "backtest 2017-26: Sharpe=1.79 OOS (+0.44 vs flagship), PBO=0.20; "
                "caveats: GFC untestable, benign window, crypto rho 0.48, ~69pct lift = rates sleeve"]
 except (FileNotFoundError, json.JSONDecodeError):
     pass
+# Out-of-sample replays of the public backtests (35_bt_replay.py) -- frozen rules re-run on
+# public prices, NOT live trading. No "name=number" pairs: confscan greps them in .ai.txt.
+_oos = []
+for _s in _strats:
+    if not _s.get("public"):
+        continue
+    if _s["key"] in BT_FROZEN:
+        _oos.append(f"{_s['key']} | FROZEN: no comparable data; not carried forward")
+        continue
+    _r = bt_replay(_s["key"])
+    if _r:
+        _m = _r["metrics"]
+        _oos.append(f"{_s['key']} | {_r['start']}..{_r['asof']} | return {_m['return_pct']:+.2f}% | "
+                    f"max drawdown {_m['max_drawdown_pct']:.2f}% | rules frozen {_r.get('rules_frozen')}")
+if _oos:
+    ai += ["OUT-OF-SAMPLE REPLAYS (frozen rules re-run daily on public prices; NOT live trading)"] + _oos
 open(f"{DOCS}/strategies.ai.txt", "w", encoding="utf-8").write("\n".join(ai) + "\n")
 
 print("strategies.html built:", {k: (round(METRICS[k]["sharpe"], 2) if METRICS[k] else None) for k in order})

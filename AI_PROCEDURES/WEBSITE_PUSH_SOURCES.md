@@ -17,6 +17,12 @@ job, script or clone that writes here, check this list — and add yourself to i
 `daily_refresh.ps1` also runs `scripts/34_site_freshness.py` (2026-10-07), which writes
 exactly one extra file, `docs/internal/freshness.html`, from pipeline v2 layer 7's content audit.
 
+It also runs `scripts/35_bt_replay.py` (2026-10-07), which writes only `data/bt_replay/<key>.json`
+(the out-of-sample replays of the public backtests, rendered by `24_backtests.py` on `bt_*.html`
+and by `23_strategies.py` on the cards). It imports the private engines at runtime from the
+workspaces the hub names and writes no parameters, engine code or trade tapes; host-only (it
+skips, leaving the committed files, wherever the private code or the network is missing).
+
 Both build from **this clone's `scripts/`** after pulling origin, so a change merged to
 `scripts/` is what they publish. There is no other generator, template, include or
 partial: `docs/*.html` are emitted whole by Python (`17_build_site.py`, `18_portfolio.py`,

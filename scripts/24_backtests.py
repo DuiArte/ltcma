@@ -10,6 +10,10 @@ repo fallback from it, keeping the two in sync.
 Styling: reuses the site shell (style.css + the shared NAV); the few card/badge
 rules are inlined here because 17_build_site.py owns (overwrites) style.css.
 
+Since 2026-10-07 each report page opens with the strategy's out-of-sample replay since
+its backtest ended (data/bt_replay/<key>.json, written by 35_bt_replay.py: chart +
+one paragraph), or with its frozen notice (glossary.BT_FROZEN).
+
 Run from the scripts/ dir (the daily refresh does `cd scripts && python3 ...`).
 Failures are non-fatal to the pipeline: the daily refresh guards this with `|| echo`.
 """
@@ -28,8 +32,10 @@ HUB_CANDIDATES = [
 ]
 
 sys.path.insert(0, HERE)
-from glossary import NAV, bt_card  # noqa: E402
-from design_system import CSS_LINKS
+from glossary import NAV, bt_card, bt_replay, bt_day, bt_pct, BT_FROZEN  # noqa: E402
+from design_system import CSS_LINKS, axis_formats, assert_no_entities, NAVY, BENCH  # noqa: E402
+
+PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
 FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
          'family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">')
@@ -158,12 +164,14 @@ def esc(s):
     return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def shell(title, body, plot=False):
+def shell(title, body, plot=False, css=""):
+    head_extra = (f"<style>{css}</style>" if css else "") + (
+        f'<script src="{PLOTLY}"></script>' if plot else "")
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title}</title>
 {FONTS}
-{CSS_LINKS}<link rel="stylesheet" href="style.css"></head>
+{CSS_LINKS}<link rel="stylesheet" href="style.css">{head_extra}</head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
@@ -200,8 +208,9 @@ _EMOJI = {"✅": "✓", "❌": "✗", "⚠️": "!", "⚠": "!",
           "\U0001f7e2": "", "\U0001f7e1": "", "\U0001f534": ""}
 
 
-def _public_report(html, name):
+def _public_report(html, name, after_head=""):
     """Three fixes the 2026-10-01 audit found on the live bt_*.html pages.
+    (`after_head` is placed right under the heading block: the out-of-sample replay.)
 
     * The page heading was the REPORT.md's own working title, so the page the catalogue
       calls "Static SPY / IEF / GLD Diversification" opened as "Momentum Rotation /
@@ -218,16 +227,165 @@ def _public_report(html, name):
         if orig and orig.lower() != name.lower():
             head += (f'<p class="bt-src" style="color:#888;font-size:13px;margin:-.4rem 0 1.2rem">'
                      f'Research report: {m.group(1)}</p>')
-        html = html[:m.start()] + head + html[m.end():]
+        pre, post = html[:m.start()] + head, html[m.end():]
     else:
-        html = head + html
-    html = _RE.sub(r"<table", '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
-                              "<table", html)
-    html = html.replace("</table>", "</table></div>")
-    html = _RE.sub(r"\bCarlos\b", "the operator", html)
+        pre, post = head, html
+    post = _RE.sub(r"<table", '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
+                              "<table", post)
+    post = post.replace("</table>", "</table></div>")
+    pre, post = (_RE.sub(r"\bCarlos\b", "the operator", x) for x in (pre, post))
     for k, v in _EMOJI.items():
-        html = html.replace(k, v)
-    return html
+        pre, post = pre.replace(k, v), post.replace(k, v)
+    # the replay block is generated here, not from the private markdown: it skips the rewrites
+    return pre + after_head + post
+
+
+# ---- out-of-sample replay (data/bt_replay/<key>.json from 35_bt_replay.py) ----------------
+# Chart chrome mirrors 23_strategies.py's LAYOUT: Inter for labels, JetBrains Mono for numbers.
+_SANS = "Inter, system-ui, -apple-system, sans-serif"
+_MONO = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+_LAYOUT = dict(template="plotly_white", font=dict(family=_SANS, size=12, color="#111111"),
+               dragmode=False, margin=dict(l=56, r=20, t=18, b=40), height=340,
+               paper_bgcolor="white", plot_bgcolor="white", showlegend=False,
+               hoverlabel=dict(font=dict(family=_MONO, size=11, color="#111111"),
+                               bgcolor="rgba(255,255,255,.97)", bordercolor="#d4d4d4",
+                               align="left"),
+               xaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=_MONO, size=11)),
+               yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(family=_MONO, size=11)))
+
+OOS_CSS = r"""
+.oos{margin:.4rem 0 2.6rem;padding-bottom:1.4rem;border-bottom:1px solid var(--line)}
+.oos>h2{margin-top:1.4rem}
+.oos-tag{display:inline-block;font:500 10.5px 'Inter',sans-serif;letter-spacing:.06em;
+text-transform:uppercase;color:#fff;background:#0a2540;padding:3px 9px;margin:0 0 .2rem}
+.oos-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:#e5e5e5;
+border:1px solid #e5e5e5;margin:1rem 0}
+.oos-stats>div{min-width:0;background:#fff;padding:10px 8px;text-align:center}
+.oos-v{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;
+font-size:16px;font-weight:500;color:#111;overflow-wrap:anywhere}
+.oos-v.neg{color:#7c2d12}
+.oos-k{font-size:9.5px;color:#888;margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.report .oos-foot{font-size:12.5px;color:#888;line-height:1.55}
+.oos .tile.chart{padding:8px 8px 4px;margin:0 0 .4rem}
+.oos-frozen{background:rgba(10,37,64,.045);border:1px solid #e5e5e5;border-left:3px solid #0a2540;
+padding:14px 18px;margin:.4rem 0 2.2rem}
+.report .oos-frozen p{margin:.2rem 0;font-size:14px}
+@media(max-width:560px){.oos-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+"""
+
+
+def _chart(rep, div_id):
+    """Growth of 100 from the backtest's end, through the site's chart funnel (axis_formats +
+    the entity/sign guard), exactly as 23_strategies.py's div() does."""
+    import plotly.graph_objects as go
+    xs = [p["date"] for p in rep["series"]]
+    ys = [p["value"] for p in rep["series"]]
+    fig = go.Figure()
+    fig.add_scatter(x=xs, y=ys, mode="lines", name="Out-of-sample replay",
+                    line=dict(color=NAVY, width=2.2),
+                    hovertemplate="%{x|%d %b %Y}<br>Growth of 100: %{y:.2f}<extra></extra>")
+    fig.add_hline(y=100, line=dict(color=BENCH, width=1, dash="dot"))
+    fig.update_layout(yaxis_title="Growth of 100")
+    fig = axis_formats(assert_no_entities(fig, f"replay {rep.get('key')}"))
+    fig.update_layout(**_LAYOUT)
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
+    return fig.to_html(full_html=False, include_plotlyjs=False, div_id=div_id,
+                       config={"displayModeBar": False, "scrollZoom": False,
+                               "doubleClick": False, "responsive": True})
+
+
+def _replay_text(key, strat, rep):
+    """The one-paragraph explanation per strategy. Report pages already name tickers and
+    parameters (they are the private REPORT.md rendered verbatim); the CARD text does not."""
+    frozen_on = bt_day(rep["rules_frozen"]) if rep.get("rules_frozen") else "the run date"
+    common = ("Each run first re-creates the original backtest on the fresh prices and must "
+              "match it within 0.01%, day by day, before the curve is extended, so the line "
+              "starts exactly where the backtest stopped. ")
+    tail = ("An out-of-sample replay of fixed rules on public prices &mdash; not live trading, "
+            "not an account record.")
+    if key == "buy_the_dip":
+        return ("What the strategy did after its backtest ended. The deployed configuration "
+                "&mdash; the equal-weight daily blend of the selected SPY, QQQ and EFA rules "
+                "&mdash; is re-run every trading day on public end-of-day prices with everything "
+                f"exactly as frozen on {frozen_on}: same engine, same selected parameters, 1% "
+                "risk per trade, 0.10% round-trip costs. Nothing is re-optimised. " + common +
+                "A position still open at the latest close is marked at that close, net of its "
+                "exit cost. " + tail)
+    if key == "static_diversification":
+        km = strat.get("key_metrics") or {}
+        pub = ""
+        if all(isinstance(km.get(k), (int, float)) for k in ("cagr_pct", "best_raw_sharpe", "max_dd_pct")):
+            dd = km["max_dd_pct"]                         # quoted at its published precision
+            pub = (f" (CAGR {km['cagr_pct']:.1f}%, Sharpe {km['best_raw_sharpe']:.2f}, maximum "
+                   f"drawdown {'&minus;' if dd < 0 else ''}{abs(dd):.1f}%)")
+        return ("What the strategy did after its backtest ended. The headline configuration "
+                "&mdash; SPY, IEF and GLD in equal weight, rebalanced <b>weekly</b>, 0.10% "
+                "round-trip costs on turnover &mdash; is re-run every trading day on public "
+                f"end-of-day prices with the rules frozen on {frozen_on}. Nothing is "
+                f"re-optimised. Note on cadence: the published figures{pub} come from this "
+                "weekly-rebalanced configuration &mdash; it is the report's headline static row "
+                "&mdash; while the catalogue entry and the deployment note describe monthly or "
+                "quarterly rebalancing, which the report found near-identical in Sharpe. The "
+                "replay follows the weekly configuration that produced the published numbers. "
+                + common + tail)
+    if key == "static_drift_weights":
+        sc = rep.get("sleeve_c") or {}
+        corr = ""
+        if isinstance(sc.get("monthly_corr_vs_backtest_sleeve"), (int, float)):
+            w = str(sc.get("corr_window", ""))           # "2016-02..2026-04"
+            span = f"{w[:4]}&ndash;{w[-7:-3]}" if len(w) >= 16 else "the backtest years"
+            corr = (f" Over {span} the two were only loosely related (monthly correlation "
+                    f"{sc['monthly_corr_vs_backtest_sleeve']:.2f}): this follows the book as "
+                    "operated, not the backtest exactly.")
+        return ("What the strategy did after its backtest ended. The 50/30/20 book is re-run "
+                "every trading day on public end-of-day prices under its frozen allocation rules "
+                "&mdash; fixed weights restored at every month-end, no regime gating, no kill "
+                "switch. Sleeve A (50%) is the SPY/QQQ/EFA buy-the-dip blend with its frozen "
+                "engine and parameters; sleeve B (30%) holds SPY, IEF and GLD in equal weight, "
+                "rebalanced monthly. <b>Sleeve C (20%) is not the backtest's:</b> there it was a "
+                "five-minute-bar CRT gold strategy whose data cannot be extended, so the replay "
+                "uses the rule as operated &mdash; long GLD while its daily close is above its "
+                "200-day EMA, otherwise cash, traded at the next open." + corr +
+                " Sleeves A and B, with the frozen sleeve C, reproduce the backtest's monthly "
+                "returns within 0.01% before the curve is extended. The replay starts where the "
+                f"backtest window ends ({bt_day(rep['start'])}); the rules were fixed on "
+                f"{frozen_on} from data that ended there. " + tail)
+    return common + tail
+
+
+def replay_section(strat):
+    """HTML block for the top of bt_<key>.html, and whether it carries a chart."""
+    key = strat["key"]
+    if key in BT_FROZEN:
+        return (f'<div class="oos-frozen" id="oos"><span class="oos-tag">Frozen</span>'
+                f'<p><b>No comparable data; not carried forward.</b> {BT_FROZEN[key]}</p></div>',
+                False)
+    rep = bt_replay(key)
+    if not rep:
+        return "", False
+    m = rep["metrics"]
+    count = (("Trades", m["n_trades"]) if "n_trades" in m else
+             ("Rebalances", m.get("n_rebalances", 0)))
+    if m.get("open_positions"):
+        count = (f'Trades &middot; {m["open_positions"]} open', count[1])
+    neg = lambda x: " neg" if x < 0 else ""                      # noqa: E731
+    stats = (f'<div class="oos-stats">'
+             f'<div><div class="oos-v{neg(m["return_pct"])}">{bt_pct(m["return_pct"])}</div>'
+             f'<div class="oos-k">Return</div></div>'
+             f'<div><div class="oos-v{neg(m["max_drawdown_pct"])}">{bt_pct(m["max_drawdown_pct"])}</div>'
+             f'<div class="oos-k">Max drawdown</div></div>'
+             f'<div><div class="oos-v">{count[1]}</div><div class="oos-k">{count[0]}</div></div>'
+             f'<div><div class="oos-v">{m["trading_days"]}</div><div class="oos-k">Trading days</div></div>'
+             f'</div>')
+    foot = (f'<p class="oos-foot">As of {bt_day(rep["asof"])} &middot; growth of 100 from the '
+            f'backtest&rsquo;s last day ({bt_day(rep["start"])}) &middot; recomputed each trading '
+            f'day by the site pipeline &middot; hypothetical, not actual trading.</p>')
+    return (f'<section class="oos" id="oos"><span class="oos-tag">Frozen rules &middot; public '
+            f'prices</span><h2>Out-of-sample replay since {bt_day(rep["start"])}</h2>'
+            f'<p>{_replay_text(key, strat, rep)}</p>{stats}'
+            f'<div class="tile chart wide"><div class="ch">{_chart(rep, "oos-chart")}</div></div>'
+            f'{foot}</section>', True)
 
 
 def render_report_page(strat):
@@ -246,11 +404,13 @@ def render_report_page(strat):
         raw = open(md_path, encoding="utf-8").read()
         html = "<pre>" + esc(raw) + "</pre>"
     html = _cap_decimals(html)
-    html = _public_report(html, strat["name"])
+    oos, has_chart = replay_section(strat)
+    html = _public_report(html, strat["name"], after_head=oos)
     body = (f'<main class="container"><article class="tile report">'
             f'<a class="bt-back" href="strategies.html#backtests">&larr; All backtests</a>'
             f'{html}</article></main>')
-    out = shell(f"{esc(strat['name'])} — Backtest Report", body)
+    out = shell(f"{esc(strat['name'])} — Backtest Report", body, plot=has_chart,
+                css=OOS_CSS if oos else "")
     with open(os.path.join(DOCS, out_name), "w", encoding="utf-8") as fh:
         fh.write(out)
     return out_name

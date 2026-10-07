@@ -658,15 +658,20 @@ def _bt_redact(text):
 # the thesis, verdict and all performance metrics; drops tickers, universe lists,
 # entry/exit mechanics, sleeve compositions and parameter values.
 _BT_PUBLIC = {
+    # 2026-10-07 (Carlos): the card is the DEPLOYED equal-weight blend of the three surviving
+    # sleeves (make_report.build_portfolio), no longer the single-instrument flagship. The
+    # metric tiles come from the hub's key_metrics -- they must be the blend's too.
     "buy_the_dip": (
         "Buy-the-Dip / Sell-the-Rip",
         "Daily pullback-in-uptrend: buy weakness while a long-term trend filter is "
-        "positive, optionally fade rips in downtrends, across a broad diversified "
-        "index-ETF universe. 2010–2026.",
+        "positive, optionally fade rips in downtrends, tested across a broad diversified "
+        "index-ETF universe. Shown as deployed: an equal-weight daily blend of the three "
+        "index-ETF sleeves that survived the protocol. 2010–2026.",
         "Robust, low-drawdown S&P replacement — the edge is structural (positive across "
-        "most of the parameter space), not curve-fit. Deploy as a diversified ensemble: "
-        "a low-drawdown core, not a return amplifier. DSR 0.60–0.80, PBO 0.37–0.48; "
-        "roughly 2× the S&P's Calmar at a fraction of its drawdown."),
+        "most of the parameter space), not curve-fit. The deployed three-sleeve blend: "
+        "Sharpe 1.21, Calmar 1.01, max drawdown -3.03%, CAGR 3.08% at 1% risk per trade — "
+        "nearly 3× the S&P's Calmar at a fraction of its drawdown. Per-sleeve DSR "
+        "0.60–0.80, PBO 0.37–0.48. A low-drawdown core, not a return amplifier."),
     "static_diversification": (
         "Static Multi-Asset Diversification",
         "An equal-weight, low-turnover blend across three asset classes (equity, "
@@ -707,9 +712,78 @@ def _bt_public(strat):
             _bt_redact(strat.get("verdict_line", "")))
 
 
-def bt_card(strat, report_link=None, xref=""):
+# ── out-of-sample replay (data/bt_replay/<key>.json, written by 35_bt_replay.py) ──
+# A public backtest ends where its data ended. 35 re-runs the frozen rules on public prices
+# every day and carries the curve forward; 24 draws it on bt_<key>.html, 23 puts one line on
+# the card. Label it "out-of-sample replay" -- never "live": it is recomputed from rules frozen
+# before the window began, not a record of trades placed (Carlos: "a live track that
+# backfills history is a backtest in costume").
+#
+# FROZEN strategies are not carried forward at all; the reason is public-safe prose, rendered
+# on both the card and the report page. (The content-age monitor carries its own copy in
+# refresh_manifest.json -> backtest_pages.content_rule.frozen.)
+BT_FROZEN = {
+    "crt": ("The result was measured on an intraday broker data feed that is closed by design, "
+            "and the rules in use now trade hourly, four-hour and daily bars only, so there is no "
+            "comparable data to replay it on. Broader later re-tests read its headline figures as "
+            "a product of the 2016&ndash;2026 gold rally rather than a durable edge. The report "
+            "stays as a research record; it is not extended."),
+}
+# What the one-line card note adds per strategy (ticker-free: strategies.html is confscanned).
+_BT_OOS_EXTRA = {
+    "static_diversification": "; weekly rebalance, as in the published figures",
+    "static_drift_weights": "; the regime sleeve is replayed with its operated daily trend rule",
+}
+
+
+def bt_replay(key):
+    """The strategy's out-of-sample replay as written by 35_bt_replay.py, or None."""
+    import json
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    p = os.path.join(os.path.dirname(here), "data", "bt_replay", f"{key}.json")
+    try:
+        with open(p, encoding="utf-8") as fh:
+            rep = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    return rep if rep.get("series") else None
+
+
+def bt_day(iso):
+    """'2026-05-26' -> '26 May 2026' (the site's date style)."""
+    import datetime as _dt
+    return _dt.date.fromisoformat(str(iso)[:10]).strftime("%d %b %Y")
+
+
+def bt_pct(x):
+    """Signed percentage at the 2-dp ceiling, typographic minus: +2.06% / &minus;0.96%."""
+    return (f"+{x:.2f}%" if x > 0 else f"&minus;{abs(x):.2f}%" if x < 0 else "0.00%")
+
+
+def bt_oos_note(key, report_link=None):
+    """One-line card note: the replay's headline numbers, or the frozen notice."""
+    if key in BT_FROZEN:
+        return ('<p class="bt-oos bt-oos-frozen"><span class="bt-oos-k">Frozen &mdash; no '
+                'comparable data; not carried forward</span>The intraday data behind this result '
+                'is closed by design and later re-tests read it as a data-era result, so it is '
+                'not extended.</p>')
+    rep = bt_replay(key)
+    if not rep:
+        return ""
+    m = rep["metrics"]
+    link = (f' <a href="{report_link}#oos">Chart&nbsp;&rarr;</a>' if report_link else "")
+    return (f'<p class="bt-oos"><span class="bt-oos-k">Out-of-sample replay &middot; '
+            f'{bt_day(rep["start"])} &ndash; {bt_day(rep["asof"])}</span>'
+            f'Return <b>{bt_pct(m["return_pct"])}</b>, max drawdown <b>{bt_pct(m["max_drawdown_pct"])}</b>'
+            f'{_BT_OOS_EXTRA.get(key, "")}. Frozen rules on public prices &mdash; not live '
+            f'trading.{link}</p>')
+
+
+def bt_card(strat, report_link=None, xref="", note=""):
     """Render one strategy as a card. report_link -> "Full report" anchor;
-    xref -> an optional cross-reference line (e.g. deployment status / sibling page).
+    xref -> an optional cross-reference line (e.g. deployment status / sibling page);
+    note -> an optional out-of-sample replay / frozen line (bt_oos_note).
     Name/description/verdict are routed through the confidentiality filter."""
     badge = strat.get("badge", "red")
     label = strat.get("verdict") or BT_BADGE.get(badge, ("", ""))[0]
@@ -733,6 +807,7 @@ def bt_card(strat, report_link=None, xref=""):
         f'<p class="bt-tests">{_bt_esc(ptests)}</p>'
         f'<div class="bt-metrics">{tiles}</div>'
         f'<p class="bt-verdict">{_bt_esc(pverd)}</p>'
+        f'{note}'
         f'{xr}'
         f'<div class="bt-foot"><span class="bt-span">{_bt_esc(span)}</span>{link}</div>'
         f'</article>')
@@ -773,5 +848,11 @@ border-top:1px solid #e5e5e5;padding-top:14px}
 .bt-span{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-size:11px;color:#888}
 .bt-link{color:#0a2540;text-decoration:none;font-size:13px;font-weight:500;white-space:nowrap}
 .bt-link:hover{text-decoration:underline}
+.bt-oos{font-size:12.5px;color:#333;line-height:1.5;margin:0 0 14px;padding:9px 12px;
+background:rgba(10,37,64,.035);border:1px solid #e5e5e5;overflow-wrap:break-word}
+.bt-oos b{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;font-weight:500;color:#111}
+.bt-oos-k{display:block;font-size:9.5px;color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.bt-oos a{color:#0a2540;font-weight:500;white-space:nowrap}
+.bt-oos-frozen{background:#fcfcfc}
 @media(max-width:560px){.bt-metrics{grid-template-columns:repeat(3,1fr)}.bt-m:nth-child(3n){border-right:0}}
 """

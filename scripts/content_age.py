@@ -307,10 +307,16 @@ def ex_github_projects(repo, rule, today):
 def ex_backtests(repo, rule, today):
     """Public backtests end where their data ends. A window is "live" only if something carries
     it forward to today; until then its age is the gap between the backtest and the present.
-    `live` maps a strategy key to the paper-track series that extends it."""
+    `live` maps a strategy key to the series that extends it ({"file", "series", "amber_days",
+    "red_days"}; series entries need "date") -- since 2026-10-07 the out-of-sample replays in
+    data/bt_replay/<key>.json (35_bt_replay.py), whose own "label" is used in the finding.
+    `frozen` maps a strategy key to the REASON it is deliberately not carried forward: an INFO
+    finding, never AMBER, and its old end date does not set the surface's content age (a
+    decided freeze is not staleness; e.g. crt, whose data branch is closed by design)."""
     a, r = rule.get("amber_days"), rule.get("red_days")
     S = json.load(open(os.path.join(repo, "data", "backtests_strategies.json"), encoding="utf-8"))
     live = rule.get("live") or {}
+    frozen = rule.get("frozen") or {}
     out, g, ends = [], GREEN, []
     for s in S["strategies"]:
         if s.get("public") not in (True, "True"):
@@ -319,16 +325,22 @@ def ex_backtests(repo, rule, today):
         m = re.search(r"(\d{4}-\d{2}-\d{2})\s*$", span)
         end = _d(m.group(1)) if m else None
         name = s.get("short_name") or s["key"]
+        if s["key"] in frozen:
+            out.append([INFO, "%s: backtest ends %s, frozen - not carried forward (%s)"
+                        % (name, end or span or "?", frozen[s["key"]])])
+            continue
         if s["key"] in live:
             src = live[s["key"]]
+            label = "the paper-track"
             try:
                 pt = json.load(open(os.path.join(repo, src["file"]), encoding="utf-8"))
+                label = "the " + pt["label"] if isinstance(pt, dict) and pt.get("label") else label
                 last = _d(pt[src.get("series", "series")][-1]["date"])
-            except (OSError, ValueError, KeyError, IndexError):
+            except (OSError, ValueError, KeyError, IndexError, TypeError):
                 last = None
             gg = _grade_age(_age(today, last), src.get("amber_days", 5), src.get("red_days", 10))
-            out.append([gg, "%s: backtest to %s, carried live by the paper-track to %s"
-                        % (name, end or "?", last or "?")])
+            out.append([gg, "%s: backtest to %s, carried forward by %s to %s"
+                        % (name, end or "?", label, last or "?")])
             ends.append(last)
         else:
             gg = _grade_age(_age(today, end), a, r)

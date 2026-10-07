@@ -13,7 +13,8 @@
        one) so the two jobs can never touch this clone at the same time.
     1. Verify clean tree (auto-clean generated docs/data leftovers), pull --rebase.
     2. Data refresh (best-effort): 08 signals, 09 priced-in, 10 regimes,
-       20 regime tracker, 19 stock analysis, 28 EMBER paper-track.
+       20 regime tracker, 19 stock analysis, 28 EMBER paper-track,
+       35 out-of-sample replay of the public backtests.
     3. Site rebuild: 17 site, 23 strategies, 27 research notes, 25 stock picks,
        21 signals redirect, 18 portfolio, 26 real-numbers, 22 AI copies,
        24 backtests redirect.  (17 and 23 are load-bearing: failure aborts.)
@@ -223,6 +224,11 @@ try {
     Run-Step '20_regime_tracker.py'  | Out-Null
     Run-Step '19_stock_analysis.py'  | Out-Null
     Run-Step '28_ember_ensemble.py'  | Out-Null   # accumulates EMBER paper-track NAV (best-effort)
+    # Out-of-sample replay of the public backtests (2026-10-07): re-runs the FROZEN private engines
+    # on fresh public prices -> data/bt_replay/<key>.json, which 23 (card line) and 24 (bt_*.html
+    # chart) render, so it must run before both. Host-only + best-effort: without the private code
+    # or the network it SKIPs (exit 0) and the committed replay stays; a broken seam exits 1 = WARN.
+    Run-Step '35_bt_replay.py'       | Out-Null
 
     # Peak-base sidecar: roll the last VALIDATED walk forward to today's prices + FX
     # (2026-09-30). Before this, nothing scheduled touched it and the Performance block
