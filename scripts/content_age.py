@@ -120,12 +120,21 @@ def ex_meta_asof(repo, rule, today):
             bad.append("batch tile %s vs %d rows" % (tile["discovery"], n_rows))
         if tile.get("load-bearing") and tile["load-bearing"] != str(n_cards):
             bad.append("findings tile %s vs %d cards" % (tile["load-bearing"], n_cards))
+        # 2026-10-07: the tested-count tile must equal the by-source table's total
+        tot = re.search(r'<tr class="tally-total"><td>Total</td><td>(\d+)</td>', html)
+        if tile.get("signals") and tot and tile["signals"] != tot.group(1):
+            bad.append("tested tile %s vs by-source total %s" % (tile["signals"], tot.group(1)))
         if bad:
             out.append([RED, "funnel tiles disagree with the page: " + "; ".join(bad)])
             g = RED
         else:
-            out.append([GREEN, "funnel tiles reconcile to the page (%d batches, %d findings)"
-                        % (n_rows, n_cards)])
+            out.append([GREEN, "funnel tiles reconcile to the page (%d batches, %d findings%s)"
+                        % (n_rows, n_cards, ", %s tested" % tot.group(1) if tot else "")])
+        unc = _meta(html, "ltcma-tally-unclassified")
+        if unc and unc.isdigit() and int(unc) > 0:
+            out.append([AMBER, "%s research Finding(s) newer than the tested-count ledger's "
+                               "classification - classify them (test or audit) in the ledger" % unc])
+            g = worst(g, AMBER)
     return _result(asof, today, g, out)
 
 

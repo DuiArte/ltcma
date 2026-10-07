@@ -29,9 +29,12 @@ DURABLE_EDGES = 1
 
 # ── the batch record (axis tested · trials · outcome) ────────────────────────
 BATCHES = [
-    ("v0.5", "May 2026", "Baseline daily weak-signal library — trend, mean-reversion, volatility and range families on a 27-instrument universe", "~20",
+    # Trials column = the batch's pre-registered trials in its SignalLib artifacts (2026-10-07
+    # audit; ledger Documents/Research/_HARNESS/TESTED_LEDGER.json). The table used to mix
+    # units (v0.6 gate cells dropped, v0.7-T3's counted; v2.1 as "4 pilots") and summed to 146.
+    ("v0.5", "May 2026", "Baseline daily weak-signal library — trend, mean-reversion, volatility and range families on a 27-instrument universe", "12",
      "One feature retained as a model input (a 5-day mean-reversion effect); nothing deployable standalone."),
-    ("v0.6", "Jun 2026", "Machine-learned price-path forecast features", "2",
+    ("v0.6", "Jun 2026", "Machine-learned price-path forecast features", "14",
      "No edge beyond what the simple features already carry."),
     ("v0.7-T1", "Jun 2026", "Synthetic-path Monte Carlo robustness features", "—",
      "Negative; synthetic paths add no conditioning information."),
@@ -47,9 +50,9 @@ BATCHES = [
      "0/30 — the variance risk premium is real and repriced below the bar since 2018. Finding #13."),
     ("v2.0-exec", "Jun 2026", "Passive / maker execution study over the intraday gross edge (8 execution regimes)", "—",
      "The cost wall stands: passive fills convert explicit spread into adverse selection. Finding #12, extension."),
-    ("v2.1", "Jun 2026", "Defined-risk option spreads · volatility futures carry · post-earnings drift · MX momentum", "4 pilots",
+    ("v2.1", "Jun 2026", "Defined-risk option spreads · volatility futures carry · post-earnings drift · MX momentum", "26",
      "0/4 — premium thinness is wrapper-independent; free option-chain data is crash-blind. Finding #14."),
-    ("v2.2", "Jun 2026", "MX momentum re-tested on a point-in-time universe (delisted names restored)", "1",
+    ("v2.2", "Jun 2026", "MX momentum re-tested on a point-in-time universe (delisted names restored)", "8",
      "Dead — survivorship was roughly half the measured edge. Finding #15."),
     ("v2.3-A", "Jun 2026", "Event / macro-calendar premia — pre-FOMC drift, payrolls-day, CPI-day", "20",
      "0/20 — the premia replicate with the right sign and are below cost per event. Finding #16."),
@@ -212,22 +215,29 @@ def _pipeline_row():
         return None
     first = min(r["written_at"] for r in rows)[:10]
     last = max(r["written_at"] for r in rows)[:10]
-    full = [r for r in rows if not r.get("gate")]          # reached a full backtest
+    reached = [r for r in rows if not r.get("gate")]        # reached the engine stage
+    # 2026-10-07: a verdict that reached the engine stage is NOT an engine run when it carries
+    # `duplicate_of` -- it reuses an earlier computation (the pipeline's own STATUS.md:
+    # "counting copies would overstate the evidence"). Until today this row said 9 ideas were
+    # "fully backtested"; 2 engine runs produced all 9 verdicts.
+    runs = [r for r in reached if not r.get("duplicate_of")]
     rej = sum(1 for r in rows if r.get("gate") == "gate0-prescreen")
-    promoted = sum(1 for r in full if str(r.get("verdict", "")).upper() in
+    promoted = sum(1 for r in reached if str(r.get("verdict", "")).upper() in
                    ("PROMOTE", "PASS", "PROMOTED", "PAPER-TRACK"))
     f0, f1 = pd.Timestamp(first), pd.Timestamp(last)
     span = (f1.strftime("%b %Y") if f0.to_period("M") == f1.to_period("M")
             else f"{f0.strftime('%b')}&ndash;{f1.strftime('%b %Y')}")
-    return dict(code="auto", date=span, last=last, full=len(full), screened=len(rows),
+    return dict(code="auto", date=span, last=last, full=len(runs), screened=len(rows),
                 promoted=promoted,
                 axis=(f"Automated pipeline &mdash; {len(rows)} published ideas screened "
-                      f"({rej} rejected before any compute, {len(rows)-rej-len(full)} "
-                      f"mapped to an already-closed family or blocked by data)"),
-                trials=str(len(full)),
-                outcome=(f"{promoted}/{len(full)} &mdash; no fully backtested idea beat its "
-                         f"own best-of-N null. Updates itself from the pipeline's verdicts; "
-                         f"last verdict {f1.strftime('%d %b %Y')}."))
+                      f"({rej} rejected before any compute, {len(rows)-rej-len(reached)} "
+                      f"mapped to an already-closed family or blocked by data, {len(reached)} "
+                      f"reached the engine)"),
+                trials=str(len(runs)),
+                outcome=(f"{promoted}/{len(reached)} &mdash; {len(runs)} distinct engine "
+                         f"run{'s' if len(runs) != 1 else ''} behind {len(reached)} verdicts; "
+                         f"none beat its own best-of-N null. Updates itself from the "
+                         f"pipeline's verdicts; last verdict {f1.strftime('%d %b %Y')}."))
 
 
 PIPE = None
@@ -250,14 +260,80 @@ def _deployable():
     return sum(1 for x in S if str(x.get("verdict", "")).startswith("Deployable"))
 
 
+# ── everything tested, by source (Carlos 2026-10-07: "busca en la documentacion todas las
+# estrategias de los backtests") ───────────────────────────────────────────────────────────
+# The tile used to count only the batch table (SignalLib-era signal trials). A full sweep of
+# the documentation found six sources; the PRIVATE ledger (Documents/Research/_HARNESS/
+# TESTED_LEDGER.json) lists every campaign with its source line, and this build publishes
+# only group labels and counts (data/research_tally.json, also the fallback off-host).
+# Hunt Loop and pipeline counts are read live, so the tile moves when the research does;
+# Findings are classified by hand (test vs audit) and any newer one is flagged unclassified.
+def _tally():
+    import glob, json
+    from paths import DATA, cuser
+    pub = DATA / "research_tally.json"
+    try:
+        L = json.load(open(cuser("Documents", "Research", "_HARNESS", "TESTED_LEDGER.json"),
+                           encoding="utf-8"))
+    except (OSError, ValueError):
+        T = json.load(open(pub, encoding="utf-8"))
+        print(f"  research: private ledger unavailable -> published tally of {T['asof']}")
+        return T
+    groups, unclassified = [], []
+    for g in L["groups"]:
+        auto = g.get("auto")
+        if "items" in g:
+            n = sum(int(i.get("n", 1)) for i in g["items"])
+        elif auto == "strategy_log_findings":
+            log = open(cuser("Documents", "STRATEGY_LOG.md"), encoding="utf-8", errors="ignore").read()
+            # "No Finding #108", "do NOT manufacture Finding #108": negated mentions are not
+            # findings. Only numbers above classified_through are read, so skipping a real
+            # mention just delays detection to that finding's own row.
+            minted = set()
+            for _m in re.finditer(r"Finding #(\d+)", log):
+                if not re.search(r"\b(no|not|never|manufactur\w*)\b",
+                                 log[max(0, _m.start() - 30):_m.start()].lower()):
+                    minted.add(int(_m.group(1)))
+            hi = g["classified_through"]
+            excl = {x for v in g["excluded"].values() for x in v} | set(g["never_minted"])
+            n = sum(1 for x in range(g["range_from"], hi + 1) if x not in excl)
+            unclassified = sorted(x for x in minted if x > hi)
+        elif auto == "hunt_loop_index":
+            idx = json.load(open(cuser("Trading_Index", "findings", "_index.json"), encoding="utf-8"))
+            n = sum(1 for e in idx if not str(e.get("title", "")).lower().startswith("harness self-test"))
+        elif auto == "pipeline_engine_runs":
+            n = 0
+            for f in glob.glob(str(cuser("Trading_Index", "pipeline", "backtests", "*.json"))):
+                try:
+                    d = json.load(open(f, encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                n += int(bool(d.get("written_at")) and not d.get("gate") and not d.get("duplicate_of"))
+        else:
+            n = int(g["n"])
+        groups.append({"id": g["id"], "label": g["label"], "unit": g["unit"], "n": n})
+    T = {"_comment": "Counts only, by source. Built by scripts/27_research_notes.py from a private "
+                     "ledger of every campaign with its documentation reference.",
+         "asof": pd.Timestamp.today().strftime("%Y-%m-%d"), "groups": groups,
+         "total": sum(g["n"] for g in groups), "unclassified_findings": unclassified}
+    with open(pub, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(T, f, indent=1)
+    return T
+
+
+TALLY = _tally()
 N_BATCHES = len(BATCHES) + (1 if PIPE else 0)
 N_TRIALS = sum(_n(b[3]) for b in BATCHES) + (PIPE["full"] if PIPE else 0)
+_SL = next(g["n"] for g in TALLY["groups"] if g["id"] == "signallib")
+assert sum(_n(b[3]) for b in BATCHES) == _SL, \
+    f"batch table trials {sum(_n(b[3]) for b in BATCHES)} != ledger SignalLib trials {_SL}"
+N_TESTED = TALLY["total"]
 N_FINDINGS = len(FINDINGS)
 N_STRAT = _deployable()
 _WORDS = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
 FUNNEL = [
     (str(N_BATCHES), "discovery batches &mdash; every one negative"),
-    (str(N_TRIALS), "signals &amp; strategies tested, counted from the batch record"),
+    (str(N_TESTED), "signals &amp; strategies tested, every documented source (below)"),
     (str(DURABLE_EDGES), "durable feature-level edge found"),
     (str(N_STRAT), "strategies that cleared the survival bar"),
     (str(N_FINDINGS), "load-bearing findings published"),
@@ -265,7 +341,7 @@ FUNNEL = [
 # newest content on the page: the pipeline's last verdict, else the last manual batch month
 _last_manual = pd.Timestamp("1 " + BATCHES[-1][1]) + pd.offsets.MonthEnd(0)
 CONTENT_ASOF = max(filter(None, [PIPE and pd.Timestamp(PIPE["last"]), _last_manual]))
-print(f"  research: {N_BATCHES} batches | {N_TRIALS} trials | {N_FINDINGS} findings | "
+print(f"  research: {N_BATCHES} batches | table {N_TRIALS} trials | tested {N_TESTED} | {N_FINDINGS} findings | "
       f"{N_STRAT} deployable | content as of {CONTENT_ASOF.date()}")
 
 # ── render ───────────────────────────────────────────────────────────────────
@@ -280,6 +356,10 @@ for code, date, axis, trials, outcome in BATCHES + ([(PIPE["code"], PIPE["date"]
                    f'<td class="ax">{_bt_redact(axis)}</td><td>{trials}</td>'
                    f'<td class="neg" style="text-align:center">0</td>'
                    f'<td class="ax">{_bt_redact(outcome)}</td></tr>')
+
+tally_rows = "".join(
+    f'<tr><td class="ax">{g["label"]}</td><td>{g["n"]}</td><td class="ax">{g["unit"]}</td></tr>'
+    for g in TALLY["groups"])
 
 cards = ""
 for num, tag, date, title, body in FINDINGS:
@@ -349,6 +429,7 @@ document.querySelectorAll('.pills').forEach(function(grp){
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="ltcma-content-asof" content="{CONTENT_ASOF.date()}">
+<meta name="ltcma-tally-unclassified" content="{len(TALLY.get('unclassified_findings', []))}">
 <title>Carlos Duarte — Research Notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{CSS}</style></head>
@@ -358,15 +439,17 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <section class="hero"><div class="container">
 <h1>Research Notes — the full record</h1>
 <p class="lede">What was tested, what failed, and the little that survived.
-{N_TRIALS} signals and strategies across {N_BATCHES} discovery batches have produced
-exactly {_WORDS.get(DURABLE_EDGES, DURABLE_EDGES).lower()} durable feature-level edge and {_WORDS.get(N_STRAT, N_STRAT).lower()} deployable strategies — and
-every batch since the first has promoted nothing. That is the honest base rate
+{N_TESTED} signals and strategies tested &mdash; {_SL} pre-registered signal trials in the
+discovery batches and {N_TESTED - _SL} strategies tested end to end since &mdash; have produced
+exactly {_WORDS.get(DURABLE_EDGES, DURABLE_EDGES).lower()} durable feature-level edge and {_WORDS.get(N_STRAT, N_STRAT).lower()} deployable strategies, and
+every discovery batch since the first has promoted nothing. That is the honest base rate
 of systematic-edge discovery, and hiding it would misstate how hard this is.
 The {N_FINDINGS} load-bearing findings below are the working capital of the program.</p>
 <p class="asof">As of {ASOF} &middot; negative results published by design</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#funnel">The funnel</a><a href="#batches">Batch record</a>
+<a href="#tally">Everything tested</a>
 <a href="#findings">The {N_FINDINGS} findings</a><a href="#survives">What survives</a></div>
 
 <section class="block" id="funnel"><h2>The discovery funnel</h2>
@@ -386,6 +469,20 @@ hardened a rule — the lessons compound even when the P&amp;L column doesn't.</
 <th style="text-align:left">Date</th><th style="text-align:left">Axis tested</th>
 <th>Trials</th><th>Promoted</th><th style="text-align:left">Outcome</th></tr></thead>
 <tbody>{batch_rows}</tbody></table></div></section>
+
+<section class="block" id="tally"><h2>Everything tested, by source</h2>
+<p class="note">The batch record above is one source among six. Every campaign behind these
+counts is listed, with its reference in the research log, in a private ledger; only the
+counts are published. Not counted: ideas screened on paper, ideas the automated pipeline
+rejected before any computation, audits, and re-tests of a strategy already counted.</p>
+<div class="tile" style="padding:0 16px 8px;overflow-x:auto">
+<table class="ptable"><thead><tr><th style="text-align:left">Source</th>
+<th>Tested</th><th style="text-align:left">Unit</th></tr></thead>
+<tbody>{tally_rows}</tbody>
+<tfoot><tr class="tally-total"><td>Total</td><td>{N_TESTED}</td><td class="ax">signals &amp; strategies</td></tr></tfoot>
+</table></div>
+<p class="note" style="margin-top:.6rem">Counted as of {pd.Timestamp(TALLY['asof']).strftime('%d %b %Y')}; the
+Strategy Hunt Loop and pipeline rows update themselves from their own records.</p></section>
 
 <section class="block" id="findings"><h2>The {N_FINDINGS} findings</h2>
 <p class="note">Written so a reader (or the next research agent) can act on them
@@ -424,8 +521,10 @@ open(f"{DOCS}/research.html", "w", encoding="utf-8").write(HTML)
 
 # ── low-token AI companion ───────────────────────────────────────────────────
 ai = ["RESEARCH NOTES — AI COPY (low-token)",
-      f"asof={ASOF}; funnel: 14 batches all negative | ~181 trials | 1 durable edge "
-      "(5d mean-reversion, input only) | 3 deployable strategies | 18 findings",
+      f"asof={ASOF}; funnel: {N_BATCHES} discovery batches all negative | {N_TESTED} signals & "
+      f"strategies tested ({'; '.join(f'{g['id']}={g['n']}' for g in TALLY['groups'])}) | "
+      f"{DURABLE_EDGES} durable edge (5d mean-reversion, input only) | {N_STRAT} deployable "
+      f"strategies | {N_FINDINGS} findings published",
       "fields: finding|tag|date|title|gist"]
 for num, tag, date, title, body in FINDINGS:
     gist = body.split(". ")[0][:160]

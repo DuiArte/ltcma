@@ -1,0 +1,44 @@
+{
+ "_comment": "Counts only, by source. Built by scripts/27_research_notes.py from a private ledger of every campaign with its documentation reference.",
+ "asof": "2026-10-07",
+ "groups": [
+  {
+   "id": "signallib",
+   "label": "Pre-registered signal trials in the SignalLib discovery batches",
+   "unit": "signal trials",
+   "n": 179
+  },
+  {
+   "id": "named_may",
+   "label": "Named strategies tested end to end (May 2026)",
+   "unit": "strategies",
+   "n": 24
+  },
+  {
+   "id": "findings",
+   "label": "Strategy tests documented as numbered Findings",
+   "unit": "strategies",
+   "n": 71
+  },
+  {
+   "id": "e2e",
+   "label": "End-to-end tests without a Finding number (Jul-Sep 2026)",
+   "unit": "strategies",
+   "n": 13
+  },
+  {
+   "id": "hunt_loop",
+   "label": "Strategy Hunt Loop backtests (since 24 Sep 2026)",
+   "unit": "strategies",
+   "n": 11
+  },
+  {
+   "id": "pipeline",
+   "label": "Automated pipeline engine runs (since 24 Sep 2026)",
+   "unit": "engine runs",
+   "n": 2
+  }
+ ],
+ "total": 300,
+ "unclassified_findings": []
+}

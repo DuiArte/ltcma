@@ -1,5 +1,5 @@
 RESEARCH NOTES — AI COPY (low-token)
-asof=07 Oct 2026; funnel: 14 batches all negative | ~181 trials | 1 durable edge (5d mean-reversion, input only) | 3 deployable strategies | 18 findings
+asof=07 Oct 2026; funnel: 15 discovery batches all negative | 300 signals & strategies tested (signallib=179; named_may=24; findings=71; e2e=13; hunt_loop=11; pipeline=2) | 1 durable edge (5d mean-reversion, input only) | 3 deployable strategies | 18 findings published
 fields: finding|tag|date|title|gist
 #1|closed|2026-05-28|Double-gating is the dominant failure mode|Strategies that already carry internal regime detection lose edge when an external regime gate is layered on top — the signal gets trimmed twice
 #2|method|2026-05-28|Partial-window winners are usually rally artifacts|A precious-metals momentum system that looked deployable on an eight-year window collapsed on the full 23-year history: its profits clustered inside two secular
@@ -19,4 +19,4 @@ fields: finding|tag|date|title|gist
 #16|closed|2026-06-10|Announcement premia replicate — and are unharvestable|The published macro-calendar premia (pre-FOMC drift, the payrolls-day premium) replicate in our data with the right sign, decaying after 2015 exactly as the lit
 #17|closed|2026-06-10|Crypto funding carry: a Sharpe-4 premium, institutionalized away|The delta-neutral funding harvest was genuinely real — roughly 10% a year at 2% volatility for several years, nearly uncorrelated to everything else in the book
 #18|method|2026-06-10|The beta knife is mandatory|Any long-only absolute-return 'pass' must be decomposed against the passive benchmark over the same window before it counts
-batches: v0.5=~20 trials,0 promoted; v0.6=2 trials,0 promoted; v0.7-T1=— trials,0 promoted; v0.7-T3=8 trials,0 promoted; v0.8=8 trials,0 promoted; v0.9=9 trials,0 promoted; v1.0=11 trials,0 promoted; v2.0-vol=30 trials,0 promoted; v2.0-exec=— trials,0 promoted; v2.1=4 pilots trials,0 promoted; v2.2=1 trials,0 promoted; v2.3-A=20 trials,0 promoted; v2.3-B=20 trials,0 promoted; v2.3-C=13 trials,0 promoted
+batches: v0.5=12 trials,0 promoted; v0.6=14 trials,0 promoted; v0.7-T1=— trials,0 promoted; v0.7-T3=8 trials,0 promoted; v0.8=8 trials,0 promoted; v0.9=9 trials,0 promoted; v1.0=11 trials,0 promoted; v2.0-vol=30 trials,0 promoted; v2.0-exec=— trials,0 promoted; v2.1=26 trials,0 promoted; v2.2=8 trials,0 promoted; v2.3-A=20 trials,0 promoted; v2.3-B=20 trials,0 promoted; v2.3-C=13 trials,0 promoted
