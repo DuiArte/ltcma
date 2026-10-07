@@ -324,7 +324,7 @@ def _tally():
 TALLY = _tally()
 N_BATCHES = len(BATCHES) + (1 if PIPE else 0)
 N_TRIALS = sum(_n(b[3]) for b in BATCHES) + (PIPE["full"] if PIPE else 0)
-_SL = next(g["n"] for g in TALLY["groups"] if g["id"] == "signallib")
+_SL = next(g["n"] for g in TALLY["groups"] if g["id"] == "discovery")
 assert sum(_n(b[3]) for b in BATCHES) == _SL, \
     f"batch table trials {sum(_n(b[3]) for b in BATCHES)} != ledger SignalLib trials {_SL}"
 N_TESTED = TALLY["total"]

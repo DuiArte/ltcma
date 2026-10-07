@@ -3,8 +3,8 @@
  "asof": "2026-10-07",
  "groups": [
   {
-   "id": "signallib",
-   "label": "Pre-registered signal trials in the SignalLib discovery batches",
+   "id": "discovery",
+   "label": "Pre-registered signal trials in the discovery batches",
    "unit": "signal trials",
    "n": 179
   },

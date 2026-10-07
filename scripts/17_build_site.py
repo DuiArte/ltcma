@@ -494,10 +494,14 @@ try:
     # cash by choice). Until 2026-10-06 both sides of the S&P tile were the USD figure; until
     # 2026-10-07 it was measured from the first trade instead of the year-end close.
     from benchmark_ytd import ytd as _ytd
+    from money_weighted import mwr as _mwr
     _y = _ytd(_pk["curve"])
+    # MWRR = the exact IRR of every dated trade (money_weighted.py), not P&L / peak capital
+    # (Carlos, 2026-10-07: "el mas objetivo posible") - same figure as portfolio.html.
+    _mw = _mwr(_pk["curve"], _pk["markers"])
     _tiles = [
-        ("MWRR", _pp(_pk["mwrr_usd"]), _pp(_pk["mwrr_mxn"]),
-         "what the capital earned"),
+        ("MWRR", _pp(_mw["book_usd"]), _pp(_mw["book_mxn"]),
+         "what the money earned (IRR since the first trade)"),
         ("TWRR", _pp(_y["book_usd"]), _pp(_y["book_mxn"]),
          "what the decisions earned, year to date"),
         ("S&P 500", _pp(_y["spy_usd"]), _pp(_y["spy_mxn"]),
@@ -518,10 +522,10 @@ try:
 <div class="ccy-toggle">
 <button data-cur="usd" class="active" onclick="setCurrency('usd')">USD</button>
 <button data-cur="mxn" onclick="setCurrency('mxn')">MXN</button></div>
-<p class="note">The real equity book, measured against the most capital it ever had
-deployed at one moment. <b>Two returns, because they answer different questions:</b>
-MWRR is what the money earned, TWRR is what the decisions earned with the flows stripped
-out &mdash; only the second can fairly be set against an index. Full detail, holdings and
+<p class="note">The real equity book. <b>Two returns, because they answer different
+questions:</b> MWRR is what the money earned &mdash; the internal rate of return of every
+dated trade &mdash; and TWRR is what the decisions earned with the flows stripped out; only
+the second can fairly be set against an index's year. Full detail, holdings and
 the trade-by-trade curve on the <a href="portfolio.html">Portfolio</a> page.</p>
 <div class="metrics" style="grid-template-columns:repeat(4,1fr)">{_cells}</div>
 <p class="note" style="margin-top:.9rem">Book as of {_pk['as_of']} &middot; share counts
@@ -536,7 +540,7 @@ function setCurrency(c){{
     b.classList.toggle('active',b.dataset.cur===c);}});
 }}
 </script></section>"""
-    print(f"  home: portfolio card (MWRR {_pk['mwrr_usd']*100:.2f}% / TWRR YTD "
+    print(f"  home: portfolio card (MWRR/IRR {_mw['book_usd']*100:.2f}% / TWRR YTD "
           f"{_y['book_usd']*100:.2f}% / alpha vs S&P YTD {(_y['book_usd']-_y['spy_usd'])*100:+.2f} pp)")
 except FileNotFoundError:
     print("  home: no peak sidecar -> portfolio card omitted")

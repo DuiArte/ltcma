@@ -165,12 +165,12 @@ regime-switching GPU Monte Carlo engine.</p>
 <div class="ccy-toggle">
 <button data-cur="usd" class="active" onclick="setCurrency('usd')">USD</button>
 <button data-cur="mxn" onclick="setCurrency('mxn')">MXN</button></div>
-<p class="note">The real equity book, measured against the most capital it ever had
-deployed at one moment. <b>Two returns, because they answer different questions:</b>
-MWRR is what the money earned, TWRR is what the decisions earned with the flows stripped
-out &mdash; only the second can fairly be set against an index. Full detail, holdings and
+<p class="note">The real equity book. <b>Two returns, because they answer different
+questions:</b> MWRR is what the money earned &mdash; the internal rate of return of every
+dated trade &mdash; and TWRR is what the decisions earned with the flows stripped out; only
+the second can fairly be set against an index's year. Full detail, holdings and
 the trade-by-trade curve on the <a href="portfolio.html">Portfolio</a> page.</p>
-<div class="metrics" style="grid-template-columns:repeat(4,1fr)"><div class="metric"><div class="mv"><span class="cval" data-mxn="+17.80%" data-usd="+15.97%">+15.97%</span></div><div class="mk">MWRR</div><div class="mh">what the capital earned</div></div><div class="metric"><div class="mv"><span class="cval" data-mxn="+35.33%" data-usd="+27.18%">+27.18%</span></div><div class="mk">TWRR</div><div class="mh">what the decisions earned, year to date</div></div><div class="metric"><div class="mv"><span class="cval" data-mxn="+15.50%" data-usd="+15.14%">+15.14%</span></div><div class="mk">S&P 500</div><div class="mh"><span class="cval" data-usd="index total return YTD, USD" data-mxn="index total return YTD, MXN">index total return YTD, USD</span></div></div><div class="metric"><div class="mv"><span class="cval" data-mxn="+19.82 pp" data-usd="+12.04 pp">+12.04 pp</span></div><div class="mk">Alpha</div><div class="mh"><span class="cval" data-usd="USD TWRR (+27.18%) less the S&amp;P YTD" data-mxn="MXN TWRR (+35.33%) less the S&amp;P YTD in MXN">USD TWRR (+27.18%) less the S&amp;P YTD</span></div></div></div>
+<div class="metrics" style="grid-template-columns:repeat(4,1fr)"><div class="metric"><div class="mv"><span class="cval" data-mxn="+36.61%" data-usd="+32.89%">+32.89%</span></div><div class="mk">MWRR</div><div class="mh">what the money earned (IRR since the first trade)</div></div><div class="metric"><div class="mv"><span class="cval" data-mxn="+35.33%" data-usd="+27.18%">+27.18%</span></div><div class="mk">TWRR</div><div class="mh">what the decisions earned, year to date</div></div><div class="metric"><div class="mv"><span class="cval" data-mxn="+15.50%" data-usd="+15.14%">+15.14%</span></div><div class="mk">S&P 500</div><div class="mh"><span class="cval" data-usd="index total return YTD, USD" data-mxn="index total return YTD, MXN">index total return YTD, USD</span></div></div><div class="metric"><div class="mv"><span class="cval" data-mxn="+19.82 pp" data-usd="+12.04 pp">+12.04 pp</span></div><div class="mk">Alpha</div><div class="mh"><span class="cval" data-usd="USD TWRR (+27.18%) less the S&amp;P YTD" data-mxn="MXN TWRR (+35.33%) less the S&amp;P YTD in MXN">USD TWRR (+27.18%) less the S&amp;P YTD</span></div></div></div>
 <p class="note" style="margin-top:.9rem">Book as of 2026-10-06 &middot; share counts
 independently reconciled to 2026-08-05 &middot; returns are exact
 (display scaling cancels in a ratio) &middot; <a href="portfolio.html">see the full book

@@ -924,7 +924,8 @@ _MK_WINDOW_START = dates.min()          # the walk starts at the FIRST fill, so 
                                         # is orphaned off the head of the curve any more
 print(f"  curve: peak-base sidecar ({PK['as_of']}, {len(_pc)} days) | "
       f"base USD {PK['base_usd']:,.2f} / MXN {PK['base_mxn']:,.2f} | "
-      f"MWRR {PK['mwrr_usd']*100:.2f}% USD / {PK['mwrr_mxn']*100:.2f}% MXN | "
+      f"sidecar P&L/peak {PK['mwrr_usd']*100:.2f}% USD (retired from the page 2026-10-07; "
+      f"MWRR is now the IRR, money_weighted.py) | "
       f"TWRR {PK['twrr_usd']*100:.2f}% USD")
 # The sidecar chain (mxn_peak -> peak_curves -> guards -> make_site_sidecar) is MANUAL and
 # hand-dated; daily_refresh.ps1 never touches it. So the Performance block freezes at the
@@ -1579,33 +1580,43 @@ f1.update_layout(yaxis_title="MXN (scaled)", hovermode="x unified",
 NAVY, BENCH, TEAL = BLUE, "#9aa5b1", "#0f766e"
 _pcd = _pc.index
 
-# 4. P/L against the peak base, BOTH currencies at once, with utilisation underneath.
-# Both lines are drawn together on purpose rather than following the currency toggle:
-# the gap between them IS the FX effect, and it is only legible side by side. The book
-# earned 16.03% measured in dollars and 14.93% in pesos on exactly the same trades.
+# 4. What the MONEY earned: the money-weighted return (the exact IRR of every dated trade)
+# from the first trade to each day, against the S&P 500 fed the IDENTICAL cash flows.
+# Replaced "return on peak capital" on 2026-10-07 (Carlos: "quiero el mas objetivo posible").
+# P&L / peak divided the whole record by one instant's maximum (the book used 57% of it on
+# average), so it roughly halved what the money earned and shifted retroactively at every new
+# peak. The IRR has no free parameter; money_weighted.py owns the arithmetic and conventions.
+# Both currencies are drawn together on purpose: the gap between them IS the FX effect.
+from money_weighted import mwr as _mwr
+_ncf = sum((1 if x["side"] == "buy" else -1) * x["net_usd"] for x in PK["markers"])
+assert abs(PK["curve"][-1]["mv_usd"] - _ncf - PK["pl_usd"]) < 0.01, \
+    "the fills do not reproduce the curve's P&L - the IRR would run on a different universe"
+MW = _mwr(PK["curve"], PK["markers"])
+_mp = pd.DataFrame(MW["path"])
+_md = pd.to_datetime(_mp["d"])
+_MW_FT = pd.Timestamp(MW["first_trade"]).strftime("%d %b %Y")
+_MW_LBL = "annualized" if MW["annualized"] else "over the period, not annualized"
+print(f"  money-weighted (IRR) since {MW['first_trade']}, {MW['days']} d, {_MW_LBL}: book USD "
+      f"{MW['book_usd']*100:+.2f}% MXN {MW['book_mxn']*100:+.2f}% | S&P same money USD "
+      f"{MW['spy_usd']*100:+.2f}% MXN {MW['spy_mxn']*100:+.2f}%")
 f4 = go.Figure()
-f4.add_scatter(x=_pcd, y=_pc["util_usd"] * 100, mode="lines", name="Capital in use",
-               line=dict(color=TEAL, width=0), fill="tozeroy", yaxis="y2",
-               fillcolor="rgba(15,118,110,0.10)",
-               hovertemplate="%{y:.0f}% of peak<extra>Capital in use</extra>")
-f4.add_scatter(x=_pcd, y=_pc["plpct_usd"] * 100, mode="lines", name="Return · USD",
+f4.add_scatter(x=_md, y=_mp["book_usd"] * 100, mode="lines", name="This book · USD",
                line=dict(color=NAVY, width=2.4),
-               hovertemplate="%{y:.2f}%<extra>USD</extra>")
-f4.add_scatter(x=_pcd, y=_pc["plpct_mxn"] * 100, mode="lines", name="Return · MXN",
+               hovertemplate="%{y:.2f}%<extra>Book · USD</extra>")
+f4.add_scatter(x=_md, y=_mp["book_mxn"] * 100, mode="lines", name="This book · MXN",
                line=dict(color=NAVY, width=1.6, dash="dot"),
-               hovertemplate="%{y:.2f}%<extra>MXN</extra>")
+               hovertemplate="%{y:.2f}%<extra>Book · MXN</extra>")
+f4.add_scatter(x=_md, y=_mp["spy_usd"] * 100, mode="lines", name="S&P 500, same money · USD",
+               line=dict(color=BENCH, width=1.8),
+               hovertemplate="%{y:.2f}%<extra>S&P 500 · USD</extra>")
+f4.add_scatter(x=_md, y=_mp["spy_mxn"] * 100, mode="lines", name="S&P 500, same money · MXN",
+               line=dict(color=BENCH, width=1.3, dash="dot"),
+               hovertemplate="%{y:.2f}%<extra>S&P 500 · MXN</extra>")
 f4.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
-f4.add_vline(x=pd.Timestamp(PK["peak_date"]), line=dict(color=GREY, width=1, dash="dash"))
-f4.add_annotation(x=pd.Timestamp(PK["peak_date"]), y=1.0, yref="paper", yanchor="bottom",
-                  text="peak capital", showarrow=False,
-                  font=dict(family=SANS, size=10, color=GREY))
 f4.update_layout(
-    title="Return on the most capital the book ever needed at once",
-    yaxis=dict(title="return (%)", gridcolor="#e5e5e5",
+    title="What the money earned since the first trade (money-weighted)",
+    yaxis=dict(title="money-weighted return (%)", gridcolor="#e5e5e5",
                tickfont=dict(family=MONO, size=11), zeroline=False),
-    yaxis2=dict(title="capital in use (%)", overlaying="y", side="right", range=[0, 320],
-                showgrid=False, tickfont=dict(family=MONO, size=10, color=TEAL),
-                title_font=dict(family=SANS, size=11, color=TEAL)),
     hovermode="x unified", height=330,
     legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
                 font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
@@ -1715,8 +1726,8 @@ def pktxt(usd, mxn):
 # And they read YTD (Carlos, 2026-10-07): the S&P from the year-end close, the book's TWRR with
 # its pre-first-trade weeks at 0% -- not buying in early January was a decision, so it is scored.
 KPI_RET = [
-    ("MWRR", pkpct(PK["mwrr_usd"], PK["mwrr_mxn"]),
-     "money-weighted &mdash; what the capital earned"),
+    ("MWRR", pkpct(MW["book_usd"], MW["book_mxn"]),
+     f"money-weighted &mdash; the IRR of every dated trade since {_MW_FT}, {_MW_LBL}"),
     ("TWRR", pkpct(BOOK_YTD_USD, BOOK_YTD_MXN),
      "time-weighted, year to date &mdash; what the decisions earned"),
     ("S&amp;P 500", pkpct(SPY_YTD_USD, SPY_YTD_MXN),
@@ -2030,40 +2041,42 @@ book.</div>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
 &middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
 {PK['fx_today']:.4f} (fixed at build)</p>
-<p class="note"><b>Everything below is measured against the most capital this book
-ever had deployed at one moment</b> &mdash; {pkval(PK['base_mxn']*SCALE, PK['base_usd']*SCALE)} on
-{pd.Timestamp(PK['peak_date']).strftime('%d %b %Y')} at {_PEAK_TS}, across
-{PK['peak_n_pos']} open positions. That base is <i>derived</i> from what was actually
-put to work rather than assumed, so the book can never have deployed more than it
-&mdash; a claim the old fixed base could not make, and did not meet.</p>
+<p class="note"><b>Two standard measures, and no assumed base behind either.</b>
+<b>Money-weighted</b> is the internal rate of return of every dated buy and sale against
+today&rsquo;s market value &mdash; what the money earned, sized and timed as it actually was.
+<b>Time-weighted</b> chain-links daily returns with the flows stripped out &mdash; what the
+decisions earned. For scale only: the most this book ever had at work at one moment was
+{pkval(PK['base_mxn']*SCALE, PK['base_usd']*SCALE)}, on
+{pd.Timestamp(PK['peak_date']).strftime('%d %b %Y')} across {PK['peak_n_pos']} open
+positions.</p>
 <div class="metrics" style="grid-template-columns:repeat(5,1fr)">{kpi_money}</div>
 <div class="metrics" style="grid-template-columns:repeat(5,1fr);margin-top:1.2rem">{kpi_ret}</div>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f4, "pf-peak")}</div></div>
-<p class="note" style="margin-top:.8rem">The solid line is the return in dollars, the
-dotted one the same trades measured in pesos; the gap between them is the currency, not
-the investing. The shaded band is how much of the peak was actually in use on each day
-&mdash; it averages {PK['util_mean']*100:.0f}% and bottoms at {PK['util_min']*100:.0f}%,
-which is why this is the most conservative of the possible denominators: most of the
-time the book was earning on less than the base it is measured against.</p>
+<p class="note" style="margin-top:.8rem">Each point is the money-weighted return from the
+first trade to that day: the one rate at which every buy and sale up to then, and that
+day&rsquo;s value, net to zero &mdash; expressed {_MW_LBL}, as the record is
+{"over" if MW["annualized"] else "under"} a year old. The grey lines put the identical cash
+flows into the S&amp;P 500 on the same dates, so both face exactly the same money. Solid is
+dollars, dotted the same trades in pesos; the gap between them is the currency, not the
+investing.</p>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f5, "pf-twr")}</div></div>
 <div class="twonote">
-<div><h4>MWRR &mdash; {_pct(PK['mwrr_usd'])} <span>(USD)</span></h4>
-<p>Total profit over the peak capital deployed. This is <b>what the money earned</b>:
-it answers &ldquo;I had to have this much available &mdash; what did I get for it?&rdquo;
-Sensitive to how much was invested and when, which is exactly the point. In pesos the
-same trades read {_pct(PK['mwrr_mxn'])}.</p></div>
+<div><h4>MWRR &mdash; {_pct(MW['book_usd'])} <span>(USD)</span></h4>
+<p>The internal rate of return of every dated trade against today&rsquo;s value, over the
+{MW['days']} days since the first trade ({_MW_LBL}). This is <b>what the money earned</b>,
+weighted by how much was invested and for how long &mdash; no peak, no average, no
+assumed base. In pesos the same trades read {_pct(MW['book_mxn'])}.</p></div>
 <div><h4>TWRR &mdash; {_pct(PK['twrr_usd'])} <span>(USD)</span></h4>
 <p>Daily returns chain-linked with deposits and withdrawals stripped out. This is
 <b>what the decisions earned</b>, independent of how much money happened to be in at
 the time. It is the industry standard (GIPS) and the only one of the two that can
 fairly be set against an index.</p></div></div>
-<p class="note"><b>Both numbers are true and they are not interchangeable.</b> The
-{(PK['twrr_usd']-PK['mwrr_usd'])*100:.1f}-point gap between them is not an error: the
-book was small early and larger later, so the decisions outran the money. A portfolio
-is not &ldquo;up {PK['twrr_usd']*100:.0f}%&rdquo; in the sense of the cash being worth
-that much more &mdash; it is up {_pct(PK['mwrr_usd'])} on the capital it required, while
-its decisions performed like {_pct(PK['twrr_usd'])}. Quoting either one without saying
-which it is, is the mistake this panel exists to prevent.</p>
+<p class="note"><b>Both numbers are true and they are not interchangeable.</b>
+Money-weighted sits {abs(MW['book_usd']-PK['twrr_usd'])*100:.1f} points
+{"above" if MW['book_usd'] >= PK['twrr_usd'] else "below"} time-weighted (in dollars):
+{"more money was at work while returns were higher, so the sizing and timing of the capital added to what the decisions earned" if MW['book_usd'] >= PK['twrr_usd'] else "more money was at work while returns were lower, so the sizing and timing of the capital cost part of what the decisions earned"}.
+Quoting either one without saying which it is, is the mistake this panel exists to
+prevent.</p>
 <p class="note">Against the index, both ways: on <b>decisions</b>, year to date, the book
 returned {_pct(BOOK_YTD_USD)} against the S&amp;P 500&rsquo;s {_pct(SPY_YTD_USD)} from the
 {_YE} close, a {(BOOK_YTD_USD-SPY_YTD_USD)*100:+.2f}-point difference (in pesos
@@ -2071,10 +2084,11 @@ returned {_pct(BOOK_YTD_USD)} against the S&amp;P 500&rsquo;s {_pct(SPY_YTD_USD)
 staying out was a decision, so its year counts those weeks at 0% while the index carries
 whatever it did over them. On <b>money</b> &mdash;
 putting the identical {len(PK['markers'])} cash movements into SPY on the identical
-dates and walking it with the same cost-relief rules &mdash; the index would have
-returned {_pct(PK['spy_mwrr'])} against the book&rsquo;s {_pct(PK['mwrr_usd'])}, a
-{(PK['mwrr_usd']-PK['spy_mwrr'])*100:+.2f}-point difference. The second is the harder
-test and the one that cannot be flattered by the timing of the flows.</p>
+dates &mdash; the index would have earned {_pct(MW['spy_usd'])} money-weighted against the
+book&rsquo;s {_pct(MW['book_usd'])}, a {(MW['book_usd']-MW['spy_usd'])*100:+.2f}-point
+difference (in pesos {_pct(MW['spy_mxn'])} against {_pct(MW['book_mxn'])}). The second is
+the harder test and the one that cannot be flattered by the timing of the flows: both
+sides receive exactly the same money on exactly the same days.</p>
 <p class="note"><b>What this does not prove.</b> {RECON_ASOF} is the last date on which
 an independent broker statement confirmed these share counts (20 of 20 matched).
 Positions after it are walked forward from the transaction blotter, which reconciles to
