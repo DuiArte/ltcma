@@ -1613,32 +1613,48 @@ f4.update_layout(
 # 5. TWRR against the index. Different question from chart 4 and labelled as such:
 # this one strips the flows, so it compares DECISIONS and is the only one of the two
 # that an index comparison is legitimate for at all.
+# Read YTD (Carlos, 2026-10-07: "los benchmarks se leen YTD; se eligio no comprar en los
+# primeros dias del ano"). The x-axis starts at the year-end close: the book sits flat at 0%
+# until its first trade (in cash, by choice) while the S&P carries what it did over those
+# weeks. Until 2026-10-07 the S&P was measured from the first trade, which in pesos folded the
+# dollar's +5% rebound off its February low into the benchmark (+21% vs +15.5% YTD).
+# benchmark_ytd.py owns the arithmetic, the pre-inception link and the 2027+ case.
+from benchmark_ytd import ytd as _ytd
+YTD = _ytd(PK["curve"])
+_yp = pd.DataFrame(YTD["path"])
+_yd = pd.to_datetime(_yp["d"])
+SPY_YTD_USD, SPY_YTD_MXN = YTD["spy_usd"], YTD["spy_mxn"]
+BOOK_YTD_USD, BOOK_YTD_MXN = YTD["book_usd"], YTD["book_mxn"]
+_YE = pd.Timestamp(YTD["year_end"]).strftime("%d %b %Y")
+_FT = pd.Timestamp(YTD["first_trade"]).strftime("%d %b %Y")
+if YTD["first_trade"] > YTD["year_end"]:      # whole history inside the year: YTD == inception
+    assert abs(BOOK_YTD_USD - PK["twrr_usd"]) < 1e-9 and abs(BOOK_YTD_MXN - PK["twrr_mxn"]) < 1e-9, \
+        "book YTD must equal the since-inception TWRR while the book's history lies inside the year"
+# the curve window's own S&P TR stays a cross-check: same SPY series as the sidecar's spy_tr
+assert abs(float(_pc["spy"].iloc[-1]) / float(_pc["spy"].iloc[0]) - 1.0 - PK["spy_tr"]) < 1e-9, \
+    "SPY TR from the curve disagrees with the sidecar"
+print(f"  S&P 500 YTD (from {YTD['year_end']}): USD {SPY_YTD_USD*100:+.2f}% | MXN {SPY_YTD_MXN*100:+.2f}% "
+      f"| book YTD USD {BOOK_YTD_USD*100:+.2f}% MXN {BOOK_YTD_MXN*100:+.2f}%")
 f5 = go.Figure()
-f5.add_scatter(x=_pcd, y=_pc["twr_usd"] * 100, mode="lines", name="This book · USD",
+if YTD["first_trade"] > YTD["year_end"]:
+    f5.add_vrect(x0=YTD["year_end"], x1=YTD["first_trade"], fillcolor="#f1f1f1", opacity=1,
+                 line_width=0, layer="below", annotation_text="in cash, by choice",
+                 annotation_position="top left",
+                 annotation_font=dict(family=SANS, size=10, color=GREY))
+f5.add_scatter(x=_yd, y=_yp["book_usd"] * 100, mode="lines", name="This book · USD",
                line=dict(color=NAVY, width=2.4),
                hovertemplate="%{y:.2f}%<extra>Book · USD</extra>")
-f5.add_scatter(x=_pcd, y=_pc["twr_mxn"] * 100, mode="lines", name="This book · MXN",
+f5.add_scatter(x=_yd, y=_yp["book_mxn"] * 100, mode="lines", name="This book · MXN",
                line=dict(color=NAVY, width=1.5, dash="dot"),
                hovertemplate="%{y:.2f}%<extra>Book · MXN</extra>")
-_spytr = (_pc["spy"] / float(_pc["spy"].iloc[0]) - 1.0) * 100.0
-# SPY in pesos = the same dollar total return carried through the walk's OWN daily USD/MXN
-# (curve `fx`), start to each day -- what a peso investor in SPY actually got. Not
-# spy_tr x today's rate. Matches Portfolio_YTD_Real Q_Table "S&P TR MXN" by construction.
-_spyx = _pc["spy"].astype(float) * _pc["fx"].astype(float)
-_spytr_mxn = (_spyx / float(_spyx.iloc[0]) - 1.0) * 100.0
-SPY_TR_USD = float(_spytr.iloc[-1]) / 100.0
-SPY_TR_MXN = float(_spytr_mxn.iloc[-1]) / 100.0
-assert abs(SPY_TR_USD - PK["spy_tr"]) < 1e-9, "SPY TR from the curve disagrees with the sidecar"
-print(f"  S&P 500 TR: USD {SPY_TR_USD*100:+.2f}% | MXN {SPY_TR_MXN*100:+.2f}% "
-      f"(fx {float(_pc['fx'].iloc[0]):.4f} -> {float(_pc['fx'].iloc[-1]):.4f})")
-f5.add_scatter(x=_pcd, y=_spytr, mode="lines", name="S&P 500 · USD",
+f5.add_scatter(x=_yd, y=_yp["spy_usd"] * 100, mode="lines", name="S&P 500 · USD",
                line=dict(color=BENCH, width=1.8),
                hovertemplate="%{y:.2f}%<extra>S&P 500 · USD</extra>")
-f5.add_scatter(x=_pcd, y=_spytr_mxn, mode="lines", name="S&P 500 · MXN",
+f5.add_scatter(x=_yd, y=_yp["spy_mxn"] * 100, mode="lines", name="S&P 500 · MXN",
                line=dict(color=BENCH, width=1.3, dash="dot"),
                hovertemplate="%{y:.2f}%<extra>S&P 500 · MXN</extra>")
 f5.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
-f5.update_layout(title="Investment decisions vs the index (flows removed)",
+f5.update_layout(title="Investment decisions vs the index, year to date (flows removed)",
                  yaxis_title="cumulative return (%)", hovermode="x unified", height=330,
                  legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
                              font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
@@ -1696,18 +1712,20 @@ def pktxt(usd, mxn):
 # pairing: book USD vs SPY USD, book MXN vs SPY MXN (SPY carried through the walk's daily
 # USD/MXN). The old "SPY is a dollar fact" rule left the MXN view comparing a peso TWRR
 # against a dollar index -- the mismatch it claimed to prevent, just mirrored.
+# And they read YTD (Carlos, 2026-10-07): the S&P from the year-end close, the book's TWRR with
+# its pre-first-trade weeks at 0% -- not buying in early January was a decision, so it is scored.
 KPI_RET = [
     ("MWRR", pkpct(PK["mwrr_usd"], PK["mwrr_mxn"]),
      "money-weighted &mdash; what the capital earned"),
-    ("TWRR", pkpct(PK["twrr_usd"], PK["twrr_mxn"]),
-     "time-weighted &mdash; what the decisions earned"),
-    ("S&amp;P 500", pkpct(SPY_TR_USD, SPY_TR_MXN),
-     pktxt("index total return in USD, same window",
-           "index total return in MXN (SPY &times; USD/MXN), same window")),
+    ("TWRR", pkpct(BOOK_YTD_USD, BOOK_YTD_MXN),
+     "time-weighted, year to date &mdash; what the decisions earned"),
+    ("S&amp;P 500", pkpct(SPY_YTD_USD, SPY_YTD_MXN),
+     pktxt(f"index total return in USD, year to date (from the {_YE} close)",
+           f"index total return in MXN (SPY &times; USD/MXN), year to date (from the {_YE} close)")),
     # Name the operand: a reader subtracts in their head, so the tile says which TWRR.
-    ("vs index", pkpct(PK["twrr_usd"] - SPY_TR_USD, PK["twrr_mxn"] - SPY_TR_MXN, unit=" pp"),
-     pktxt(f"USD TWRR ({_pct(PK['twrr_usd'])}) less the index in USD",
-           f"MXN TWRR ({_pct(PK['twrr_mxn'])}) less the index in MXN")),
+    ("vs index", pkpct(BOOK_YTD_USD - SPY_YTD_USD, BOOK_YTD_MXN - SPY_YTD_MXN, unit=" pp"),
+     pktxt(f"USD TWRR ({_pct(BOOK_YTD_USD)}) less the S&amp;P YTD in USD",
+           f"MXN TWRR ({_pct(BOOK_YTD_MXN)}) less the S&amp;P YTD in MXN")),
     ("Capital in use", f"{PK['util_now']*100:.0f}%", "of peak, today"),
 ]
 kpi_money = "".join(
@@ -2046,9 +2064,12 @@ is not &ldquo;up {PK['twrr_usd']*100:.0f}%&rdquo; in the sense of the cash being
 that much more &mdash; it is up {_pct(PK['mwrr_usd'])} on the capital it required, while
 its decisions performed like {_pct(PK['twrr_usd'])}. Quoting either one without saying
 which it is, is the mistake this panel exists to prevent.</p>
-<p class="note">Against the index, both ways: on <b>decisions</b> the book returned
-{_pct(PK['twrr_usd'])} against the S&amp;P 500&rsquo;s {_pct(PK['spy_tr'])}, a
-{(PK['twrr_usd']-PK['spy_tr'])*100:+.2f}-point difference. On <b>money</b> &mdash;
+<p class="note">Against the index, both ways: on <b>decisions</b>, year to date, the book
+returned {_pct(BOOK_YTD_USD)} against the S&amp;P 500&rsquo;s {_pct(SPY_YTD_USD)} from the
+{_YE} close, a {(BOOK_YTD_USD-SPY_YTD_USD)*100:+.2f}-point difference (in pesos
+{_pct(BOOK_YTD_MXN)} against {_pct(SPY_YTD_MXN)}). The book bought nothing before {_FT}:
+staying out was a decision, so its year counts those weeks at 0% while the index carries
+whatever it did over them. On <b>money</b> &mdash;
 putting the identical {len(PK['markers'])} cash movements into SPY on the identical
 dates and walking it with the same cost-relief rules &mdash; the index would have
 returned {_pct(PK['spy_mwrr'])} against the book&rsquo;s {_pct(PK['mwrr_usd'])}, a

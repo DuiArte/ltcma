@@ -489,24 +489,25 @@ try:
     except (OSError, KeyError, ValueError):
         pass
     _pp = lambda v: f"{v*100:+.2f}%"
-    # SPY in pesos through the walk's own daily USD/MXN (same formula as 18_portfolio.py).
-    # Until 2026-10-06 both sides of this tile were the USD figure, so the MXN view set a
-    # peso TWRR against a dollar index.
-    _c0, _c1 = _pk["curve"][0], _pk["curve"][-1]
-    _spy_mxn = (_c1["spy"] * _c1["fx"]) / (_c0["spy"] * _c0["fx"]) - 1.0
+    # Benchmarks read YTD (Carlos, 2026-10-07), same module and convention as 18_portfolio.py:
+    # S&P from the year-end close, the book's TWRR with its pre-first-trade weeks at 0% (in
+    # cash by choice). Until 2026-10-06 both sides of the S&P tile were the USD figure; until
+    # 2026-10-07 it was measured from the first trade instead of the year-end close.
+    from benchmark_ytd import ytd as _ytd
+    _y = _ytd(_pk["curve"])
     _tiles = [
         ("MWRR", _pp(_pk["mwrr_usd"]), _pp(_pk["mwrr_mxn"]),
          "what the capital earned"),
-        ("TWRR", _pp(_pk["twrr_usd"]), _pp(_pk["twrr_mxn"]),
-         "what the decisions earned"),
-        ("S&P 500", _pp(_pk["spy_tr"]), _pp(_spy_mxn),
-         '<span class="cval" data-usd="index total return, USD" '
-         'data-mxn="index total return, MXN">index total return, USD</span>'),
-        ("Alpha", f"{(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp",
-         f"{(_pk['twrr_mxn']-_spy_mxn)*100:+.2f} pp",
-         f'<span class="cval" data-usd="USD TWRR ({_pp(_pk["twrr_usd"])}) less the index" '
-         f'data-mxn="MXN TWRR ({_pp(_pk["twrr_mxn"])}) less the index in MXN">'
-         f'USD TWRR ({_pp(_pk["twrr_usd"])}) less the index</span>'),
+        ("TWRR", _pp(_y["book_usd"]), _pp(_y["book_mxn"]),
+         "what the decisions earned, year to date"),
+        ("S&P 500", _pp(_y["spy_usd"]), _pp(_y["spy_mxn"]),
+         '<span class="cval" data-usd="index total return YTD, USD" '
+         'data-mxn="index total return YTD, MXN">index total return YTD, USD</span>'),
+        ("Alpha", f"{(_y['book_usd']-_y['spy_usd'])*100:+.2f} pp",
+         f"{(_y['book_mxn']-_y['spy_mxn'])*100:+.2f} pp",
+         f'<span class="cval" data-usd="USD TWRR ({_pp(_y["book_usd"])}) less the S&amp;P YTD" '
+         f'data-mxn="MXN TWRR ({_pp(_y["book_mxn"])}) less the S&amp;P YTD in MXN">'
+         f'USD TWRR ({_pp(_y["book_usd"])}) less the S&amp;P YTD</span>'),
     ]
     _cells = "".join(
         f'<div class="metric"><div class="mv">'
@@ -535,8 +536,8 @@ function setCurrency(c){{
     b.classList.toggle('active',b.dataset.cur===c);}});
 }}
 </script></section>"""
-    print(f"  home: portfolio card (MWRR {_pk['mwrr_usd']*100:.2f}% / TWRR "
-          f"{_pk['twrr_usd']*100:.2f}% / alpha {(_pk['twrr_usd']-_pk['spy_tr'])*100:+.2f} pp)")
+    print(f"  home: portfolio card (MWRR {_pk['mwrr_usd']*100:.2f}% / TWRR YTD "
+          f"{_y['book_usd']*100:.2f}% / alpha vs S&P YTD {(_y['book_usd']-_y['spy_usd'])*100:+.2f} pp)")
 except FileNotFoundError:
     print("  home: no peak sidecar -> portfolio card omitted")
 except Exception as _e:
