@@ -52,3 +52,32 @@ partial: `docs/*.html` are emitted whole by Python (`17_build_site.py`, `18_port
   for the author/message of the last write (the WSL job's commits read
   `Portfolio tracker update YYYY-MM-DD_HH:MM`), then GitHub Pages caching (deploy takes
   ~1 min; fetch with a cache-busting `?n=` query).
+
+## Rules for every writer, human or agent (2026-10-07)
+
+Binding site conventions (benchmarks read YTD, money-weighted return = exact IRR, derived
+counters, backtest replay labelling, privacy) and the reason for each live in
+`C:\Users\carlo\Documents\AI_PROCEDURES\WEBSITE_AGENT_RULES.md`. They are Carlos's decisions:
+implement them, don't re-litigate them. The operational minimum:
+
+- **The clone is shared.** Two agents worked in it, uncommitted, at the same time on 10-07.
+  - Run `git status` before every commit.
+  - Stage only your own paths (`git add <paths>`, never `-A` / `.`).
+  - Never commit `docs/` generated while someone else's source edits are uncommitted: their
+    nav change gets baked into your pages.
+- **Clean before 16:31.** A dirty file outside `docs/`/`data/` makes the daily refresh refuse to run.
+- ⛔ **History was rewritten on 2026-10-07** to purge a private file that had been committed
+  under `data/`.
+  - Every commit SHA older than `8806382` changed.
+  - Never `git push --all` or `--tags` from this clone: local refs still hold the old history.
+  - Any future rewrite needs Carlos's explicit OK. Take `Global\LTCMA_REPO_LOCK`, abort if
+    origin moved or the tree is dirty, rewrite `main` only, then push with
+    `--force-with-lease=main:<old-sha>`.
+- **Never write private data under this repo.** That means real or unscaled figures, broker
+  exports, trade blotters and private code. Private outputs go to
+  `Documents\CarlosDuarteWebsite\real_numbers\`. `.gitignore` blocks `*blotter*.csv`.
+- **Private ledgers publish counts only.** Don't name private code bases in page text
+  (confscan flags them).
+- **New tab:** a generator in `scripts/` run by `daily_refresh.ps1`, a manifest entry with a
+  `content_rule`, and a row in this file. The Market Intel and Street LTCMA tabs followed it on
+  10-07.
