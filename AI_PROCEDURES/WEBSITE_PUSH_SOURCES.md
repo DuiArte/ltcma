@@ -13,6 +13,9 @@ job, script or clone that writes here, check this list — and add yourself to i
 | `daily_refresh.ps1` (this repo) | Task Scheduler `daily-website-refresh` | all generated `docs/` + `data/`; runs `scripts/*.py`, load-bearing guards (`guard_decimals`, `guard_no_snapshot`), then `git commit` + `git push origin main` |
 | `weekly_model_rebuild.ps1` (this repo) | Task Scheduler `weekly-model-rebuild` (Sun 22:00) | model outputs 01-04 + risk/MC; shares the `Global\LTCMA_REPO_LOCK` mutex with the daily job |
 
+`daily_refresh.ps1` also runs `scripts/34_site_freshness.py` (2026-10-07), which writes
+exactly one extra file, `docs/internal/freshness.html`, from pipeline v2 layer 7's content audit.
+
 Both build from **this clone's `scripts/`** after pulling origin, so a change merged to
 `scripts/` is what they publish. There is no other generator, template, include or
 partial: `docs/*.html` are emitted whole by Python (`17_build_site.py`, `18_portfolio.py`,
@@ -27,6 +30,7 @@ partial: `docs/*.html` are emitted whole by Python (`17_build_site.py`, `18_port
 | `C:\Users\carlo\Scripts\daily_real_numbers_refresh.ps1` / `scripts\26_real_numbers_refresh.py` | writes the PRIVATE un-scaled copy to `Documents\CarlosDuarteWebsite\real_numbers\` — never `docs/`, never git. (It still has its own "Snapshot" block; that is the private file, out of scope for the public guard) |
 | `C:\Users\carlo\Scripts\data_freshness_check.ps1`, `daily_advances_digest.py`, `portfolio_actions.py`, `real_income_generator.py`, `build_realized_ledger.py` | read the repo / `data/`, write alerts or private outputs elsewhere; no commit, no push |
 | `Documents\CarlosDuarteWebsite` | **not a git repo** — a mirror *target* (`daily_refresh.ps1` copies `docs/` + `data/` into it). Nothing syncs from it back to the repo |
+| `C:\Users\carlo\Scripts\pipeline_v2\layer7_content_refresh.py` (task `Pipeline V2 Content`, 09:30; also called by step 34) + `scripts/content_age.py` | content-age auditor: grades what each tab SAYS against `content_rule` in `Trading_Index\pipeline\content\refresh_manifest.json`; writes `CONTENT_STATUS.md` and `Scripts\logs\WEBSITE_ALERT.txt`. Read-only against the repo. See `WEBSITE_PIPELINES_GAPS.md` |
 | `.github/workflows/refresh.yml` | **manual only** (`workflow_dispatch`, cron removed 2026-08-11). It cannot build `portfolio.html` on the runner (no private book) |
 | Pipeline V2 (`Scripts\pipeline_v2\orchestrator.ps1`), `Strategy Hunt Loop` | do not reference the site repo |
 
