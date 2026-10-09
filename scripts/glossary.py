@@ -480,6 +480,12 @@ BT_JS = r"""(function(){
     ulcer:function(x){return isFinite(x)?x.toFixed(1)+"%":"—";},
     longdd:function(x){return isFinite(x)?x+" m":"—";}};
   function setCell(k,key,t){var el=document.getElementById(CFG.cellPrefix+"_"+k+"_"+key);if(el)el.textContent=t;}
+  // Log-axis ticks for a re-based growth-of-100 chart: the densest 1-2-5 style ladder that
+  // still gives >=4 labelled values in range, printed whole ("150", not Plotly's bare "5").
+  function logAx(ys){var lo=Infinity,hi=-Infinity;ys.forEach(function(a){a.forEach(function(v){if(isFinite(v)&&v>0){if(v<lo)lo=v;if(v>hi)hi=v;}});});
+    var L=[[1,2,5],[1,1.5,2,3,5,7],[1,1.2,1.5,2,2.5,3,4,5,6,7,8,9],[1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.5,3,4,5,6,7,8,9]],best=null;
+    for(var j=0;j<L.length;j++){var t=[];for(var e=0;e<6;e++)L[j].forEach(function(m){var v=Math.round(m*Math.pow(10,e)*10)/10;if(v>=lo&&v<=hi)t.push(v);});best=t;if(t.length>=4)break;}
+    return {"yaxis.tickmode":"array","yaxis.tickvals":best,"yaxis.ticktext":best.map(function(v){return v.toLocaleString("en-US",{maximumFractionDigits:0});})};}
   function updateCharts(start){
     var cd=commonDates().filter(function(d){return d>=start;});
     if(HP&&CFG.eq&&document.getElementById(CFG.eq)){
@@ -487,7 +493,7 @@ BT_JS = r"""(function(){
       ["SARS","DUO","MARS"].forEach(function(k){var a=alignRets(k,cd);xs.push(cd);ys.push(g100(a.s));});
       var sp=alignRets("SARS",cd);xs.push(cd);ys.push(g100(sp.b));
       Plotly.restyle(CFG.eq,{x:xs,y:ys},[0,1,2,3]);
-      Plotly.relayout(CFG.eq,{"xaxis.autorange":true,"yaxis.autorange":true});
+      Plotly.relayout(CFG.eq,Object.assign({"xaxis.autorange":true,"yaxis.autorange":true},logAx(ys)));
     }
     if(HP&&CFG.dd&&document.getElementById(CFG.dd)){
       var dx=[],dy=[];
@@ -499,7 +505,7 @@ BT_JS = r"""(function(){
     if(HP&&CFG.bars&&document.getElementById(CFG.bars)){
       var i0=idxFrom(D.BARS.dates,start),bd=D.BARS.dates.slice(i0),bs=D.BARS.s.slice(i0),bb=D.BARS.b.slice(i0);
       Plotly.restyle(CFG.bars,{x:[bd,bd],y:[g100(bs),g100(bb)]},[0,1]);
-      Plotly.relayout(CFG.bars,{"xaxis.autorange":true,"yaxis.autorange":true});
+      Plotly.relayout(CFG.bars,Object.assign({"xaxis.autorange":true,"yaxis.autorange":true},logAx([g100(bs),g100(bb)])));
     }
   }
   function updateTable(start){
