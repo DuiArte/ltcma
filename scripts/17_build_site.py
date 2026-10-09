@@ -193,6 +193,43 @@ for cls, c in cmap.items():
 f2.update_layout(title="Risk / return map — 12-year LTCMA (base case)",
                  xaxis_title="volatility (%)", yaxis_title="expected return (%)")
 
+# ---------- 2b. LTCMA vs the published Street consensus (Carlos, 2026-10-09) ----------
+# Display only: the consensus is a cross-check, never a model input. Medians, bands and n come
+# from the Market Intel edition (data/market_intel/consensus_public.json, the same rows its page
+# already publishes); this model's value is today's base case, so the side is recomputed here.
+STREET_CMP = ""
+try:
+    _mi = json.load(open(f"{D}/market_intel/consensus_public.json", encoding="utf-8"))
+    _side = {"above": "above the range", "below": "below the range", "inside": "inside"}
+    _rows = ""
+    for _r in sorted(_mi["diff_carlos"]["rows"], key=lambda r: (r.get("public_median") is None, r["label"])):
+        if _r["asset"] not in summ.index:
+            continue
+        _m = float(summ.loc[_r["asset"], "ER_lambda0.5"]) * 100
+        if _r.get("public_median") is None:
+            _rows += (f'<tr><td>{_r["label"]}</td><td>{_m:.1f}%</td>'
+                      f'<td colspan="3" style="color:var(--muted);text-align:left">no public estimate</td></tr>')
+            continue
+        _lo, _hi = _r["band"]
+        _s = "above" if _m > _hi + 1e-9 else ("below" if _m < _lo - 1e-9 else "inside")
+        _rows += (f'<tr><td>{_r["label"]}</td><td>{_m:.1f}%</td><td>{_r["public_median"] + 1e-9:.1f}%</td>'
+                  f'<td>{_lo + 1e-9:.1f}&ndash;{_hi + 1e-9:.1f}%</td>'
+                  f'<td style="text-align:left">{_side[_s]} (n={_r["public_n"]})</td></tr>')
+    STREET_CMP = (
+        '<h3>This model vs the published Street consensus</h3>'
+        f'<p class="note">Base-case expected return next to the median of the asset managers that '
+        f'publish capital market assumptions (Market Intel, {_mi["edition"]} edition of '
+        f'{_mi["run_date"]}; range = interquartile band; n = publishers). Mostly 10-year horizons '
+        'against this model&rsquo;s 12, converted to nominal USD geometric. A cross-check only: the '
+        'consensus does not feed the model. Detail and sources on '
+        '<a href="ltcma-consensus.html">Market Intel</a>.</p>'
+        '<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr>'
+        '<th>Asset class</th><th>This model</th><th>Street median</th><th>Range</th>'
+        f'<th style="text-align:left">This model is</th></tr></thead><tbody>{_rows}</tbody></table></div>')
+    print(f"  model output: Street consensus comparison ({_mi['run_date']}, {_rows.count('<tr>')} rows)")
+except (FileNotFoundError, KeyError, ValueError) as _e:
+    print(f"  model output: no Street consensus comparison ({type(_e).__name__})")
+
 # ---------- 3. valuation dispersion ----------
 eq = ret[ret["class"] == "Equity"].sort_values("val_now")
 # cheap -> expensive reads as one ramp, not as three unrelated hues
@@ -577,7 +614,7 @@ the <a href="glossary.html">Glossary</a>.</p>
 {ccy_badge("USD", "all expected returns are in US dollars")}
 <p class="note">Each chart below has a plain-language explanation; full
 definitions are in the <a href="glossary.html">Glossary</a>.</p>
-<div class="grid">{charts}</div></section>
+<div class="grid">{charts}</div>{STREET_CMP}</section>
 {STRATBT}
 <section class="block"><h2>Full Written Report</h2>
 <p>Complete analysis — methodology, macro backdrop, return tables, the
