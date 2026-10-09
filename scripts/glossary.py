@@ -296,10 +296,30 @@ def bt_load():
         "BARS": ("Mexican Equity Rotation", "#7e97b3", 0.09, "IPC",
                  f"{H}/BARS/data/backtest/backtest_returns.csv", "BARS", "IPC"),
     }
+    # 2026-10-09 (Carlos, option A): the four series are extended monthly by the private
+    # Scripts\strategy_extend tool -- published history frozen, fresh months appended -- into
+    # Trading_Index\strategy_ext\out\. Used only when that file starts with the published
+    # history unchanged; otherwise the frozen original is read, as before.
+    EXT = os.path.join(H, "Trading_Index", "strategy_ext", "out")
+    EXTF = {"SARS": "SARS_backtest_returns.csv", "DUO": "DUO_duo_returns.csv",
+            "MARS": "MARS_backtest_returns.csv", "BARS": "BARS_backtest_returns.csv"}
+
+    def _src(k, path):
+        ext = os.path.join(EXT, EXTF[k])
+        try:
+            orig = open(path, "rb").read()
+            new = open(ext, "rb").read()
+        except OSError:
+            return path
+        if len(new) > len(orig) and new.startswith(orig.replace(b"\r\n", b"\n")):
+            return ext
+        print(f"  bt_load: {k} extension ignored (does not start with the published history)")
+        return path
+
     try:
         data = {}
         for k, (name, color, rf, bn, path, col, bcol) in DEFS.items():
-            df = pd.read_csv(path, index_col=0, parse_dates=True)
+            df = pd.read_csv(_src(k, path), index_col=0, parse_dates=True)
             s = df[col].dropna()
             b = df[bcol].dropna()
             idx = s.index.intersection(b.index).sort_values()
