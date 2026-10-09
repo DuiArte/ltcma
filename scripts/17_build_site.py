@@ -682,27 +682,30 @@ _OCTO = ('<svg class="gh-mark" viewBox="0 0 16 16" width="20" height="20" '
 PROJECTS = [
     ("LTCMA Methodology", "DuiArte/ltcma-methodology",
      "https://github.com/DuiArte/ltcma-methodology",
-     "Long-term capital market assumptions &mdash; building-block expected returns, "
-     "Ledoit-Wolf risk, regime-switching Monte Carlo.", "Research", True),
+     "Every long-term capital market assumption this site publishes, as data, and how "
+     "each is built &mdash; building-block returns, 15-year volatility, Ledoit-Wolf "
+     "correlation.", "Research", True),
     ("Static Drift-Weight 50/30/20", "DuiArte/static-drift-weight",
      "https://github.com/DuiArte/static-drift-weight",
-     "The deployed core sleeve &mdash; SPY/IEF/GLD drift-weighted, no gating. "
-     "Sharpe 1.33, GFC-stress-tested to a sub-10% monthly drawdown.", "Deployed", True),
+     "50% buy-the-dip, 30% equal-weight SPY/IEF/GLD, 20% trend-gated gold, reset "
+     "monthly &mdash; the thesis, the 2010&ndash;2026 backtest and its out-of-sample "
+     "replay.", "Research", True),
     ("SignalLib Framework", "DuiArte/signallib-framework",
      "https://github.com/DuiArte/signallib-framework",
-     "Signal-discovery rig &mdash; many uncorrelated weak signals over static "
-     "weights, with deflated-Sharpe and PBO gates baked in.", "Research", True),
+     "The architecture of a signal library &mdash; features, screens, scores, "
+     "ensembles &mdash; with textbook examples; the production signals stay "
+     "private.", "Research", True),
     ("Terse", "DuiArte/terse", "https://github.com/DuiArte/terse",
      "A token-efficient language for compressing instructions and documents "
      "before they reach an LLM.", "Tooling", True),
     ("AI Procedures (Quant)", "DuiArte/ai-procedures-quant",
      "https://github.com/DuiArte/ai-procedures-quant",
-     "The runbooks and automated daily-refresh infrastructure that keep this "
-     "research lab current.", "Tooling", True),
+     "Templated runbooks for backtesting, research and publishing, plus the "
+     "sanitizer that turns a private report into a public one.", "Tooling", True),
     ("Backtests Archive", "DuiArte/backtests-archive",
      "https://github.com/DuiArte/backtests-archive",
-     "Selected backtest reports &mdash; methodology and headline results; the live "
-     "parameters stay private.", "Research", True),
+     "One report per backtest this site publishes &mdash; verdict, headline "
+     "metrics and caveats; the live parameters stay private.", "Research", True),
 ]
 _BADGE = {"Deployed": "badge-deployed", "Research": "badge-research", "Tooling": "badge-tooling"}
 # Each live card shows its repo's REAL last push (GitHub API). Until 2026-10-07 the page carried
