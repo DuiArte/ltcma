@@ -91,6 +91,10 @@ f_bars.update_layout(title="Growth of 100 (MXN) — Mexican Equity Rotation vs I
 
 # ── indicator table (initial values over each strategy's full window) ────────
 METRICS = {k: bt_indicators(data[k]["s"], data[k]["b"], data[k]["rf"]) for k in order}
+# The newest month in the four walk-forward series. The page stamp used to be today's date alone,
+# so curves that stopped in Apr 2026 read "As of 08 Oct 2026" (Carlos, 2026-10-09). Stamped in
+# the hero and in <meta ltcma-content-asof>, which layer 7 grades (content_rule "strategies").
+SERIES_END = max(pd.Timestamp(data[k]["dates"][-1]) for k in order)
 
 
 def _nan(x):
@@ -589,6 +593,7 @@ text-align:center;margin:14px 0 4px;letter-spacing:.01em}
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Systematic Strategies</title>
+<meta name="ltcma-content-asof" content="{SERIES_END:%Y-%m-%d}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{BT_CARD_CSS}{STRAT_CSS}{EMBER_CSS}</style><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
@@ -601,7 +606,7 @@ against the S&amp;P 500 (and the IPC for Mexican equity). Equity curves, drawdow
 full indicator set. Results only — the detection-and-optimisation methodology is proprietary.
 Every validated and archived backtest behind these building blocks is catalogued below
 (the former Backtests page, now merged in) with status filters.</p>
-<p class="asof">As of {ASOF} &middot; out-of-sample &middot; hypothetical, not actual trading results</p>
+<p class="asof">As of {ASOF} &middot; walk-forward series through {SERIES_END:%b %Y} &middot; out-of-sample &middot; hypothetical, not actual trading results</p>
 </div></section>
 <main class="container">
 <section class="block"><h2>Backtest Window</h2>

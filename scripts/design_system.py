@@ -132,7 +132,13 @@ def axis_formats(fig):
             # plotly 2.35 labels a log axis's MAJOR ticks with its hoverformat when it has
             # no tickformat ("100.00", "1,000.00") and every minor digit 5-9 under D1.
             # Trimmed hover (still <= 2 dp) and 2/5 minors only.
-            _upd = dict(hoverformat=NUM_TICK, dtick="D2")
+            # 2026-10-09: "D2" labels its minor ticks with the bare digit, so a growth-of-100
+            # axis read "5 ... 100 ... 2 ... 5 ... 1,000" (Carlos, from a phone). An explicit
+            # 1-2-5 ladder prints each value whole (50, 200, 500); Plotly drops the rungs
+            # outside the visible range, so the start-date slider's re-base still works.
+            _ladder = [m * 10 ** e for e in range(0, 6) for m in (1, 2, 5)]
+            _upd = dict(hoverformat=NUM_TICK, tickmode="array", tickvals=_ladder,
+                        ticktext=[f"{v:,}" for v in _ladder])
         # 2026-09-24: el techo tambien va a las ETIQUETAS DE EJE, no solo al tooltip.
         # Mismo criterio no-destructivo: un tickformat puesto a mano (porcentajes, bps,
         # miles) se respeta; un eje de fecha nunca recibe formato numerico.

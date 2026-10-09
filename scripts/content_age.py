@@ -388,10 +388,25 @@ def ex_json_date(repo, rule, today):
                                                         _sla_text(_age(today, asof), a, r))]])
 
 
+def ex_all(repo, rule, today):
+    """Several contents on one page, each with its own SLA: the page is as stale as its worst.
+    strategies.html (2026-10-09): the EMBER paper-track was graded daily while the four
+    walk-forward curves above it had stopped at Apr 2026 under an "As of <today>" stamp."""
+    subs = [evaluate(repo, sub, today) for sub in rule["rules"]]
+    worst = min(subs, key=lambda x: _ORDER.get(x["grade"], 9))
+    dated = [s for s in subs if s["content_asof"]]
+    oldest = min(dated, key=lambda x: x["content_asof"]) if dated else None
+    findings = [f for s in subs for f in s["findings"]]
+    return {"content_asof": oldest["content_asof"] if oldest else None,
+            "age_days": oldest["age_days"] if oldest else None,
+            "grade": worst["grade"], "findings": findings,
+            "facts": {"parts": [s["facts"] for s in subs]}}
+
+
 EXTRACTORS = {"meta_asof": ex_meta_asof, "regex_date": ex_regex_date, "json_date": ex_json_date,
               "stock_pages": ex_stock_pages, "regime": ex_regime,
               "github_projects": ex_github_projects, "backtests": ex_backtests,
-              "report": ex_report}
+              "report": ex_report, "all": ex_all}
 
 
 def evaluate(repo, rule, today=None):
