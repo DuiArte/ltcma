@@ -186,6 +186,9 @@ Log: $LogFile
 Nothing was committed or pushed; the site is still on the last good model vintage.
 "@
     } catch { }
+    # MODEL_ALERT.txt alone went unread for two Sundays (2026-10-11, 10-18): also surface it
+    # in Downloads\WEBSITE_ALERT_URGENT.txt + a toast.
+    try { & powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\carlo\Scripts\task_failure_monitor.ps1' -Quiet | Out-Null } catch { }
     exit 1
 }
 function Invoke-Native {
@@ -222,6 +225,7 @@ $script:Start = Get-Date
 $mode = if ($DryRun) {'DRY RUN'} elseif ($BuildOnly) {'BUILD ONLY'} else {'LIVE'}
 Log "=== WEEKLY model rebuild START ($mode) ==="
 
+. (Join-Path $PSScriptRoot 'repo_hygiene.ps1')   # Invoke-AbandonedWipStash
 try {
     Set-Location $Repo
 
@@ -237,7 +241,11 @@ try {
         $dirty = $r.Text -split "`n" | Where-Object { $_.Trim() }
         $nonGenerated = $dirty | Where-Object { $_ -notmatch '^.{2}\s+"?(docs/|data/)' }
         # Never fight a human or another agent for the tree (same rule as the watchdog).
-        if ($nonGenerated) { Fail "Working tree DIRTY beyond generated artifacts; refusing to rebuild:`n$($r.Text)" }
+        # ...but WIP idle >= 12 h is abandoned: stash + patch it (repo_hygiene.ps1) rather than
+        # skip the week -- 2026-10-11 and 10-18 were both lost to one forgotten edit.
+        if ($nonGenerated -and -not (Invoke-AbandonedWipStash -Porcelain $nonGenerated -Job 'weekly_model_rebuild')) {
+            Fail "Working tree DIRTY beyond generated artifacts; refusing to rebuild:`n$($r.Text)"
+        }
         (Invoke-Native { git checkout -- docs data }) | Out-Null
         (Invoke-Native { git clean -fd docs data }) | Out-Null
         Log ("Auto-cleaned {0} generated leftovers from a prior interrupted run." -f $dirty.Count) 'WARN'

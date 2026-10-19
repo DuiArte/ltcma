@@ -121,6 +121,11 @@ Log: $LogFile
 Nothing was committed or pushed; the public site is still on the last good build.
 "@
     } catch { }
+    # REFRESH_ALERT.txt sat unread in Scripts\logs for the whole 2026-10-09..10-19 outage.
+    # Surface it where Carlos looks: Downloads\WEBSITE_ALERT_URGENT.txt + a toast.
+    if (-not ($DryRun -or $BuildOnly)) {
+        try { & powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\carlo\Scripts\task_failure_monitor.ps1' -Quiet | Out-Null } catch { }
+    }
     exit 1
 }
 function Invoke-Native {
@@ -154,6 +159,7 @@ $script:Start = Get-Date
 $mode = if ($DryRun) {'DRY RUN'} elseif ($BuildOnly) {'BUILD ONLY'} else {'LIVE'}
 Log "=== Windows-native refresh START ($mode) ==="
 
+. (Join-Path $PSScriptRoot 'repo_hygiene.ps1')   # Invoke-AbandonedWipStash
 try {
     Set-Location $Repo
 
@@ -172,7 +178,11 @@ try {
         # 'UU ...', 'R  a -> b') fell through to "non-generated" and hard-aborted the run.
         $dirty = $r.Text -split "`n" | Where-Object { $_.Trim() }
         $nonGenerated = $dirty | Where-Object { $_ -notmatch '^.{2}\s+"?(docs/|data/)' }
-        if ($nonGenerated) { Fail "Working tree DIRTY beyond generated artifacts:`n$($r.Text)" }
+        # Abandoned WIP (idle >= 12 h) is stashed + patched, not fought over and not
+        # allowed to freeze the site: 2026-10-09..10-19 it blocked 6 refreshes (repo_hygiene.ps1).
+        if ($nonGenerated -and -not (Invoke-AbandonedWipStash -Porcelain $nonGenerated -Job 'daily_refresh')) {
+            Fail "Working tree DIRTY beyond generated artifacts:`n$($r.Text)"
+        }
         (Invoke-Native { git checkout -- docs data }) | Out-Null
         (Invoke-Native { git clean -fd docs data }) | Out-Null
         Log ("Auto-cleaned {0} generated leftovers from a prior interrupted run." -f $dirty.Count) 'WARN'
