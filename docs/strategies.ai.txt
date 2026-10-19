@@ -1,19 +1,19 @@
 LTCMA SYSTEMATIC STRATEGIES — AI COPY (low-token)
-asof=09 Oct 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
+asof=19 Oct 2026; freq=monthly; OOS walk-forward; hypothetical, not actual trading
 names public-safe (no mechanism exposed); rf USD=4.5% BARS=9%
 interactive: site lets reader re-base start date; values below = full window
 fields: code|name|bench|window|metrics...
-SARS|Adaptive US Equity|vs S&P 500|2004-01..2026-04(267m)|CAGR=12.1%|vol=12.3%|Sharpe=0.61|Sortino=0.87|MaxDD=-17.6%|Calmar=0.69|Omega=2.10|GtP=1.10|Recov=65.88|Ulcer=4.2%|VaR95=-5.0%|CVaR95=-7.5%|Tail=1.33|Win=67.4%|Skew=-0.38|Kurt=0.69|Alpha=+3.6%|Beta=0.71|TE=8.0%|IR=0.24|UpCap=0.85|DnCap=0.65|LongestDD=18m
-DUO|Balanced Multi-strategy|vs S&P 500|2007-01..2026-04(231m)|CAGR=9.9%|vol=10.5%|Sharpe=0.51|Sortino=0.71|MaxDD=-15.6%|Calmar=0.64|Omega=2.02|GtP=1.02|Recov=33.08|Ulcer=4.1%|VaR95=-4.9%|CVaR95=-6.7%|Tail=1.07|Win=66.2%|Skew=-0.56|Kurt=0.63|Alpha=+2.2%|Beta=0.56|TE=9.0%|IR=-0.03|UpCap=0.70|DnCap=0.55|LongestDD=24m
-MARS|Defensive Multi-asset|vs S&P 500|1998-04..2026-04(336m)|CAGR=7.3%|vol=8.9%|Sharpe=0.31|Sortino=0.41|MaxDD=-17.6%|Calmar=0.41|Omega=1.94|GtP=0.94|Recov=35.01|Ulcer=6.4%|VaR95=-3.6%|CVaR95=-5.6%|Tail=1.31|Win=68.5%|Skew=-0.53|Kurt=2.07|Alpha=+1.5%|Beta=0.34|TE=12.5%|IR=-0.08|UpCap=0.51|DnCap=0.34|LongestDD=40m
-BARS|Mexican Equity Rotation|vs IPC|2008-05..2026-04(204m)|CAGR=11.4%|vol=14.2%|Sharpe=0.17|Sortino=0.25|MaxDD=-24.1%|Calmar=0.47|Omega=1.92|GtP=0.92|Recov=21.91|Ulcer=7.9%|VaR95=-5.6%|CVaR95=-8.2%|Tail=1.34|Win=60.3%|Skew=-0.12|Kurt=1.32|Alpha=+4.6%|Beta=0.66|TE=10.6%|IR=0.55|UpCap=0.85|DnCap=0.52|LongestDD=54m
+SARS|Adaptive US Equity|vs S&P 500|2004-01..2026-08(271m)|CAGR=12.2%|vol=12.2%|Sharpe=0.63|Sortino=0.89|MaxDD=-17.6%|Calmar=0.69|Omega=2.12|GtP=1.12|Recov=70.56|Ulcer=4.1%|VaR95=-5.0%|CVaR95=-7.5%|Tail=1.33|Win=67.2%|Skew=-0.39|Kurt=0.72|Alpha=+3.6%|Beta=0.71|TE=7.9%|IR=0.23|UpCap=0.85|DnCap=0.65|LongestDD=18m
+DUO|Balanced Multi-strategy|vs S&P 500|2007-01..2026-08(235m)|CAGR=9.9%|vol=10.4%|Sharpe=0.51|Sortino=0.71|MaxDD=-15.6%|Calmar=0.63|Omega=2.02|GtP=1.02|Recov=34.10|Ulcer=4.1%|VaR95=-4.9%|CVaR95=-6.7%|Tail=1.08|Win=66.0%|Skew=-0.56|Kurt=0.62|Alpha=+2.1%|Beta=0.56|TE=8.9%|IR=-0.05|UpCap=0.70|DnCap=0.56|LongestDD=24m
+MARS|Defensive Multi-asset|vs S&P 500|1998-04..2026-08(340m)|CAGR=7.2%|vol=8.9%|Sharpe=0.31|Sortino=0.40|MaxDD=-17.6%|Calmar=0.41|Omega=1.92|GtP=0.92|Recov=35.45|Ulcer=6.4%|VaR95=-3.6%|CVaR95=-5.6%|Tail=1.29|Win=68.2%|Skew=-0.53|Kurt=2.02|Alpha=+1.4%|Beta=0.34|TE=12.5%|IR=-0.10|UpCap=0.51|DnCap=0.35|LongestDD=40m
+BARS|Mexican Equity Rotation|vs IPC|2008-05..2026-08(208m)|CAGR=10.9%|vol=14.1%|Sharpe=0.14|Sortino=0.20|MaxDD=-24.1%|Calmar=0.45|Omega=1.87|GtP=0.87|Recov=20.87|Ulcer=7.9%|VaR95=-5.6%|CVaR95=-8.2%|Tail=1.33|Win=59.6%|Skew=-0.09|Kurt=1.33|Alpha=+4.3%|Beta=0.67|TE=10.5%|IR=0.53|UpCap=0.85|DnCap=0.53|LongestDD=54m
 EMBER 4-SLEEVE ENSEMBLE — LIVE PAPER-TRACK (Finding #38; NOT live capital)
-inception=2026-06-18; asof=2026-10-08; days=78; indexed-to-100; vs a fixed 50/30/20 equity/Treasury/gold reference basket (an asset-class stand-in, NOT the deployed Static Drift-Weight 50/30/20 strategy)
+inception=2026-06-18; asof=2026-10-19; days=85; indexed-to-100; vs a fixed 50/30/20 equity/Treasury/gold reference basket (an asset-class stand-in, NOT the deployed Static Drift-Weight 50/30/20 strategy)
 weights inverse-vol: Anchor 33pct, Rates 42pct, Crypto 7pct, EM 18pct
-latest: ensemble=100.40 reference=99.82
+latest: ensemble=100.32 reference=99.60
 backtest 2017-26: Sharpe=1.79 OOS (+0.44 vs flagship), PBO=0.20; caveats: GFC untestable, benign window, crypto rho 0.48, ~69pct lift = rates sleeve
 OUT-OF-SAMPLE REPLAYS (frozen rules re-run daily on public prices; NOT live trading)
-buy_the_dip | 2026-05-26..2026-10-08 | return +1.60% | max drawdown -0.96% | rules frozen 2026-05-26
-static_diversification | 2026-05-26..2026-10-08 | return -2.76% | max drawdown -5.24% | rules frozen 2026-05-26
+buy_the_dip | 2026-05-26..2026-10-19 | return +0.94% | max drawdown -1.24% | rules frozen 2026-05-26
+static_diversification | 2026-05-26..2026-10-19 | return -2.75% | max drawdown -5.24% | rules frozen 2026-05-26
 crt | FROZEN: no comparable data; not carried forward
-static_drift_weights | 2026-04-30..2026-10-08 | return -1.60% | max drawdown -3.66% | rules frozen 2026-05-30
+static_drift_weights | 2026-04-30..2026-10-19 | return -1.92% | max drawdown -3.66% | rules frozen 2026-05-30
