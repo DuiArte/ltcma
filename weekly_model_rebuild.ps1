@@ -386,6 +386,12 @@ try {
         # This is the single most expensive mistake available in this procedure.
         Log "-- -Publish given: handing off to daily_refresh.ps1 (rebuild docs, commit, push, live-verify)"
         $dr = Join-Path $Repo 'daily_refresh.ps1'
+        # Release the repo lock FIRST. daily_refresh.ps1 is a separate process that takes the
+        # same Global\LTCMA_REPO_LOCK; a mutex is owned per thread, so while we hold it the
+        # child waits its 25-min timeout and Fail()s. Every -Publish since the lock landed
+        # (2026-08-11) deadlocked this way; found on the 2026-10-19 catch-up run. The data
+        # commit is already made, so nothing of ours is in flight once we let go.
+        Exit-RepoLock
         $r = Invoke-Native { & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dr }
         foreach ($l in ($r.Text -split "`n" | Select-Object -Last 25)) { if ($l.Trim()) { Log "   $l" } }
         if ($r.Code -ne 0) { Fail "daily_refresh.ps1 failed after the model rebuild; the model data commit is LOCAL and unpushed. See its own log." }
