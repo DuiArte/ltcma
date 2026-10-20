@@ -386,6 +386,7 @@ linked to the originals. Not investment advice.</p></div></footer>
         f.write(page)
     print(f"ltcma-consensus.html built ({len(pubs)} publishers, {len(d['matrix'])} rows, {len(d.get('divergences', []))} divergences)")
     render_street()
+    render_congress()
 
 
 # ---- Street LTCMA page (decision D14, Carlos 2026-10-07) -------------------------------------
@@ -486,6 +487,114 @@ firms listed. Not investment advice.</p></div></footer>
     with open(STREET_OUT, "w", encoding="utf-8") as f:
         f.write(page)
     print(f"street-ltcma.html built ({n_pub} rows, {len(idx.get('editions', []))} edition(s))")
+
+
+# ---- Congressional activity (Market Intel Track B, House PTRs) ---------------------------------
+CONG_SRC = os.path.join(DATA, "market_intel", "congress_public.json")
+CONG_OUT = os.path.join(DOCS, "congressional-activity.html")
+PARTY = {"D": "D", "R": "R", "I": "I"}
+DIR = {"P": "Buy", "S": "Sell", "S-partial": "Sell (partial)", "E": "Exchange"}
+ATYPE = {"ST": "stock", "OP": "option", "GS": "govt/muni bond", "CS": "corp bond", "EF": "ETF", "MF": "mutual fund",
+         "OT": "other", "PS": "private stock", "HN": "hedge fund", "PE": "private equity", "OI": "other investment"}
+
+
+def money(x):
+    return f"${x / 1e6:,.1f}M" if abs(x) >= 1e6 else f"${x / 1e3:,.0f}K"
+
+
+def render_congress():
+    """House Periodic Transaction Reports (official House Clerk filings), weekly. Built off-repo by
+    Trading_Index/market_intel (congress_house.py -> congress_build.py); render-only here. Senate is a
+    stated coverage gap. Amounts are the disclosure ranges; flows use range midpoints."""
+    if not os.path.exists(CONG_SRC):
+        print("congress: no congress_public.json yet - page not built")
+        return
+    c = json.load(open(CONG_SRC, encoding="utf-8"))
+    cov = c["coverage"]
+    asof = date.fromisoformat(c["as_of"]).strftime("%d %b %Y")
+    h = cov["house"]
+
+    def who(r):
+        return f'{e(r["member"])} <span class="cv">({e(r.get("party") or "?")}-{e(r["state_dst"])})</span>'
+    al = ""
+    lab = {"CLUSTER": "Cluster", "LARGE": "Large (&gt; $500K)", "CHAIR": "Committee chair, sector in jurisdiction",
+           "LATE": "Filed late (&gt; 45 days)", "OPTIONS": "Options"}
+    order = ["CLUSTER", "CHAIR", "LARGE", "OPTIONS", "LATE"]
+    for t in order:
+        items = [a for a in c["alerts"] if a["type"] == t]
+        if not items:
+            continue
+        li = ""
+        for a in items[:25]:
+            if t == "CLUSTER":
+                li += (f'<li><b>{e(a["ticker"])}</b> &middot; {"buys" if a["side"] == "P" else "sales"} by '
+                       f'{len(a["members"])} members ({e(", ".join(a["members"]))}) between {e(a["from"])} and '
+                       f'{e(a["to"])} &middot; about {money(a["notional"])} at range midpoints</li>')
+            else:
+                li += (f'<li>{who(a)} &middot; {DIR.get(a["direction"], e(a["direction"]))} <b>{e(a["ticker"] or "")}</b> '
+                       f'&middot; {e(a["amount"])} &middot; traded {e(a["tx_date"])}, filed {e(a["filed_date"])} '
+                       f'({a["lag_days"]} d) &middot; <a href="{e(a["source"])}">filing</a></li>')
+        more = f'<p class="note">+{len(items) - 25} more in the data.</p>' if len(items) > 25 else ""
+        al += f'<h3 style="font-size:14.5px;margin:1rem 0 .3rem">{lab[t]} <span class="badge">{len(items)}</span></h3><ul class="sumlist">{li}</ul>{more}'
+    mt = "".join(f'<tr><td class="a">{who(m)}</td><td>{m["trades"]}</td><td class="v">{money(m["buy_mid"])}</td>'
+                 f'<td class="v">{money(m["sell_mid"])}</td><td class="v">{m["median_lag"]:.0f} d</td><td>{m["late"]}</td>'
+                 f'<td>{e(m["last_filed"])}</td></tr>' for m in c["members"][:25])
+    fl = ""
+    for w, rows in c["flows"].items():
+        trs = "".join(f'<tr><td class="a">{e(r["sector"])}</td><td>{r["n"]}</td><td class="v">{money(r["buy"])}</td>'
+                      f'<td class="v">{money(r["sell"])}</td><td class="v"><b>{money(r["net"])}</b></td></tr>' for r in rows[:12])
+        fl += (f'<h3 style="font-size:14.5px;margin:1rem 0 .3rem">Last {w.replace("d", " days")} (by filing date)</h3>'
+               f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Trades</th><th>Bought</th>'
+               f'<th>Sold</th><th>Net</th></tr></thead><tbody>{trs}</tbody></table></div>')
+    tr = "".join(f'<tr><td>{e(r["filed_date"])}</td><td class="a">{who(r)}</td><td><b>{e(r["ticker"] or "")}</b></td>'
+                 f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(r["asset"][:70])}</td>'
+                 f'<td>{e(ATYPE.get(r["asset_type"], r["asset_type"]))}</td><td>{DIR.get(r["direction"], e(r["direction"]))}</td>'
+                 f'<td>{e(r["amount"])}</td><td>{e(r["tx_date"])}</td><td>{e(r["owner"])}</td>'
+                 f'<td>{e(r.get("jur") or "")}</td><td><a href="{e(r["source"])}">PDF</a></td></tr>' for r in c["rows"][:400])
+    page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ltcma-content-asof" content="{c['as_of']}">
+<title>Carlos Duarte — Congressional Activity</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{CSS}</style></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
+</div></header>
+<section class="hero"><div class="container">
+<h1>Congressional trading — what members disclose</h1>
+<p class="lede">Stock and bond trades that members of the U.S. House report under the STOCK Act, read from the
+official House Clerk filings every week, with the members' committees attached.</p>
+<p class="asof">Disclosures as of {asof} &middot; House: {h["filings_parsed"]} filings, {h["rows"]} trades since {e(h["since"])}
+&middot; <b>Senate: not covered</b></p>
+</div></section>
+<main class="container">
+<div class="prelim"><b>Coverage.</b> House only. The Senate's disclosure site blocks automated access and this site does
+not work around such blocks, so Senate trades are not shown. {h["needs_ocr"]} House filings are scanned images and
+{h["parse_fail"]} could not be read; they are counted, not dropped.</div>
+<div class="toc"><a href="#alerts">Signals</a><a href="#members">Members</a><a href="#sectors">Sectors</a><a href="#trades">Trades</a><a href="#method">Method</a></div>
+<section class="block" id="alerts"><h2>Signals</h2>{al or '<p class="note">None in the window.</p>'}</section>
+<section class="block" id="members"><h2>Most active members</h2>
+<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Member</th><th>Trades</th><th>Bought</th><th>Sold</th>
+<th>Median filing lag</th><th>Late</th><th>Last filed</th></tr></thead><tbody>{mt}</tbody></table></div></section>
+<section class="block" id="sectors"><h2>Net flow by sector</h2>{fl}</section>
+<section class="block" id="trades"><h2>Trades filed in the last 13 weeks</h2>
+<div class="mi-wrap"><table class="mi"><thead><tr><th>Filed</th><th class="a">Member</th><th>Ticker</th><th>Asset</th><th>Type</th>
+<th>Side</th><th>Amount</th><th>Traded</th><th>Owner</th><th>Jurisdiction</th><th>Source</th></tr></thead><tbody>{tr}</tbody></table></div></section>
+<section class="block" id="method"><h2>Method</h2><p class="note">Members must report a trade within 45 days.
+Amounts are the ranges they disclose. Dollar totals use each range's midpoint and are rough. Dates are keyed on the
+<b>filing date</b>, when the market can first know. Owner: self, SP spouse, JT joint, DC dependent child.
+Dividend reinvestments are dropped, and an amended filing replaces the original. <b>Jurisdiction</b>: JUR-1 means the
+member chairs a committee or subcommittee whose remit covers the stock's sector, JUR-2 is a ranking member, and
+JUR-3 a member. Only current roles count, and the committee-to-sector map is approximate. A cluster is 3 or more
+members trading the same stock the same way within 14 days, totalling $500K or more. Disclosures are public records
+reproduced for research. Not investment advice.</p></section>
+</main>
+<footer class="shell-foot"><div class="container"><p>Source: U.S. House of Representatives, Office of the Clerk,
+financial disclosure reports. Committee data: unitedstates/congress-legislators. Not investment advice.</p></div></footer>
+</body></html>"""
+    with open(CONG_OUT, "w", encoding="utf-8") as f:
+        f.write(page)
+    print(f"congressional-activity.html built ({len(c['rows'])} rows, {len(c['alerts'])} signals)")
 
 
 if __name__ == "__main__":

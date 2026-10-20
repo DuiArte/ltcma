@@ -10,6 +10,9 @@ from design_system import MOBILE_CHARTS_JS
 # itself once market-intel-monthly republishes the JSON.
 _STREET = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data",
                                       "market_intel", "street_ltcma_public.json"))
+# Congress tab (Market Intel Track B) the same way: only once its first data push has been OK'd.
+_CONGRESS = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data",
+                                        "market_intel", "congress_public.json"))
 
 NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="report.html">Full Report</a>'
@@ -20,6 +23,7 @@ NAV = ('<nav><a href="index.html">Dashboard</a>'
        '<a href="regime.html">Regime Tracker</a>'
        '<a href="ltcma-consensus.html">Market Intel</a>'
        + ('<a href="street-ltcma.html">Street LTCMA</a>' if _STREET else '')
+       + ('<a href="congressional-activity.html">Congress</a>' if _CONGRESS else '')
        + '<a href="projects.html">Projects</a>'
        '<a href="glossary.html">Glossary</a>'
        '<a href="index.html#about">About</a></nav>'

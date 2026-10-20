@@ -49,7 +49,10 @@ ARCHIVE_DEBT = "archived edition; republish via TAB_RESYNC (D-20260924-004)"
 BUDGET_DAYS = [(re.compile(r"(?i)model"), 10),
                # ltcma-consensus.html is a MONTHLY edition (Market Intel, task market-intel-monthly,
                # day 1); 38 d = one month + a missed-run margin. MARKET_INTEL_SPEC.md 2/8.
-               (re.compile(r"(?i)consensus"), 38)]
+               (re.compile(r"(?i)consensus"), 38),
+               # congressional-activity.html: WEEKLY House disclosures (Market Intel Track B); the stamp
+               # is the newest filing date, so 9 d = one week + a missed-run margin (MARKET_INTEL_WEEKLY.md)
+               (re.compile(r"(?i)disclosures"), 9)]
 
 
 def _parse(s):
