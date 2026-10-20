@@ -498,6 +498,12 @@ ATYPE = {"ST": "stock", "OP": "option", "GS": "govt/muni bond", "CS": "corp bond
          "OT": "other", "PS": "private stock", "HN": "hedge fund", "PE": "private equity", "OI": "other investment"}
 
 
+def dp2(s):
+    """Filer text (bond coupons '5.000%', CUSIP-like runs) trimmed to 2 decimals: site rule, guard_decimals."""
+    import re
+    return re.sub(r"(\d+\.\d\d)\d+", r"\1", s or "")
+
+
 def money(x):
     return f"${x / 1e6:,.1f}M" if abs(x) >= 1e6 else f"${x / 1e3:,.0f}K"
 
@@ -547,7 +553,7 @@ def render_congress():
                f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Trades</th><th>Bought</th>'
                f'<th>Sold</th><th>Net</th></tr></thead><tbody>{trs}</tbody></table></div>')
     tr = "".join(f'<tr><td>{e(r["filed_date"])}</td><td class="a">{who(r)}</td><td><b>{e(r["ticker"] or "")}</b></td>'
-                 f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(r["asset"][:70])}</td>'
+                 f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(dp2(r["asset"][:70]))}</td>'
                  f'<td>{e(ATYPE.get(r["asset_type"], r["asset_type"]))}</td><td>{DIR.get(r["direction"], e(r["direction"]))}</td>'
                  f'<td>{e(r["amount"])}</td><td>{e(r["tx_date"])}</td><td>{e(r["owner"])}</td>'
                  f'<td>{e(r.get("jur") or "")}</td><td><a href="{e(r["source"])}">PDF</a></td></tr>' for r in c["rows"][:400])
