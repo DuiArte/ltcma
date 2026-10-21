@@ -604,6 +604,12 @@ try:
                 continue
             MARK[k], MARK_SRC[k] = m, "sidecar"
         priced_at = max(priced_at or "", _pk0["as_of"])
+        # One rate per page: the sidecar's curve, tiles and USD returns use its fx_today. A
+        # second live fetch here returned the PREVIOUS bar once on 2026-10-21 (18.42 vs 18.67,
+        # -1.4% on every USD figure for one build), so the sidecar rate wins when it is current.
+        if abs(float(_pk0["fx_today"]) / fx_live - 1) > 0.002:
+            print(f"  WARN live USDMXN {fx_live:.4f} != sidecar {_pk0['fx_today']:.4f} -- using the sidecar's")
+        fx_live = RATE = float(_pk0["fx_today"])
     else:
         print(f"  WARN peak sidecar {_pk0['as_of']} older than quotes {priced_at} -- "
               f"holdings marked from quotes")
@@ -684,6 +690,25 @@ for _, b in _bdf.iterrows():
         row["shares"] = shares_raw
         row["unrealized"]["mxn_cost"] = mxn_cost_raw
 
+# Exact purchase FX from the walk (2026-10-21). The lot cache above froze on 2026-05-26 and
+# new names inherit a blended proxy, so every lot bought since then carried the summer rate
+# (~17.2-17.4) as its buy FX. After the 13/16-Oct buys at 18.3-18.4 that credited the open
+# book with a peso gain it never had: FX leg +1,126,733 shown vs +817,019 exact (scaled).
+# The peak sidecar walks every fill at its own day's rate (cost_usd), the same input as the
+# dual-currency returns, so x_buy = cost_mxn / cost_usd is the position's true blended rate.
+_PKX = {_nk(p["ticker"]): p for p in (_pk0.get("positions", []) if "_pk0" in globals() else [])
+        if not p.get("native") and p.get("cost_usd")}
+_nx = 0
+for r in ATTR["rows"]:
+    p = _PKX.get(_nk(POS_KEY.get(r["ticker"], r["ticker"])))
+    if r["native"] or p is None or abs(float(r.get("shares") or 0.0) - p["shares"]) > 1e-6:
+        continue
+    r["unrealized"]["x_buy"] = p["cost_mxn"] / p["cost_usd"]
+    r["unrealized"]["mxn_cost"] = p["cost_mxn"]
+    r["approx"] = False
+    _nx += 1
+print(f"  FXA: exact per-fill buy FX from the peak sidecar for {_nx}/{len(ATTR['rows'])} rows")
+
 for r in ATTR["rows"]:
     pos_tk = POS_KEY.get(r["ticker"], r["ticker"])
     u = r["unrealized"]
@@ -720,9 +745,12 @@ DECOMP = {}
 for r in ATTR["rows"]:
     btk = POS_KEY.get(r["ticker"], r["ticker"])          # cache ticker -> broker name
     u = r["unrealized"]
-    DECOMP[btk] = dict(fx=float(u.get("fx") or 0.0) * SCALE,
-                       inter=float(u.get("interaction") or 0.0) * SCALE,
-                       native=bool(r.get("native")), approx=bool(r.get("approx")))
+    # keyed by BOTH names: since position_latest.json supersedes the broker cut, holdings
+    # say "CCJ" while POS_KEY maps to "CCJ N", so CCJ's FX leg was silently dropped.
+    for _k in {btk, r["ticker"]}:
+        DECOMP[_k] = dict(fx=float(u.get("fx") or 0.0) * SCALE,
+                          inter=float(u.get("interaction") or 0.0) * SCALE,
+                          native=bool(r.get("native")), approx=bool(r.get("approx")))
 
 # FX is the canonical decomposed leg (from the attribution buckets); Stock is the
 # residual Total − FX, so each row and the total reconcile to the cent (absorbs the
