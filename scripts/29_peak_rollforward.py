@@ -119,7 +119,25 @@ def main():
         print(f"  no US session after {A['as_of']} yet -- anchor republished unchanged")
         return 0
     fxd = fx.reindex(spy.index.union(fx.index)).sort_index().ffill()
-    missing = [t for t, s in px.items()
+    # Yahoo can serve a STALE MXN=X bar for today: on 2026-10-21 alternate fetches returned
+    # 18.674 and 18.4244 for the same date, and the 18.42 one was published (every USD figure
+    # +1.4%). The SIC quotes are the independent witness: .MX / US close of the same ETF is the
+    # peso rate the broker itself prices at. If the bar disagrees with their median by more
+    # than 0.75%, the bar is wrong -- use the implied rate and say so. LAST session only: that
+    # is the unfinished bar. Finished bars are left alone even though Yahoo's MXN=X daily close
+    # tracks the PREVIOUS session's SIC-implied rate (~1 day lag, up to ~1.4%, measured
+    # 09-22..10-21) -- the whole post-05-27 spine shares that convention, and mixing two in one
+    # series would be worse than the lag. Open item, WEBSITE_AGENT_RULES / CORRECTIONS.
+    for d in spy.index[spy.index > asof_a][-1:]:
+        imp = sorted(float(sic[t].loc[d] / px[t].loc[d]) for t in sic
+                     if d in sic[t].index and d in px[t].index and px[t].loc[d] > 0)
+        if len(imp) >= 5:
+            med = imp[len(imp) // 2]
+            if abs(float(fxd.loc[d]) / med - 1) > 0.0075:
+                print(f"  WARN MXN=X {d.date()} bar {float(fxd.loc[d]):.4f} vs SIC-implied median "
+                      f"{med:.4f} ({len(imp)} pairs) -- stale bar, using the implied rate")
+                fxd.loc[d] = med
+    missing =[t for t, s in px.items()
                if s.loc[:asof_a].empty or s.index.max() < days[-1] - pd.Timedelta(days=4)]
     if missing:
         print(f"  pricing FAILED for {missing} -- sidecar left at {A['as_of']}")
