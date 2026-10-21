@@ -1311,6 +1311,8 @@ _DM = "__detalle_movimientos__"           # sentinel source id, not a path
 _DMF = [os.path.join(_HISTD, "DetalleMovimientos_228128_31082026_p%d.csv" % i) for i in range(8)]
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_21092026.csv")]
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_23092026.csv")]   # de-risk 23-sep: 5 ventas (QQQ/VGT/VUG/SOXX x2). Alimentar el walk, NO aflojar guards.
+_DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_07102026.csv")]   # 01-oct: BIL buy, NVDA + XLE sells (XLE row says Cancelada, 2 sh assigned = fill)
+_DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261021.csv")]   # 13-oct VUG buy, 16-oct DCA QQQ/VGT/VUG/SOXX (SOXX 23+10+10 partials)
 _DM_CACHE = None
 
 
