@@ -3,13 +3,13 @@
  "label": "out-of-sample replay",
  "rules_frozen": "2026-05-26",
  "start": "2026-05-26",
- "asof": "2026-10-21",
+ "asof": "2026-10-22",
  "metrics": {
-  "return_pct": 1.31,
-  "max_drawdown_pct": -1.24,
-  "trading_days": 103,
+  "return_pct": 0.67,
+  "max_drawdown_pct": -1.38,
+  "trading_days": 104,
   "n_trades": 10,
-  "open_positions": 3
+  "open_positions": 2
  },
  "seam": {
   "check": "each sleeve's daily equity vs the frozen equity file (relative), and its trade entry dates vs the frozen trade list",
@@ -125,6 +125,7 @@
   {"date":"2026-10-16","value":100.81},
   {"date":"2026-10-19","value":100.96},
   {"date":"2026-10-20","value":101.08},
-  {"date":"2026-10-21","value":101.31}
+  {"date":"2026-10-21","value":101.32},
+  {"date":"2026-10-22","value":100.67}
  ]
 }
