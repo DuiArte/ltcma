@@ -151,6 +151,7 @@ def main():
                           f'<div class="bar"><i style="width:{float(shown):.1f}%"></i></div>')
         odds_html += f'<div class="odd"><h4>{e(t["label"])}</h4>{inner}</div>'
     taken = (pm.get("taken_at") or "")[:16].replace("T", " ")
+    fed_html = render_fed_path()
 
     # ---- matrix
     head = "".join(f'<th class="pub" title="{e(p["publisher"])} — {e(p["product"])}">{e(p["short"])}'
@@ -329,7 +330,8 @@ Prediction-market odds for the macro calls are shown alongside.</p>
 <section class="block" id="odds"><h2>Market-implied odds</h2>
 <p class="note">Prices on Kalshi and Polymarket, read from their public market data (snapshot {e(taken)} CDMX).
 A price of 0.83 means the market pays out as if the event were 83% likely. Thin markets are skipped.</p>
-<div class="odds">{odds_html or '<p class="note">No snapshot available.</p>'}</div></section>
+{fed_html}
+<div class="odds" style="margin-top:1rem">{odds_html or '<p class="note">No snapshot available.</p>'}</div></section>
 
 <section class="block" id="matrix"><h2>The grid — expected annual return, % nominal</h2>
 <p class="note">Each publisher's long-horizon forecast for the asset class (the horizon closest to 12 years when several
@@ -487,6 +489,55 @@ firms listed. Not investment advice.</p></div></footer>
     with open(STREET_OUT, "w", encoding="utf-8") as f:
         f.write(page)
     print(f"street-ltcma.html built ({n_pub} rows, {len(idx.get('editions', []))} edition(s))")
+
+
+# ---- Fed path: market-implied odds meeting by meeting (Carlos 2026-10-22) ---------------------
+FED_SRC = os.path.join(DATA, "market_intel", "fed_path_public.json")
+
+
+def pc(x):
+    return str((Decimal(str(x)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)) + "%"
+
+
+def render_fed_path():
+    """'If no change is expected this month, when does the market see one?' One row per FOMC meeting:
+    Kalshi cut / hold / hike odds (Polymarket alongside where it lists the meeting). Refreshed daily by
+    market-intel-daily. No 'as of' wording: the page's freshness stamp stays the monthly edition."""
+    if not os.path.exists(FED_SRC):
+        return ""
+    f = json.load(open(FED_SRC, encoding="utf-8"))
+    ms = f.get("meetings") or []
+    if not ms:
+        return ""
+    nx, fm = f.get("next"), f.get("first_likely_move")
+
+    def when(d):
+        return date.fromisoformat(d).strftime("%d %b %Y")
+    k = nx["kalshi"]
+    top = max(("cut", "hold", "hike"), key=lambda x: k[x])
+    head = f'Next meeting ({when(nx["date"])}): the market prices a <b>{top}</b> at {pc(k[top])}. '
+    if fm and fm["meeting"] != nx["meeting"]:
+        head += (f'The first meeting where a move is more likely than not is <b>{when(fm["date"])}</b>: '
+                 f'a <b>{fm["direction"]}</b> at {pc(fm["prob"])}.')
+    elif fm:
+        head += f'A {fm["direction"]} is already more likely than not at this meeting.'
+    else:
+        head += 'No meeting in the listed horizon has a move priced above 50%.'
+    rows = ""
+    for m in ms:
+        kk, p = m["kalshi"], m.get("polymarket")
+        thin = ' <span class="cv" title="wide quotes or last trades only">thin</span>' if kk["quality"] != "firm" else ""
+        pm_cell = f'{pc(p["cut"])} / {pc(p["hold"])} / {pc(p["hike"])}' if p else "—"
+        rows += (f'<tr><td class="a">{e(m["meeting"])} <span class="cv">{when(m["date"])}</span>{thin}</td>'
+                 f'<td class="v">{pc(kk["cut"])}</td><td class="v"><b>{pc(kk["hold"])}</b></td><td class="v">{pc(kk["hike"])}</td>'
+                 f'<td class="v">{pm_cell}</td></tr>')
+    return (f'<h3 style="font-size:15px;margin:0 0 .4rem">Fed path, meeting by meeting</h3>'
+            f'<p class="note" style="max-width:60em">{head}</p>'
+            f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">FOMC meeting</th><th>Cut</th><th>Hold</th>'
+            f'<th>Hike</th><th>Polymarket (cut / hold / hike)</th></tr></thead><tbody>{rows}</tbody></table></div>'
+            f'<p class="legend">Kalshi decision markets, mid-price where quoted tightly. Each meeting is priced on its own; '
+            f'"thin" = wide quotes or last trades only. Market prices from {e((f.get("taken_at") or "")[:10])}, refreshed '
+            f'every weekday. Not investment advice.</p>')
 
 
 # ---- Congressional activity (Market Intel Track B, House PTRs) ---------------------------------
