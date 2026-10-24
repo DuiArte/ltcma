@@ -37,6 +37,7 @@ import yfinance as yf
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import paths
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 
 UPD = paths.cuser("Documents", "portfolio_updates")
 OUTF = paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "peak_sidecar.json")
@@ -57,7 +58,8 @@ def _anchor():
 
 
 def _closes(sym, start):
-    h = yf.download(sym, start=start, interval="1d", auto_adjust=True, progress=False)
+    h = yf.download(sym, start=start, interval="1d", auto_adjust=True, progress=False,
+                    session=ys.SESSION)
     if isinstance(h.columns, pd.MultiIndex):
         h.columns = h.columns.get_level_values(0)
     s = h["Close"].dropna()

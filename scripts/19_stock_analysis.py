@@ -16,6 +16,7 @@ import requests
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
@@ -133,7 +134,7 @@ def tiles(items):
         for k, v in items) + '</div>')
 
 def analyze(ticker):
-    t = yf.Ticker(ticker)
+    t = yf.Ticker(ticker, session=ys.SESSION)
     info = t.info or {}
     if not info.get("currentPrice") and not info.get("regularMarketPrice"):
         print(f"  {ticker}: no data, skipped"); return None
@@ -423,7 +424,9 @@ def buffett_row(ticker):
     info = None
     for _ in range(2):                       # one retry; threaded fetch of ~500 names
         try:
-            info = yf.Ticker(ticker).info or {}
+            info = yf.Ticker(ticker, session=ys.SESSION).info or {}
+            break
+        except ys.YahooBlocked:              # 401/403/410/429 or breaker: a gap, never retried
             break
         except Exception:
             time.sleep(0.4)
@@ -583,6 +586,22 @@ else:
         + _sec(f"Mexican IPC &mdash; {ipc_cov}/{len(IPC_SCREEN)} with data", ipc_rows)
         + '</section>')
     print(f"  screener coverage: US {us_cov}/{len(US_UNIVERSE)}, IPC {ipc_cov}/{len(IPC_SCREEN)}")
+    # Publish guard (2026-10-23). yahoo_session stops Yahoo for the rest of this process after a
+    # 403/410/429 (and the crumb side after a 401), so a block mid-screen leaves a table built from
+    # whatever came back first -- like the 287/503 US + 0/33 IPC page committed on 2026-08-28.
+    # Then, or below 90% coverage (503/503 US when the screen was added), stocks.html is NOT rewritten:
+    # the daily refresh restored it from HEAD before this step, so the committed page stays
+    # (25_stock_picks.py normally overwrites it with the merged page anyway).
+    _floor = 0.90
+    _short = [f"{lbl} {c}/{n}" for lbl, c, n in (("US", us_cov, len(US_UNIVERSE)),
+                                                 ("IPC", ipc_cov, len(IPC_SCREEN)))
+              if c < _floor * n]
+    if ys.blocked() or _short:
+        SCREENER = None
+        _why = "; ".join(filter(None, [ys.blocked() and f"Yahoo blocked: {ys.blocked()}",
+                                       _short and "coverage below 90%: " + ", ".join(_short)]))
+        print(f"  screener NOT published ({_why}); stocks.html left at its committed copy")
+        ys.alert(f"19 screener not published ({_why}); stocks.html kept at its committed copy")
 
 land = f"""<section class="hero"><div class="container">
 <h1>Equity Research</h1>
@@ -596,6 +615,10 @@ valuation. A reusable tool: run it on any ticker.</p>
 <div class="scards">{cards}</div></section>
 {SCREENER}
 {METHOD}</main>"""
-open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(
-    page("Equity Research — CFA-style Stock Analysis", land))
-print(f"\nLanding page: stocks.html ({len(existing)} companies)")
+if SCREENER is None:                     # publish guard above: keep the committed stocks.html
+    print(f"\nLanding page: stocks.html NOT rewritten (partial screener); "
+          f"{len(done)}/{len(watch)} stock pages refreshed")
+else:
+    open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(
+        page("Equity Research — CFA-style Stock Analysis", land))
+    print(f"\nLanding page: stocks.html ({len(existing)} companies)")

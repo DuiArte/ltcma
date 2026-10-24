@@ -221,6 +221,21 @@ try {
     Pop-Location
     if ($rootChk -ne $Repo) { Fail "paths.ROOT resolves to '$rootChk', expected '$Repo'" }
     Log "Python env OK; paths.ROOT = $rootChk"
+    # Yahoo transport self-test (2026-10-23; offline, nothing is sent). Exit 1 = a policy failure:
+    # a script in the repo would reach Yahoo outside scripts\yahoo_session.py (a browser-
+    # impersonating client), or the honest layers did not install -- abort before any fetch.
+    # Exit 2 = untested yfinance/curl_cffi versions, or CURL_IMPERSONATE was set (removed in every
+    # process that imports the helper) -- warn and continue.
+    Push-Location $Scripts
+    $yst = Invoke-Native { python yahoo_session.py --selftest }
+    Pop-Location
+    if ($yst.Code -eq 2) {
+        Log ("Yahoo transport self-test WARN (continuing):`n{0}" -f $yst.Text) 'WARN'
+    } elseif ($yst.Code -ne 0) {
+        Fail ("Yahoo transport self-test FAILED (fetch policy: no browser impersonation):`n{0}" -f $yst.Text)
+    } else {
+        Log "Yahoo transport self-test OK."
+    }
     if ($DryRun) {
         Log "=== DRY RUN OK ($([math]::Round(((Get-Date)-$script:Start).TotalSeconds))s) ==="
         exit 0
@@ -280,6 +295,18 @@ try {
     Run-Step 'guard_no_snapshot.py'  -LoadBearing | Out-Null
     Pop-Location
     Log "Site rebuild complete."
+    # Yahoo fetch-policy gaps (2026-10-23): scripts\yahoo_session.py never retries a 401/403/410/
+    # 429, stops Yahoo for the rest of that script, and appends each block (and each page kept at
+    # its committed copy by 19/25) to YAHOO_ALERT.txt. Best-effort steps discard their stderr on
+    # success, so today's lines are surfaced here.
+    $yAlert = Join-Path $LogDir 'YAHOO_ALERT.txt'
+    if (Test-Path $yAlert) {
+        $yToday = @(Select-String -Path $yAlert -Pattern ('^' + [regex]::Escape($Today)))
+        if ($yToday.Count -gt 0) {
+            Log ("Yahoo refused/blocked requests today ({0} line(s)) -- recorded gaps, nothing retried:" -f $yToday.Count) 'WARN'
+            $yToday | Select-Object -Last 10 | ForEach-Object { Log "  $($_.Line)" 'WARN' }
+        }
+    }
 
     # ---- 4. mirror backup -----------------------------------------------------
     if (-not (Test-Path $Backup)) { New-Item -ItemType Directory -Force $Backup | Out-Null }

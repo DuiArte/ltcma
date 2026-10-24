@@ -24,6 +24,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 
 ANA = os.path.expanduser("~/capstone/data/analytics")  # exists on both Win + WSL homes
 G_CAP = 0.045
@@ -104,7 +105,9 @@ def fundamentals(ticker):
     info = None
     for _ in range(2):
         try:
-            info = yf.Ticker(ticker).info or {}
+            info = yf.Ticker(ticker, session=ys.SESSION).info or {}
+            break
+        except ys.YahooBlocked:              # 401/403/410/429 or breaker: a gap, never retried
             break
         except Exception:
             time.sleep(0.4)
@@ -132,8 +135,8 @@ def fundamentals(ticker):
     # 12-1 momentum: 12m return excluding the most recent month
     mom = None
     try:
-        h = yf.Ticker(ticker).history(period="14mo", interval="1mo",
-                                      auto_adjust=True)["Close"].dropna()
+        h = yf.Ticker(ticker, session=ys.SESSION).history(period="14mo", interval="1mo",
+                                                          auto_adjust=True)["Close"].dropna()
         if len(h) >= 13:
             mom = float(h.iloc[-2] / h.iloc[-13] - 1)
     except Exception:
@@ -170,6 +173,16 @@ def build_universe():
             "picker: 0/%d fundamentals fetched -- yfinance returned empty info for every ticker "
             "(rate-limited or offline). stocks.html cannot be rebuilt this run; retain the prior "
             "page and retry next cycle." % len(tickers))
+    # Publish guard (2026-10-23): after a Yahoo block yahoo_session refuses the rest of this
+    # process's Yahoo calls, so the picks would be ranked over whichever names answered first (and
+    # momentum would be missing). Same contract as above: no partial picks, keep the prior page.
+    if ys.blocked() or len(funds) < 0.90 * len(tickers):
+        why = "; ".join(filter(None, [ys.blocked() and "Yahoo blocked: %s" % ys.blocked(),
+                                      "%d/%d fundamentals fetched" % (len(funds), len(tickers))]))
+        ys.alert("picker: picks not rebuilt (%s); stocks.html kept at its committed copy" % why)
+        raise RuntimeError("picker: %s -- publish floor not met (needs no Yahoo block and >= 90%% "
+                           "of the universe). stocks.html is not rebuilt this run; the prior page "
+                           "is kept." % why)
     fdf = pd.DataFrame(funds).set_index("ticker")
 
     s = sens.set_index("ticker")

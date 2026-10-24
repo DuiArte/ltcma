@@ -13,4 +13,9 @@ openpyxl
 xlrd
 markdown
 plotly
-yfinance
+# PINNED (2026-10-23): scripts/yahoo_session.py -- the honest transport every yfinance call goes
+# through (no browser impersonation) -- patches yfinance/curl_cffi internals that were checked
+# against exactly these versions. Upgrade only together with a re-check of those layers;
+# `python scripts/yahoo_session.py --selftest` warns (exit 2) on any other version.
+yfinance==1.3.0
+curl_cffi==0.15.0

@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 import plotly.graph_objects as go
 
 import paths
@@ -103,7 +104,7 @@ _lo = (df["Fecha"].min() - pd.Timedelta(days=70)).strftime("%Y-%m-%d")
 _syms = sorted({TICKER_MAP[t] for t in df["ticker"].unique() if t in TICKER_MAP})
 try:
     _hist = yf.download(_syms, start=_lo, interval="1d",
-                        auto_adjust=True, progress=False)["Close"]
+                        auto_adjust=True, progress=False, session=ys.SESSION)["Close"]
     if isinstance(_hist, pd.Series):
         _hist = _hist.to_frame(name=_syms[0])
     if getattr(_hist.index, "tz", None) is not None:
@@ -230,7 +231,7 @@ latest = df[df["Fecha"] == df["Fecha"].max()].copy()
 asof_excel = df["Fecha"].max().strftime("%d %b %Y")
 
 try:
-    fx_live = float(yf.Ticker("MXN=X").history(period="2d")["Close"].iloc[-1])
+    fx_live = float(yf.Ticker("MXN=X", session=ys.SESSION).history(period="2d")["Close"].iloc[-1])
 except Exception:
     fx_live = RATE
 RATE = fx_live
@@ -241,7 +242,7 @@ to_fetch = sorted({TICKER_MAP[t] for t in latest["ticker"] if t in TICKER_MAP})
 if to_fetch:
     try:
         ld = yf.download(to_fetch, period="5d", interval="1d",
-                         auto_adjust=True, progress=False)["Close"]
+                         auto_adjust=True, progress=False, session=ys.SESSION)["Close"]
         if isinstance(ld, pd.Series):
             ld = ld.to_frame(name=to_fetch[0])
         live_px = {c: float(ld[c].dropna().iloc[-1]) for c in ld.columns

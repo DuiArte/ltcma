@@ -56,6 +56,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # offline, nothing sent: every yfinance call goes through scripts/yahoo_session.py (one
+      # honest User-Agent, no browser impersonation); non-zero = do not fetch (2026-10-23)
+      - name: Yahoo transport self-test
+        run: python scripts/yahoo_session.py --selftest
+
       # the pipeline scripts expect the project at ~/LTCMA
       - name: Link workspace to ~/LTCMA
         run: ln -sfn "$GITHUB_WORKSPACE" "$HOME/LTCMA"

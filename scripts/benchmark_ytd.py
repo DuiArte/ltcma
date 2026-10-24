@@ -94,6 +94,7 @@ def build_link():
     """One-off (re-runnable): daily SPY adjusted close + spine USD/MXN, year-end -> first trade."""
     import pandas as pd
     import yfinance as yf
+    import yahoo_session as ys          # honest Yahoo transport, no browser impersonation (2026-10-23)
     pk = json.load(open(cuser("Documents", "CarlosDuarteWebsite", "real_numbers", "peak_sidecar.json"),
                         encoding="utf-8"))
     c = sorted(pk["curve"], key=lambda r: r["d"])
@@ -103,7 +104,8 @@ def build_link():
     h.index = h.index.tz_convert("UTC")
     fx = h.groupby(h.index.date).last()                # Dukascopy H1, last bar of each UTC day
     px = yf.download("SPY", start=(ye - timedelta(days=10)).isoformat(),
-                     end=(first + timedelta(days=1)).isoformat(), auto_adjust=False, progress=False)
+                     end=(first + timedelta(days=1)).isoformat(), auto_adjust=False, progress=False,
+                     session=ys.SESSION)
     adj = px["Adj Close"]
     adj = (adj.iloc[:, 0] if hasattr(adj, "columns") else adj).dropna()
     days = [d.date() for d in adj.index if ye - timedelta(days=7) <= d.date() <= first]

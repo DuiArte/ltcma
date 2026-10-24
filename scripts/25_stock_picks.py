@@ -295,8 +295,28 @@ document.querySelectorAll('.pills').forEach(function(grp){
 </script>"""
 
 
+def _keep_committed_page():
+    """picker could not rebuild the picks (Yahoo block, < 90% fundamentals, outage). Earlier in
+    the same refresh 19_stock_analysis.py may already have rewritten docs/stocks.html with its
+    own landing page, so "not writing" is not enough to keep the committed picks page: restore
+    it from HEAD (2026-10-23). Nothing is fetched; a git failure leaves the file as it is."""
+    import subprocess
+    from paths import ROOT
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "checkout", "HEAD", "--", "docs/stocks.html"],
+                           capture_output=True, text=True, timeout=60)
+        print("stocks.html: committed copy kept" if r.returncode == 0 else
+              f"stocks.html: could not restore the committed copy ({r.stderr.strip()[:200]})")
+    except Exception as e:                                              # noqa: BLE001
+        print(f"stocks.html: could not restore the committed copy ({e})")
+
+
 def main():
-    df, weights, meta = picker.build_universe()
+    try:
+        df, weights, meta = picker.build_universe()
+    except Exception:
+        _keep_committed_page()
+        raise                                    # non-zero exit: the refresh log shows why
     sig_html, n_sens, n_fomc = signals_section()
     asof = pd.Timestamp.today().strftime("%d %b %Y")
 

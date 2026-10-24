@@ -11,6 +11,7 @@ import requests
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 
@@ -72,7 +73,7 @@ comp["GPR"] = gpr.reindex(idx)
 # as cycle stress, consistent with the other "elevated = stress" inputs. ---
 try:
     sox = yf.download("^SOX", period="max", interval="1mo",
-                      auto_adjust=True, progress=False)["Close"].dropna()
+                      auto_adjust=True, progress=False, session=ys.SESSION)["Close"].dropna()
     if hasattr(sox, "columns"):
         sox = sox.iloc[:, 0]
     sox.index = pd.to_datetime(sox.index).tz_localize(None) + pd.offsets.MonthEnd(0)
@@ -184,7 +185,7 @@ fig.update_layout(title="Composite stress index (z-score, 4 facets) · shaded = 
 
 # ---------- VIX bucket forward returns (fresh from yfinance) ----------
 spx = yf.download("^GSPC", period="20y", interval="1d",
-                  auto_adjust=True, progress=False)["Close"].dropna()
+                  auto_adjust=True, progress=False, session=ys.SESSION)["Close"].dropna()
 if hasattr(spx, "columns"):                     # MultiIndex protection
     spx = spx.iloc[:, 0]
 spx.index = pd.to_datetime(spx.index).tz_localize(None)

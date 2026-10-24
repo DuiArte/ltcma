@@ -66,6 +66,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
@@ -228,7 +229,7 @@ _lo = (df["Fecha"].min() - pd.Timedelta(days=70)).strftime("%Y-%m-%d")  # cover 
 _syms = sorted({TICKER_MAP[t] for t in df["ticker"].unique() if t in TICKER_MAP})
 try:
     _hist = yf.download(_syms, start=_lo, interval="1d",
-                        auto_adjust=True, progress=False)["Close"]
+                        auto_adjust=True, progress=False, session=ys.SESSION)["Close"]
     if isinstance(_hist, pd.Series):
         _hist = _hist.to_frame(name=_syms[0])
     if getattr(_hist.index, "tz", None) is not None:
@@ -544,7 +545,7 @@ print(f"  broker snapshot: {len(latest)} equity positions @ {asof_excel} | GBMF2
 
 # refresh USDMXN to the live rate (falls back to FRED rate if yfinance fails)
 try:
-    fx_live = float(yf.Ticker("MXN=X").history(period="2d")["Close"].iloc[-1])
+    fx_live = float(yf.Ticker("MXN=X", session=ys.SESSION).history(period="2d")["Close"].iloc[-1])
 except Exception:
     fx_live = RATE
 RATE = fx_live          # used by cval() for the MXN/USD toggle
@@ -576,7 +577,7 @@ try:
     _mx = sorted({_TM[k] for k in _HELD if k in _TM})
     _us = sorted(k for k in _HELD if k not in _TM and k != "GMEXICOB")
     ld = yf.download(_mx + _us, period="5d", interval="1d",
-                     auto_adjust=True, progress=False)["Close"]
+                     auto_adjust=True, progress=False, session=ys.SESSION)["Close"]
     if isinstance(ld, pd.Series):
         ld = ld.to_frame(name=(_mx + _us)[0])
     live_px = {c: float(ld[c].dropna().iloc[-1]) for c in ld.columns if ld[c].dropna().size}
@@ -1289,7 +1290,8 @@ def _costasof(t, when):
         else: break
     return best if best is not None else lst[0][1]
 try:
-    _fxh = yf.Ticker("MXN=X").history(start="2026-03-15", end="2026-06-16", auto_adjust=False)
+    _fxh = yf.Ticker("MXN=X", session=ys.SESSION).history(start="2026-03-15", end="2026-06-16",
+                                                           auto_adjust=False)
     _fxpts = sorted((d.date(), float(c)) for d,c in zip(_fxh.index, _fxh["Close"]))
 except Exception:
     _fxpts = []

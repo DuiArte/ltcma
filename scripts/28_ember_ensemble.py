@@ -29,6 +29,7 @@ from datetime import date
 
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 
 from paths import DATA_S as DATA
 
@@ -75,7 +76,7 @@ def fetch_closes():
     """Daily adjusted-close panel for every constituent, forward-filled on the
     common (SPY) trading calendar. Returns None on a total fetch failure."""
     df = yf.download(ALL_TICKERS, period="6mo", interval="1d",
-                     auto_adjust=True, progress=False)
+                     auto_adjust=True, progress=False, session=ys.SESSION)
     if df is None or df.empty:
         return None
     closes = df["Close"] if "Close" in df.columns.get_level_values(0) else df
@@ -111,7 +112,7 @@ def fetch_splits(tickers, since):
     line while the market moved +0.17% (found 2026-10-07)."""
     out = {}
     for t in tickers:
-        s = yf.Ticker(t).splits
+        s = yf.Ticker(t, session=ys.SESSION).splits
         if s is None or len(s) == 0:
             continue
         s.index = pd.to_datetime(s.index).tz_localize(None).normalize()

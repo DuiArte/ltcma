@@ -3,6 +3,7 @@ import io, time, sys
 import pandas as pd
 import requests
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 
 import paths as _paths                  # repo-anchored (migration 2026-08-07)
 DATA = _paths.DATA_S
@@ -43,7 +44,7 @@ def fetch_prices():
     tickers = list(UNIVERSE.values())
     print(f"Downloading {len(tickers)} tickers from Yahoo Finance...")
     raw = yf.download(tickers, period="max", interval="1mo",
-                      auto_adjust=True, progress=False)
+                      auto_adjust=True, progress=False, session=ys.SESSION)
     close = raw["Close"] if isinstance(raw.columns, pd.MultiIndex) else raw
     close = close.rename(columns={v: k for k, v in UNIVERSE.items()})
     close = close[list(UNIVERSE.keys())]

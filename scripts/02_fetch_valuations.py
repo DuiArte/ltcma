@@ -3,6 +3,7 @@ Free source: yfinance .info + dividend history fallback."""
 import json
 import pandas as pd
 import yfinance as yf
+import yahoo_session as ys              # honest Yahoo transport, no browser impersonation (2026-10-23)
 
 import paths as _paths                  # repo-anchored (migration 2026-08-07)
 DATA = _paths.DATA_S
@@ -17,7 +18,7 @@ rows = []
 for name, tk in EQUITY_ETF.items():
     rec = {"asset": name, "ticker": tk}
     try:
-        t = yf.Ticker(tk)
+        t = yf.Ticker(tk, session=ys.SESSION)
         info = t.info or {}
         rec["trailingPE"] = info.get("trailingPE")
         rec["info_yield"] = info.get("yield")  # ETF distribution yield (decimal)

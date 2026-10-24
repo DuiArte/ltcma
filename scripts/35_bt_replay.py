@@ -129,7 +129,10 @@ def _closed_only(df):
 def fetch(btd_data, tickers):
     """Fresh daily OHLC through the private loader's own fetch (`data._yf_one`: yfinance,
     auto_adjust=True, from 2010-01-01) -- the call that built the frozen caches, minus the cache
-    write. All tickers are cut to their common last CLOSED session; calendars must agree."""
+    write. All tickers are cut to their common last CLOSED session; calendars must agree.
+    The private loader calls yf.download WITHOUT session= (yfinance would build its Chrome-
+    impersonating default); importing yahoo_session first swaps in the honest session (2026-10-23)."""
+    import yahoo_session  # noqa: F401
     out = {t: _closed_only(btd_data._yf_one(t).sort_index()) for t in tickers}
     last = min(df.index[-1] for df in out.values())
     out = {t: df[df.index <= last] for t, df in out.items()}
