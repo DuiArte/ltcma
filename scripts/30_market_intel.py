@@ -560,9 +560,12 @@ def money(x):
 
 
 def render_congress():
-    """House Periodic Transaction Reports (official House Clerk filings), weekly. Built off-repo by
-    Trading_Index/market_intel (congress_house.py -> congress_build.py); render-only here. Senate is a
-    stated coverage gap. Amounts are the disclosure ranges; flows use range midpoints."""
+    """Congressional Periodic Transaction Reports, weekly. Built off-repo by Trading_Index/market_intel
+    (congress_house.py + congress_senate_mirror.py -> congress_build.py); render-only here. House: our own
+    parse of the House Clerk PDFs. Senate (and scanned House PDFs): the open dataset built from the official
+    filings, on the page with Carlos's OK; those rows carry via=mirror and are marked with a dagger.
+    Without mirror rows the page falls back to House-only wording. Amounts are the disclosure ranges; flows
+    use range midpoints."""
     if not os.path.exists(CONG_SRC):
         print("congress: no congress_public.json yet - page not built")
         return
@@ -570,6 +573,14 @@ def render_congress():
     cov = c["coverage"]
     asof = date.fromisoformat(c["as_of"]).strftime("%d %b %Y")
     h = cov["house"]
+    sen = cov.get("senate") or {}
+    mirror = sen.get("status") == "mirror"
+    MAXROWS = 400
+    n_sen = sum(1 for r in c["rows"] if r.get("chamber") == "Senate")
+
+    def src_link(x):
+        lab = "PDF" if str(x["source"]).lower().endswith(".pdf") else "filing"
+        return f'<a href="{e(x["source"])}">{lab}</a>{"&dagger;" if x.get("via") == "mirror" else ""}'
 
     def who(r):
         return f'{e(r["member"])} <span class="cv">({e(r.get("party") or "?")}-{e(r["state_dst"])})</span>'
@@ -590,7 +601,7 @@ def render_congress():
             else:
                 li += (f'<li>{who(a)} &middot; {DIR.get(a["direction"], e(a["direction"]))} <b>{e(a["ticker"] or "")}</b> '
                        f'&middot; {e(a["amount"])} &middot; traded {e(a["tx_date"])}, filed {e(a["filed_date"])} '
-                       f'({a["lag_days"]} d) &middot; <a href="{e(a["source"])}">filing</a></li>')
+                       f'({a["lag_days"]} d) &middot; {src_link(a)}</li>')
         more = f'<p class="note">+{len(items) - 25} more in the data.</p>' if len(items) > 25 else ""
         al += f'<h3 style="font-size:14.5px;margin:1rem 0 .3rem">{lab[t]} <span class="badge">{len(items)}</span></h3><ul class="sumlist">{li}</ul>{more}'
     mt = "".join(f'<tr><td class="a">{who(m)}</td><td>{m["trades"]}</td><td class="v">{money(m["buy_mid"])}</td>'
@@ -607,7 +618,36 @@ def render_congress():
                  f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(dp2(r["asset"][:70]))}</td>'
                  f'<td>{e(ATYPE.get(r["asset_type"], r["asset_type"]))}</td><td>{DIR.get(r["direction"], e(r["direction"]))}</td>'
                  f'<td>{e(r["amount"])}</td><td>{e(r["tx_date"])}</td><td>{e(r["owner"])}</td>'
-                 f'<td>{e(r.get("jur") or "")}</td><td><a href="{e(r["source"])}">PDF</a></td></tr>' for r in c["rows"][:400])
+                 f'<td>{e(r.get("jur") or "")}</td><td>{src_link(r)}</td></tr>' for r in c["rows"][:MAXROWS])
+    capnote = (f'<p class="note">Showing the newest {MAXROWS} of {len(c["rows"])} trades. All of them are in the '
+               f'<a href="https://github.com/DuiArte/ltcma/blob/main/data/market_intel/congress_public.json">data file</a>.</p>'
+               if len(c["rows"]) > MAXROWS else "")
+    if mirror:
+        lede = ("Stock and bond trades that members of the U.S. House and Senate report under the STOCK Act, updated "
+                "every week, with the members' committees attached.")
+        cover = (f'House: {h["filings_parsed"]} filings, {h["rows"]} trades since {e(h["since"])} &middot; '
+                 f'Senate: {sen.get("rows", n_sen)} trades')
+        boxtxt = (f'<b>Coverage.</b> Both chambers. <b>House</b> trades are read by this site from the House Clerk\'s '
+                  f'filings. <b>Senate</b> trades, and the House filings that are scanned images, come from an open '
+                  f'dataset built from the official filings (marked &dagger;). The Senate\'s disclosure site blocks '
+                  f'automated access, and this site does not work around such blocks. On the House filings both '
+                  f'read, 99.6% of our trades matched the dataset exactly. {h["needs_ocr"]} scanned House filings '
+                  f'are still unread and {h["parse_fail"]} could not be read; they are counted, not dropped.')
+        foot = ('Sources: U.S. House of Representatives, Office of the Clerk, and U.S. Senate, Office of Public Records, '
+                'financial disclosure reports. Senate and scanned House filings (&dagger;): the open dataset '
+                '<a href="https://huggingface.co/datasets/austin-starks/congressional-stock-trades">'
+                'austin-starks/congressional-stock-trades</a>, built from those filings. Committee data: '
+                'unitedstates/congress-legislators. Not investment advice.')
+    else:
+        lede = ("Stock and bond trades that members of the U.S. House report under the STOCK Act, read from the "
+                "official House Clerk filings every week, with the members' committees attached.")
+        cover = (f'House: {h["filings_parsed"]} filings, {h["rows"]} trades since {e(h["since"])} &middot; '
+                 f'<b>Senate: not covered</b>')
+        boxtxt = (f'<b>Coverage.</b> House only. The Senate\'s disclosure site blocks automated access and this site '
+                  f'does not work around such blocks, so Senate trades are not shown. {h["needs_ocr"]} House filings '
+                  f'are scanned images and {h["parse_fail"]} could not be read; they are counted, not dropped.')
+        foot = ('Source: U.S. House of Representatives, Office of the Clerk, financial disclosure reports. Committee '
+                'data: unitedstates/congress-legislators. Not investment advice.')
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="ltcma-content-asof" content="{c['as_of']}">
@@ -619,15 +659,11 @@ def render_congress():
 </div></header>
 <section class="hero"><div class="container">
 <h1>Congressional trading — what members disclose</h1>
-<p class="lede">Stock and bond trades that members of the U.S. House report under the STOCK Act, read from the
-official House Clerk filings every week, with the members' committees attached.</p>
-<p class="asof">Disclosures as of {asof} &middot; House: {h["filings_parsed"]} filings, {h["rows"]} trades since {e(h["since"])}
-&middot; <b>Senate: not covered</b></p>
+<p class="lede">{lede}</p>
+<p class="asof">Disclosures as of {asof} &middot; {cover}</p>
 </div></section>
 <main class="container">
-<div class="prelim"><b>Coverage.</b> House only. The Senate's disclosure site blocks automated access and this site does
-not work around such blocks, so Senate trades are not shown. {h["needs_ocr"]} House filings are scanned images and
-{h["parse_fail"]} could not be read; they are counted, not dropped.</div>
+<div class="prelim">{boxtxt}</div>
 <div class="toc"><a href="#alerts">Signals</a><a href="#members">Members</a><a href="#sectors">Sectors</a><a href="#trades">Trades</a><a href="#method">Method</a></div>
 <section class="block" id="alerts"><h2>Signals</h2>{al or '<p class="note">None in the window.</p>'}</section>
 <section class="block" id="members"><h2>Most active members</h2>
@@ -636,7 +672,7 @@ not work around such blocks, so Senate trades are not shown. {h["needs_ocr"]} Ho
 <section class="block" id="sectors"><h2>Net flow by sector</h2>{fl}</section>
 <section class="block" id="trades"><h2>Trades filed in the last 13 weeks</h2>
 <div class="mi-wrap"><table class="mi"><thead><tr><th>Filed</th><th class="a">Member</th><th>Ticker</th><th>Asset</th><th>Type</th>
-<th>Side</th><th>Amount</th><th>Traded</th><th>Owner</th><th>Jurisdiction</th><th>Source</th></tr></thead><tbody>{tr}</tbody></table></div></section>
+<th>Side</th><th>Amount</th><th>Traded</th><th>Owner</th><th>Jurisdiction</th><th>Source</th></tr></thead><tbody>{tr}</tbody></table></div>{capnote}</section>
 <section class="block" id="method"><h2>Method</h2><p class="note">Members must report a trade within 45 days.
 Amounts are the ranges they disclose. Dollar totals use each range's midpoint and are rough. Dates are keyed on the
 <b>filing date</b>, when the market can first know. Owner: self, SP spouse, JT joint, DC dependent child.
@@ -646,8 +682,7 @@ JUR-3 a member. Only current roles count, and the committee-to-sector map is app
 members trading the same stock the same way within 14 days, totalling $500K or more. Disclosures are public records
 reproduced for research. Not investment advice.</p></section>
 </main>
-<footer class="shell-foot"><div class="container"><p>Source: U.S. House of Representatives, Office of the Clerk,
-financial disclosure reports. Committee data: unitedstates/congress-legislators. Not investment advice.</p></div></footer>
+<footer class="shell-foot"><div class="container"><p>{foot}</p></div></footer>
 </body></html>"""
     with open(CONG_OUT, "w", encoding="utf-8") as f:
         f.write(page)
