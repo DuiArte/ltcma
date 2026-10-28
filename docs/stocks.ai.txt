@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=27 Oct 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=28 Oct 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|DDOG|Technology|280.82|+0.544|Earnings growth
-2|LLY|Healthcare|1281.91|+0.515|CAD beta
-3|SMCI|Technology|35.09|+0.514|Revenue growth
-4|NVDA|Technology|217.94|+0.393|Revenue growth
-5|COST|Consumer Defensive|992.13|+0.377|Gross margin
-6|WMT|Consumer Defensive|119.32|+0.375|CAD beta
-7|PLTR|Technology|198.73|+0.360|Revenue growth
-8|HD|Consumer Cyclical|318.50|+0.339|ROE
-9|AAPL|Technology|347.10|+0.303|ROE
-10|ORCL|Technology|130.53|+0.253|CAD beta
-11|AVGO|Technology|342.33|+0.245|Revenue growth
-12|KO|Consumer Defensive|91.18|+0.242|CAD beta
-13|GOOGL|Communication Services|320.58|+0.223|Net margin
-14|AMZN|Consumer Cyclical|253.10|+0.154|CAD beta
-15|NVO|Healthcare|38.67|+0.043|CAD beta
-16|NET|Technology|327.80|+0.036|Rate beta
-17|NFLX|Communication Services|62.52|+0.036|Buffett score
-18|SNOW|Technology|337.42|+0.007|Rate beta
-19|MSFT|Technology|531.33|-0.000|Net margin
-20|UNH|Healthcare|410.39|-0.040|Gross margin
+1|DDOG|Technology|278.41|+0.541|Earnings growth
+2|SMCI|Technology|35.81|+0.518|Revenue growth
+3|LLY|Healthcare|1288.30|+0.513|CAD beta
+4|NVDA|Technology|215.38|+0.391|Revenue growth
+5|COST|Consumer Defensive|982.73|+0.373|Gross margin
+6|WMT|Consumer Defensive|118.77|+0.370|CAD beta
+7|PLTR|Technology|196.81|+0.357|Revenue growth
+8|HD|Consumer Cyclical|317.56|+0.338|ROE
+9|AAPL|Technology|343.83|+0.301|ROE
+10|KO|Consumer Defensive|91.73|+0.293|CAD beta
+11|ORCL|Technology|144.54|+0.250|CAD beta
+12|AVGO|Technology|351.81|+0.244|Revenue growth
+13|GOOGL|Communication Services|324.89|+0.220|Net margin
+14|AMZN|Consumer Cyclical|254.60|+0.150|CAD beta
+15|NVO|Healthcare|38.29|+0.050|CAD beta
+16|NFLX|Communication Services|61.99|+0.045|Buffett score
+17|NET|Technology|318.72|+0.028|Rate beta
+18|SNOW|Technology|339.91|+0.001|Rate beta
+19|MSFT|Technology|531.01|-0.004|Net margin
+20|UNH|Healthcare|407.10|-0.034|Gross margin
