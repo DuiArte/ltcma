@@ -11,7 +11,8 @@ Docs: Documents/AI_PROCEDURES/MARKET_INTEL_SPEC.md, MARKET_INTEL_MONTHLY.md.
 import html
 import json
 import os
-from datetime import date
+import re
+from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 
 from glossary import NAV
@@ -70,7 +71,19 @@ border-right:1px solid #d4d4d4;letter-spacing:.01em;transition:background .12s,c
 .sumlist li{margin:0 0 .55rem;line-height:1.55;max-width:60em}
 .badge{display:inline-block;font-size:10.5px;font-family:var(--mono);padding:1px 6px;border:1px solid var(--line);color:var(--sec);margin-left:6px;vertical-align:middle}
 .prelim{border:1px solid #c7d3df;background:#f5f8fb;padding:10px 14px;font-size:13.5px;margin:0 0 1.2rem;max-width:60em}
-@media (max-width:700px){.dv .sides{grid-template-columns:1fr}.mi th.pub{height:80px}}
+.mi.ol td{white-space:normal;min-width:74px;vertical-align:top}
+.mi.ol td.a{white-space:normal;min-width:170px;max-width:270px;line-height:1.35}
+.mi.ol td.a a{color:inherit}
+.mi.ol td.v a{color:inherit;text-decoration:none;display:block}
+.mi.ol td.v a .pv{border-bottom:1px dotted var(--line-strong)}
+.mi.ol td.v a:hover .pv{border-bottom-color:currentColor}
+.mi.ol .ven{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.03em}
+.mi.ol .oc{display:block;font:400 10.5px/1.25 'Inter',sans-serif;color:var(--sec);margin-bottom:1px}
+.mi.ol .hz{display:block;font:italic 400 10px/1.2 'Inter',sans-serif;color:var(--muted);margin-bottom:1px}
+.mi.ol td.th{color:var(--muted)}
+.mi.ol td.q{color:#c4c9cf}
+@media (max-width:700px){.dv .sides{grid-template-columns:1fr}.mi th.pub{height:80px}
+.mi.ol td{min-width:56px;padding:4px 5px}.mi.ol td.a,.mi.ol th.a{min-width:108px;max-width:132px}}
 """
 
 
@@ -152,6 +165,10 @@ def main():
         odds_html += f'<div class="odd"><h4>{e(t["label"])}</h4>{inner}</div>'
     taken = (pm.get("taken_at") or "")[:16].replace("T", " ")
     fed_html = render_fed_path()
+    outlook_html = render_event_outlook()
+    # the snapshot cards carry their own price date (the Fed path and the outlook panel above carry theirs)
+    snap_note = (f'<p class="note" style="margin-top:1.6rem">Snapshot cards: market prices from {e(taken)} CDMX. '
+                 f'Thin markets are skipped.</p>') if odds_html and taken else ""
 
     # ---- matrix
     head = "".join(f'<th class="pub" title="{e(p["publisher"])} — {e(p["product"])}">{e(p["short"])}'
@@ -328,10 +345,13 @@ Prediction-market odds for the macro calls are shown alongside.</p>
 <section class="block" id="summary"><h2>Summary</h2><ul class="sumlist">{summary}</ul></section>
 
 <section class="block" id="odds"><h2>Market-implied odds</h2>
-<p class="note">Prices on Kalshi and Polymarket, read from their public market data (snapshot {e(taken)} CDMX).
-A price of 0.83 means the market pays out as if the event were 83% likely. Thin markets are skipped.</p>
+<p class="note">Prices on Kalshi and Polymarket, read from their public market data. Each part of this section is
+read at a different time and gives the date of its own prices, so the same market can show two prices. A price of
+0.83 means the market pays out as if the event were 83% likely.</p>
 {fed_html}
-<div class="odds" style="margin-top:1rem">{odds_html or '<p class="note">No snapshot available.</p>'}</div></section>
+{outlook_html}
+{snap_note}
+<div class="odds" style="margin-top:.4rem">{odds_html or '<p class="note">No snapshot available.</p>'}</div></section>
 
 <section class="block" id="matrix"><h2>The grid — expected annual return, % nominal</h2>
 <p class="note">Each publisher's long-horizon forecast for the asset class (the horizon closest to 12 years when several
@@ -538,6 +558,184 @@ def render_fed_path():
             f'<p class="legend">Kalshi decision markets, mid-price where quoted tightly. Each meeting is priced on its own; '
             f'"thin" = wide quotes or last trades only. Market prices from {e((f.get("taken_at") or "")[:10])}, refreshed '
             f'every weekday. Not investment advice.</p>')
+
+
+# ---- Event outlook: prediction markets month by month, next 6 months (Carlos 2026-10-22 #3 / #8, 2026-10-23) --------
+OUTLOOK_SRC = os.path.join(DATA, "market_intel", "outlook_public.json")
+OUTLOOK_CATS = [("fed", "Fed"), ("macro_data", "Macro data"), ("geopolitics", "Geopolitics"),
+                ("us_politics", "US politics"), ("commodities", "Commodities"), ("crypto", "Crypto")]
+OUTLOOK_VENUES = {"kalshi": "Kalshi", "polymarket": "Polymarket"}
+OUTLOOK_MAX_AGE_D = 5        # the panel's own freshness budget (its stamp is not a guard_freshness label): weekday
+#                              publish + weekend + one missed run; older prices leave the panel out
+OUTLOOK_URL = ("https://polymarket.com/", "https://www.polymarket.com/", "https://kalshi.com/", "https://www.kalshi.com/")
+
+
+def _short(s, n):
+    s = " ".join(str(s or "").split())
+    return s if len(s) <= n else s[:n - 1].rstrip() + "…"
+
+
+def _txt(x):
+    """A JSON text field, or '' (a number / list where text belongs is not shown)."""
+    return x if isinstance(x, str) else ""
+
+
+_OL_ZEROS = re.compile(r"(\d+\.\d\d)(\d+)")
+_OL_PRECISE = re.compile(r"\d+\.\d{3,}")
+_OL_DASH = re.compile(r"(?<=\w)([-–—])(?=\w)")
+
+
+def _dp2_strict(x):
+    """Outlook text at <= 2 decimals without cutting a digit (site rule, guard_decimals): trailing zeros past the 2nd
+    are dropped ('4.3000' -> '4.30'); None when a significant 3rd decimal remains ('Above 4.325%': a cut 'Above 4.32%'
+    would read right and be wrong), and the caller leaves that cell / row out. outlook_public.py already refuses such
+    text; this is the renderer's own check (dp2() above cuts, which is right for filer text, not for a market strike)."""
+    s = " ".join(_txt(x).split())
+    s = _OL_ZEROS.sub(lambda m: m.group(1) if set(m.group(2)) == {"0"} else m.group(0), s)
+    return None if _OL_PRECISE.search(s) else s
+
+
+def _joined(escaped):
+    """Word joiners (U+2060) around a dash between two word characters, so an outcome 'Hike–Pause–Hike' /
+    'Pause-Hike-Pause' or a meeting list 'Sep–Oct–Dec' stays on one line in a narrow phone column."""
+    return _OL_DASH.sub("&#8288;\\1&#8288;", escaped)
+
+
+def _graded_stamp(text):
+    """True when text would read as a dated freshness stamp to guard_freshness ('as of', 'updated' + a date)."""
+    try:
+        from guard_freshness import STAMP
+    except Exception:                         # noqa: BLE001 - no guard module, nothing to check against
+        return False
+    return bool(STAMP.search(text))
+
+
+def render_event_outlook(now=None):
+    """The 6-month outlook extended to every priority category (ROTATION_MODEL_SPEC 6 #3: "las probabilidades a los
+    proximos seis meses ... de Polymarket como de Kalshi"). Rows = the most-traded markets per topic, both venues where
+    both list one; columns = the current month and the next five. Built off-repo by Trading_Index/rotation/
+    outlook_public.py (public market data only: question, outcome, span, whole-percent probability, 7-day change, month,
+    category, market URL; no volumes, no flow data); render-only here. The span (italic) names the period a market is
+    about when its column does not ('Oct CPI' under Nov, 'Q3 2026', 'in 2026', 'Sep–Oct–Dec'), a shorter window, or
+    the event's own words. Changes are labelled with the JSON's change_days (none shown without a sane value).
+    FOMC meetings stay in the Fed-path table above.
+    Like the Fed-path table, no 'as of' wording ("Market prices from"): the page's graded stamp stays the monthly
+    edition. Its own budget instead: prices older than OUTLOOK_MAX_AGE_D days (UTC, at render time) leave the panel out,
+    as does a missing, unparsable or malformed file (never the page build)."""
+    if not os.path.exists(OUTLOOK_SRC):
+        return ""
+    try:
+        with open(OUTLOOK_SRC, encoding="utf-8") as fh:
+            o = json.load(fh)
+        return _event_outlook(o, now or datetime.now(timezone.utc).replace(tzinfo=None))
+    except Exception as x:                    # noqa: BLE001 - a bad file costs the panel, not the page
+        print(f"event outlook: outlook_public.json unusable ({type(x).__name__}: {x}) - panel left out")
+        return ""
+
+
+def _event_outlook(o, now):
+    rows, months = o.get("rows") or [], o.get("months") or []
+    if not rows or not months or not isinstance(rows, list) or not isinstance(months, list):
+        return ""
+    t = datetime.strptime(o["as_of"], "%Y-%m-%dT%H:%M:%SZ")
+    age_d = (now - t).total_seconds() / 86400.0
+    if age_d > OUTLOOK_MAX_AGE_D:
+        print(f"event outlook: prices from {o['as_of']} are {age_d:.1f} days old (> {OUTLOOK_MAX_AGE_D}) - panel left out")
+        return ""
+    asof = f'{t.strftime("%Y-%m-%d %H:%M")} UTC'      # the Fed-path table's date format ('Market prices from 2026-10-23')
+    # the change window the exporter used (outlook_public --change-days); without a sane one no change is shown
+    cd = o.get("change_days")
+    cd = cd if isinstance(cd, (int, float)) and not isinstance(cd, bool) and 0 < cd <= 31 else None
+    days = f'{cd:g} day{"" if cd == 1 else "s"}' if cd else ""
+    head = "".join(f'<th>{date(int(m[:4]), int(m[5:7]), 1).strftime("%b %Y")}</th>' for m in months)
+    body, n_chg, n_rows = "", 0, 0
+    for cid, cname in OUTLOOK_CATS:
+        rs = [r for r in rows if isinstance(r, dict) and r.get("category") == cid]
+        part = ""
+        for r in rs:
+            cells = {c.get("month"): c for c in (r.get("cells") or []) if isinstance(c, dict)}
+            tds, vis, r_chg = "", [], 0
+            for m in months:
+                c = cells.get(m)
+                if not c or not _txt(c.get("prob_text")):
+                    tds += '<td class="q">&ndash;</td>'
+                    continue
+                oc_s, hz_s, q_s, pt_s = (_dp2_strict(c.get(k)) for k in ("outcome", "span", "question", "prob_text"))
+                if None in (oc_s, hz_s, q_s, pt_s):   # a significant 3rd decimal: leave the cell out, never cut digits
+                    print(f"event outlook: {_txt(r.get('row'))[:40]!r} {m}: text with > 2 decimals - cell left out")
+                    tds += '<td class="q">&ndash;</td>'
+                    continue
+                chg = c.get("chg_7d")
+                chg = chg if isinstance(chg, int) and not isinstance(chg, bool) and cd else None
+                r_chg += chg is not None
+                ch = (f' <span class="cv" title="change over {days}, percentage points">'
+                      f'{"0" if chg == 0 else f"{chg:+d}"}</span>') if chg is not None else ""
+                oc_t, hz_t = _short(oc_s, 26), _short(hz_s, 28)
+                # word joiners keep 'Hike–Pause–Hike' / a meeting list 'Sep–Oct–Dec' on one line in a narrow column
+                oc = f'<span class="oc">{_joined(e(oc_t))}</span>' if oc_t else ""
+                hz = f'<span class="hz">{_joined(e(hz_t))}</span>' if hz_t else ""
+                thin = c.get("thin") is True
+                tip = q_s + (" (thin market)" if thin else "")
+                inner = f'{oc}{hz}<span class="pv">{e(pt_s)}{"~" if thin else ""}</span>'
+                url = _txt(c.get("url"))
+                if url.startswith(OUTLOOK_URL):
+                    inner = f'<a href="{e(url)}" rel="noopener">{inner}</a>'
+                tds += f'<td class="v{" th" if thin else ""}" title="{e(tip)}">{inner}{ch}</td>'
+                vis += [oc_t, hz_t, pt_s]
+            if not tds.count('class="v'):
+                continue
+            row_s = _dp2_strict(r.get("row"))
+            if row_s is None:
+                print(f"event outlook: row {_txt(r.get('row'))[:40]!r}: label with > 2 decimals - row left out")
+                continue
+            row_t = _short(row_s, 70)
+            ven = OUTLOOK_VENUES.get(r.get("venue"), "")
+            if _graded_stamp(" ".join([row_t, ven] + vis)):
+                print(f"event outlook: row {row_t!r} reads as a dated stamp to guard_freshness - row left out")
+                continue
+            label = e(row_t)
+            if _txt(r.get("url")).startswith(OUTLOOK_URL):
+                label = f'<a href="{e(r["url"])}" rel="noopener">{label}</a>'
+            part += f'<tr><td class="a">{label}<span class="ven">{e(ven)}</span></td>{tds}</tr>'
+            n_chg += r_chg
+            n_rows += 1
+        if part:
+            body += f'<tr class="g"><td class="a">{e(cname)}</td><td colspan="{len(months)}"></td></tr>{part}'
+    if not n_rows:
+        return ""
+    since = o.get("history_since")
+    if n_chg:
+        chg_note = (f"Small figure = change over the last {days}, in percentage points (firmly quoted markets "
+                    f"only).")
+    else:
+        start = ""
+        try:
+            start = " (collection began " + datetime.strptime(since, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d") + ")"
+        except (TypeError, ValueError):
+            pass
+        chg_note = ("7-day changes will appear once a full week of prices has been collected" if cd == 7 else
+                    f"Changes over {days} will appear once {days} of prices have been collected" if cd else
+                    "Changes will appear once enough prices have been collected") + f"{start}."
+    return (f'<h3 id="outlook" style="font-size:15px;margin:1.6rem 0 .4rem">Event outlook (next 6 months)</h3>'
+            f'<p class="note" style="max-width:60em">The most-traded prediction markets on the topics that move asset '
+            f'prices, month by month: each column is the month in which the market resolves or its deadline falls '
+            f'(&ldquo;by&rdquo; markets are cumulative up to that date; a data release sits in the month it is '
+            f'published, with the period it covers in italics). Market prices from {asof}. Sources: '
+            f'<a href="https://polymarket.com" rel="noopener">Polymarket</a> and '
+            f'<a href="https://kalshi.com" rel="noopener">Kalshi</a> public market data.</p>'
+            f'<div class="mi-wrap"><table class="mi ol"><thead><tr><th class="a">Market</th>{head}</tr></thead>'
+            f'<tbody>{body}</tbody></table></div>'
+            f'<p class="legend">These are market prices, not forecasts: 64% means the market pays out as if the event '
+            f'were 64% likely. Where a market lists several outcomes or price levels, the cell shows the leading outcome '
+            f'or, among the firmly quoted levels, the one closest to even odds. <i>Italic</i> notes say what a cell&rsquo;s '
+            f'market is about when the column alone does not: the period a data release, full-year or multi-meeting '
+            f'market covers (&ldquo;Oct CPI&rdquo; sits under November, when October&rsquo;s CPI is published; '
+            f'&ldquo;Q3 2026&rdquo;; &ldquo;in 2026&rdquo;; the meetings &ldquo;Sep&ndash;Oct&ndash;Dec&rdquo;), '
+            f'a day for a market that ends earlier in the month (&ldquo;to&rdquo; a window&rsquo;s last day, '
+            f'&ldquo;by&rdquo; a deadline, &ldquo;on&rdquo; the day of a reading or a meeting), or the event&rsquo;s '
+            f'own words when a row groups several markets in one month. {chg_note} ~ = the market shown is thin (wide '
+            f'quotes or last trades only), read with care. FOMC meeting odds are in the Fed path table above. Each cell '
+            f'links to its market; hover for the full question. Not investment advice.</p>')
 
 
 # ---- Congressional activity (Market Intel Track B, House PTRs) ---------------------------------

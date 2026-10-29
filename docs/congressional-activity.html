@@ -49,7 +49,19 @@ border-right:1px solid #d4d4d4;letter-spacing:.01em;transition:background .12s,c
 .sumlist li{margin:0 0 .55rem;line-height:1.55;max-width:60em}
 .badge{display:inline-block;font-size:10.5px;font-family:var(--mono);padding:1px 6px;border:1px solid var(--line);color:var(--sec);margin-left:6px;vertical-align:middle}
 .prelim{border:1px solid #c7d3df;background:#f5f8fb;padding:10px 14px;font-size:13.5px;margin:0 0 1.2rem;max-width:60em}
-@media (max-width:700px){.dv .sides{grid-template-columns:1fr}.mi th.pub{height:80px}}
+.mi.ol td{white-space:normal;min-width:74px;vertical-align:top}
+.mi.ol td.a{white-space:normal;min-width:170px;max-width:270px;line-height:1.35}
+.mi.ol td.a a{color:inherit}
+.mi.ol td.v a{color:inherit;text-decoration:none;display:block}
+.mi.ol td.v a .pv{border-bottom:1px dotted var(--line-strong)}
+.mi.ol td.v a:hover .pv{border-bottom-color:currentColor}
+.mi.ol .ven{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.03em}
+.mi.ol .oc{display:block;font:400 10.5px/1.25 'Inter',sans-serif;color:var(--sec);margin-bottom:1px}
+.mi.ol .hz{display:block;font:italic 400 10px/1.2 'Inter',sans-serif;color:var(--muted);margin-bottom:1px}
+.mi.ol td.th{color:var(--muted)}
+.mi.ol td.q{color:#c4c9cf}
+@media (max-width:700px){.dv .sides{grid-template-columns:1fr}.mi th.pub{height:80px}
+.mi.ol td{min-width:56px;padding:4px 5px}.mi.ol td.a,.mi.ol th.a{min-width:108px;max-width:132px}}
 </style></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="congressional-activity.html">Congress</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
