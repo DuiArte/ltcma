@@ -965,17 +965,10 @@ if _pk_lag > 1:
     print(f"  WARN peak sidecar STALE: Performance block as of {PK['as_of']}, "
           f"{_pk_lag} business days behind -- rerun site_peakbase chain (WEBSITE_DEPLOY.md)")
 
-# The published peak must be the recorded one. A silent drift here would re-scale the
-# "Peak capital deployed" and "Capital in use" tiles without anything looking wrong.
-# Recorded SCALED, exactly as the page prints it: real pesos stay out of this public repo.
-# A genuine new peak (more cost at work than ever before -- the 30-Oct DCA) moves it: the
-# walk derives it, the new value is recorded here and reported. A re-walk that merely
-# drifts still fails.
-_PEAK_SCALED = {"mxn": 24_428_902, "usd": 1_347_479}
-assert round(PK["base_mxn"] * SCALE) == _PEAK_SCALED["mxn"], \
-    f"MXN peak base drifted from the recorded peak -> {PK['base_mxn'] * SCALE:,.0f} (scaled)"
-assert round(PK["base_usd"] * SCALE) == _PEAK_SCALED["usd"], \
-    f"USD peak base drifted from the recorded peak -> {PK['base_usd'] * SCALE:,.0f} (scaled)"
+# No approved-peak guard any more (2026-10-30, Carlos): the page no longer publishes the peak.
+# The book is DCA'd weekly, so a new peak is routine, and since 2026-10-07 no figure divides by it
+# (MWRR = IRR, TWRR chain-linked). The sidecar still carries the derived peak; 29 asserts it
+# equals the anchor's.
 
 # ---------- per-holding return: it is NOT the same number in both currencies ----------
 # The page used one `ret` under a currency toggle, which quietly asserted that a holding's
@@ -1720,11 +1713,11 @@ def pkval(mxn, usd, dec=0, signed=False):
     """Currency-aware figure whose USD side is the WALK's dollars, not a division.
 
     cval() converts by today's single live rate, which is right for a live-priced
-    holdings table and wrong here. The peak base is a specific historical quantity:
-    US$739,395.50 of cost was deployed at one instant, at the rates the fills actually
-    got. Dividing its peso twin by today's rate lands on 741,875 -- close enough to look
-    right and wrong enough to be a different number from the one every other artefact
-    publishes. Both sides are carried explicitly so neither is inferred from the other.
+    holdings table and wrong here. A walk figure (cost basis, realized, P&L) is a
+    historical quantity: each dollar of cost was bought at the rate its own fill got.
+    Dividing the peso twin by today's rate lands near it -- close enough to look right and
+    wrong enough to be a different number from the one every other artefact publishes.
+    Both sides are carried explicitly so neither is inferred from the other.
     """
     f = fmts if signed else fmt
     return (f'<span class="cval" data-mxn="{f(mxn, dec)}" '
@@ -1732,8 +1725,10 @@ def pkval(mxn, usd, dec=0, signed=False):
 
 
 KPI_MONEY = [
-    ("Peak capital deployed", pkval(PK["base_mxn"] * SCALE, PK["base_usd"] * SCALE),
-     "the most the book ever had at work at one moment"),
+    # 2026-10-30 (Carlos): the peak tile is replaced by the open cost basis, as in the private
+    # mirror. Under a weekly DCA the peak is "today" most weeks and tells a reader nothing.
+    ("Cost basis", pkval(PK["curve"][-1]["cost_mxn"] * SCALE, PK["curve"][-1]["cost_usd"] * SCALE),
+     "open positions, all-in &middot; ex-GMEXICO&nbsp;B"),
     # These tiles differ from the Holdings TOTAL row by exactly the GMEXICO B line,
     # which the peak curve leaves out (it is peso-quoted) -- hence the label.
     ("Market value", pkval(PK["mv_mxn"] * SCALE, PK["mv_usd"] * SCALE),
@@ -1775,7 +1770,9 @@ KPI_RET = [
     ("vs index", pkpct(BOOK_YTD_USD - SPY_YTD_USD, BOOK_YTD_MXN - SPY_YTD_MXN, unit=" pp"),
      pktxt(f"USD TWRR ({_pct(BOOK_YTD_USD)}) less the S&amp;P YTD in USD",
            f"MXN TWRR ({_pct(BOOK_YTD_MXN)}) less the S&amp;P YTD in MXN")),
-    ("Capital in use", f"{PK['util_now']*100:.0f}%", "of peak, today"),
+    # 2026-10-30 (Carlos): "Capital in use" (cost / peak) read 100% after every DCA week.
+    ("S&amp;P, same money", pkpct(MW["spy_usd"], MW["spy_mxn"]),
+     "IRR of the identical dated flows put into SPY"),
 ]
 kpi_money = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div>'
@@ -2083,10 +2080,7 @@ book.</div>
 <b>Money-weighted</b> is the internal rate of return of every dated buy and sale against
 today&rsquo;s market value &mdash; what the money earned, sized and timed as it actually was.
 <b>Time-weighted</b> chain-links daily returns with the flows stripped out &mdash; what the
-decisions earned. For scale only: the most this book ever had at work at one moment was
-{pkval(PK['base_mxn']*SCALE, PK['base_usd']*SCALE)}, on
-{pd.Timestamp(PK['peak_date']).strftime('%d %b %Y')} across {PK['peak_n_pos']} open
-positions.</p>
+decisions earned. No peak-capital or fixed-base denominator is used anywhere on this page.</p>
 <div class="metrics" style="grid-template-columns:repeat(5,1fr)">{kpi_money}</div>
 <div class="metrics" style="grid-template-columns:repeat(5,1fr);margin-top:1.2rem">{kpi_ret}</div>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f4, "pf-peak")}</div></div>
