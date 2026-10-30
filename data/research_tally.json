@@ -1,6 +1,6 @@
 {
  "_comment": "Counts only, by source. Built by scripts/27_research_notes.py from a private ledger of every campaign with its documentation reference.",
- "asof": "2026-10-29",
+ "asof": "2026-10-30",
  "groups": [
   {
    "id": "discovery",
