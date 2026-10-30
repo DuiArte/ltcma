@@ -965,12 +965,17 @@ if _pk_lag > 1:
     print(f"  WARN peak sidecar STALE: Performance block as of {PK['as_of']}, "
           f"{_pk_lag} business days behind -- rerun site_peakbase chain (WEBSITE_DEPLOY.md)")
 
-# The published MXN base must be the one Carlos approved. A silent drift here would
-# re-denominate every percentage on the page without anything looking wrong.
-assert abs(PK["base_mxn"] - 12_831_669.88) < 0.05, \
-    f"MXN peak base drifted from the approved 12,831,669.88 -> {PK['base_mxn']:,.2f}"
-assert abs(PK["base_usd"] - 739_395.50) < 0.05, \
-    f"USD peak base drifted from the approved 739,395.50 -> {PK['base_usd']:,.2f}"
+# The published peak must be the recorded one. A silent drift here would re-scale the
+# "Peak capital deployed" and "Capital in use" tiles without anything looking wrong.
+# Recorded SCALED, exactly as the page prints it: real pesos stay out of this public repo.
+# A genuine new peak (more cost at work than ever before -- the 30-Oct DCA) moves it: the
+# walk derives it, the new value is recorded here and reported. A re-walk that merely
+# drifts still fails.
+_PEAK_SCALED = {"mxn": 24_428_902, "usd": 1_347_479}
+assert round(PK["base_mxn"] * SCALE) == _PEAK_SCALED["mxn"], \
+    f"MXN peak base drifted from the recorded peak -> {PK['base_mxn'] * SCALE:,.0f} (scaled)"
+assert round(PK["base_usd"] * SCALE) == _PEAK_SCALED["usd"], \
+    f"USD peak base drifted from the recorded peak -> {PK['base_usd'] * SCALE:,.0f} (scaled)"
 
 # ---------- per-holding return: it is NOT the same number in both currencies ----------
 # The page used one `ret` under a currency toggle, which quietly asserted that a holding's
@@ -1343,6 +1348,7 @@ _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_21092026.csv")]
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_23092026.csv")]   # de-risk 23-sep: 5 ventas (QQQ/VGT/VUG/SOXX x2). Alimentar el walk, NO aflojar guards.
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_07102026.csv")]   # 01-oct: BIL buy, NVDA + XLE sells (XLE row says Cancelada, 2 sh assigned = fill)
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261021.csv")]   # 13-oct VUG buy, 16-oct DCA QQQ/VGT/VUG/SOXX (SOXX 23+10+10 partials)
+_DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261030.csv")]   # 23-oct DCA + XLE trim, 29-oct AAPL/IBM sells + GOOGL buy (one row says Cancelada = fill), 30-oct DCA
 _DM_CACHE = None
 
 
