@@ -1,24 +1,24 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=30 Oct 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+asof=03 Nov 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|DDOG|Technology|235.27|+0.555|Earnings growth
-2|SMCI|Technology|32.95|+0.526|Revenue growth
-3|WMT|Consumer Defensive|123.51|+0.396|CAD beta
-4|COST|Consumer Defensive|1012.28|+0.394|Gross margin
-5|NVDA|Technology|204.64|+0.386|Revenue growth
-6|LLY|Healthcare|1417.54|+0.370|CAD beta
-7|PLTR|Technology|184.11|+0.366|Revenue growth
-8|HD|Consumer Cyclical|329.20|+0.346|ROE
-9|AAPL|Technology|344.63|+0.294|ROE
-10|KO|Consumer Defensive|94.08|+0.288|CAD beta
-11|ORCL|Technology|130.67|+0.269|CAD beta
-12|AVGO|Technology|326.08|+0.254|Revenue growth
-13|AMZN|Consumer Cyclical|240.35|+0.167|CAD beta
-14|GOOGL|Communication Services|279.84|+0.105|Net margin
-15|NET|Technology|280.70|+0.063|Rate beta
-16|NVO|Healthcare|40.00|+0.039|CAD beta
-17|SNOW|Technology|306.08|+0.034|Rate beta
-18|NFLX|Communication Services|62.08|+0.028|Buffett score
-19|MSFT|Technology|521.91|+0.002|Net margin
-20|META|Communication Services|614.99|-0.034|Gross margin
+1|SMCI|Technology|31.61|+0.591|Revenue growth
+2|LLY|Healthcare|1420.43|+0.524|CAD beta
+3|WMT|Consumer Defensive|124.87|+0.450|CAD beta
+4|NVDA|Technology|208.31|+0.432|Revenue growth
+5|COST|Consumer Defensive|1021.45|+0.432|Gross margin
+6|HD|Consumer Cyclical|331.17|+0.367|ROE
+7|PLTR|Technology|174.38|+0.359|Revenue growth
+8|AAPL|Technology|331.57|+0.359|ROE
+9|KO|Consumer Defensive|95.15|+0.342|CAD beta
+10|ORCL|Technology|127.42|+0.315|CAD beta
+11|DDOG|Technology|221.17|+0.288|Earnings growth
+12|AVGO|Technology|332.43|+0.243|Revenue growth
+13|ABBV|Healthcare|289.02|+0.216|Earnings growth
+14|GOOGL|Communication Services|280.43|+0.164|Net margin
+15|NET|Technology|277.00|+0.141|Rate beta
+16|SNOW|Technology|296.12|+0.077|Rate beta
+17|AMD|Technology|489.99|+0.069|Revenue growth
+18|MSFT|Technology|520.19|+0.066|Net margin
+19|SHOP|Technology|147.96|-0.019|CAD beta
+20|AMZN|Consumer Cyclical|248.98|-0.021|Revenue growth

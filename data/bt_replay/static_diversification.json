@@ -3,12 +3,12 @@
  "label": "out-of-sample replay",
  "rules_frozen": "2026-05-26",
  "start": "2026-05-26",
- "asof": "2026-10-30",
+ "asof": "2026-11-02",
  "metrics": {
-  "return_pct": -4.67,
+  "return_pct": -4.39,
   "max_drawdown_pct": -6.62,
-  "trading_days": 110,
-  "n_rebalances": 22
+  "trading_days": 111,
+  "n_rebalances": 23
  },
  "seam": {
   "check": "the frozen engine's daily equity on fresh prices vs the same engine on the frozen price file (relative)",
@@ -131,6 +131,7 @@
   {"date":"2026-10-27","value":97.13},
   {"date":"2026-10-28","value":97.26},
   {"date":"2026-10-29","value":96.85},
-  {"date":"2026-10-30","value":95.33}
+  {"date":"2026-10-30","value":95.33},
+  {"date":"2026-11-02","value":95.61}
  ]
 }
