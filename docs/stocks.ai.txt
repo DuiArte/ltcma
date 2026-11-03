@@ -2,23 +2,23 @@ STOCK COMPOSITE PICKS — AI COPY (low-token)
 asof=03 Nov 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
 composite=sum(corr-derived-weight*zscore); weights private; top20=picks
 fields: rank|ticker|sector|price|composite|dominant_var
-1|SMCI|Technology|31.61|+0.591|Revenue growth
-2|LLY|Healthcare|1420.43|+0.524|CAD beta
-3|WMT|Consumer Defensive|124.87|+0.450|CAD beta
-4|NVDA|Technology|208.31|+0.432|Revenue growth
-5|COST|Consumer Defensive|1021.45|+0.432|Gross margin
-6|HD|Consumer Cyclical|331.17|+0.367|ROE
-7|PLTR|Technology|174.38|+0.359|Revenue growth
-8|AAPL|Technology|331.57|+0.359|ROE
-9|KO|Consumer Defensive|95.15|+0.342|CAD beta
-10|ORCL|Technology|127.42|+0.315|CAD beta
-11|DDOG|Technology|221.17|+0.288|Earnings growth
-12|AVGO|Technology|332.43|+0.243|Revenue growth
-13|ABBV|Healthcare|289.02|+0.216|Earnings growth
-14|GOOGL|Communication Services|280.43|+0.164|Net margin
-15|NET|Technology|277.00|+0.141|Rate beta
-16|SNOW|Technology|296.12|+0.077|Rate beta
-17|AMD|Technology|489.99|+0.069|Revenue growth
-18|MSFT|Technology|520.19|+0.066|Net margin
-19|SHOP|Technology|147.96|-0.019|CAD beta
-20|AMZN|Consumer Cyclical|248.98|-0.021|Revenue growth
+1|SMCI|Technology|31.39|+0.591|Revenue growth
+2|LLY|Healthcare|1409.38|+0.524|CAD beta
+3|WMT|Consumer Defensive|124.86|+0.451|CAD beta
+4|NVDA|Technology|206.69|+0.432|Revenue growth
+5|COST|Consumer Defensive|1019.26|+0.432|Gross margin
+6|HD|Consumer Cyclical|333.66|+0.368|ROE
+7|PLTR|Technology|175.40|+0.360|Revenue growth
+8|AAPL|Technology|331.90|+0.359|ROE
+9|KO|Consumer Defensive|94.80|+0.342|CAD beta
+10|ORCL|Technology|126.19|+0.315|CAD beta
+11|DDOG|Technology|220.52|+0.288|Earnings growth
+12|AVGO|Technology|332.13|+0.243|Revenue growth
+13|ABBV|Healthcare|286.00|+0.216|Earnings growth
+14|GOOGL|Communication Services|280.03|+0.165|Net margin
+15|NET|Technology|273.62|+0.141|Rate beta
+16|SNOW|Technology|295.04|+0.077|Rate beta
+17|AMD|Technology|483.90|+0.068|Revenue growth
+18|MSFT|Technology|520.99|+0.066|Net margin
+19|SHOP|Technology|142.57|-0.020|CAD beta
+20|AMZN|Consumer Cyclical|250.69|-0.021|Revenue growth
