@@ -11,7 +11,7 @@ job, script or clone that writes here, check this list — and add yourself to i
 | Source | Trigger | What it pushes |
 |---|---|---|
 | `daily_refresh.ps1` (this repo) | Task Scheduler `daily-website-refresh` | all generated `docs/` + `data/`; runs `scripts/*.py`, load-bearing guards (`guard_decimals`, `guard_no_snapshot`), then `git commit` + `git push origin main` |
-| `weekly_model_rebuild.ps1` (this repo) | Task Scheduler `weekly-model-rebuild` (Sun 22:00) | model outputs 01-04 + risk/MC; shares the `Global\LTCMA_REPO_LOCK` mutex with the daily job |
+| `weekly_model_rebuild.ps1` (this repo) | Task Scheduler `weekly-model-rebuild` (Sun 22:00) | model outputs 01-04 + risk/MC; step 3c (wave 14) rebuilds the stock picker's PRIVATE capstone inputs in `~\capstone\data\analytics\` with `scripts/capstone_inputs_refresh.py` (outside the repo, never committed; skipped under -BuildOnly); shares the `Global\LTCMA_REPO_LOCK` mutex with the daily job |
 | `C:\Users\carlo\Scripts\market_intel_monthly.ps1` (Market Intel Track A, added 2026-10-07) | Task Scheduler `market-intel-monthly` (day 1, 07:00) | **only** `data/market_intel/consensus_public.json` + `docs/ltcma-consensus.html` (and, since 2026-10-07, the Street LTCMA: `data/market_intel/street_ltcma_{public,editions}.json`, `docs/street-ltcma.html`, `docs/street-ltcma/street_ltcma_<date>_<hash>.{csv,xlsx}` downloadable editions — **held** since the C-20261007-02 take-down, `street.hold` in `config_a.yaml`), via `git commit --only` on those of its paths that exist, under the same `Global\LTCMA_REPO_LOCK` mutex, after `git pull --ff-only`. The daily refresh re-renders the same page from the same JSON (`scripts/30_market_intel.py`, render-only), so both writers emit the same bytes for a given JSON. Builds privately in `Documents\Market_Intel` first. Docs: `Documents\AI_PROCEDURES\MARKET_INTEL_SPEC.md`, `MARKET_INTEL_MONTHLY.md`. |
 | `C:\Users\carlo\Scripts\market_intel_weekly.ps1` (Market Intel Track B, added 2026-10-22) | Task Scheduler `market-intel-weekly` (Mon 08:00) | **only** `data/market_intel/congress_public.json` + `docs/congressional-activity.html` (House PTRs from the Clerk), `git commit --only`, under the lock, after `git pull --ff-only`. Docs: `MARKET_INTEL_WEEKLY.md` |
 | `C:\Users\carlo\Scripts\market_intel_daily.ps1` (Fed path, added 2026-10-22) | Task Scheduler `market-intel-daily` (Mon-Fri 16:45) | **only** `data/market_intel/fed_path_public.json` + `docs/ltcma-consensus.html` (same generator as the daily refresh, so the same bytes), `git commit --only`, under the lock. Publish failure = alert, never fails its collectors |
@@ -26,9 +26,11 @@ workspaces the hub names and writes no parameters, engine code or trade tapes; h
 skips, leaving the committed files, wherever the private code or the network is missing).
 
 `scripts/25_stock_picks.py` (step 3, since 2026-11-04 `de3fbd2`, the Pick Tracker) also writes
-`data/picks_history.csv` (one row per name per NYSE session, session-dated, public values) and
+`data/picks_history.csv` (one row per name per NYSE session, session-dated, public values; 14 columns since
+wave 14: `on_list`, `list_rule`, `macro_through` appended) and
 `data/picks_splits.json`; both are committed by the refresh's `git add docs data`. Its SEC Form 4 cache
-lives in `.cache/sec_form4/` (git-ignored, never committed). Procedure: `Documents\AI_PROCEDURES\
+lives in `.cache/sec_form4/` (git-ignored, never committed). Since wave 14 also `.cache/insider_px/` (past
+Yahoo closes for the insider records; git-ignored). Procedure: `Documents\AI_PROCEDURES\
 STOCK_PICKS_TRACKER.md`.
 
 Both build from **this clone's `scripts/`** after pulling origin, so a change merged to
