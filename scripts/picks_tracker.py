@@ -3,12 +3,26 @@
 Everything here is computed from data/picks_history.csv (the page's own published ranking, day by day), the
 overlays (picks_overlays) and SPY closes. Nothing here feeds the composite, the ranks or the weights.
 
+LIST RULE (wave 14, 2026-11-04): the published list is 20 names, a TWO-SIDED band at the cut
+  (picks_history.published_list): a name already on it stays while it ranks <= 25 (STAY); a name off it ranked
+  <= 15 (ENTER) always enters and displaces the worst-ranked pick; the remaining places go to the best-ranked
+  names. Before wave 14 the list was the plain top 20, and the stored history keeps what was published.
+METHOD CHANGES (wave 14): method_info() dates, from the history itself, the first ranking on refreshed macro
+  inputs (macro_through) and the first band ranking; entries and exits at those rankings are annotated as a
+  method change, the move into the macro-refresh ranking is left out of the exit model, and the Track Record
+  says that the rankings before it used inputs frozen at May 2026 data.
 EXIT ESTIMATE (empirical, no pretend precision)
-  * Deterministic trigger: a pick leaves when its composite falls below the #20 cutoff, i.e. when a name
-    now ranked 21+ overtakes it. The page shows today's margin over the rank-21 composite.
-  * Statistical estimate: a Markov chain over rank states (1-5, 6-10, 11-15, 16-18, 19-20, off the list)
+  * Deterministic trigger: a pick leaves when its rank falls below 25, i.e. when 25 other names overtake it.
+    The page shows today's margin over the rank-26 composite. A pick ranked 21-25 can also be DISPLACED, when
+    a name off the list ranks 15th or better and the pick is the worst-ranked one (a pick ranked 1-20 never
+    is). The chain below models only the rank exit, so for picks ranked 21-25 it can overstate the stay; the
+    page says so and counts the displacements the replay shows.
+  * Statistical estimate: a Markov chain over rank states (1-5, 6-10, 11-15, 16-20, 21-23, 24-25, below 25)
     fitted to every pair of consecutive FULL snapshots exactly one NYSE trading day apart (a partial snapshot
-    is skipped). "Off" is absorbing for the time to the FIRST exit. From today's state: median trading days
+    is skipped, and so is the move INTO the first ranking on refreshed macro inputs, a one-off method change),
+    over every name ranked 25 or better on the first day (ranks do not depend on membership, so names off the
+    list in 21-25 move like listed ones). "Below 25" is absorbing for the time to the FIRST exit. From today's
+    state: median trading days
     until the name first leaves, the model's PREDICTIVE range of that time (10th-90th percentile of the
     first-exit distribution: 8 in 10 names starting in the band leave inside it), and the probability it
     leaves within 20 trading days. The moving-block bootstrap over dates (blocks of 10 days, 300 draws,
@@ -17,7 +31,12 @@ EXIT ESTIMATE (empirical, no pretend precision)
     A state with fewer than 30 observed transitions or 15 distinct days is "insufficient history". Anything
     longer than the history itself (N trading days tracked) is printed as "> N td" (computed up to
     H_MAX = 250). Next to it: the model-free share of past name-days in the same state after which the name
-    left within 20 td (overlapping name-days, so its effective sample is far smaller than its count).
+    ranked below 25 within 20 td (overlapping name-days, so its effective sample is far smaller than its count).
+RULE REPLAY (in-sample, wave 14): three rules replayed on the SAME stored rankings (plain top 20; the
+  one-sided band, stay while rank <= 25, the rejected variant; the two-sided band 15/25), full rankings only:
+  entries, rankings with a change, distinct names, spells, short spells, rankings with a top-10 / top-15 name
+  kept off the list, follow-the-list basket. 15/25 were chosen on the ranks-only columns (turnover and
+  kept-off counts), never on returns; the basket column is in-sample and is not evidence.
 TRACK RECORD ("will they keep doing well?")
   * follow-the-list basket (equal-weight top 20, re-formed at every full snapshot) vs the equal-weight
     universe REBALANCED at each ranking, ranks 21-40 and SPY (price return). Entries use the ranking day's
@@ -40,9 +59,17 @@ from datetime import date, datetime
 import numpy as np
 import pandas as pd
 
-from picks_history import LIST_LAUNCH, Panel, TOP_N  # noqa: F401
+from picks_history import (BAND, ENTER, EXIT_RANK, LIST_LAUNCH, Panel, RULE_BAND, RULE_FALLBACK,  # noqa: F401
+                            RULE_ONE_SIDED, STAY, TOP_N, published_list)
 
-STATES = [(1, 5, "1-5"), (6, 10, "6-10"), (11, 15, "11-15"), (16, 18, "16-18"), (19, 20, "19-20")]
+# Frozen capstone macro inputs before wave 14 (facts read from the 2026-06-10 files, wave-14 capstone lane):
+# producer run 2026-05-20 on data through 2026-05-19; its USD/CAD series (a static export) ended 2025-11-27.
+FROZEN_DATA = "May 2026"
+FROZEN_CAD_END = "2025-11-27"
+
+# rank bands of the exit model: the old 16-18 / 19-20 pair at the plain cut moved 5 places down with the band
+STATES = [(1, 5, "1-5"), (6, 10, "6-10"), (11, 15, "11-15"), (16, 20, "16-20"), (21, 23, "21-23"),
+          (24, EXIT_RANK, f"24-{EXIT_RANK}")]
 OFF = len(STATES)
 H_MAX = 250
 BOOT_B, BLOCK_L, SEED = 300, 10, 20261104
@@ -72,17 +99,27 @@ def state_of(rank):
 
 
 # ============================================================ exit model
+def _macro_break(p):
+    """The first ranking on refreshed macro inputs (a one-off method change), or None."""
+    try:
+        return p.macro_since()[0]
+    except Exception:                                                   # noqa: BLE001
+        return None
+
+
 def _transitions(p):
-    """[(pair index, origin date, from state, to state)] over consecutive 1-trading-day snapshot pairs."""
+    """[(pair index, origin date, from state, to state)] over consecutive 1-trading-day snapshot pairs. The move
+    into the first ranking on refreshed macro inputs is skipped: it is a change of method, not rank dynamics."""
     out, k = [], 0
     part = set(getattr(p, "partial", []) or [])
+    brk = _macro_break(p)
     for d0, d1 in zip(p.dates[:-1], p.dates[1:]):
-        if p.tdi[d1] - p.tdi[d0] != 1 or d0 in part or d1 in part:
+        if p.tdi[d1] - p.tdi[d0] != 1 or d0 in part or d1 in part or d1 == brk:
             continue
         r0, r1 = p.rank.loc[d0], p.rank.loc[d1]
         for tk in p.rank.columns:
             a, b = r0.get(tk), r1.get(tk)
-            if pd.isna(a) or pd.isna(b) or a > TOP_N:
+            if pd.isna(a) or pd.isna(b) or a > EXIT_RANK:
                 continue
             out.append((k, d0, state_of(a), state_of(b)))
         k += 1
@@ -130,7 +167,11 @@ def _matrix(c, fallback=None):
 
 def exit_model(p):
     tr, n_pairs = _transitions(p)
+    # round 3 (L4): how many of the fitted moves come from the frozen-input period (both rankings before the first
+    # ranking on refreshed inputs, read from macro_through; every move while no ranking is dated yet)
+    brk = _macro_break(p)
     res = {"n_pairs": n_pairs, "n_transitions": len(tr), "states": [],
+           "n_frozen": sum(1 for _k, d0, _a, _b in tr if brk is None or d0 < brk),
            "span_td": (p.tdi[p.dates[-1]] - p.tdi[p.dates[0]] + 1) if p.dates else 0}
     if n_pairs < 5:
         res["insufficient"] = True
@@ -177,8 +218,9 @@ def exit_model(p):
 
 
 def _empirical_p20(p):
-    """Model-free: share of (day, name) observations in each state after which the name was off the list at
-    some snapshot within the next 20 trading days (only days with >= 20 td of history after them)."""
+    """Model-free: share of (day, name) observations in each state after which the name ranked below the exit
+    line (rank > EXIT_RANK) on some full ranking within the next 20 trading days (only days with >= 20 td of
+    history after them). Ranks only, so it reads the same under either list rule."""
     hits, n = np.zeros(OFF), np.zeros(OFF)
     last_td = p.tdi[p.dates[-1]]
     part = set(getattr(p, "partial", []) or [])
@@ -187,14 +229,14 @@ def _empirical_p20(p):
             break
         if d in part:
             continue
-        fut = [x for x in p.dates[i + 1:] if p.tdi[x] - p.tdi[d] <= 20]
+        fut = [x for x in p.dates[i + 1:] if p.tdi[x] - p.tdi[d] <= 20 and x not in part]
         for tk in p.rank.columns:
             r = p.rank.at[d, tk]
-            if pd.isna(r) or r > TOP_N:
+            if pd.isna(r) or r > EXIT_RANK:
                 continue
             s = state_of(r)
             n[s] += 1
-            if any(p.top.at[x, tk] == 0 for x in fut):
+            if any((p.rank.at[x, tk] == p.rank.at[x, tk]) and p.rank.at[x, tk] > EXIT_RANK for x in fut):
                 hits[s] += 1
     return [((hits[s] / n[s]) if n[s] else None, int(n[s])) for s in range(OFF)]
 
@@ -245,26 +287,86 @@ def _t_interval(vals):
     return m, m - _t95(k - 1) * se, m + _t95(k - 1) * se
 
 
+def _basket_rows(p, top, spy=None, dropped=None):
+    """Follow-the-list basket for a membership frame `top` (date x ticker, 1 on / 0 off / NaN unobserved):
+    formed on full rankings only; an interval with no trading day (a holiday snapshot repeating the prior
+    close) is skipped rather than counted as a tie / loss."""
+    part = set(getattr(p, "partial", []) or [])
+    full = [d for d in p.dates if d not in part]
+    rows = []
+    for d0, d1 in zip(full[:-1], full[1:]):
+        if p.tdi[d1] - p.tdi[d0] <= 0:
+            continue
+        on = [tk for tk in top.columns if top.at[d0, tk] == 1]
+        off = [tk for tk in top.columns if top.at[d0, tk] == 0]
+        if dropped is not None:
+            for tk in on + off:
+                if p.window_ret(tk, d0, d1) != p.window_ret(tk, d0, d1) and not (
+                        pd.isna(p.adj.at[d0, tk]) or pd.isna(p.adj.at[d1, tk])):
+                    dropped[tk] = dropped.get(tk, 0) + 1    # priced on both days, n/a only for a price break
+        rows.append({"from": d0, "to": d1, "top20": p.ew_ret(d0, d1, on)[0], "rest": p.ew_ret(d0, d1, off)[0],
+                     "ew": p.ew_ret(d0, d1)[0], "spy": spy_ret(spy, d0, d1)})
+    return pd.DataFrame(rows, columns=["from", "to", "top20", "rest", "ew", "spy"])
+
+
+REPLAY_RULES = (("plain", None, None), ("one_sided", STAY, None), ("two_sided", STAY, ENTER))
+
+
+def rule_replay(p):
+    """In-sample replay of three list rules on the same stored rankings (ranks and composites never change):
+    the plain top 20; the one-sided band (a listed name stays while rank <= 25; the rejected variant); the
+    two-sided band (stay while rank <= 25, enter at rank <= 15). Full rankings only; each band starts from the
+    first ranking's plain top 20 and carries its own list forward ranking by ranking (a day with no ranking is
+    skipped, as the live rule reads the last recorded list). kept10 / kept15 = rankings on which a name ranked
+    10th / 15th or better was off the list. The basket numbers are in-sample and are not evidence."""
+    part = set(getattr(p, "partial", []) or [])
+    full = [d for d in p.dates if d not in part]
+    out = {"n_rankings": len(full), "from": full[0] if full else None, "to": full[-1] if full else None,
+           "stay": STAY, "enter": ENTER, "rules": {}}
+    for name, stay, enter in REPLAY_RULES:
+        fr = pd.DataFrame(np.nan, index=p.dates, columns=p.rank.columns)
+        prev = None
+        kept10 = kept15 = displaced = 0
+        for d in full:
+            ranks = p.rank.loc[d].dropna().astype(int).to_dict()
+            mem = published_list(ranks, prev if stay is not None else None, stay or STAY, enter)
+            fr.loc[d, list(ranks)] = 0.0
+            fr.loc[d, mem] = 1.0
+            ms = set(mem)
+            kept10 += any(r <= 10 and t not in ms for t, r in ranks.items())
+            kept15 += any(r <= 15 and t not in ms for t, r in ranks.items())
+            if prev is not None and stay is not None:
+                displaced += sum(1 for t in set(prev) - ms if ranks.get(t, 10 ** 6) <= stay)
+            prev = mem
+        sp = p.spells_of(fr)
+        done = sp[~sp.ongoing]
+        entries, changed_days = 0, 0
+        for d0, d1 in zip(full[:-1], full[1:]):
+            a = set(fr.columns[fr.loc[d0] == 1])
+            new = set(fr.columns[fr.loc[d1] == 1]) - a
+            entries += len(new)
+            changed_days += bool(new)
+        bk = _basket_rows(p, fr)
+        cum = float((1 + bk["top20"].fillna(0)).prod() - 1) if len(bk) else None
+        out["rules"][name] = {"frame": fr, "spells": len(sp), "completed": len(done),
+                              "le5": int((done.trading_days <= 5).sum()) if len(done) else 0,
+                              "median_td": float(done.trading_days.median()) if len(done) else None,
+                              "entries": entries, "changed_days": changed_days,
+                              "turnover": entries / (TOP_N * max(1, len(full) - 1)),
+                              "names": int((fr == 1).any().sum()), "basket": cum,
+                              "ew": float((1 + bk["ew"].fillna(0)).prod() - 1) if len(bk) else None,
+                              "kept10": int(kept10), "kept15": int(kept15), "displaced": int(displaced)}
+    pl, bd = out["rules"]["plain"], out["rules"]["two_sided"]
+    out["short_avoided"] = pl["le5"] - bd["le5"]
+    return out
+
+
 def track_record(p, spy=None):
     out = {}
     part = set(getattr(p, "partial", []) or [])
     full = [d for d in p.dates if d not in part]
-    # follow-the-list basket: formed on full rankings only; an interval with no trading day (a holiday
-    # snapshot repeating the prior close) is skipped rather than counted as a tie / loss
-    rows, cache = [], {}
-    dropped = {}
-    for d0, d1 in zip(full[:-1], full[1:]):
-        if p.tdi[d1] - p.tdi[d0] <= 0:
-            continue
-        on = [tk for tk in p.top.columns if p.top.at[d0, tk] == 1]
-        off = [tk for tk in p.top.columns if p.top.at[d0, tk] == 0]
-        for tk in on + off:
-            if p.window_ret(tk, d0, d1) != p.window_ret(tk, d0, d1) and not (
-                    pd.isna(p.adj.at[d0, tk]) or pd.isna(p.adj.at[d1, tk])):
-                dropped[tk] = dropped.get(tk, 0) + 1        # priced on both days, n/a only for a price break
-        rows.append({"from": d0, "to": d1, "top20": p.ew_ret(d0, d1, on)[0], "rest": p.ew_ret(d0, d1, off)[0],
-                     "ew": p.ew_ret(d0, d1)[0], "spy": spy_ret(spy, d0, d1)})
-    bk = pd.DataFrame(rows, columns=["from", "to", "top20", "rest", "ew", "spy"])
+    cache, dropped = {}, {}
+    bk = _basket_rows(p, p.top, spy, dropped)
     for c in ("top20", "rest", "ew", "spy"):
         bk["cum_" + c] = (1 + bk[c].fillna(0)).cumprod() - 1
     spy_ok = bool(bk["spy"].notna().all()) if len(bk) else False
@@ -341,24 +443,102 @@ def track_record(p, spy=None):
                      "mean": float(np.mean(good)) if good else None, "ew": ew_bh, "ew_n": n_ew,
                      "excess": mx, "lo": lo, "hi": hi,
                      "spy": spy_ret(spy, d0, d1), "from": d0, "to": d1, "rets": rets}
+    out["replay"] = rule_replay(p)
+    out["method"] = method_info(p)
+    out["band_since"] = out["method"]["band_since"]
     return out
+
+
+def method_info(p, mem=None, rec=None, macro=None):
+    """The wave-14 method changes, dated from the stored history (so every later build says the same):
+      band_since    first ranking published under a band rule (or today's session when today's build uses the
+                    band but is not recorded yet); band_fallbacks = later rankings that fell back to the plain
+                    top 20;
+      macro_since   first ranking made with refreshed (dated) macro inputs; frozen_from / frozen_to = the
+                    rankings that used the frozen May 2026 inputs; undated_after = later rankings without a date;
+      changes       {ranking: {"what": [...], "entered": [...], "left": [...]}}: the list moves at a method change,
+                    which are not ordinary turnover.
+    mem / rec / macro = today's membership, history record and macro inputs (all optional)."""
+    dates = list(p.dates)
+    out = {"band_since": None, "band_fallbacks": [], "macro_since": None, "frozen_from": dates[0] if dates else None,
+           "frozen_to": None, "undated_after": 0, "changes": {}, "today_refreshed": False}
+    try:
+        bs, fb = p.band_since()
+        ms, last_frozen, und = p.macro_since()
+    except Exception:                                                   # noqa: BLE001
+        bs, fb, ms, last_frozen, und = None, [], None, (dates[-1] if dates else None), 0
+    today = (rec or {}).get("session")
+    recorded = bool((rec or {}).get("recorded"))
+    if bs is None and str((mem or {}).get("rule", "")).startswith("band") and today and not recorded:
+        bs = today                                    # today's build uses the band but is not in the history
+    out.update(band_since=bs, band_fallbacks=fb, macro_since=ms, frozen_to=last_frozen if ms else
+               (dates[-1] if dates else None), undated_after=und)
+    out["today_refreshed"] = bool(macro and macro.get("basis") == "data through")
+    out["pre_listing"] = (macro or {}).get("pre_listing") or ""
+    whats = {}
+    if ms:
+        whats.setdefault(ms, []).append("macro")
+    if bs and bs in dates:
+        whats.setdefault(bs, []).append("band")
+    part = set(getattr(p, "partial", []) or [])
+    for d, what in sorted(whats.items()):
+        i = dates.index(d)
+        prev = next((x for x in reversed(dates[:i]) if x not in part), None)
+        ent = lft = []
+        if prev is not None and d not in part:
+            a = set(p.top.columns[p.top.loc[prev] == 1])
+            b = set(p.top.columns[p.top.loc[d] == 1])
+            ent, lft = sorted(b - a), sorted(a - b)
+        out["changes"][d] = {"what": what, "entered": ent, "left": lft, "prev": prev}
+    return out
+
+
+def method_change_txt(mi, short=False):
+    """One sentence per method-change ranking (dates in the page's format)."""
+    parts = []
+    for d, c in sorted((mi or {}).get("changes", {}).items()):
+        w = []
+        if "macro" in c["what"]:
+            w.append(f"the macro inputs were refreshed for the first time since {FROZEN_DATA}")
+        if "band" in c["what"]:
+            w.append("the list rule became the two-sided band")
+        mv = ""
+        if c.get("entered") or c.get("left"):
+            mv = (f": {len(c['entered'])} name{'s' if len(c['entered']) != 1 else ''} entered"
+                  + (f" ({', '.join(c['entered'])})" if c["entered"] and not short else "")
+                  + f" and {len(c['left'])} left" + (f" ({', '.join(c['left'])})" if c["left"] and not short else "")
+                  + " at that change, which is not ordinary turnover")
+        parts.append(f"The {dfmt(d, True)} ranking is a method change ({' and '.join(w)}){mv}.")
+    return " ".join(parts)
 
 
 # ============================================================ per-ticker tracker rows
 def tracker_rows(p, exit_res, spy=None):
+    """One row per name of the last ranking. "on" = on the PUBLISHED list (the star; since wave 14 a listed
+    name stays while it ranks <= 25). A pick's margin is over the rank-26 composite (the name it must stay
+    ahead of); a name off the list gets its place in line (best-ranked first) for the next free place."""
     last = p.dates[-1]
     c20, c21 = p.cutoff(last)
+    _c25, c26 = p.cutoff(last, EXIT_RANK)
     sp = p.spells()
     st_by = {r["state"]: r for r in exit_res.get("states", [])}
     rows = []
     order = p.rank.loc[last].dropna().sort_values().index.tolist()
+    on_last = {tk for tk in order if p.top_raw.at[last, tk] == 1}
+    if not on_last:                                    # a history without membership: the plain top 20
+        on_last = {tk for tk in order if int(p.rank.at[last, tk]) <= TOP_N}
+    queue = [tk for tk in order if tk not in on_last]
+    try:
+        changes = set(p.method_changes())
+    except Exception:                                                   # noqa: BLE001
+        changes = set()
     for tk in order:
         rank = int(p.rank.at[last, tk])
         comp = p.comp.at[last, tk]
         s_tk = sp[sp.ticker == tk]
         cur = s_tk[s_tk.ongoing]
-        row = {"ticker": tk, "rank": rank, "on": rank <= TOP_N, "sector": p.sector.get(tk), "n_spells": len(s_tk),
-               "composite": comp, "price": p.px.at[last, tk]}
+        row = {"ticker": tk, "rank": rank, "on": tk in on_last, "sector": p.sector.get(tk), "n_spells": len(s_tk),
+               "composite": comp, "price": p.px.at[last, tk], "by_band": tk in on_last and rank > TOP_N}
         if row["on"] and len(cur):
             c = cur.iloc[0]
             d0 = c.start
@@ -370,21 +550,22 @@ def tracker_rows(p, exit_res, spy=None):
                        entry_rank=int(c.entry_rank), entry_price=float(p.adj.at[d0, tk]),
                        ret=r, ew=ew, spy=sr, ex_ew=(r - ew) if (r == r and ew == ew) else np.nan,
                        ex_spy=(r - sr) if (r == r and sr == sr) else np.nan,
-                       mdd=p.max_drawdown(tk, d0, last), margin=(comp - c21) if c21 == c21 else np.nan,
-                       broken=any(b["ticker"] == tk and d0 <= b["from"] for b in p.breaks))
+                       mdd=p.max_drawdown(tk, d0, last), margin=(comp - c26) if c26 == c26 else np.nan,
+                       broken=any(b["ticker"] == tk and d0 <= b["from"] for b in p.breaks),
+                       at_change=d0 in changes)
             row["exit"] = st_by.get(state_of(rank))
         elif row["on"]:                     # on today's list but no observed spell (cannot happen with a full
             row.update(since=last, td=1, cd=1, launch=False, censored=False, gap_before=0,   # last ranking)
                        entry_rank=rank, entry_price=float(p.adj.at[last, tk]), ret=np.nan, ew=np.nan,
                        spy=np.nan, ex_ew=np.nan, ex_spy=np.nan, mdd=np.nan,
-                       margin=(comp - c21) if c21 == c21 else np.nan, broken=False)
+                       margin=(comp - c26) if c26 == c26 else np.nan, broken=False)
             row["exit"] = st_by.get(state_of(rank))
         else:
             prev = s_tk[~s_tk.ongoing]
             row.update(last_on=prev.last_on_list.max() if len(prev) else None,
-                       margin=(comp - c20) if c20 == c20 else np.nan)
+                       margin=(comp - c20) if c20 == c20 else np.nan, in_line=queue.index(tk) + 1)
         rows.append(row)
-    return rows, {"c20": c20, "c21": c21, "last": last}
+    return rows, {"c20": c20, "c21": c21, "c26": c26, "last": last}
 
 
 # ============================================================ formatting
@@ -456,15 +637,25 @@ def _p(x):
     return "&lt;1%" if x < 0.005 else pct(x, False, 0)
 
 
-def margin_txt(m, on):
-    """The composite's distance to the cut at the published precision. Ranks 21-40 are published at 2 dp, so
-    a gap under 0.01 is a tie at that precision and its sign means nothing: say which side of the cut the
-    RANK puts the name on instead of printing "-0.00 vs #21"."""
+def ordinal(n):
+    n = int(n)
+    return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
+def margin_txt(m, on, in_line=None):
+    """A pick's distance to its exit line at the published precision: its composite over the rank-26
+    composite (since wave 14 a listed name leaves only when it ranks below 25). Names off the list are
+    published at 2 dp, so a gap under 0.01 is a tie at that precision and its sign means nothing: say that
+    the RANK keeps the name ahead instead of printing "+0.00 vs #26". A name off the list gets its place in
+    line for the next free place (the best-ranked name off the list is 1st), not a composite gap: under the
+    band it enters only when a pick drops below 25."""
+    if not on:
+        return f"{ordinal(in_line)} in line" if in_line else "n/a"
     if m is None or (isinstance(m, float) and not np.isfinite(m)):
         return "n/a"
     if abs(m) < 0.005:
-        return "&lt;0.01 above #21" if on else "&lt;0.01 below #20"
-    return f"{num2(m)} vs {'#21' if on else '#20'}"
+        return f"&lt;0.01 above #{EXIT_RANK + 1}"
+    return f"{num2(m)} vs #{EXIT_RANK + 1}"
 
 
 _PATH_RX = re.compile(r"[A-Za-z]:[\\/][^\s;,)]*|/(?:home|mnt|Users|tmp)/[^\s;,)]*")
@@ -601,6 +792,24 @@ def owner_mix(counts):
     return ", ".join(f"{c[k]} {k}" for k in order if c.get(k))
 
 
+def ir_min_indep():
+    """insider_record.MIN_INDEP (k of n is shown only from this many independent windows)."""
+    try:
+        import insider_record as ir
+        return ir.MIN_INDEP
+    except Exception:                                                   # noqa: BLE001
+        return 3
+
+
+def ir_h():
+    """The insider-record horizon (insider_record.HORIZON_TD)."""
+    try:
+        import insider_record as ir
+        return ir.HORIZON_TD
+    except Exception:                                                   # noqa: BLE001
+        return 60
+
+
 def _detail(r, ov, meta):
     tk = r["ticker"]
     o = ov.get(tk, {})
@@ -611,27 +820,38 @@ def _detail(r, ov, meta):
         main, sub = exit_text(ex)
         emp = ""
         if ex and ex.get("emp_p20") is not None:
-            emp = (f" In the history, names in the same rank band left within 20 td after "
+            emp = (f" In the history, names in the same rank band ranked below {EXIT_RANK} within 20 td after "
                    f"{_p(ex['emp_p20'])} of {ex['emp_n']} observed name-days (overlapping, so far fewer "
                    f"independent cases than that).")
         m = r.get("margin")
-        cut = (f"today it is <b>{num2(m)}</b> above the rank-21 composite" if m == m and abs(m) >= 0.005
-               else "today it is level with the rank-21 composite at the published 2 dp (it is ahead on rank)")
+        nxt = EXIT_RANK + 1
+        cut = (f"today it is <b>{num2(m)}</b> above the rank-{nxt} composite" if m == m and abs(m) >= 0.005
+               else f"today it is level with the rank-{nxt} composite at the published 2 dp (it is ahead on rank)")
+        band = (f" It ranks {r['rank']}, outside the top {TOP_N}: it stays because it was already on the list "
+                f"and still ranks {EXIT_RANK} or better. It can also be displaced earlier: when a name off the list "
+                f"ranks {ENTER}th or better, the worst-ranked pick leaves to make room (the estimate below counts "
+                f"only the rank exit, so it can overstate the stay)." if r.get("by_band") else "")
+        chg = (f" It entered at the {dfmt(r['since'], True)} ranking, a method change (see the note above), "
+               f"not ordinary turnover." if r.get("at_change") else "")
         ent = ""
         if r.get("gap_before"):
             ent = (f" It entered after {r['gap_before']} trading day{'s' if r['gap_before'] != 1 else ''} with no "
                    f"ranking, so the true entry may be up to that much earlier.")
-        blocks.append(f"""<div class="ptb"><h4>Exit</h4><p>Leaves the list when its composite falls below the #20
-cutoff: {cut}. Rank band {e(STATES[state_of(r['rank'])][2])}: median time to first exit <b>{main}</b> ({sub};
-{ex['n_obs'] if ex else 0} transitions, {ex['n_dates'] if ex else 0} days).{emp}{ent} Not a forecast: ranks are
-re-derived every build.</p></div>""")
+        blocks.append(f"""<div class="ptb"><h4>Exit</h4><p>Leaves the list when its rank falls below {EXIT_RANK}:
+{cut}.{band}{chg} Rank band {e(STATES[state_of(r['rank'])][2])}: median time to
+first exit <b>{main}</b> ({sub}; {ex['n_obs'] if ex else 0} transitions, {ex['n_dates'] if ex else 0} days).{emp}{ent}
+Not a forecast: ranks are re-derived every build.</p></div>""")
     else:
         lo = (f"last on the list {dfmt(r['last_on'], True)}" if r.get("last_on")
-              else f"never in the top 20 since the list began ({dfmt(LIST_LAUNCH, True)})")
-        m = r.get("margin")
-        dist = (f"Composite {num2(m)} from the #20 cutoff" if m == m and abs(m) >= 0.005
-                else "Composite level with the #20 cutoff at the published 2 dp (behind it on rank)")
-        blocks.append(f'<div class="ptb"><h4>Status</h4><p>Rank {r["rank"]}, {lo}. {dist}.</p></div>')
+              else f"never on the list since it began ({dfmt(LIST_LAUNCH, True)})")
+        line = r.get("in_line")
+        wait = (f"It is {ordinal(line)} in line: it enters as soon as it ranks {ENTER}th or better, or when a pick "
+                f"ranks below {EXIT_RANK} and it is then the best-ranked name off the list" if line
+                else "Off the list")
+        held = (f" It ranks inside the top {TOP_N} but outside the top {ENTER}, so it waits while every pick still "
+                f"ranks {EXIT_RANK} or better (the band keeps names already on the list)." if r["rank"] <= TOP_N
+                else "")
+        blocks.append(f'<div class="ptb"><h4>Status</h4><p>Rank {r["rank"]}, {lo}. {wait}.{held}</p></div>')
     # earnings
     eo = o.get("earnings")
     if eo and eo.get("status") == "ok":
@@ -702,10 +922,26 @@ re-derived every build.</p></div>""")
                       f"{x['n_sell_tx']} sales (code S; {money(x['sell_usd'])}, {x['n_sellers']} insiders), net "
                       f"<b>{money(x['net_usd'])}</b>{plan}{roles}. {x['n_filings']} Form 4 filings; "
                       f"{x['n_other_lines']} other lines (grants, exercises, tax withholding, gifts) not counted.</li>")
+        recs = io_.get("records") or {}
+        spy_ok = io_.get("record_spy_ok", True)
+
+        seen = set()
+
+        def own(d):
+            import insider_record as ir
+            c = str(d.get("owner_cik") or "")
+            r = recs.get(c)
+            if r is None:
+                return "n/a"
+            if c in seen:                          # one record per insider: said once, on the first line
+                return '<span class="tn">as above</span>'
+            seen.add(c)
+            tip = (f"purchases {r['k_buy']} of {r['n_buy']}, sales {r['k_sell']} of {r['n_sell']}" if r.get("show") else "")
+            return f'<span title="{e(tip)}">{e(ir.record_txt(r, spy_ok))}</span>'
         dl = "".join(f'<tr><td>{dfmt(d["tx_date"], True)}</td><td>{e(d["name"] or "")}</td><td>{e(d["role"])}</td>'
                      f'<td>{d["side"]} ({"P" if d["side"] == "buy" else "S"}){" non-market" if d["nonmarket"] else ""}'
                      f'{" &middot; 10b5-1" if d["plan"] else ""}</td>'
-                     f'<td class="num">{money(d["value"])}</td><td><a href="{e(d["url"])}">Form 4</a></td></tr>'
+                     f'<td class="num">{money(d["value"])}</td><td class="own">{own(d)}</td><td><a href="{e(d["url"])}">Form 4</a></td></tr>'
                      for d in io_.get("detail") or [])
         # The filing list's date is a STAMP only while it is current (guard_freshness grades every "as of"
         # at the daily cadence); an older list is said plainly, with a date but no stamp wording.
@@ -718,12 +954,22 @@ re-derived every build.</p></div>""")
                f"SEC EDGAR. Not refreshed today: the filing list was last fetched on {dfmt(asof_d, True)}.")
         cap = ("Largest P / S lines among the filings parsed so far (backfill incomplete)"
                if not io_["windows"][180]["complete"] else "Largest P / S lines, 180 days")
+        cov = e(dfmt(io_.get("cache_from"), True)) if io_.get("cache_from") else ""
+        own_note = (f"""<p class="tn">Own record = how this insider's own past trades in this stock were followed by the
+stock: a purchase counts as right when the stock then beat SPY over the next {ir_h()} trading days, a sale when it
+then lagged SPY (price only, from the close of the trade day). Counted: purchases (code P) and sales (code S =
+sale, open market or private), one per insider, day and side, only once their {ir_h()}-day window has closed;
+10b5-1 plan trades are not counted (they are scheduled months ahead), only their number is shown. Trades close
+together share most of their window, so the cell first gives the number of independent (non-overlapping)
+windows, and shows k of n only from {ir_min_indep()} independent windows; otherwise it says too few independent
+trades. Small sample and descriptive{', from the Form 4s filed since ' + cov if cov else ''} held here: not a
+forecast, and not part of the composite.</p>""" if dl else "")
         blocks.append(f"""<div class="ptb wide"><h4>Insiders (SEC Form 4)</h4><ul class="ptul">{''.join(wl)}</ul>
-{('<p class="tn">' + cap + ':</p><table class="ptmini"><tr><th>Traded</th><th>Insider (as filed)</th><th>Role</th><th>Side</th><th>Value</th><th></th></tr>' + dl + '</table>') if dl else ''}
+{('<p class="tn">' + cap + ':</p><table class="ptmini"><tr><th>Traded</th><th>Insider (as filed)</th><th>Role</th><th>Side</th><th>Value</th><th>Own record</th><th></th></tr>' + dl + '</table>') if dl else ''}
 <p class="tn">Code P = open-market or private purchase (lines whose footnotes show a non-market purchase are
 excluded from the counts and marked in the table); code S = sale, open market or private. By transaction date
 inside the window. The 10b5-1 mark comes from the filing's own Rule 10b5-1 box, or a footnote that says the trade was
-made under such a plan. {src}</p></div>""")
+made under such a plan. {src}</p>{own_note}</div>""")
     else:
         blocks.append(f'<div class="ptb"><h4>Insiders (SEC Form 4)</h4><p>{gap_cell(io_)}: {gap_why(io_)}</p></div>')
     # congress
@@ -778,16 +1024,20 @@ def tracker_section(rows, ov, exit_res, cut, meta):
                 ret = ('<span class="ptgap" title="the price history has a split-like jump and Yahoo gives no split '
                        'information that rules a split out">n/a (price break)</span>')
             mg = r.get("margin")
+            bb = (f'<br><span class="tn" title="ranks outside the top {TOP_N}; kept by the band (stay while rank '
+                  f'&le; {EXIT_RANK})">kept by the band</span>' if r.get("by_band") else "")
+            if r.get("at_change"):
+                since += ('<br><span class="tn" title="entered at a method change, not ordinary turnover">'
+                          'method change</span>')
             rk = (f'{r["rank"]}<br><span class="tn">entry {r["entry_rank"]}</span><br>'
-                  f'<span class="tn {cls(mg) if (mg == mg and abs(mg) >= 0.005) else ""}">{margin_txt(mg, True)}</span>')
+                  f'<span class="tn {cls(mg) if (mg == mg and abs(mg) >= 0.005) else ""}">{margin_txt(mg, True)}</span>'
+                  f'{bb}')
             exc = _exit_cell(r.get("exit"))
         else:
             since = (f'off list<br><span class="tn">last on {dfmt(r["last_on"])}</span>' if r.get("last_on")
-                     else 'off list<br><span class="tn">never in top 20</span>')
+                     else 'off list<br><span class="tn">never on the list</span>')
             ret, exc = dash, dash
-            mg = r.get("margin")
-            rk = (f'{r["rank"]}<br><span class="tn {cls(mg) if (mg == mg and abs(mg) >= 0.005) else ""}">'
-                  f'{margin_txt(mg, False)}</span>')
+            rk = f'{r["rank"]}<br><span class="tn">{margin_txt(None, False, r.get("in_line"))}</span>'
         trs.append(
             f'<tr data-pick="{1 if r["on"] else 0}"{"" if r["on"] else " hidden"}>'
             f'<td><button class="pt-x" type="button" aria-expanded="false" aria-controls="{did}" data-t="{did}" '
@@ -806,17 +1056,49 @@ def tracker_section(rows, ov, exit_res, cut, meta):
     rec_note = ""
     if rec and not rec.get("recorded"):
         rec_note = f' Today\'s build is not added to the history ({e(rec.get("why", ""))}).'
+    lm = meta.get("list") or {}
+    mi = meta.get("method") or {}
+    if lm.get("rule") == RULE_FALLBACK:
+        why = safe_text(lm.get("why") or "no usable previous list")
+        rule_note = (f' <b>Today the band could not be applied</b> ({e(why)}), so the list is the plain '
+                     f'top {TOP_N}.')
+    else:
+        kept = lm.get("kept_by_band") or []
+        rule_note = (f' Today {plural(len(kept), "pick")} rank{"s" if len(kept) == 1 else ""} outside the top {TOP_N} and '
+                     f'{"stays" if len(kept) == 1 else "stay"} on the list by the band ({e(", ".join(kept))}).' if kept else "")
+        forced, disp = lm.get("forced") or [], lm.get("displaced") or []
+        if forced:
+            rule_note += (f' Today {e(", ".join(forced))} entered by ranking {ENTER}th or better'
+                          + (f', in place of {e(", ".join(disp))}.' if disp else "."))
+    bs = meta.get("band_since") or mi.get("band_since")
+    fb = mi.get("band_fallbacks") or []
+    if bs:
+        band_txt = (f"since the {dfmt(bs, True)} ranking a two-sided band applies at the cut: a pick stays while it "
+                    f"ranks {EXIT_RANK}th or better, a name off the list enters as soon as it ranks {ENTER}th or better "
+                    f"(the worst-ranked pick makes room), and any other free place goes to the best-ranked name off "
+                    f"the list"
+                    + (f" (on {plural(len(fb), 'later ranking')} the band could not be applied and the plain top "
+                       f"{TOP_N} was published: {', '.join(dfmt(d, True) for d in fb[:5])}"
+                       f"{', ...' if len(fb) > 5 else ''})" if fb else "")
+                    + f"; before that it was the plain top {TOP_N}")
+    else:
+        band_txt = (f"so far every ranking used the plain top {TOP_N}; a two-sided band (stay while rank &le; "
+                    f"{EXIT_RANK}, enter at rank &le; {ENTER}) applies from the next recorded ranking")
+    chg_txt = method_change_txt(mi)
+    chg_txt = f" {e(chg_txt)}" if chg_txt else ""
+    n_chg_left = sum(len(c.get("left") or []) for c in (mi.get("changes") or {}).values())
     return f"""<section class="block" id="tracker">
 <h2>Pick Tracker</h2>
-<p class="note">Follows every pick from the day it entered the top 20: how long it has been on the list, how it
-has done since (against SPY and the equal-weight universe over the same dates), how far it sits above the cut,
-how long names in its rank band have tended to stay, and the analyst, earnings, insider and congressional
-context. Open a row (+) for the detail. Built daily from the page's own history ({len(meta['dates'])} daily
-rankings since the list began on {dfmt(LIST_LAUNCH, True)}, each dated by the session whose closes it holds; the
-latest is the {dfmt(meta['dates'][-1], True)} close).{rec_note} <b>The overlays are context only: they do not change
-the composite or the ranks</b>; whether any of them should enter the model is a separate decision. Not advice.</p>
+<p class="note">Follows every pick from the day it entered the list: how long it has been on it, how it has done
+since (against SPY and the equal-weight universe over the same dates), how far it sits above its exit line, how
+long names in its rank band have tended to stay, and the analyst, earnings, insider and congressional context.
+The list is {TOP_N} names: {band_txt}.{rule_note}{chg_txt} Open a row
+(+) for the detail. Built daily from the page's own history ({len(meta['dates'])} daily rankings since the list began
+on {dfmt(LIST_LAUNCH, True)}, each dated by the session whose closes it holds; the latest is the
+{dfmt(meta['dates'][-1], True)} close).{rec_note} <b>The overlays are context only: they do not change the composite
+or the ranks</b>; whether any of them should enter the model is a separate decision. Not advice.</p>
 <div class="ptpills" role="group" aria-label="rows">
-  <button class="pill on" type="button" data-f="pick">Top-20 picks ({n_on})</button>
+  <button class="pill on" type="button" data-f="pick">Picks ({n_on})</button>
   <button class="pill" type="button" data-f="all">All {len(rows)}</button>
 </div>
 <div class="tile" style="padding:0 14px 8px;overflow-x:auto">
@@ -830,15 +1112,18 @@ exact. ~ = the entry follows trading days with no ranking (machine off, refresh 
 up to that many days earlier.{' &ge; = already on the list when this history starts, so the true start is earlier.' if sp.get('left_censored') else ''}
 Since entry = price change from the first day of the current spell (price only, no dividends; Yahoo-confirmed
 splits applied), next to SPY and the buy-and-hold equal-weight universe over the same dates; max DD = worst fall from
-a peak since entry, on daily closing prices. Rank: today, at entry, and the composite's margin over the rank-21
-composite (picks) or its distance to the rank-20 composite (others), at the published precision (ranks 21-40 are
-published at 2 dp, so a gap under 0.01 is a tie there and only the rank decides). Exit estimate = median trading
-days until the name first leaves the top 20, from a rank-band Markov chain over {exit_res.get('n_transitions', 0)}
-day-to-day moves; range = the model's 10th to 90th percentile of that time (8 in 10 names in the band leave inside
-it); then the chance of leaving within 20 trading days, next to how often that happened in the history. Of
-{sp.get('n', 0)} spells so far, {sp.get('completed', 0)} ended, after a median of {sp.get('median_td') or 0:.0f}
+a peak since entry, on daily closing prices. Rank: today, at entry, and the pick's composite margin over the
+rank-{EXIT_RANK + 1} composite, the name it must stay ahead of (names off the list are published at 2 dp, so a gap under
+0.01 is a tie there and only the rank decides); a name off the list shows its place in line for the next free place.
+Exit estimate = median trading days until the name first ranks below {EXIT_RANK}, from a rank-band Markov chain over
+{exit_res.get('n_transitions', 0)} day-to-day moves of every name ranked {EXIT_RANK} or better (the move into a method-change
+ranking is left out; displacement of a pick ranked {TOP_N + 1}-{EXIT_RANK} is not modelled); range = the model's 10th
+to 90th percentile of that time (8 in 10 names in the band leave inside it); then the chance of leaving within 20
+trading days, next to how often a name in the band ranked below {EXIT_RANK} within 20 trading days in the history.{frozen_moves_txt(exit_res)}
+Of {sp.get('n', 0)} spells so far, {sp.get('completed', 0)} ended, after a median of {sp.get('median_td') or 0:.0f}
 trading days (middle half {sp.get('q1') or 0:.0f}–{sp.get('q3') or 0:.0f}); {sp.get('le5', 0)} of them lasted 5
-days or less, mostly names hovering at the cut. Analyst target = Yahoo Finance consensus mean, upside from today's
+days or less, mostly names hovering at the old cut (before the band){f"; {n_chg_left} ended at a method change, not by ordinary turnover" if n_chg_left else ""}.
+Analyst target = Yahoo Finance consensus mean, upside from today's
 price, analyst count and range (aggregates, no firm names); model = the picker's own crude valuation, not a target.
 Analysts = share of buy ratings, rating changes and target raises / cuts in 90 days. Insiders = SEC Form 4
 purchases (code P) and sales (code S: open market or private). Congress = STOCK Act filings, counted by filing
@@ -864,9 +1149,86 @@ def _ans(row, h, who):
             f"{int(row['k_indep'])} independent windows.")
 
 
+def frozen_txt(mi):
+    """The frozen-input disclosure in HISTORY terms (wave 14, C2): which stored rankings used the macro inputs
+    frozen at May 2026 data, dated from the history (picks_history macro_through), and since when they refresh."""
+    mi = mi or {}
+    a, b, since = mi.get("frozen_from"), mi.get("frozen_to"), mi.get("macro_since")
+    cad = dfmt(FROZEN_CAD_END, True)
+    if not a:
+        return ""
+    if since:
+        und = mi.get("undated_after") or 0
+        return (f" rankings from {dfmt(a, True)} to {dfmt(b, True)} used macro inputs (betas, P/E, the FOMC target) "
+                f"frozen at {FROZEN_DATA} data (the USD/CAD betas ended {cad}), which kept ranks sticky and tenure "
+                f"long, so the tenure, persistence and follow-the-list figures above mostly reflect that period; "
+                f"since the {dfmt(since, True)} ranking the inputs are rebuilt weekly"
+                + (f" ({plural(und, 'later ranking')} carried no dated inputs)" if und else "") + ";")
+    return (f" every ranking so far ({dfmt(a, True)} to {dfmt(b, True)}) used macro inputs (betas, P/E, the FOMC "
+            f"target) frozen at {FROZEN_DATA} data (the USD/CAD betas ended {cad}), which keeps ranks sticky and "
+            f"tenure long" + ("; refreshed inputs apply from the next recorded ranking" if mi.get("today_refreshed")
+                              else "") + ";")
+
+
+def _frozen_share(ex):
+    """(moves on frozen inputs, all fitted moves, quantifier or None) from exit_model()'s counts (round 3)."""
+    n, k = int((ex or {}).get("n_transitions") or 0), int((ex or {}).get("n_frozen") or 0)
+    if not n or not k:
+        return k, n, None
+    q = "All" if k == n else "Nearly all" if k >= 0.9 * n else "Most" if 2 * k > n else None
+    return k, n, q
+
+
+def frozen_moves_txt(ex):
+    """Exit-estimate footnote (round 3, L4): how many of the model's moves come from the frozen-input period, from
+    the history's macro_through dates; the "likely overstates" inference only while they are the majority."""
+    k, n, q = _frozen_share(ex)
+    if not k:
+        return ""
+    if q is None:
+        return f" {k} of those {n} moves come from rankings on the macro inputs frozen at {FROZEN_DATA} data."
+    cnt = "" if q == "All" else f" ({k} of {n})"
+    return (f" {q} of those moves{cnt} come from rankings on the macro inputs frozen at {FROZEN_DATA} data, which "
+            f"kept ranks sticky, so for now the estimate likely overstates how long a name stays.")
+
+
+def ai_method_tail(mi, ex=None):
+    """Appended to stocks.ai.txt line 3 (round 3, L0): the band's start and the macro-input change, dated from the
+    stored history (band_since, macro_through) exactly as the page dates them; true on the first live build, later
+    builds, fallback days and an unrecorded build. Never says "rule=" (parse_ai reads the first one). Never
+    raises: "" (nothing claimed) when anything is missing."""
+    try:
+        mi = mi or {}
+        out = []
+        bs, ms = mi.get("band_since"), mi.get("macro_since")
+        if bs:
+            out.append(f"{RULE_BAND} since {bs}")   # r4: names the band, so a fallback day cannot misread it
+        chg = sorted((mi.get("changes") or {}).keys())
+        cw = (f"entries/exits on {' and '.join(chg)} are {'a method change' if len(chg) == 1 else 'method changes'}"
+              if chg else "")
+        if ms and mi.get("today_refreshed"):
+            out.append(f"macro inputs rebuilt weekly since {ms} (frozen at {FROZEN_DATA} data before"
+                       + (f"; {cw}" if cw else "") + ")")
+        elif ms:
+            out.append(f"macro inputs refreshed from {ms} (frozen at {FROZEN_DATA} data before"
+                       + (f"; {cw}" if cw else "") + "); today's inputs carry no data-through date")
+        elif mi.get("frozen_from"):
+            out.append(f"every stored ranking used macro inputs frozen at {FROZEN_DATA} data"
+                       + ("; today's ranking (not recorded) uses refreshed inputs" if mi.get("today_refreshed")
+                          else ""))
+            if cw:
+                out.append(cw)
+        k, n, q = _frozen_share(ex)
+        if q:
+            out.append(f"exit_median_td: {q.lower()} model moves ({k} of {n}) on frozen inputs, likely overstates stays")
+        return "".join("; " + x for x in out)
+    except Exception:                                                   # noqa: BLE001
+        return ""
+
+
 def record_section(tr, chart_html="", macro=None):
-    """macro = {"date": iso, "age_days": n} of the capstone macro inputs (file date, read at build time), so the
-    caveat about frozen inputs is said only while it is true."""
+    """tr["method"] = method_info() (the frozen-input period and the method changes, from the history itself).
+    macro = today's _macro_inputs() (only whether today's inputs are refreshed is used)."""
     ps = tr["persistence"]
     bs = tr["basket_summary"]
     coh = tr["cohort"]
@@ -875,10 +1237,10 @@ def record_section(tr, chart_html="", macro=None):
         x = ps[(ps.h == h) & (ps.bucket == b)] if len(ps) else ps
         return x.iloc[0].to_dict() if len(x) else None
     long10 = _ans(get(10, "60+ td"), 10, "picks already on the list 60 trading days or more")
-    all10 = _ans(get(10, "top20"), 10, "all top-20 picks together")
+    all10 = _ans(get(10, "top20"), 10, "all picks together")
     rows = ""
     labels = {"0-19 td": "On list 0-19 td", "20-59 td": "On list 20-59 td", "60+ td": "On list 60+ td",
-              "top20": "All top-20 picks", "rank21_40": "Ranks 21-40"}
+              "top20": "All picks", "rank21_40": "Off the list"}
     for b in ["0-19 td", "20-59 td", "60+ td", "top20", "rank21_40"]:
         cells = ""
         for h in HORIZONS:
@@ -928,26 +1290,37 @@ def record_section(tr, chart_html="", macro=None):
                   if share is not None else ""))
     else:
         lbt = "no name has reached 60 td yet"
-    mi = macro or {}
-    mtxt = ""
-    if mi.get("date") and mi.get("age_days") is not None and mi["age_days"] > 30:
-        mtxt = (f" the macro inputs to the composite (betas, P/E, the FOMC target) were last refreshed on "
-                f"{dfmt(mi['date'], True)}, which keeps ranks sticky and tenure long;")
+    mi = dict(tr.get("method") or {})
+    if macro is not None:
+        mi["today_refreshed"] = macro.get("basis") == "data through"
+    mtxt = frozen_txt(mi)
+    chg = method_change_txt(mi, short=True)
     part = (f" {bs['n_partial']} partial ranking{'s' if bs['n_partial'] != 1 else ''} (fewer names than the "
             f"universe) {'are' if bs['n_partial'] != 1 else 'is'} not used to form baskets or move tenure."
             if bs.get("n_partial") else "")
+    since = mi.get("band_since") or tr.get("band_since")
+    fb = mi.get("band_fallbacks") or []
+    rule_txt = ((f" The list is the plain top {TOP_N} before the {dfmt(since, True)} ranking and follows the two-sided"
+                 f" band from that ranking on"
+                 + (f", except {plural(len(fb), 'ranking')} on which the band could not be applied and the plain top"
+                    f" {TOP_N} was published" if fb else "") + ".")
+                if since else f" Every ranking so far used the plain top {TOP_N}; the two-sided band applies from the "
+                              f"next recorded ranking.")
+    if chg:
+        rule_txt += f" {e(chg)}"
     return f"""<section class="block" id="track-record">
 <h2>Track Record: will they keep doing well?</h2>
 <p class="note">Several picks have been on the list for months, and some did very well. This section asks what the
 page's own history says about what tends to come next. {long10} {all10}{coh_txt} The history is short
 ({n_rank} daily rankings, {dfmt(bs['from'], True)} to {dfmt(bs['to'], True)}); none of this is a forecast or advice.</p>
 <div class="tile chart"><div class="ch">{chart_html}</div></div>
-<p class="note" style="font-size:12.5px">Follow-the-list basket (equal-weight top 20, re-formed at every daily ranking,
-price only): top 20 {pct(bs['top20'])}, equal-weight universe rebalanced at each ranking {pct(bs['ew'])}, ranks 21-40
-{pct(bs['rest'])}{spy_txt}. The top 20 beat the universe in {bs['beats']} of {bs['n']} day-to-day intervals. Each basket
-is formed at the close of the day it was ranked, and the ranking is published only after that close, so these are
-not returns anyone could have traded at those prices.{drop_txt}{part} The rebalanced universe differs from the
-buy-and-hold universe used in the rows above and in the cohort sentence.</p>
+<p class="note" style="font-size:12.5px">Follow-the-list basket (equal-weight, the {TOP_N} published picks, re-formed at
+every daily ranking, price only): picks {pct(bs['top20'])}, equal-weight universe rebalanced at each ranking
+{pct(bs['ew'])}, the names off the list {pct(bs['rest'])}{spy_txt}. The picks beat the universe in {bs['beats']} of
+{bs['n']} day-to-day intervals.{rule_txt} Each basket is formed at the close of the day it was ranked, and the ranking
+is published only after that close, so these are not returns anyone could have traded at those prices.{drop_txt}{part}
+The rebalanced universe differs from the buy-and-hold universe used in the rows above and in the cohort sentence.</p>
+{replay_html(tr)}
 <h3>Forward excess return vs the equal-weight universe</h3>
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto">
 <table class="ptable ptrec"><thead><tr><th>Group (tenure at the start)</th><th>Next 5 td</th><th>Next 10 td</th>
@@ -961,6 +1334,46 @@ quotes, price return only. Past behaviour of the list does not predict its futur
 </section>"""
 
 
+def replay_html(tr):
+    """The in-sample replay of both list rules on the same rankings, with its labels (wave 14)."""
+    rp = tr.get("replay") or {}
+    rr = rp.get("rules") or {}
+    pl, one, two = rr.get("plain"), rr.get("one_sided"), rr.get("two_sided")
+    if not pl or not one or not two or not rp.get("n_rankings"):
+        return ""
+    mi = tr.get("method") or {}
+    frz = ""                                       # round 3 (L4): no comparison with the refreshed inputs
+    if mi.get("macro_since") and mi.get("frozen_to"):
+        frz = (f" The rankings up to {dfmt(mi['frozen_to'], True)} used macro inputs frozen at {FROZEN_DATA} data, "
+               f"which kept ranks sticky.")
+    elif not mi.get("macro_since") and mi.get("frozen_from"):
+        frz = f" Every ranking in this replay used macro inputs frozen at {FROZEN_DATA} data, which kept ranks sticky."
+
+    def cells(x):
+        return (f'<td class="num">{x["entries"]}</td><td class="num">{x["changed_days"]}</td>'
+                f'<td class="num">{x["names"]}</td><td class="num">{x["completed"]} of {x["spells"]}</td>'
+                f'<td class="num">{x["le5"]}</td><td class="num">{x["kept10"]}</td><td class="num">{x["kept15"]}</td>'
+                f'<td class="num">{pct(x["basket"])}</td>')
+    return f"""<h3>Three list rules on the same rankings (in-sample replay)</h3>
+<div class="tile" style="padding:0 16px 8px;overflow-x:auto">
+<table class="ptable ptrec"><thead><tr><th>Rule</th><th>Names entering</th><th>Rankings with a change</th>
+<th>Distinct names</th><th>Spells ended</th><th>Spells of 5 td or less</th><th>Rankings with a top-10 name kept off</th>
+<th>Rankings with a top-15 name kept off</th><th>Basket (in-sample)</th></tr></thead><tbody>
+<tr><td>Plain top {TOP_N}</td>{cells(pl)}</tr>
+<tr><td>One-sided band: stay while rank &le; {EXIT_RANK} (rejected)</td>{cells(one)}</tr>
+<tr><td>Two-sided band: stay while rank &le; {EXIT_RANK}, enter at rank &le; {ENTER} (published)</td>{cells(two)}</tr>
+</tbody></table></div>
+<p class="note" style="font-size:11.5px;margin-top:.9rem">The three rules replayed on the same {rp['n_rankings']} full
+rankings ({dfmt(rp['from'], True)} to {dfmt(rp['to'], True)}; the composites and ranks are identical, only membership
+differs; each band starts from the first day's top {TOP_N}). The one-sided band keeps the list almost still, but it also
+keeps well-ranked names off the list for long stretches (the two kept-off columns), so it was rejected. The two-sided
+band lets any name ranked {ENTER}th or better in at once (the worst-ranked pick makes room;
+{plural(two['displaced'], 'such displacement')} in this replay). {ENTER} and {EXIT_RANK} were chosen on the ranks-only
+columns of this replay as it stood on 4 Nov 2026 (84 rankings, 04 Jun to 03 Nov 2026), never on returns. Basket = follow-the-list, equal-weight, price only, formed
+at each ranking's close (not tradeable at those prices); the equal-weight universe rebalanced the same way returned
+{pct(pl['ew'])}. <b>The basket column is in-sample and is not evidence</b> that any rule earns more.{frz}</p>"""
+
+
 def record_figure(tr):
     import plotly.graph_objects as go
     bk = tr["basket"]
@@ -968,9 +1381,9 @@ def record_figure(tr):
         return None
     x = [bk["from"].iloc[0]] + bk["to"].tolist()
     fig = go.Figure()
-    series = [("cum_top20", "Top 20 (follow the list)", "#0a2540", 2.2),
+    series = [("cum_top20", "Picks (follow the list)", "#0a2540", 2.2),
               ("cum_ew", "Equal-weight universe (rebalanced)", "#9aa5b1", 1.6),
-              ("cum_rest", "Ranks 21-40", "#5b7c99", 1.4)]
+              ("cum_rest", "Off the list", "#5b7c99", 1.4)]
     if bk["spy"].notna().all():
         series.append(("cum_spy", "SPY", "#0f766e", 1.4))
     for col, name, color, wd in series:
@@ -1009,6 +1422,7 @@ table.ptmini{border-collapse:collapse;font-size:11.5px;margin:4px 0 6px;font-var
 table.ptmini th{color:#888;font-weight:500;text-align:left;padding:2px 8px 2px 0;border-bottom:1px solid #e5e5e5}
 table.ptmini td{padding:2px 8px 2px 0;border-bottom:1px solid #f0f0f0;text-align:left}
 table.ptmini td.num{text-align:right;font-family:'JetBrains Mono',ui-monospace,monospace}
+table.ptmini td.own{white-space:normal;min-width:11em;max-width:19em;font-size:11px}
 @media(max-width:560px){.ptdet{grid-template-columns:1fr;max-width:86vw}}
 """
 
@@ -1029,7 +1443,35 @@ document.querySelectorAll('.ptpills').forEach(function(g){g.querySelectorAll('.p
 </script>"""
 
 
-def methodology_html():
+def methodology_html(band_since=None, mi=None):
+    mi = mi or {}
+    fb = mi.get("band_fallbacks") or []
+    since = ((f"Before the {dfmt(band_since, True)} ranking it was the plain top 20 by composite. From that ranking on"
+              + (f" (except {plural(len(fb), 'ranking')} on which the band could not be applied)" if fb else "") + ",")
+             if band_since else "So far it has been the plain top 20 by composite. From the next recorded ranking on,")
+    ms = mi.get("macro_since")
+    head = (f"Rankings before the {dfmt(ms, True)} ranking used files frozen at {FROZEN_DATA} data (the USD/CAD betas "
+            f"ended {dfmt(FROZEN_CAD_END, True)})" if ms else
+            f"Every ranking so far used files frozen at {FROZEN_DATA} data (the USD/CAD betas ended "
+            f"{dfmt(FROZEN_CAD_END, True)})")
+    # round 3 (L5): "rebuilt every Sunday" and the sources only while today's files carry the rebuild's sidecar
+    # (mi["today_refreshed"]); restored old files or a missing sidecar get wording that stays true
+    if mi.get("today_refreshed"):
+        how = ((f"; from that ranking on" if ms else "; from the next recorded ranking on")
+               + " they are rebuilt every Sunday from Yahoo prices (stocks, the dollar index, USD/CAD) and FRED (the "
+                 "10-year yield; fed funds for the decision labels), and the line under the page title gives the date "
+                 "of their prices and of their regressions.")
+    elif ms:
+        how = ("; from that ranking on, the rankings recorded with a data-through date used files rebuilt by the "
+               "site's weekly script. Today's files carry no build record, so the line under the page title gives "
+               "only their file date.")
+    else:
+        how = "; the line under the page title gives their file date."
+    macro_p = (f"""<p><b>Macro inputs.</b> The composite's macro variables (betas to the 10-year yield, the dollar index
+and USD/CAD; P/E; the post-FOMC 5-day drift that sets the weights) come from two private files.
+{head}{how} The {dfmt(ms, True) if ms else 'first'} ranking on the rebuilt inputs is marked as a method
+change: names that entered or left there did so at the change, not as ordinary turnover, and the day-to-day move
+into it is left out of the exit model.{" FOMC meetings before a stock's first trading day are not counted." if mi.get("pre_listing") == "dropped" else ""}</p>""")
     return """<p><b>Pick Tracker.</b> Every build adds the full ranking to <code>data/picks_history.csv</code>
 (rebuilt once from the page's committed history). Each ranking is dated by the trading session whose closing
 prices it holds: a build after the close counts for that day, a build after midnight or before the open for the
@@ -1041,8 +1483,19 @@ is dated by the first / last ranking that shows it (the true date lies inside th
 marked ~). A partial ranking (fewer names than the universe) keeps its prices, but its top 20 is not used. Splits
 are applied only when Yahoo confirms them; a split-like jump makes returns across it n/a unless Yahoo's own split
 record (a last split earlier than the jump) shows it was a real price move.</p>
-<p><b>Exit estimate.</b> A pick leaves the list when its composite falls below the #20 cutoff. The estimate is
-empirical: a Markov chain over rank bands fitted to all day-to-day moves between full rankings. The page shows the
+<p><b>List membership.</b> The published list is always 20 names. """ + since + """ a two-sided band applies at the cut: a name already on the list stays while it ranks 25th or
+better; a name off the list enters as soon as it ranks 15th or better, and the worst-ranked pick makes room (only a
+pick ranked 21-25 can be displaced); any other free place goes to the best-ranked name off the list. The previous list
+is the one stored for the last recorded session before the build's own; if there is none, or it does not hold 20
+names, the build falls back to the plain top 20 and the page says so. The band changes only which names carry the
+star: the composite, the ranks and the weights are the same. 15 and 25 were chosen on a ranks-only replay of the
+84 stored rankings from 04 Jun to 03 Nov 2026 (turnover and how often a well-ranked name was kept off), never on
+returns; the Track Record shows that replay, extended to every ranking since. <code>data/picks_history.csv</code> keeps the raw rank, the top-20 flag and, separately, the published
+membership, the rule that built it and the date of the macro inputs.</p>
+""" + macro_p + """<p><b>Exit estimate.</b> A pick leaves the list when its rank falls below 25, or, if it ranks 21-25, when a name off
+the list ranks 15th or better and displaces it. The estimate is empirical and models only the rank exit: a Markov
+chain over rank bands fitted to all day-to-day moves between full rankings of every name ranked 25 or better
+(ranks do not depend on membership), so for a pick ranked 21-25 it can overstate the stay. The page shows the
 median time to first exit and the model's range for it (10th to 90th percentile: 8 in 10 names starting in the band
 leave inside it); a block bootstrap gives the uncertainty of the median itself. Fewer than 30 moves or 15 days in a
 band reads "insufficient history", and anything longer than the history itself reads "&gt; N td" (N = trading days
@@ -1055,7 +1508,16 @@ can leave in one day when the inputs move.</p>
 Yahoo Finance (aggregates only, fetched every build; a block or outage makes the cell read "not available today",
 never yesterday's value). Insider trades come from SEC EDGAR Form 4 filings (purchases, code P, and sales, code S,
 open market or private; non-market purchases excluded; plan sales flagged; names as filed); a new issuer is
-backfilled over several days and says so until complete. Congress trades come from the site's weekly STOCK Act
+backfilled over several days and says so until complete. Exxon Mobil's insiders are read from both of its SEC
+registrants (the holding company that has carried the XOM listing since 1 Jul 2026, and the former company, whose
+filing list is re-read monthly). Each insider in the detail table gets an own record: how that person's own past
+trades in the stock (purchases, code P; sales, code S, open market or private) were followed by the stock over the
+next 60 trading days against SPY (price only, from the trade day's close; a purchase is right when the stock beat
+SPY, a sale when it lagged). 10b5-1 plan trades are not counted, only trades whose 60-day window has closed count,
+and the number of independent (non-overlapping) windows comes first: the result is shown as "k of n" only from 3
+independent windows, otherwise as too few independent trades. The horizon was fixed before any result was seen. It
+is descriptive and small-sample (only the Form 4s the site holds count; the insider detail says from when), not a
+forecast. Congress trades come from the site's weekly STOCK Act
 dataset, counted by the member who filed them, with the owner (self, spouse, joint, dependent child) as filed.
 News sentiment is not covered. None of the overlays enters the composite or the ranks.</p>"""
 

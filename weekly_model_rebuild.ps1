@@ -26,6 +26,16 @@
        05a's Shiller raw; its CSVs feed 17_build_site.py in the DAILY job.
        Also orphaned until 2026-08-12. Best-effort because a stale chart is
        better than a blocked model rebuild -- the freshness checker grades it.
+    3c. Capstone macro inputs (added 2026-11-04, wave 14): capstone_inputs_refresh.py
+       rebuilds the stock picker's two PRIVATE parquets in ~\capstone\data\analytics
+       (macro betas, P/E, post-FOMC drift; ~206 Yahoo + 2 FRED requests). Best-effort,
+       writes outside the repo, never takes the repo lock itself (this job holds it).
+       AFTER the load-bearing fetches (its Yahoo burst cannot get them rate-limited)
+       and BEFORE the gate (a gate breach cannot skip it; the gate reads only data/).
+       Skipped under -BuildOnly (a test run must not move the live ranking) and with
+       -SkipCapstone. It alerts itself (YAHOO_ALERT.txt) and keeps the previous files
+       when an input is incomplete; 25_stock_picks.py alerts when they are older than
+       13 days.
     4. MATERIALITY GATE (scripts/model_delta_gate.py): rebuilt data/ vs HEAD.
        A breach reverts data/ and stops the run. Nothing is published.
        Tolerances: 75 bp headline ER . 150 bp any asset ER . 100 bp any
@@ -78,12 +88,15 @@
 .PARAMETER DryRun
   Environment + guard checks only. No downloads, no build.
 
+.PARAMETER SkipCapstone
+  Skip step 3c (the capstone macro inputs keep their current vintage).
+
 .NOTES
   Created 2026-08-11. ASCII-only by convention (cp1252 console eats curly quotes).
   PYTHONUTF8 is forced: the generators print Unicode and write UTF-8.
 #>
 [CmdletBinding()]
-param([switch]$Force, [switch]$SkipMC, [switch]$Publish, [switch]$BuildOnly, [switch]$DryRun)
+param([switch]$Force, [switch]$SkipMC, [switch]$Publish, [switch]$BuildOnly, [switch]$DryRun, [switch]$SkipCapstone)
 
 $ErrorActionPreference = 'Stop'
 
@@ -314,6 +327,27 @@ try {
     # caught instead by Scripts\data_freshness_check.ps1, which grades the
     # mtime of backtest_results.csv against a budget.
     Run-Step '16_backtest.py' | Out-Null
+
+    # ---- 3c. capstone macro inputs (best-effort; wave 14, 2026-11-04) ---------
+    # Rebuilds the stock picker's private parquets in ~\capstone\data\analytics, OUTSIDE
+    # this clone (never staged, never committed). Runs under the repo lock we already hold,
+    # so a catch-up daily refresh cannot read them mid-replace; it must NOT take the lock
+    # itself (no --lock: a mutex is owned per thread, the child would wait 25 min and fail).
+    # Placed AFTER the load-bearing fetches (01/02/03 also use Yahoo: its ~206-request burst
+    # cannot get them rate-limited) and BEFORE the gate (model_delta_gate.py reads data/ only,
+    # and a breach must not skip it). A load-bearing Fail() above skips it for the week; the
+    # 13-day page budget absorbs one missed Sunday (only its last Friday reads stale). Skipped
+    # under -BuildOnly: that is a test
+    # run, and new inputs move the live ranking at the next daily build. A refusal or failure
+    # is a WARN here; the script has already written its own YAHOO_ALERT.txt line and kept
+    # the previous files.
+    if ($SkipCapstone) {
+        Log "-SkipCapstone given; capstone macro inputs not refreshed." 'WARN'
+    } elseif ($BuildOnly) {
+        Log "-BuildOnly: capstone macro inputs not refreshed (a test run must not move the live ranking)." 'WARN'
+    } else {
+        Run-Step 'capstone_inputs_refresh.py' | Out-Null
+    }
 
     # ---- 4. materiality gate -------------------------------------------------
     Log "-- materiality gate (rebuilt data/ vs HEAD)"

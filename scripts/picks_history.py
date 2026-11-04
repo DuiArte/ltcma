@@ -27,7 +27,32 @@ Writers
             only when it has no rows; an intraday build records nothing. A day the picker could not rebuild
             the page adds nothing: that day is a gap, never a carried-forward row.
 
-Facts derived here (no forecasting): spells on the top 20, tenure in NYSE trading days and calendar
+PUBLISHED LIST vs RAW RANK (wave 14, 2026-11-04; Carlos's written OK: hysteresis at the rank-20 cut)
+  The published list is 20 names, but since wave 14 it is not simply ranks 1-20. TWO-SIDED band (a
+  main-session design choice within Carlos's OK; revert = set ENTER = None and the one-sided rule below):
+    * a name ALREADY on the published list (an incumbent) stays while its rank is <= STAY (25);
+    * a name off the list ranked <= ENTER (15) always enters; it displaces the worst-ranked incumbent(s)
+      (only incumbents ranked 21-25 can be displaced: with 20 incumbents, an outsider inside the top 20
+      means an incumbent outside it);
+    * the remaining places go to the best-ranked names; the list always has exactly 20 names.
+  published_list() implements it; ENTER = None gives the one-sided band (stay while rank <= STAY, no forced
+  entry), the variant the wave-14 recheck rejected (it kept top-10 names off the list for months; it is
+  still replayed on the page next to the plain top 20 so readers can see why).
+  The previous membership is the on_list set of the last recorded session BEFORE the build's own session; if
+  there is none or it does not hold exactly 20 names, the build falls back to the plain top 20 and the page
+  says so. Columns: is_top20 = the RAW rank <= 20 (unchanged meaning for every old row); on_list = the
+  PUBLISHED membership (the page's star); list_rule = "top20" (plain rule: every row before wave 14),
+  RULE_BAND ("band15_25") or "top20_fallback" (band rule in force, previous list unusable). Old CSVs without
+  the columns load with on_list = is_top20 and list_rule = "top20", which is what was published. The
+  composite, the ranks and the weights never change: only which 20 names carry the star.
+  15 / 25 were chosen on a RANKS-ONLY replay of the stored rankings (entries, short spells, rankings with a
+  top-10 / top-15 name kept off the list), never on returns.
+MACRO INPUTS VINTAGE (wave 14): macro_through = the data-through date of the capstone macro inputs the build
+  ranked with (the sidecar of capstone_inputs_refresh.py; "" = unknown, i.e. every row before wave 14, when
+  the inputs were frozen at May 2026 data). The first session with a date is the method change the page
+  annotates (Panel.macro_since()). The git backfill reads it back from the page's hero line.
+
+Facts derived here (no forecasting): spells on the published list, tenure in NYSE trading days and calendar
 days, entry prices, split handling. Prices are the page's own Yahoo prices at build time (price return,
 no dividends). Splits are applied ONLY when Yahoo confirms them (defaultKeyStatistics.lastSplitFactor /
 lastSplitDate, recorded in data/picks_splits.json by the build). A split-like jump is a "price break" (any
@@ -67,8 +92,18 @@ except ImportError:                                   # imported from a test wit
 HIST = DATA / "picks_history.csv"
 SPLITS = DATA / "picks_splits.json"
 TOP_N = 20
+STAY = 25                                             # wave 14: an incumbent stays while rank <= STAY
+ENTER = 15                                            # wave 14: an outsider ranked <= ENTER always enters
+BAND = STAY - TOP_N                                   # 5: the width of the stay band (one-sided variant = band5)
+EXIT_RANK = STAY
+RULE_PLAIN, RULE_BAND, RULE_FALLBACK = "top20", f"band{ENTER}_{STAY}", "top20_fallback"
+RULE_ONE_SIDED = f"band{BAND}"                        # rejected variant: replayed on the page, never published
+# on_list / list_rule / macro_through are APPENDED (wave 14): a reader of the first 11 columns, by name or by
+# position, is unchanged
 COLS = ["snapshot_date", "rank", "ticker", "sector", "price_usd", "composite", "composite_dp",
-        "is_top20", "universe_n", "source", "built_at"]
+        "is_top20", "universe_n", "source", "built_at", "on_list", "list_rule", "macro_through"]
+RE_RULE_META = re.compile(r'<meta name="ltcma-picks-rule" content="([^"]+)"')
+RE_MACRO_HTML = re.compile(r"macro inputs: prices through (\d{2} [A-Z][a-z]{2} \d{4})")
 PAGE_PATHS = ("docs/stocks.html", "docs/stocks.ai.txt")
 GIT_READ_ONLY = {"log", "show", "rev-parse"}          # the only git subcommands this module may run
 # The composite picker and its top-20 list first appeared on 2026-06-04 (commit 8431783 created picker.py;
@@ -184,13 +219,17 @@ def _date(s):
 
 
 def parse_html(doc):
-    res = {"asof": None, "header_n": None, "rows": []}
+    res = {"asof": None, "header_n": None, "rows": [], "rule": None, "macro": ""}
     if not doc:
         return res
     m = RE_ASOF_HTML.search(doc)
     if m:
         res["asof"] = _date(m.group(1))
         res["header_n"] = int(m.group(2)) if m.group(2) else None
+    mr = RE_RULE_META.search(doc)                     # wave 14 pages say which list rule built the star
+    res["rule"] = mr.group(1) if mr else None
+    mm = RE_MACRO_HTML.search(doc)                    # wave 14 hero: "macro inputs: prices through DD Mon YYYY"
+    res["macro"] = (_date(mm.group(1)) or "") if mm else ""
     t = RE_TABLE.search(doc)
     if not t:
         return res
@@ -212,13 +251,15 @@ def parse_html(doc):
 def parse_ai(doc):
     """stocks.ai.txt -> asof + top-20 rows. Lines carry rank|ticker|sector|price|composite|dominant_var and,
     since wave 13, extra columns appended at the END (ignored here)."""
-    res = {"asof": None, "universe": None, "rows": []}
+    res = {"asof": None, "universe": None, "rows": [], "rule": None}
     if not doc:
         return res
     m = RE_ASOF_AI.search(doc)
     if m:
         res["asof"] = _date(m.group(1))
         res["universe"] = int(m.group(2))
+    mr = re.search(r"\brule=(\w+)", doc)              # wave 14 header line 3
+    res["rule"] = mr.group(1) if mr else None
     for line in doc.splitlines():
         parts = line.strip().split("|")
         if len(parts) >= 5 and parts[0].isdigit():
@@ -239,22 +280,26 @@ def _commit_rows(repo, sha, commit_iso):
     out = []
     if h["rows"]:
         n = len(h["rows"])
+        rule = h.get("rule") or RULE_PLAIN            # pages before wave 14 carry no rule: the star was ranks 1-20
         for r in h["rows"]:
+            # is_top20 = the raw rank; on_list = the star the page published (equal on every pre-wave-14 page)
             row = {"rank": r["rank"], "ticker": r["ticker"], "sector": r["sector"], "price_usd": r["price_usd"],
-                   "composite": r["composite"], "composite_dp": r["composite_dp"], "is_top20": bool(r["star"]),
-                   "universe_n": n}
+                   "composite": r["composite"], "composite_dp": r["composite_dp"], "is_top20": r["rank"] <= TOP_N,
+                   "universe_n": n, "on_list": bool(r["star"]), "list_rule": rule,
+                   "macro_through": h.get("macro") or ""}
             ar = ai_by.get(r["ticker"])
             if ar is not None and ar["composite"] is not None and ar["composite_dp"] > row["composite_dp"]:
                 row["composite"], row["composite_dp"] = ar["composite"], ar["composite_dp"]
             if ar is not None and ar["sector"]:
                 row["sector"] = ar["sector"]
             out.append(row)
-    elif a["rows"]:                                   # html overwritten by another page: top 20 only
-        for r in a["rows"]:
+    elif a["rows"]:                                   # html overwritten by another page: the pick lines only
+        for r in a["rows"]:                           # (ai.txt lists exactly the published picks)
             out.append({"rank": r["rank"], "ticker": r["ticker"], "sector": r["sector"],
                         "price_usd": r["price_usd"], "composite": r["composite"],
                         "composite_dp": r["composite_dp"], "is_top20": r["rank"] <= TOP_N,
-                        "universe_n": a["universe"]})
+                        "universe_n": a["universe"], "on_list": True,
+                        "list_rule": a.get("rule") or RULE_PLAIN, "macro_through": ""})
     return snap, out, bool(h["rows"])
 
 
@@ -306,13 +351,35 @@ def backfill_from_git(repo, since=None, report=None):
 
 
 # ------------------------------------------------------------------------------------------- store
+def _bool(s):
+    return s.astype(str).str.lower().isin(["true", "1"])
+
+
 def _normalise(df):
     if df.empty:
         return pd.DataFrame(columns=COLS)
+    df = df.copy()
+    # wave 14: rows written before on_list / list_rule existed were published under the plain rule, so their
+    # published membership IS the raw top-20 flag
+    if "on_list" not in df.columns:
+        df["on_list"] = df["is_top20"]
+    if "list_rule" not in df.columns:
+        df["list_rule"] = RULE_PLAIN
+    miss = df["on_list"].isna() | (df["on_list"].astype(str).str.strip() == "")
+    if miss.any():
+        df.loc[miss, "on_list"] = df.loc[miss, "is_top20"]
+    lr = df["list_rule"].astype(str).str.strip()
+    df["list_rule"] = lr.where(~lr.isin(["", "nan", "None", "<NA>"]), RULE_PLAIN)
+    # wave 14: the macro inputs' data-through date; "" = unknown (every row before wave 14: frozen inputs)
+    if "macro_through" not in df.columns:
+        df["macro_through"] = ""
+    mt = df["macro_through"].astype(str).str.strip().str[:10]
+    df["macro_through"] = mt.where(mt.str.match(r"^\d{4}-\d{2}-\d{2}$"), "")
     df = df[COLS].copy()
     df["rank"] = df["rank"].astype(int)
     df["composite_dp"] = df["composite_dp"].astype(int)
-    df["is_top20"] = df["is_top20"].astype(str).str.lower().isin(["true", "1"])
+    df["is_top20"] = _bool(df["is_top20"])
+    df["on_list"] = _bool(df["on_list"])
     df["universe_n"] = pd.to_numeric(df["universe_n"], errors="coerce").astype("Int64")
     df["price_usd"] = pd.to_numeric(df["price_usd"], errors="coerce")
     df["composite"] = pd.to_numeric(df["composite"], errors="coerce")
@@ -343,7 +410,8 @@ def save(df, path=None):
         sec = f'"{sec}"' if "," in sec else sec
         lines.append(",".join([r.snapshot_date, str(int(r.rank)), r.ticker, sec, px, comp,
                                str(int(r.composite_dp)), "True" if r.is_top20 else "False", un,
-                               str(r.source or ""), str(r.built_at or "")]))
+                               str(r.source or ""), str(r.built_at or ""), "True" if r.on_list else "False",
+                               str(r.list_rule or RULE_PLAIN), str(r.macro_through or "")]))
     tmp = path.with_suffix(path.suffix + ".tmp")
     with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
@@ -351,20 +419,103 @@ def save(df, path=None):
     return path
 
 
-def snapshot_from_picker(df, asof_date, built_at=None):
+def snapshot_from_picker(df, asof_date, built_at=None, members=None, rule=None, macro_through=None):
     """Today's picker DataFrame (indexed by ticker, sorted, with rank/sector/price/composite) -> rows in the
-    published precision. Never touches weights."""
+    published precision. Never touches weights. members = the PUBLISHED list (default: ranks 1-20, the plain
+    rule); they are the stocks.ai.txt pick lines, published at 3 dp, so they are stored at 3 dp and every
+    other name at the page's 2 dp. macro_through = the macro inputs' data-through date (iso) or None."""
     built_at = built_at or dt.datetime.now().astimezone().isoformat(timespec="seconds")
     n = len(df)
+    if members is None:
+        members = {str(tk) for tk, r in df.iterrows() if int(r["rank"]) <= TOP_N}
+        rule = rule or RULE_PLAIN
+    members = {str(x) for x in members}
     recs = []
     for tk, r in df.iterrows():
         rank = int(r["rank"])
-        dp = 3 if rank <= TOP_N else 2
+        on = str(tk) in members
+        dp = 3 if on else 2
         recs.append({"snapshot_date": str(asof_date), "rank": rank, "ticker": str(tk),
                      "sector": str(r.get("sector") or ""), "price_usd": round(float(r["price"]), 2),
                      "composite": round(float(r["composite"]), dp), "composite_dp": dp,
-                     "is_top20": rank <= TOP_N, "universe_n": n, "source": "daily_build", "built_at": built_at})
+                     "is_top20": rank <= TOP_N, "universe_n": n, "source": "daily_build", "built_at": built_at,
+                     "on_list": on, "list_rule": rule or RULE_PLAIN, "macro_through": macro_through or ""})
     return _normalise(pd.DataFrame(recs, columns=COLS))
+
+
+# ------------------------------------------------------------------------------------------- list rule
+def published_list(ranks, prev=None, stay=STAY, enter=ENTER, n=TOP_N):
+    """The published list. ranks: {ticker: rank} of TODAY's ranking (1 = best); prev: the previous published
+    list (iterable of tickers) or None. -> list of tickers sorted by rank.
+      * prev None (no usable previous list): the plain top n.
+      * otherwise (two-sided band, wave 14): every name of prev ranked <= `stay` is kept; every name NOT in prev
+        ranked <= `enter` enters; if that is more than n names, the worst-ranked kept names are displaced (an
+        outsider ranked <= enter < n implies an incumbent ranked > n, so only names ranked n+1..stay are ever
+        displaced); the remaining places go to the best-ranked names not chosen yet.
+      * enter=None: the one-sided band (no forced entry), the rejected variant kept for the replay.
+    Always exactly n names whenever today's ranking holds >= n names. Pure: ranks, composites and weights are
+    inputs, never changed."""
+    order = sorted((int(r), str(t)) for t, r in dict(ranks).items() if r == r)
+    if prev is None:
+        return [t for _, t in order[:n]]
+    prev = {str(x) for x in prev}
+    forced = [t for r, t in order if t not in prev and enter is not None and r <= enter][:n]
+    keep = [t for r, t in order if t in prev and r <= stay]          # rank order: best first
+    keep = keep[:max(0, n - len(forced))]                            # displace the worst-ranked incumbents
+    chosen = set(forced) | set(keep)
+    fill = [t for _, t in order if t not in chosen][:max(0, n - len(chosen))]
+    chosen |= set(fill)
+    return [t for _, t in order if t in chosen]
+
+
+def previous_list(hist, session):
+    """(tickers, prev_session, why) of the last recorded session strictly BEFORE `session` (a same-day re-run
+    never reads its own earlier build). tickers is None when there is no such session or its published list
+    does not hold exactly TOP_N names (why says which)."""
+    if hist is None or not len(hist):
+        return None, None, "no stored history"
+    h = _normalise(hist)
+    before = sorted(d for d in h["snapshot_date"].unique() if d < str(session))
+    if not before:
+        return None, None, f"no ranking stored before {session}"
+    d = before[-1]
+    on = h[(h["snapshot_date"] == d) & h["on_list"]]["ticker"].tolist()
+    if len(on) != TOP_N:
+        return None, d, f"the {d} list holds {len(on)} names, not {TOP_N}"
+    return on, d, ""
+
+
+def _fallback(plain, d, why):
+    return {"members": plain, "rule": RULE_FALLBACK, "prev_session": d, "why": why, "kept_by_band": [],
+            "entered": [], "left": [], "displaced": [], "forced": [], "stay": STAY, "enter": ENTER}
+
+
+def membership(hist, df_picker, session, stay=STAY, enter=ENTER):
+    """Today's published list for the build whose prices belong to `session` (price_session()). NEVER raises:
+    any problem with the stored history gives the plain top 20 (rule top20_fallback) and a reason the page
+    shows. -> dict(members, rule, prev_session, why, kept_by_band (picks ranked 21-25 kept), entered, left,
+    displaced (picks still ranked <= stay that a name ranked <= enter pushed out), forced (names off the list
+    that entered because they rank <= enter), stay, enter)."""
+    ranks = {str(t): int(r) for t, r in df_picker["rank"].items()}
+    plain = published_list(ranks, None)
+    try:
+        prev, d, why = previous_list(hist, session)
+    except Exception as e:                                              # noqa: BLE001
+        prev, d, why = None, None, f"history unreadable ({type(e).__name__})"
+    if prev is None:
+        return _fallback(plain, d, why)
+    mem = published_list(ranks, prev, stay, enter)
+    if len(mem) != TOP_N:                     # cannot happen with a full ranking; never publish a short list
+        return _fallback(plain, d, f"the band gave {len(mem)} names")
+    ps, ms = set(prev), set(mem)
+    rule = RULE_BAND if (stay, enter) == (STAY, ENTER) else (f"band{enter}_{stay}" if enter is not None
+                                                            else f"band{stay - TOP_N}")
+    return {"members": mem, "rule": rule, "prev_session": d, "why": "",
+            "kept_by_band": [t for t in mem if ranks.get(t, 99) > TOP_N],
+            "entered": [t for t in mem if t not in ps], "left": sorted(ps - ms, key=lambda t: ranks.get(t, 99)),
+            "displaced": sorted((t for t in ps - ms if ranks.get(t, 99) <= stay), key=lambda t: ranks.get(t, 99)),
+            "forced": [t for t in mem if t not in ps and enter is not None and ranks.get(t, 99) <= enter],
+            "stay": stay, "enter": enter}
 
 
 def append_snapshot(hist, snap):
@@ -376,10 +527,12 @@ def append_snapshot(hist, snap):
     return _normalise(pd.concat([keep, snap], ignore_index=True) if len(keep) else snap)
 
 
-def add_build(hist, df_picker, now=None):
+def add_build(hist, df_picker, now=None, members=None, rule=None, macro_through=None):
     """Record today's ranking under the session its prices belong to (price_session). -> (hist, info).
     Same-day post-close build: replaces that session (re-runs are idempotent). Later pre-open build: fills
-    the session only if it has no rows. Intraday build: records nothing (quotes are not closes)."""
+    the session only if it has no rows. Intraday build: records nothing (quotes are not closes).
+    members / rule = the PUBLISHED list of this build (membership()); default = the plain top 20.
+    macro_through = the data-through date of the macro inputs this ranking used (None = unknown)."""
     now = now or dt.datetime.now().astimezone()
     sess, basis, tier = price_session(now)
     info = {"session": sess, "basis": basis, "tier": tier, "recorded": False, "why": ""}
@@ -391,7 +544,8 @@ def add_build(hist, df_picker, now=None):
         info["why"] = (f"pre-open build: the {sess} session already has its own post-close ranking, "
                        f"which is kept")
         return _normalise(hist), info
-    snap = snapshot_from_picker(df_picker, sess, built_at=now.isoformat(timespec="seconds"))
+    snap = snapshot_from_picker(df_picker, sess, built_at=now.isoformat(timespec="seconds"), members=members,
+                                rule=rule, macro_through=macro_through)
     info["recorded"] = True
     return append_snapshot(hist, snap), info
 
@@ -562,8 +716,15 @@ class Panel:
         self.px = h.pivot(index="snapshot_date", columns="ticker", values="price_usd").sort_index()
         self.rank = h.pivot(index="snapshot_date", columns="ticker", values="rank").sort_index()
         self.comp = h.pivot(index="snapshot_date", columns="ticker", values="composite").sort_index()
-        self.top_raw = h.assign(t=h["is_top20"].astype(float)).pivot(
+        # the PUBLISHED list (the star; wave 14): spells, tenure, the basket and the tracker follow it
+        self.top_raw = h.assign(t=h["on_list"].astype(float)).pivot(
             index="snapshot_date", columns="ticker", values="t").sort_index()
+        # the raw rank <= 20 flag (equal to the published list before wave 14); used by the rule replay
+        self.top20_raw = h.assign(t=h["is_top20"].astype(float)).pivot(
+            index="snapshot_date", columns="ticker", values="t").sort_index()
+        self.rule = h.groupby("snapshot_date")["list_rule"].first().to_dict()
+        # the macro inputs' data-through date per ranking ("" = unknown: the frozen inputs before wave 14)
+        self.macro = h.groupby("snapshot_date")["macro_through"].max().to_dict()
         # partial snapshots (fewer names than the usual universe): prices kept, top-20 flags unobserved
         n_by = h.groupby("snapshot_date").size()
         self.full_n = int(n_by.mode().max()) if len(n_by) else 0
@@ -662,10 +823,14 @@ class Panel:
         had no ranking right before the entry / right after the last day on the list.
         left_censored = the spell was already running when the HISTORY starts, which only happens when the
         history starts after the list itself began (LIST_LAUNCH); since_launch = on since the list began."""
+        return self.spells_of(self.top)
+
+    def spells_of(self, top):
+        """spells() for any membership frame (date x ticker, 1 / 0 / NaN = unobserved), e.g. a rule replay."""
         dates, first = self.dates, self.dates[0]
         rows = []
-        for tk in self.top.columns:
-            s = self.top[tk]
+        for tk in top.columns:
+            s = top[tk].reindex(dates)
             start = end = prev_obs = before = None
             n_obs = 0
             for d in dates:
@@ -715,12 +880,65 @@ class Panel:
                     start = None
         return ten
 
-    def cutoff(self, d):
-        """(composite of rank 20, composite of rank 21) on date d, at the stored precision."""
+    def cutoff(self, d, rank=TOP_N):
+        """(composite of rank `rank`, composite of rank `rank` + 1) on date d, at the stored precision. The
+        band's exit line is cutoff(d, EXIT_RANK): a listed name leaves when it falls behind the rank-26 name."""
         r, c = self.rank.loc[d], self.comp.loc[d]
-        c20 = c[r == TOP_N]
-        c21 = c[r == TOP_N + 1]
+        c20 = c[r == rank]
+        c21 = c[r == rank + 1]
         return (float(c20.iloc[0]) if len(c20) else np.nan, float(c21.iloc[0]) if len(c21) else np.nan)
+
+    def macro_since(self):
+        """-> (since, last_frozen, n_undated_after): the first ranking made with dated (refreshed) macro inputs,
+        the last ranking before it (the end of the frozen-input period) and how many later rankings carry no
+        date again (inputs rolled back or the sidecar missing). (None, last ranking, 0) while no ranking has
+        refreshed inputs. Read from the stored history, so it is the same on every later build."""
+        since = next((d for d in self.dates if self.macro.get(d)), None)
+        if since is None:
+            return None, (self.dates[-1] if self.dates else None), 0
+        before = [d for d in self.dates if d < since]
+        undated = sum(1 for d in self.dates if d > since and not self.macro.get(d))
+        return since, (before[-1] if before else None), undated
+
+    def band_since(self):
+        """-> (first ranking published under a band rule, [later rankings that fell back to the plain top 20])."""
+        since = next((d for d in self.dates if str(self.rule.get(d, "")).startswith("band")), None)
+        fb = [d for d in self.dates if since and d > since and self.rule.get(d) == RULE_FALLBACK]
+        return since, fb
+
+    def method_changes(self):
+        """{ranking: [what changed]} for the one-off method changes the page annotates (wave 14): the first
+        ranking on refreshed macro inputs and the first ranking under the band rule. Entries and exits at these
+        rankings come from the change of method, not from ordinary day-to-day turnover."""
+        out = {}
+        ms = self.macro_since()[0]
+        if ms:
+            out.setdefault(ms, []).append("macro")
+        bs = self.band_since()[0]
+        if bs:
+            out.setdefault(bs, []).append("band")
+        return out
+
+    def rank_noise_at_cut(self, lo=TOP_N - 4, hi=EXIT_RANK, within=BAND):
+        """Ranks only (no returns): over consecutive full rankings one trading day apart, the 1-day rank moves
+        of names ranked lo..hi on the first day. -> dict(n, share within +/- `within` ranks, median |move|,
+        90th percentile |move|). The band is meant to absorb this noise; it was NOT chosen from it."""
+        part = set(self.partial)
+        mv = []
+        for d0, d1 in zip(self.dates[:-1], self.dates[1:]):
+            if self.tdi[d1] - self.tdi[d0] != 1 or d0 in part or d1 in part:
+                continue
+            r0, r1 = self.rank.loc[d0], self.rank.loc[d1]
+            for tk in self.rank.columns:
+                a, b = r0.get(tk), r1.get(tk)
+                if pd.isna(a) or pd.isna(b) or not (lo <= a <= hi):
+                    continue
+                mv.append(abs(int(b) - int(a)))
+        if not mv:
+            return {"n": 0}
+        mv = np.array(mv)
+        return {"n": int(len(mv)), "share_within": float((mv <= within).mean()), "median": float(np.median(mv)),
+                "p90": float(np.percentile(mv, 90)), "lo": lo, "hi": hi, "within": within}
 
 
 def main(argv=None):

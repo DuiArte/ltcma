@@ -22,6 +22,7 @@ source scout); the page labels it.
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections import Counter
 from datetime import date, datetime, timedelta, timezone
@@ -352,24 +353,70 @@ def spy_start_for(history_start, today):
     return min(hs, lo).isoformat()
 
 
+_RX_BLOCK_DETAIL = re.compile(r"(blocked this run)\s*\([^)]*\)")
+# round 3: a host / URL match stops before a trailing ";" "," or ")" so the sentence punctuation survives
+# ("SEC paused: HTTP 429 on www.sec.gov; retry tomorrow" -> "SEC paused: blocked this run; retry tomorrow")
+_RX_HTTP_ON = re.compile(r"\bHTTP \d{3} on (?:GET \s*|POST \s*)?\S+?(?=[;,)]?(?:\s|$))(?:\s*\([^)]*\))?")
+_RX_ON_HOST = re.compile(r"\s+on\s+(?:GET\s+|POST\s+)?[\w.-]+\.(?:com|gov|org|net)[^\s);,]*")
+_RX_URL = re.compile(r"https?://\S+?(?=[;,)]?(?:\s|$))")
+INSIDER_PRICE_GAP = {"blocked": "Yahoo blocked this run", "failed": "request failed", "empty": "came back empty"}
+
+
+def public_gap(why):
+    """meta["gaps"] wording for the PAGE (round 2, D5): fixed phrases and exception types only. A block keeps
+    "blocked this run" but loses its detail (status code, method, host, URL); the full text goes to the log."""
+    w = _RX_URL.sub("", str(why or ""))
+    w = _RX_BLOCK_DETAIL.sub(r"\1", w)
+    w = _RX_HTTP_ON.sub("blocked this run", w)
+    w = _RX_ON_HOST.sub("", w)
+    return " ".join(w.split())
+
+
+def insider_price_gap(kinds):
+    """The insider_prices gap line from the failure kinds of insider_record.build (fixed phrases only)."""
+    n = len(kinds)
+    order = [k for k in ("blocked", "failed", "empty") if k in kinds]
+    return (f"{n} price histor{'y' if n == 1 else 'ies'} not fetched ("
+            + "; ".join(INSIDER_PRICE_GAP[k] for k in order) + ")")
+
+
+def earliest_trade(cache_root=None, today=None):
+    """Earliest transaction date of the cached P / S Form 4 lines (read-only), bounded to the cache's own
+    400-day horizon: SPY must reach back that far for the insider records (still one chart request)."""
+    import insider_form4 as f4
+    try:
+        lines = f4.Cache(cache_root).all_lines() if cache_root else f4.Cache().all_lines()
+        d = lines[lines["code"].isin(["P", "S"])]["tx_date"].astype(str).str[:10]
+        d = d[d.str.match(r"^\d{4}-\d{2}-\d{2}$")]
+        lo = ((today or date.today()) - timedelta(days=2 * f4.KEEP_DAYS)).isoformat()
+        return max(d.min(), lo) if len(d) else None
+    except Exception:                                                   # noqa: BLE001
+        return None
+
+
 def build(df, now=None, log=print, sec_budget=160, sec_max_xml=120, offline=False, qs=None, spy=None,
-          sec_client=None, cache_root=None, spy_start=None, alert=None):
+          sec_client=None, cache_root=None, spy_start=None, alert=None, picks=None, hist=None, splits=None,
+          last_split=None, px_root=None, px_fetch=None):
     """All overlays for every ticker in the picker df. Never raises for a data problem: a failed source is a
     gap in the cells that need it. `qs` / `spy` let tests inject recorded answers (offline). `spy_start` = the
-    history's first snapshot date (SPY is fetched from there: still one chart request).
+    history's first snapshot date (SPY is fetched from there, or from the oldest cached insider trade if that
+    is earlier: still one chart request). picks = the PUBLISHED list (wave 14: SEC priority only).
+    hist / splits / last_split = the stored history, for the insider records' page-history prices.
     meta["gaps"] holds (overlay, PUBLIC wording) pairs: fixed phrases and exception TYPES only. The full
     exception text goes to the log and the alert line, never to the page (a path or a long decimal there would
     leak a local path / trip guard_decimals)."""
     import insider_form4 as f4
+    import insider_record as ir
     now = now or datetime.now(timezone.utc)
     today = now.astimezone(MX).date()
     tickers = list(df.index)
-    meta = {"gaps": [], "yahoo": {}, "sec": {}, "spy": {}}
+    meta = {"gaps": [], "yahoo": {}, "sec": {}, "spy": {}, "insider_record": {}}
     alert = alert or (None if offline else ys.alert)
     detail = []                                    # (overlay, full text) for the log / alert only
     # Yahoo: SPY first (chart bars need no crumb), then the combined calls
     if spy is None and not offline:
-        start = spy_start_for(spy_start, today)
+        et = earliest_trade(cache_root, today)
+        start = spy_start_for(min(x for x in (spy_start, et) if x) if (spy_start or et) else None, today)
         spy, why, n = fetch_spy(start, log)
         meta["spy"] = {"requests": n, "why": why, "start": start}
         if why:
@@ -388,12 +435,17 @@ def build(df, now=None, log=print, sec_budget=160, sec_max_xml=120, offline=Fals
     kw = {"cache_root": cache_root} if cache_root else {}
     try:
         cache, srep = f4.refresh(tickers, now=now, budget=sec_budget, max_xml=sec_max_xml, offline=offline,
-                                 client=sec_client, alert=None, log=log, pick_set=tickers[:20], **kw)
+                                 client=sec_client, alert=None, log=log,
+                                 pick_set=list(picks) if picks is not None else tickers[:20], **kw)
     except Exception as e:                                              # noqa: BLE001
         cache, srep = None, {"error": type(e).__name__}
         meta["gaps"].append(("insiders", f"SEC overlay failed ({type(e).__name__})"))
         detail.append(("insiders", f"SEC overlay failed: {type(e).__name__}: {str(e)[:200]}"))
     meta["sec"] = srep
+    for note in srep.get("notices") or []:        # round 2 (D3): written once; the cache state remembers it
+        log(f"stocks overlay notice: {note}")
+        if alert:
+            alert(f"stocks overlay notice: {note} (SEC notice, not a Yahoo transport issue)")
     if srep.get("blocked"):
         meta["gaps"].append(("insiders", f"SEC {srep['blocked']}"))
     if srep.get("stalled"):
@@ -425,10 +477,39 @@ def build(df, now=None, log=print, sec_budget=160, sec_max_xml=120, offline=Fals
                 meta["gaps"].append((name, f"{tk}: {type(e).__name__}"))
                 detail.append((name, f"{tk}: {type(e).__name__}: {str(e)[:200]}"))
         by[tk] = o
+    # insider records (wave 14): each shown insider's own past trades in the stock, vs SPY over 60 td
+    if cache is not None:
+        try:
+            panel = None
+            if hist is not None and len(hist):
+                import picks_history as ph
+                panel = ph.Panel(hist, splits, last_split)
+            ins = {tk: by[tk].get("insiders") for tk in tickers}
+            recs, rrep = ir.build(cache, ins, spy, now, panel=panel, offline=offline, log=log, px_root=px_root,
+                                  fetch=px_fetch)
+            meta["insider_record"] = rrep
+            for tk, rr in recs.items():
+                if isinstance(by[tk].get("insiders"), dict):
+                    by[tk]["insiders"]["records"] = rr
+                    by[tk]["insiders"]["record_spy_ok"] = bool(rrep.get("spy"))
+            if rrep.get("gaps"):
+                meta["gaps"].append(("insider_prices", insider_price_gap(rrep.get("gap_kinds") or
+                                                                         ["failed"] * len(rrep["gaps"]))))
+                detail.append(("insider_prices", "; ".join(rrep["gaps"])[:400]))
+        except Exception as e:                                          # noqa: BLE001
+            meta["gaps"].append(("insider_record", f"insider records failed ({type(e).__name__})"))
+            detail.append(("insider_record", f"{type(e).__name__}: {str(e)[:200]}"))
+    pub = []                                       # round 2 (D5): the page gets fixed phrases only
+    for name, why in meta["gaps"]:
+        w = public_gap(why)
+        if w != why:
+            detail.append((name, why))
+        pub.append((name, w))
+    meta["gaps"] = pub
     for name, why in detail:
         log(f"stocks overlay error detail: {name}: {why}")
     for name, why in meta["gaps"]:
-        tag = "" if name in ("spy", "yahoo_extras") else NOT_YAHOO
+        tag = "" if name in ("spy", "yahoo_extras", "insider_prices") else NOT_YAHOO
         msg = f"stocks overlay data gap: {name}: {why}{tag}"
         log(msg)
         if alert:

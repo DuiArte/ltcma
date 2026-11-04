@@ -28,6 +28,14 @@ CACHE: <repo>/.cache/sec_form4/ (git-ignored; public SEC data, not published as 
 PARSER: parse_form4 / tx_footnotes / nonmarket_footnotes are ported verbatim from
   Trading_Index/rotation/informed_flow.py (F4_PARSE_VERSION 3); tests/test_insider.py checks parity.
 NAMES: reporting-owner names are shown exactly as the SEC publishes them on the filing (SHOW_NAMES).
+WAVE 14 (2026-11-04): XOM is read from two CIKs (PREDECESSOR_CIK: 2115436 ExxonMobil Holdings Corp, the current
+  XOM registrant since the 2026-07-01 holding-company reorganisation, plus 34088 Exxon Mobil Corp). Round 2
+  (main-session design choice D3): BOTH are sources indefinitely (union, de-duplicated by accession); 34088's
+  list is re-read at most once per SECONDARY_REREAD_DAYS (30) (1 SEC request a month, inside the budget); a Form 4
+  filed under 34088 after 2026-07-01 is counted like any other and writes ONE alert line the first time one
+  appears (rep["notices"]; state issuers["34088"]["after_reorg_alerted"]). The detail lines carry owner_cik,
+  and trade_events() gives one row per insider trade for insider_record.py (the insider's own record vs SPY).
+  The pick priority (pick_set) is the PUBLISHED list (two-sided band).
 
   python scripts/insider_form4.py --backfill [--max-xml 2000] [--budget 2400]   # one-time, off-hours
   python scripts/insider_form4.py --status
@@ -81,7 +89,7 @@ SHOW_NAMES = True                    # insider names as the SEC publishes them (
 F4_PARSE_VERSION = 3
 
 # CIKs from SEC company_tickers.json (local copy fetched 2026-10-31; 0 requests at run time).
-# XOM maps to 2115436 there (not the historical 34088): flagged in DEPLOY_NOTES, verify before relying on it.
+# XOM maps to 2115436 there: ExxonMobil Holdings Corp, the new holding company (see PREDECESSOR_CIK).
 UNIVERSE_CIK = {"AAPL": 320193, "ABBV": 1551152, "ADBE": 796343, "AMD": 2488, "AMZN": 1018724, "ANET": 1596532,
                 "ARM": 1973239, "AVGO": 1730168, "BAC": 70858, "COIN": 1679788, "COST": 909832, "CRM": 1108524,
                 "CRWD": 1535527, "CVX": 93410, "DDOG": 1561550, "GOOGL": 1652044, "HD": 354950, "INTU": 896878,
@@ -89,8 +97,30 @@ UNIVERSE_CIK = {"AAPL": 320193, "ABBV": 1551152, "ADBE": 796343, "AMD": 2488, "A
                 "NET": 1477333, "NFLX": 1065280, "NOW": 1373715, "NVDA": 1045810, "NVO": 353278, "ORCL": 1341439,
                 "PLTR": 1321655, "SHOP": 1594805, "SMCI": 1375365, "SNOW": 1640147, "T": 732717, "TSLA": 1318605,
                 "UNH": 731766, "VZ": 732712, "WMT": 104169, "XOM": 2115436}
+# Predecessor issuers whose Form 4s still describe the same listed stock (wave 14, 2026-11-04; 3 SEC requests:
+# both submissions JSONs and one Form 4 XML, kept in tests/fixtures/xom/). XOM: CIK 34088 "EXXON MOBIL CORP"
+# carries Exxon Mobil's Form 4s up to 2026-07-01 (21 filed in 2026; the 07-01 XML says issuerCik 34088,
+# issuerTradingSymbol XOM), then a 25-NSE on 07-02. CIK 2115436 "ExxonMobil Holdings Corp" (ticker XOM, NYSE)
+# filed its 8-K12B and 23 S-8 POS on 2026-07-01: a holding-company reorganisation; its list (07-01..11-03)
+# holds no Form 4 yet. A Form 3 was still filed under 34088 on 2026-07-06, so insiders may keep using the old
+# CIK: XOM = the UNION of both, indefinitely (round 2, D3), de-duplicated by accession. The date is the
+# reorganisation: a Form 4 filed under 34088 after it is counted and alerted once (it shows the old CIK is
+# still in use). 34088's list is re-read at most once per SECONDARY_REREAD_DAYS (1 SEC request a month).
+PREDECESSOR_CIK = {"XOM": ((34088, "2026-07-01"),)}
+SECONDARY_REREAD_DAYS = 30
 NO_FORM4 = {"NVO": "foreign private issuer: it files 6-K / 20-F, and insiders file no Form 4 (0 of 1,001 "
                    "filings in its SEC list are Form 4)"}
+
+
+def ciks_of(ticker):
+    """[(cik, reorg)] for a ticker: its current CIK (reorg None) first, then predecessor CIKs (reorg = the date
+    after which a Form 4 filed under that CIK is alerted once). All of them count, without a date limit."""
+    out = [(UNIVERSE_CIK[ticker], None)] if ticker in UNIVERSE_CIK else []
+    return out + [(int(c), str(u)) for c, u in PREDECESSOR_CIK.get(ticker, ())]
+
+
+def cik_to_ticker():
+    return {str(c): t for t in UNIVERSE_CIK for c, _u in ciks_of(t)}
 LINE_COLS = ["accession", "seq", "issuer_cik", "ticker", "form", "filing_date", "as_of", "owner_cik",
              "owner_name", "is_director", "is_officer", "officer_title", "is_ten_pct", "aff10b5one", "tx_date",
              "code", "acq_disp", "shares", "price", "value_usd", "footnotes", "url", "source"]
@@ -439,7 +469,7 @@ def merge_rotation(cache, path=None, log=print):
     except Exception as e:                                              # noqa: BLE001
         log(f"insider: rotation Form 4 store unreadable ({type(e).__name__}); not reused")
         return 0
-    cik2t = {str(c): t for t, c in UNIVERSE_CIK.items()}
+    cik2t = cik_to_ticker()                      # wave 14: predecessor CIKs too (XOM 34088)
     rot = rot[rot["issuer_cik"].astype(str).isin(cik2t)]
     handled = cache.state["handled"]
     rows, accs = [], set()
@@ -495,6 +525,17 @@ def _subm_due(st, now):
     return t is None or (now - t) >= timedelta(hours=SUBM_MIN_AGE_H)
 
 
+def _secondary_due(st, now):
+    """A predecessor CIK's list is re-read at most once per SECONDARY_REREAD_DAYS (round 2, D3)."""
+    t = _ts(st.get("subm_at")) if st else None
+    return t is None or (now - t) >= timedelta(days=SECONDARY_REREAD_DAYS)
+
+
+def after_reorg(st, reorg):
+    """Form 4 accessions in a predecessor's stored list filed AFTER its reorganisation date."""
+    return sorted({f[0] for f in _filings(st or {}) if (f[1] or "") > str(reorg)})
+
+
 def refresh(tickers, now=None, budget=160, max_xml=120, offline=False, cache_root=None, client=None,
             alert=None, log=print, rotation_path=None, pick_set=None, max_seconds=MAX_SECONDS, busy_check=None):
     """Bring the cache up to date for `tickers` (priority order: picks first). Returns (cache, report).
@@ -505,7 +546,7 @@ def refresh(tickers, now=None, budget=160, max_xml=120, offline=False, cache_roo
     cache = Cache(cache_root)
     rep = {"rotation_filings_reused": merge_rotation(cache, rotation_path, log), "submissions": 0,
            "submissions_skipped_recent": 0, "xml_fetched": 0, "xml_left": 0, "blocked": None, "stalled": None,
-           "paused": None, "gaps": [], "requests": 0, "bytes": 0, "offline": offline}
+           "paused": None, "gaps": [], "requests": 0, "bytes": 0, "offline": offline, "notices": []}
     if offline:
         cache.save()
         return cache, rep
@@ -531,11 +572,14 @@ def _refresh_run(cache, rep, sec, tickers, now, max_xml, pick_set):
         return getattr(sec, "blocked", None) or getattr(sec, "stalled", None) or getattr(sec, "paused", None)
     lo_keep = (now - timedelta(days=KEEP_DAYS)).date().isoformat()
     order = [t for t in tickers if t in UNIVERSE_CIK and t not in NO_FORM4]
-    for tk in order:                                                  # 1) filing lists
+    lists = [(tk, cik, until) for tk in order for cik, until in ciks_of(tk)]
+    for tk, cik, until in lists:                                      # 1) filing lists (every CIK of a ticker)
         if stopped():
             break
-        cik = UNIVERSE_CIK[tk]
         st = cache.state["issuers"].get(str(cik)) or {}
+        if until and not _secondary_due(st, now):
+            rep["submissions_skipped_recent"] += 1                    # a predecessor's list: monthly
+            continue
         if not _subm_due(st, now):
             rep["submissions_skipped_recent"] += 1
             continue
@@ -578,29 +622,38 @@ def _refresh_run(cache, rep, sec, tickers, now, max_xml, pick_set):
                     older[name] = {"from": page.get("filingFrom"), "rows": _form4_entries(rp.json(), lo_keep)}
                 except ValueError:
                     break
-        cache.state["issuers"][str(cik)] = {"ticker": tk, "subm_at": _iso(now), "filings": fl,
-                                           "lm": r.headers.get("Last-Modified"), "etag": r.headers.get("ETag"),
-                                           "recent_from": oldest_listed, "older": older}
+        new = {"ticker": tk, "subm_at": _iso(now), "filings": fl,
+               "lm": r.headers.get("Last-Modified"), "etag": r.headers.get("ETag"),
+               "recent_from": oldest_listed, "older": older, **({"reorg": until} if until else {})}
+        if until:                                 # D3: a Form 4 under the former CIK after the reorganisation
+            aft = after_reorg(new, until)
+            new["after_reorg"] = len(aft)
+            new["after_reorg_alerted"] = st.get("after_reorg_alerted")
+            if aft and not new["after_reorg_alerted"]:
+                new["after_reorg_alerted"] = _iso(now)
+                rep["notices"].append(f"{tk}: {len(aft)} Form 4 filed under the former CIK {cik} after {until} "
+                                      f"(first seen {_iso(now)[:10]}): insiders still use the old CIK; they are "
+                                      f"counted (union of both CIKs)")
+        cache.state["issuers"][str(cik)] = new
         rep["submissions"] += 1
     handled = cache.state["handled"]                                  # 2) Form 4 XMLs
     lo90 = (now - timedelta(days=90)).date().isoformat()
     picks = set(pick_set if pick_set is not None else tickers[:20])
     pend = []
     for pri, tk in enumerate(order):
-        st = cache.state["issuers"].get(str(UNIVERSE_CIK[tk])) or {}
-        miss = [f for f in _filings(st) if f[0] not in handled]
-        miss90 = sum(1 for f in miss if f[1] >= lo90)
-        for f in miss:
+        sts = [(cik, cache.state["issuers"].get(str(cik)) or {}) for cik, _u in ciks_of(tk)]
+        miss = [(cik, f) for cik, st in sts for f in _filings(st) if f[0] not in handled]
+        miss90 = sum(1 for _c, f in miss if f[1] >= lo90)
+        for cik, f in miss:
             # 90-day window first, picks first, issuers closest to a complete window first, newest first
             pend.append((0 if f[1] >= lo90 else 1, 0 if tk in picks else 1, miss90, pri,
-                         -int(f[1].replace("-", "")), tk, f))
+                         -int(f[1].replace("-", "")), tk, cik, f))
     pend.sort(key=lambda x: x[:5])
-    for *_k, tk, f in pend:
+    for *_k, tk, cik, f in pend:
         if stopped() or rep["xml_fetched"] >= max_xml or sec.sent >= sec.budget:
             rep["xml_left"] += 1
             continue
         acc, fdate, accept, doc, form = f
-        cik = UNIVERSE_CIK[tk]
         if not doc.lower().endswith(".xml"):
             handled[acc] = "not_xml"
             continue
@@ -683,22 +736,42 @@ def aggregate(cache, ticker, now=None, rep=None):
     subm_at = _ts(st["subm_at"])
     age_d = (now - subm_at).total_seconds() / 86400 if subm_at else 999
     rf = st.get("recent_from") or ""
-    if not _filings(st) and rf and rf > (now - timedelta(days=365)).date().isoformat():
+    preds = [(c, u, cache.state["issuers"].get(str(c))) for c, u in ciks_of(ticker)[1:]]
+    if not preds and not _filings(st) and rf and rf > (now - timedelta(days=365)).date().isoformat():
         # a filing list that starts within the last year and holds no Form 4 at all: the CIK on file is
-        # probably a new registrant while insiders still file under an older CIK (XOM: 2115436 vs 34088).
+        # probably a new registrant while insiders still file under an older CIK (XOM was this case until
+        # wave 14 mapped its predecessor CIK).
         return {"status": "gap", "why": f"SEC list for CIK {cik} starts {rf} and holds no Form 4: CIK mapping "
                                         f"unverified (insiders may file under an older CIK)"}
     if age_d > GAP_DAYS:
         return {"status": "gap", "why": f"SEC filing list last refreshed {st['subm_at'][:10]} (> {GAP_DAYS} days)"}
     handled = cache.state["handled"]
     lines = cache.all_lines()
-    lines = lines[lines["issuer_cik"].astype(str) == str(cik)]
+    # the ticker's filings: its current CIK plus every predecessor CIK (round 2, D3: no date limit), one entry
+    # per accession
+    filings = list(_filings(st))
+    starts = [_listed_from(st)]
+    keep = lines["issuer_cik"].astype(str) == str(cik)
+    for c, u, pst in preds:
+        if not pst or not pst.get("subm_at"):
+            continue                              # not fetched yet: the window reads truncated until it is
+        filings += _filings(pst)
+        starts.append(_listed_from(pst))
+        keep |= lines["issuer_cik"].astype(str) == str(c)
+    seen = set()
+    filings = [f for f in filings if not (f[0] in seen or seen.add(f[0]))]     # one entry per accession
+    lines = lines[keep]
+    if "accession" in lines.columns and "seq" in lines.columns:
+        lines = lines.drop_duplicates(["accession", "seq"])
     out = {"status": "ok", "as_of": st["subm_at"][:10], "stale": age_d > STALE_DAYS, "windows": {},
-           "source": "SEC EDGAR Form 4 (non-derivative table)"}
-    listed_from = _listed_from(st)
+           "source": "SEC EDGAR Form 4 (non-derivative table)",
+           "ciks": [c for c, _u in ciks_of(ticker)],
+           "cache_from": str(lines["filing_date"].min()) if len(lines) else None}
+    starts = [s for s in starts if s]
+    listed_from = min(starts) if starts else None
     for w in WINDOWS:
         lo = (now - timedelta(days=w)).date().isoformat()
-        fl = [f for f in _filings(st) if f[1] >= lo]
+        fl = [f for f in filings if f[1] >= lo]
         miss = [f for f in fl if f[0] not in handled]
         truncated = bool(listed_from and listed_from > lo)
         x = lines[(lines["filing_date"] >= lo) & (lines["tx_date"].str[:10] >= lo)]
@@ -728,6 +801,7 @@ def aggregate(cache, ticker, now=None, rep=None):
     det = []
     for r in x.sort_values("v", ascending=False).head(8).to_dict("records"):
         det.append({"tx_date": r["tx_date"][:10], "name": r["owner_name"] if SHOW_NAMES else None,
+                    "owner_cik": str(r.get("owner_cik") or ""),
                     "role": _role(r), "side": "buy" if r["code"] == "P" else "sell",
                     "nonmarket": r["code"] == "P" and nonmarket_footnotes(r["footnotes"]),
                     "shares": _f(r["shares"]), "price": _f(r["price"]), "value": r["v"],
@@ -737,6 +811,49 @@ def aggregate(cache, ticker, now=None, rep=None):
     if not out["windows"][90]["complete"]:
         out["status"] = "partial"
     return out
+
+
+def ticker_lines(cache, ticker, lines=None):
+    """Every cached Form 4 line of a ticker: its current CIK plus every predecessor CIK (round 2, D3: no date
+    limit), one row per (accession, line). No date window (the insider record reads all of them).
+    lines = cache.all_lines(), if already read."""
+    lines = cache.all_lines() if lines is None else lines
+    keep = pd.Series(False, index=lines.index)
+    for c, _u in ciks_of(ticker):
+        keep |= lines["issuer_cik"].astype(str) == str(c)
+    out = lines[keep]
+    return out.drop_duplicates(["accession", "seq"]) if {"accession", "seq"} <= set(out.columns) else out
+
+
+def trade_events(cache, ticker, lines=None):
+    """One row per insider TRADE: (owner_cik, transaction date, side, plan) with every Form 4 line of that day
+    and side summed, from every cached filing of the ticker (all CIKs). The same filters as the page's counts:
+    code P with acquired-code A, minus lines whose footnotes show a non-market purchase; code S with
+    disposed-code D. plan = the filing's Rule 10b5-1 box or a plan footnote (a day with both plan and non-plan
+    sales gives two rows). An amendment that repeats a line lands on the same row, so it is not counted twice.
+    -> DataFrame[ticker, owner_cik, owner_name (latest as filed), date, side, plan, n_lines, value_usd]."""
+    cols = ["ticker", "owner_cik", "owner_name", "date", "side", "plan", "n_lines", "value_usd"]
+    if ticker in NO_FORM4 or ticker not in UNIVERSE_CIK:
+        return pd.DataFrame(columns=cols)
+    x = ticker_lines(cache, ticker, lines)
+    if x.empty:
+        return pd.DataFrame(columns=cols)
+    p = x[(x["code"] == "P") & (x["acq_disp"] == "A")]
+    if len(p):
+        p = p[~p["footnotes"].map(nonmarket_footnotes)]
+    s = x[(x["code"] == "S") & (x["acq_disp"] == "D")]
+    y = pd.concat([p, s])
+    if y.empty:
+        return pd.DataFrame(columns=cols)
+    y = y.assign(side=y["code"].map({"P": "buy", "S": "sell"}), date=y["tx_date"].astype(str).str[:10],
+                 plan=y["aff10b5one"].astype(str).str.lower().eq("true") | y["footnotes"].map(plan_footnote),
+                 v=pd.to_numeric(y["value_usd"], errors="coerce").fillna(0.0))
+    y = y[y["date"].str.match(r"^\d{4}-\d{2}-\d{2}$") & (y["owner_cik"].astype(str) != "")]
+    y = y.sort_values(["filing_date", "accession"])
+    g = y.groupby(["owner_cik", "date", "side", "plan"], sort=True)
+    ev = g.agg(owner_name=("owner_name", "last"), n_lines=("seq", "size"), value_usd=("v", "sum")).reset_index()
+    ev.insert(0, "ticker", ticker)
+    return ev[cols]
 
 
 def status(cache_root=None):
