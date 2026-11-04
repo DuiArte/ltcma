@@ -3397,3 +3397,43 @@ snapshot_date,rank,ticker,sector,price_usd,composite,composite_dp,is_top20,unive
 2026-11-03,38,CVX,Energy,225.27,-0.51,2,False,40,git_backfill,2026-11-03T16:40:18-06:00
 2026-11-03,39,ARM,Technology,202.49,-0.71,2,False,40,git_backfill,2026-11-03T16:40:18-06:00
 2026-11-03,40,COIN,Financial Services,145.45,-0.88,2,False,40,git_backfill,2026-11-03T16:40:18-06:00
+2026-11-04,1,SMCI,Technology,29.60,0.561,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,2,LLY,Healthcare,1417.99,0.527,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,3,WMT,Consumer Defensive,129.17,0.445,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,4,NVDA,Technology,200.13,0.438,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,5,COST,Consumer Defensive,1046.47,0.431,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,6,HD,Consumer Cyclical,355.44,0.386,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,7,PLTR,Technology,171.70,0.369,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,8,KO,Consumer Defensive,95.80,0.346,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,9,AAPL,Technology,349.51,0.340,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,10,ORCL,Technology,123.73,0.300,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,11,DDOG,Technology,188.72,0.259,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,12,AVGO,Technology,325.48,0.238,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,13,ABBV,Healthcare,294.83,0.218,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,14,GOOGL,Communication Services,288.93,0.161,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,15,NET,Technology,266.58,0.114,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,16,MSFT,Technology,555.80,0.060,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,17,AMD,Technology,488.78,0.055,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,18,SNOW,Technology,290.60,0.049,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,19,NVO,Healthcare,42.18,-0.021,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,20,AMZN,Consumer Cyclical,266.03,-0.024,3,True,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,21,ANET,Technology,178.48,-0.02,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,22,NFLX,Communication Services,66.39,-0.04,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,23,CRWD,Technology,241.00,-0.04,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,24,META,Communication Services,630.00,-0.05,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,25,UNH,Healthcare,409.38,-0.06,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,26,SHOP,Technology,153.03,-0.06,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,27,TSLA,Consumer Cyclical,385.19,-0.09,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,28,JPM,Financial Services,352.11,-0.11,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,29,VZ,Communication Services,46.17,-0.11,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,30,NOW,Technology,108.81,-0.17,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,31,INTU,Technology,356.64,-0.24,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,32,BAC,Financial Services,51.63,-0.25,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,33,MSTR,Technology,142.54,-0.26,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,34,T,Communication Services,21.83,-0.26,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,35,ADBE,Technology,248.48,-0.45,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,36,XOM,Energy,169.27,-0.46,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,37,CRM,Technology,227.11,-0.47,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,38,CVX,Energy,216.96,-0.50,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,39,ARM,Technology,191.80,-0.74,2,False,40,daily_build,2026-11-04T16:40:14-06:00
+2026-11-04,40,COIN,Financial Services,151.50,-0.87,2,False,40,daily_build,2026-11-04T16:40:14-06:00
