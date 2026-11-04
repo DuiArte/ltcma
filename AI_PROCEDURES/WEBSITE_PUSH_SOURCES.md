@@ -25,6 +25,12 @@ and by `23_strategies.py` on the cards). It imports the private engines at runti
 workspaces the hub names and writes no parameters, engine code or trade tapes; host-only (it
 skips, leaving the committed files, wherever the private code or the network is missing).
 
+`scripts/25_stock_picks.py` (step 3, since 2026-11-04 `de3fbd2`, the Pick Tracker) also writes
+`data/picks_history.csv` (one row per name per NYSE session, session-dated, public values) and
+`data/picks_splits.json`; both are committed by the refresh's `git add docs data`. Its SEC Form 4 cache
+lives in `.cache/sec_form4/` (git-ignored, never committed). Procedure: `Documents\AI_PROCEDURES\
+STOCK_PICKS_TRACKER.md`.
+
 Both build from **this clone's `scripts/`** after pulling origin, so a change merged to
 `scripts/` is what they publish. There is no other generator, template, include or
 partial: `docs/*.html` are emitted whole by Python (`17_build_site.py`, `18_portfolio.py`,
