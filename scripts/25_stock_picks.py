@@ -12,8 +12,18 @@ Sections, in order:
 
 Picker internals (the variable WEIGHTS) stay in picker.py and are never rendered;
 the cards show the ranked result + each pick's variable contributions only.
+
+Wave 13 (2026-11-04): a Pick Tracker (tenure, since-entry return vs SPY and the universe, exit
+estimate, price targets, earnings / analyst / insider / congress overlays) right after Composite
+Picks, and a Track Record section. They are built by picks_history / picks_overlays / picks_tracker
+inside _tracker_extras(), which NEVER raises: any failure there leaves the core page exactly as it
+was, shows "not available today (data gap)" in place of the section and writes one alert line
+(YAHOO_ALERT.txt via yahoo_session.alert, tagged as a site gap). The history row is dated by the
+NYSE session whose closes it holds (picks_history.price_session), not by the build day. The overlays never change
+the composite, the ranks or the weights. stocks.ai.txt keeps its first 4 header lines and its
+rank|ticker|sector|price|composite|dominant_var columns; tracker fields are appended at the END.
 """
-import os, json
+import os, json, sys, traceback
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -302,13 +312,118 @@ def _keep_committed_page():
     it from HEAD (2026-10-23). Nothing is fetched; a git failure leaves the file as it is."""
     import subprocess
     from paths import ROOT
+    # Only ever against THIS checkout (wave 13): a copy without its own .git (a staging mirror) restores
+    # nothing, and GIT_CEILING_DIRECTORIES stops git from walking up into any parent repository.
+    if not (ROOT / ".git").exists():
+        print(f"stocks.html: {ROOT} is not a git checkout; committed copy not restored")
+        return
+    env = dict(os.environ, GIT_CEILING_DIRECTORIES=str(ROOT.parent))
     try:
         r = subprocess.run(["git", "-C", str(ROOT), "checkout", "HEAD", "--", "docs/stocks.html"],
-                           capture_output=True, text=True, timeout=60)
+                           capture_output=True, text=True, timeout=60, env=env)
         print("stocks.html: committed copy kept" if r.returncode == 0 else
               f"stocks.html: could not restore the committed copy ({r.stderr.strip()[:200]})")
     except Exception as e:                                              # noqa: BLE001
         print(f"stocks.html: could not restore the committed copy ({e})")
+
+
+def _unavailable(title, sid, why):
+    return (f'<section class="block" id="{sid}"><h2>{title}</h2><p class="note"><i>'
+            f'not available today (data gap)</i>. The composite picks above are complete; this section '
+            f'could not be built ({why}). The cause is recorded in the refresh alerts.</p></section>')
+
+
+def _alert(msg):
+    """A tracker failure must not be silent: the refresh logs a best-effort step's output only when it exits
+    non-zero, and _tracker_extras never raises. YAHOO_ALERT.txt is the line the refresh and the watchdog
+    surface (yahoo_session.alert); the message says it is a site gap, not a Yahoo transport problem."""
+    line = f"stocks tracker: {msg} (site data gap, not a Yahoo transport issue)"
+    try:
+        import yahoo_session as ys
+        ys.alert(line)
+    except Exception:                                                   # noqa: BLE001
+        print("!! " + line, file=sys.stderr, flush=True)
+
+
+def _now():
+    """The build time (aware). A function so an offline test can pin it."""
+    from datetime import datetime
+    return datetime.now().astimezone()
+
+
+def _macro_inputs():
+    """Date of the capstone macro inputs the composite reads (file date, CDMX), so the page states their age
+    only while it is true."""
+    from datetime import datetime
+    try:
+        t = datetime.fromtimestamp(os.path.getmtime(f"{ANA}/stock_sensitivities.parquet"))
+    except OSError:
+        return None
+    return {"date": t.date().isoformat(), "age_days": (datetime.now() - t).days}
+
+
+def _tracker_extras(df, meta, now, log=print):
+    """Pick Tracker + Track Record + overlays (wave 13). NEVER raises and never touches df: a failure here
+    leaves the core page as it was (and writes one alert line). Returns html parts and the extra stocks.ai.txt
+    fields. `now` = the build time; the history records the session whose closes the prices are."""
+    out = {"tracker": _unavailable("Pick Tracker", "tracker", "history unavailable"), "record": "",
+           "method": "", "ai": {}, "ok": False}
+    try:
+        import picks_history as ph
+        hist = ph.ensure(log=log)
+        hist, rec = ph.add_build(hist, df, now)
+        log(f"picks_history: session {rec['session']} ({rec['basis']}, tier {rec['tier']}): "
+            f"{'recorded' if rec['recorded'] else 'not recorded: ' + rec['why']}")
+        if rec["recorded"]:
+            try:
+                ph.save(hist)                    # data/picks_history.csv (public; no weights)
+            except OSError as e:
+                log(f"picks_history: could not write {ph.HIST} ({e}); tracker built from memory")
+                _alert(f"history not saved ({type(e).__name__})")
+        try:
+            splits = ph.update_splits(df, rec["session"], first_date=str(hist["snapshot_date"].min()))
+        except Exception as e:                                          # noqa: BLE001
+            log(f"picks_history: splits not updated ({type(e).__name__}: {e})")
+            splits = ph.load_splits()
+        last_split = ph.last_split_info(df, rec["session"])
+    except Exception as e:                                              # noqa: BLE001
+        log("picks tracker: history failed:\n" + traceback.format_exc(limit=4))
+        _alert(f"history failed ({type(e).__name__}); Pick Tracker shown as a data gap")
+        out["tracker"] = _unavailable("Pick Tracker", "tracker", f"history: {type(e).__name__}")
+        return out
+    try:
+        import picks_overlays as po
+        ov = po.build(df, log=log, sec_budget=int(os.environ.get("LTCMA_SEC_BUDGET", "160")),
+                      sec_max_xml=int(os.environ.get("LTCMA_SEC_MAX_XML", "120")),
+                      offline=os.environ.get("LTCMA_OVERLAYS_OFFLINE") == "1",
+                      spy_start=str(hist["snapshot_date"].min()), now=now)
+    except Exception as e:                                              # noqa: BLE001
+        log("picks overlays failed:\n" + traceback.format_exc(limit=4))
+        _alert(f"overlays failed ({type(e).__name__}); overlay cells shown as data gaps")
+        ov = {"by_ticker": {}, "spy": None, "meta": {"gaps": [("overlays", f"{type(e).__name__}")]}}
+    try:
+        import picks_tracker as pt
+        p = ph.Panel(hist, splits, last_split)
+        ex = pt.exit_model(p)
+        rows, cut = pt.tracker_rows(p, ex, ov.get("spy"))
+        tr = pt.track_record(p, ov.get("spy"))
+        fig = pt.record_figure(tr)
+        chart = div(fig, "track-record-chart") if fig is not None else ""
+        gl = [f"{k}: {w}" for k, w in (ov.get("meta") or {}).get("gaps", [])]
+        m2 = {"dates": p.dates, "today": rec["session"], "gap_lines": gl, "record": rec}
+        out.update(tracker=pt.tracker_section(rows, ov.get("by_ticker") or {}, ex, cut, m2),
+                   record=pt.record_section(tr, chart, macro=_macro_inputs()), method=pt.methodology_html(),
+                   ai=pt.ai_fields(rows, ov.get("by_ticker") or {}), ok=True, css=pt.TRACKER_CSS,
+                   js=pt.TRACKER_JS)
+        log(f"picks tracker: {len(p.dates)} rankings, {len(rows)} rows, exit model on "
+            f"{ex.get('n_transitions', 0)} moves, splits applied {p.applied}, price breaks {len(p.breaks)}, "
+            f"split-like jumps ruled out by Yahoo {[(j['ticker'], j['to']) for j in p.real_jumps]}, "
+            f"partial days {p.partial}")
+    except Exception as e:                                              # noqa: BLE001
+        log("picks tracker failed:\n" + traceback.format_exc(limit=6))
+        _alert(f"tracker failed ({type(e).__name__}); Pick Tracker shown as a data gap")
+        out["tracker"] = _unavailable("Pick Tracker", "tracker", f"{type(e).__name__}")
+    return out
 
 
 def main():
@@ -318,7 +433,14 @@ def main():
         _keep_committed_page()
         raise                                    # non-zero exit: the refresh log shows why
     sig_html, n_sens, n_fomc = signals_section()
-    asof = pd.Timestamp.today().strftime("%d %b %Y")
+    now = _now()                                 # the history dates the row by the session its closes are
+    asof = now.strftime("%d %b %Y")              # same local day as pd.Timestamp.today(); one clock for the page
+    try:
+        import picks_tracker as _pt
+        ai_head5 = _pt.AI_HEADER5
+    except Exception:                                                   # noqa: BLE001
+        ai_head5 = None
+    extra = _tracker_extras(df, meta, now, log=lambda m: print(m, flush=True))
 
     body = f"""<section class="hero"><div class="container">
 <h1>Stock Research</h1>
@@ -330,6 +452,8 @@ z-scores and combines them, and ranks the {meta['n_universe']}-name research uni
 <main class="container">
 {ccy_badge("USD", "figures in US dollars; ratios are currency-neutral")}
 {picks_section(df, meta)}
+{extra["tracker"]}
+{extra["record"]}
 {sig_html}
 {companies_section()}
 <section class="block"><h2>Methodology &amp; limitations</h2>
@@ -348,6 +472,7 @@ z-scores (documented on the build).</p>
 <p><b>Universe.</b> The composite runs on the names that carry <i>both</i> fundamental
 and macro-signal variables (the macro-signal coverage set). The broader S&amp;P 500
 Buffett value screen stays available via the per-company tool.</p>
+{extra["method"]}
 <p><b>Not advice.</b> Educational research over a public universe. Free Yahoo Finance
 fundamentals are approximate; past forward-return relationships do not guarantee
 future returns.</p></div></section>
@@ -356,14 +481,14 @@ future returns.</p></div></section>
     html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>Carlos Duarte — Stock Research</title>{FONTS}'
-            f'{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{PAGE_CSS}</style>'
+            f'{CSS_LINKS}<link rel="stylesheet" href="style.css"><style>{PAGE_CSS}{extra.get("css", "")}</style>'
             f'<script src="{PLOTLY}"></script></head><body>'
             f'<header class="shell"><div class="shell-in">'
             f'<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b>'
             f'</span>{NAV}</div></header>{body}'
             f'<footer class="shell-foot"><div class="container"><p>Composite picker '
             f'and CFA-framework analysis on free public data. Educational research, '
-            f'not investment advice.</p></div></footer>{FILTER_JS}</body></html>')
+            f'not investment advice.</p></div></footer>{FILTER_JS}{extra.get("js", "")}</body></html>')
     open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(html)
 
     # low-token AI copy + reproducibility dump (weights stay OUT of the public copy)
@@ -374,10 +499,13 @@ future returns.</p></div></section>
           f"coverage={meta['target_coverage']}/40; fallback={meta['equal_weight_fallback']}",
           "composite=sum(corr-derived-weight*zscore); weights private; top20=picks",
           "fields: rank|ticker|sector|price|composite|dominant_var"]
+    if ai_head5:                                 # line 5 (wave 13): the appended tracker columns
+        ai.append(ai_head5)
     for tk, r in top.iterrows():
         dom = contrib.loc[tk].abs().idxmax()
+        tail = extra["ai"].get(tk) or (["na"] * 8 if ai_head5 else [])
         ai.append(f"{int(r['rank'])}|{tk}|{r['sector']}|{r['price']:.2f}|"
-                  f"{r['composite']:+.3f}|{picker.FLABEL[dom]}")
+                  f"{r['composite']:+.3f}|{picker.FLABEL[dom]}" + "".join("|" + str(x) for x in tail))
     open(f"{DOCS}/stocks.ai.txt", "w", encoding="utf-8").write("\n".join(ai) + "\n")
 
     print(f"stocks.html built: {meta['n_universe']} names, "

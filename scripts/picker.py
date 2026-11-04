@@ -56,6 +56,25 @@ FKEYS = [f[0] for f in FEATURES]
 FLABEL = {k: l for k, l, _ in FEATURES}
 FSRC = {k: s for k, s, _ in FEATURES}
 
+# ---- display-only passthrough (wave 13, 2026-11-04) --------------------------
+# Values the picker ALREADY receives in each ticker's Yahoo .info (financialData, v7 quote,
+# defaultKeyStatistics) and used to throw away: analyst consensus targets, the next-earnings
+# timestamps, the last split, and the picker's own unclipped model value. They are carried into
+# df as extra columns for the page's Pick Tracker. They are NOT features: never z-scored, never
+# weighted, never part of the composite or the ranks (FKEYS is unchanged). 0 extra requests.
+DISPLAY_INFO = {            # df column -> Yahoo .info key
+    "tgt_mean": "targetMeanPrice", "tgt_median": "targetMedianPrice",
+    "tgt_low": "targetLowPrice", "tgt_high": "targetHighPrice",
+    "n_analysts": "numberOfAnalystOpinions", "rec_mean": "recommendationMean",
+    "rec_key": "recommendationKey",
+    "earn_ts": "earningsTimestamp", "earn_ts_start": "earningsTimestampStart",
+    "earn_ts_end": "earningsTimestampEnd", "earn_is_est": "isEarningsDateEstimate",
+    "earn_call_ts": "earningsCallTimestampStart",
+    "split_factor": "lastSplitFactor", "split_date": "lastSplitDate",
+}
+DISPLAY_COLS = list(DISPLAY_INFO) + ["iv"]
+DISPLAY_TEXT = {"rec_key", "split_factor", "earn_is_est"}
+
 
 def _num(x):
     try:
@@ -141,15 +160,22 @@ def fundamentals(ticker):
             mom = float(h.iloc[-2] / h.iloc[-13] - 1)
     except Exception:
         pass
-    return {"ticker": ticker, "price": price, "sector": info.get("sector", ""),
-            "name": info.get("shortName") or info.get("longName") or ticker,
-            "roe": roe, "gross_marg": gm, "fcf_yield": fcf_y, "net_marg": nm,
-            "mos": (max(min(mos, 1.0), -0.9) if mos is not None else None),
-            "buffett": buffett,
-            "rev_growth": _num(info.get("revenueGrowth")),
-            "eps_growth": _num(info.get("earningsGrowth")),
-            "inv_de": (1.0 / (1.0 + de) if de is not None and de >= 0 else None),
-            "mom_12_1": mom}
+    out = {"ticker": ticker, "price": price, "sector": info.get("sector", ""),
+           "name": info.get("shortName") or info.get("longName") or ticker,
+           "roe": roe, "gross_marg": gm, "fcf_yield": fcf_y, "net_marg": nm,
+           "mos": (max(min(mos, 1.0), -0.9) if mos is not None else None),
+           "buffett": buffett,
+           "rev_growth": _num(info.get("revenueGrowth")),
+           "eps_growth": _num(info.get("earningsGrowth")),
+           "inv_de": (1.0 / (1.0 + de) if de is not None and de >= 0 else None),
+           "mom_12_1": mom}
+    # display-only passthrough (not features; see DISPLAY_INFO)
+    for col, key in DISPLAY_INFO.items():
+        v = info.get(key)
+        out[col] = (None if v is None else (v if isinstance(v, str) else bool(v))) \
+            if col in DISPLAY_TEXT else _num(v)
+    out["iv"] = iv                                     # unclipped model value (mos stays clipped)
+    return out
 
 
 def build_universe():
@@ -204,10 +230,14 @@ def build_universe():
             "beta_rates": _num(sv.get("beta_rates")), "beta_dxy": _num(sv.get("beta_dxy")),
             "beta_cad": _num(sv.get("beta_cad")), "r2": _num(sv.get("r2")),
             "target": _num(target.get(tk)),
+            **{c: (f[c] if c in f.index else None) for c in DISPLAY_COLS},   # display-only
         }
     df = pd.DataFrame(rows).T
     for c in FKEYS + ["target", "price"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
+    for c in DISPLAY_COLS:                               # display-only, never in z / weights / composite
+        if c not in DISPLAY_TEXT:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
 
     # z-score each feature; impute missing to 0 (neutral)
     z = pd.DataFrame(index=df.index)
@@ -239,7 +269,7 @@ def build_universe():
 
     meta = {"weights": weights, "target_coverage": have_t,
             "n_universe": len(df), "z": z, "contrib": contrib,
-            "equal_weight_fallback": have_t < 8}
+            "equal_weight_fallback": have_t < 8, "display_cols": list(DISPLAY_COLS)}
     return df, weights, meta
 
 

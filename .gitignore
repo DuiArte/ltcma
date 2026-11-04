@@ -25,3 +25,6 @@ _scratch_*
 # per-machine agent tooling (preview launch config etc.)
 .claude/
 *.tmp
+
+# picks overlays (wave 13): SEC Form 4 cache of PUBLIC filings, rebuilt by scripts/insider_form4.py; never published
+.cache/
