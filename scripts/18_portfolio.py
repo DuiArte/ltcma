@@ -497,6 +497,28 @@ if not _rlf:
                      "publish the approximate snapshot-basis figures")
 _rl = json.loads(Path(_rlf[-1]).read_text(encoding="utf-8"))
 
+# Stock splits AFTER the walk (2026-11-05: SOXX 3:1). position_latest.json and the ledger carry
+# the walk's PRE-split share counts, while the rolled sidecar marks at the POST-split .MX quote;
+# multiplying the two would publish a phantom -67% on the name. 29_peak_rollforward.py records
+# every split it applied in the sidecar (`splits`); the same factor is applied here to the
+# share counts, cost total unchanged. A split dated on/before the walk is already in its units.
+try:
+    _spk = json.loads(Path(paths.cuser("Documents", "CarlosDuarteWebsite", "real_numbers",
+                                       "peak_sidecar.json")).read_text(encoding="utf-8"))
+except FileNotFoundError:
+    _spk = {}
+for _st, _sl in (_spk.get("splits") or {}).items():
+    for _sx in _sl:
+        if _bsnap is not None and pd.Timestamp(_sx["ex"]) <= _bsnap:
+            continue
+        _f = float(_sx["factor"])
+        _m = _bdf["ticker"].map(_norm_ticker) == _st
+        _bdf.loc[_m, "Títulos"] = _bdf.loc[_m, "Títulos"] * _f
+        _bdf.loc[_m, "Costo promedio"] = _bdf.loc[_m, "Costo promedio"] / _f
+        _rl["per_ticker_held_shares"][_st] = float(_rl["per_ticker_held_shares"][_st]) * _f
+        print(f"  split: {_st} {_f:g}:1 ex {_sx['ex']} applied to the walk's share count "
+              f"(-> {_rl['per_ticker_held_shares'][_st]:g} sh, cost unchanged)")
+
 latest = _bdf.copy()
 latest["shares"] = latest["Títulos"] * SCALE
 

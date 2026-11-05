@@ -77,6 +77,35 @@ def main():
     newer = [p for p in glob.glob(os.path.join(ARCH, "**", "*.*"), recursive=True)
              if os.path.getmtime(p) > amt and Path(p).suffix.lower() in (".csv", ".xlsx", ".xls")
              and "_parsed" not in p]
+    # A DetalleMovimientos export with no equity FILL after the anchor (repo rolls, fund moves,
+    # cash) changes nothing this roll uses -- refusing on it froze the Performance block for
+    # nothing (2026-11-05 export: last fill 10-30 = the anchor). Same fill evidence as the walk.
+    def _fills_after(p):
+        try:
+            ls = Path(p).read_text(encoding="utf-8-sig", errors="replace").splitlines()
+            h = ls[1].split("|")
+        except (OSError, IndexError):
+            return True
+        for ln in ls[2:]:
+            r = dict(zip(h, ln.split("|")))
+            if r.get("Movimiento") not in ("Buy", "Sell") or not (r.get("Liquidacion") or "").strip():
+                continue
+            try:
+                if float(r["Titulos asignados"].replace(",", "")) <= 0 or \
+                        float(r["Importe Neto"].replace(",", "")) <= 0:
+                    continue
+                d = datetime.strptime(r["Instruccion"].strip().split(" ")[0], "%d/%m/%Y")
+            except (ValueError, KeyError):
+                return True                         # unreadable fill row: refuse, don't guess
+            if pd.Timestamp(d) > asof_a:
+                return True
+        return False
+    quiet = [p for p in newer if os.path.basename(p).startswith("DetalleMovimientos")
+             and not _fills_after(p)]
+    if quiet:
+        print(f"  {len(quiet)} newer export(s) carry no equity fill after {A['as_of']} "
+              f"({', '.join(os.path.basename(p) for p in quiet)}) -- rolling")
+    newer = [p for p in newer if p not in quiet]
     if newer:
         print(f"  REFUSED: {len(newer)} broker export(s) newer than the anchor, e.g. "
               f"{os.path.basename(newer[0])} -- new fills need a re-walk through the guarded "
@@ -185,11 +214,62 @@ def main():
             return at(sic[t], d), ".MX"
         return at(px[t], d) * at(fxd, d), "US x FX"
 
+    # ---- stock splits after the anchor (2026-11-05: SOXX 3:1) ----------------------------
+    # The walk's share counts are pre-split. Yahoo's US series are split-ADJUSTED backwards,
+    # but SIC .MX series were NOT on the SOXX ex-date (8,374 -> 2,520): marking 212 shares at
+    # the post-split quote would publish a -67% on the name, and at ~10% of the book the -6.7%
+    # day slips under the 15% book sanity check. So: take the split list from Yahoo, and for
+    # each quote series decide from the data whether it JUMPS at the ex-date (unadjusted ->
+    # multiply shares from ex on) or not (adjusted -> multiply on every rolled day).
+    spl = {}
+    for p in sicpos:
+        try:
+            s_ = yf.Ticker(p["ticker"]).splits
+        except Exception:
+            continue
+        if s_ is None or len(s_) == 0:
+            continue
+        s_.index = pd.to_datetime(s_.index).tz_localize(None).normalize()
+        for ex, f in s_[(s_.index > asof_a) & (s_.index <= days[-1])].items():
+            ser = sic.get(p["ticker"])
+            if ser is None:
+                alld = True                         # US x FX: auto_adjust series, adjusted
+            else:
+                b, a_ = ser.loc[:ex - pd.Timedelta(days=1)], ser.loc[ex:]
+                if b.empty or a_.empty:
+                    print(f"  pricing INCOMPLETE: {p['ticker']} split {f:g}:1 ex {ex.date()} has no "
+                          f"post-split .MX quote yet -- sidecar left at {A['as_of']}")
+                    return 4
+                ratio = float(b.iloc[-1]) / float(a_.iloc[0])
+                alld = abs(ratio / f - 1) > 0.35    # no jump at ex -> history already adjusted
+            spl.setdefault(p["ticker"], []).append((ex, float(f), alld))
+            print(f"  split {p['ticker']} {f:g}:1 ex {ex.date()} -> shares x{f:g} "
+                  f"{'on every rolled day (quote history adjusted)' if alld else 'from the ex-date (quote jumps)'}")
+
+    def shm(t, d):
+        m_ = 1.0
+        for ex, f, alld in spl.get(t, ()):
+            if alld or d >= ex:
+                m_ *= f
+        return m_
+
     curve = list(A["curve"][:-1]) + [L]
     prev = dict(L)
     spy_sh = L["spy_mv"] / L["spy"]
+    pv = {p["ticker"]: p["shares"] * shm(p["ticker"], asof_a) * at(sic[p["ticker"]], asof_a)
+          for p in sicpos if p["ticker"] in sic}
     for d in days:
-        mv_m = sum(p["shares"] * mark(p, d)[0] for p in sicpos)
+        mv_m = sum(p["shares"] * shm(p["ticker"], d) * mark(p, d)[0] for p in sicpos)
+        # per-name sanity: an unhandled split (or a bad quote) moves ONE name by a factor
+        for p in sicpos:
+            t = p["ticker"]
+            if t in pv:
+                v = p["shares"] * shm(t, d) * mark(p, d)[0]
+                if pv[t] > 0 and abs(v / pv[t] - 1) > 0.40:
+                    print(f"  SANITY FAILED: {t} value moved {v / pv[t] - 1:+.1%} on {d.date()} "
+                          f"(split not handled?) -- not rolling")
+                    return 4
+                pv[t] = v
         r = dict(d=d.strftime("%Y-%m-%d"), fx=at(fxd, d),
                  mv_mxn=mv_m, mv_usd=mv_m / at(fxd, d),
                  cost_mxn=L["cost_mxn"], cost_usd=L["cost_usd"],
@@ -238,9 +318,15 @@ def main():
     P["util_now"], P["util_mean"], P["util_min"] = u[-1], sum(u) / len(u), min(u)
     pos, srcs = [], {}
     fx_l = at(fxd, last)
+    if spl:
+        P["splits"] = dict(A.get("splits") or {})
+        for t, lst in spl.items():
+            P["splits"][t] = [dict(ex=ex.strftime("%Y-%m-%d"), factor=f, quote_adjusted=alld)
+                              for ex, f, alld in lst]
     for p in A["positions"]:
         m, src = mark(p, last)
         srcs[src] = srcs.get(src, 0) + 1
+        p = dict(p, shares=p["shares"] * shm(p["ticker"], last))   # cost unchanged by a split
         q = dict(p, px_mxn=m, px_usd=m / fx_l, mv_mxn=p["shares"] * m,
                  mv_usd=p["shares"] * m / fx_l, mark_src=src, mark_date=P["as_of"])
         q["ret_mxn"] = q["mv_mxn"] / q["cost_mxn"] - 1
