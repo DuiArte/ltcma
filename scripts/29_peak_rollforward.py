@@ -224,7 +224,7 @@ def main():
     spl = {}
     for p in sicpos:
         try:
-            s_ = yf.Ticker(p["ticker"]).splits
+            s_ = yf.Ticker(p["ticker"], session=ys.SESSION).splits
         except Exception:
             continue
         if s_ is None or len(s_) == 0:
