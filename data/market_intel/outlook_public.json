@@ -1,6 +1,6 @@
 {
  "schema": "outlook_public/1",
- "as_of": "2026-11-09T22:08:29Z",
+ "as_of": "2026-11-10T22:08:45Z",
  "months": [
   "2026-11",
   "2026-12",
@@ -60,31 +60,11 @@
      "question": "Another Fed rate hike in 2026?",
      "outcome": null,
      "span": "in 2026",
-     "prob": 82,
-     "prob_text": "82%",
-     "chg_7d": 12,
+     "prob": 96,
+     "prob_text": "96%",
+     "chg_7d": 21,
      "thin": false,
      "url": "https://polymarket.com/event/another-fed-rate-hike-in-2026"
-    }
-   ]
-  },
-  {
-   "category": "fed",
-   "topic": "Fed cuts/hikes count & rate level",
-   "row": "How many Fed rate cuts",
-   "venue": "polymarket",
-   "url": "https://polymarket.com/event/how-many-fed-rate-cuts-in-2026",
-   "cells": [
-    {
-     "month": "2026-12",
-     "question": "Will no Fed rate cuts happen in 2026?",
-     "outcome": "0 (0 bps)",
-     "span": "in 2026",
-     "prob": 98,
-     "prob_text": "98%",
-     "chg_7d": 1,
-     "thin": false,
-     "url": "https://polymarket.com/event/how-many-fed-rate-cuts-in-2026"
     }
    ]
   },
@@ -97,11 +77,11 @@
    "cells": [
     {
      "month": "2026-12",
-     "question": "Fed funds rate after Dec 2026 meeting? (On Dec 9, 2026): Above 4.00%",
-     "outcome": "Above 4.00%",
+     "question": "Fed funds rate after Dec 2026 meeting? (On Dec 9, 2026): Above 4.25%",
+     "outcome": "Above 4.25%",
      "span": "on Dec 9",
-     "prob": 80,
-     "prob_text": "80%",
+     "prob": 11,
+     "prob_text": "11%",
      "chg_7d": null,
      "thin": false,
      "url": "https://kalshi.com/markets/kxfed"
@@ -110,21 +90,41 @@
   },
   {
    "category": "fed",
-   "topic": "Fed chair / governors",
-   "row": "Warsh out as Fed Chair",
+   "topic": "Fed cuts/hikes count & rate level",
+   "row": "How many Fed rate hikes",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/warsh-out-as-fed-chair-by-20260723173321450",
+   "url": "https://polymarket.com/event/how-many-fed-rate-hikes-in-2026-20260623190717369",
    "cells": [
     {
      "month": "2026-12",
-     "question": "Will Warsh be out as Fed Chair by December 31, 2026?",
+     "question": "Will 2 Fed rate hikes happen in 2026?",
+     "outcome": "2 (50 bps)",
+     "span": "in 2026",
+     "prob": 86,
+     "prob_text": "86%",
+     "chg_7d": null,
+     "thin": false,
+     "url": "https://polymarket.com/event/how-many-fed-rate-hikes-in-2026-20260623190717369"
+    }
+   ]
+  },
+  {
+   "category": "fed",
+   "topic": "Fed chair / governors",
+   "row": "Jerome Powell out of Fed Board",
+   "venue": "polymarket",
+   "url": "https://polymarket.com/event/jerome-powell-out-from-fed-board-by",
+   "cells": [
+    {
+     "month": "2026-12",
+     "question": "Jerome Powell out from Fed Board by December 31?",
      "outcome": null,
      "span": null,
-     "prob": 1,
-     "prob_text": "1%",
-     "chg_7d": 0,
+     "prob": 7,
+     "prob_text": "7%",
+     "chg_7d": -5,
      "thin": false,
-     "url": "https://polymarket.com/event/warsh-out-as-fed-chair-by-20260723173321450"
+     "url": "https://polymarket.com/event/jerome-powell-out-from-fed-board-by"
     }
    ]
   },
@@ -140,9 +140,9 @@
      "question": "Will Trump publicly criticize Kevin Warsh? (2027): Before Jan 1, 2027",
      "outcome": null,
      "span": null,
-     "prob": 14,
-     "prob_text": "14%",
-     "chg_7d": -16,
+     "prob": 17,
+     "prob_text": "17%",
+     "chg_7d": -10,
      "thin": false,
      "url": "https://kalshi.com/markets/kxdjtattackwarsh"
     }
@@ -160,9 +160,9 @@
      "question": "Will the Fed Hike–Pause–Hike in the next three decisions (Sep–Oct–Dec)?",
      "outcome": "Hike–Pause–Hike",
      "span": "Sep–Oct–Dec",
-     "prob": 81,
-     "prob_text": "81%",
-     "chg_7d": 10,
+     "prob": 96,
+     "prob_text": "96%",
+     "chg_7d": 23,
      "thin": false,
      "url": "https://polymarket.com/event/fed-decisions-sepdec"
     },
@@ -171,9 +171,9 @@
      "question": "Will the Fed Pause-Hike-Pause in the next three decisions (Oct-Dec-Jan)?",
      "outcome": "Pause-Hike-Pause",
      "span": "Oct–Dec–Jan",
-     "prob": 77,
-     "prob_text": "77%",
-     "chg_7d": 14,
+     "prob": 52,
+     "prob_text": "52%",
+     "chg_7d": -10,
      "thin": false,
      "url": "https://polymarket.com/event/fed-decisions-oct-jan"
     }
@@ -188,23 +188,23 @@
    "cells": [
     {
      "month": "2026-12",
-     "question": "CPI YoY in November (In Nov 2026): Above 3.7%",
-     "outcome": "Above 3.7%",
+     "question": "CPI YoY in November (In Nov 2026): Above 3.8%",
+     "outcome": "Above 3.8%",
      "span": "Nov Inflation",
-     "prob": 44,
-     "prob_text": "44%",
-     "chg_7d": -33,
+     "prob": 29,
+     "prob_text": "29%",
+     "chg_7d": null,
      "thin": false,
      "url": "https://kalshi.com/markets/kxcpiyoy"
     },
     {
      "month": "2027-01",
-     "question": "CPI YoY in December (In Dec 2026): Above 3.5%",
-     "outcome": "Above 3.5%",
+     "question": "CPI YoY in December (In Dec 2026): Above 4.0%",
+     "outcome": "Above 4.0%",
      "span": "Dec Inflation",
-     "prob": 62,
-     "prob_text": "62%",
-     "chg_7d": null,
+     "prob": 20,
+     "prob_text": "20%",
+     "chg_7d": -25,
      "thin": false,
      "url": "https://kalshi.com/markets/kxcpiyoy"
     }
@@ -222,10 +222,10 @@
      "question": "Will JOLTS Job Openings be between 7.3M and 7.4M in October?",
      "outcome": "7.3M to 7.4M",
      "span": "Oct data",
-     "prob": 16,
-     "prob_text": "16%",
+     "prob": 15,
+     "prob_text": "15%",
      "chg_7d": null,
-     "thin": false,
+     "thin": true,
      "url": "https://polymarket.com/event/jolts-job-openings-october-2026"
     }
    ]
@@ -233,20 +233,20 @@
   {
    "category": "macro_data",
    "topic": "US payrolls / unemployment",
-   "row": "Unemployment",
+   "row": "Jobs numbers",
    "venue": "kalshi",
-   "url": "https://kalshi.com/markets/kxu3",
+   "url": "https://kalshi.com/markets/kxpayrolls",
    "cells": [
     {
      "month": "2026-12",
-     "question": "Unemployment in November (In Nov 2026): Above 4.0%",
-     "outcome": "Above 4.0%",
-     "span": "Nov Unemployment",
-     "prob": 84,
-     "prob_text": "84%",
+     "question": "Jobs numbers in Nov 2026? (In Nov 2026): Above 80,000",
+     "outcome": "Above 80,000",
+     "span": "Nov Jobs numbers",
+     "prob": 58,
+     "prob_text": "58%",
      "chg_7d": null,
      "thin": false,
-     "url": "https://kalshi.com/markets/kxu3"
+     "url": "https://kalshi.com/markets/kxpayrolls"
     }
    ]
   },
@@ -259,13 +259,13 @@
    "cells": [
     {
      "month": "2027-01",
-     "question": "Will US GDP growth in Q4 2026 be between 3.0% and 3.5%?",
-     "outcome": "3.0% to 3.5%",
+     "question": "Will US GDP growth in Q4 2026 be between 2.5% and 3.0%?",
+     "outcome": "2.5% to 3.0%",
      "span": "Q4 2026",
-     "prob": 16,
-     "prob_text": "16%",
-     "chg_7d": null,
-     "thin": true,
+     "prob": 19,
+     "prob_text": "19%",
+     "chg_7d": 5,
+     "thin": false,
      "url": "https://polymarket.com/event/us-gdp-growth-in-q4-2026"
     }
    ]
@@ -293,31 +293,31 @@
   {
    "category": "macro_data",
    "topic": "US Treasury yields",
-   "row": "How low will 5-year Treasury yield get",
+   "row": "How low will 10-year Treasury yield get",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/how-low-will-5-year-treasury-yield-get-in-november",
+   "url": "https://polymarket.com/event/how-low-will-10-year-treasury-yield-get-in-november",
    "cells": [
     {
      "month": "2026-11",
-     "question": "Will the 5-year Treasury yield dip below 4.56% in November?",
-     "outcome": "Below 4.56%",
+     "question": "Will the 10-year Treasury yield dip below 4.82% in November?",
+     "outcome": "Below 4.82%",
      "span": null,
-     "prob": 56,
-     "prob_text": "56%",
+     "prob": 23,
+     "prob_text": "23%",
      "chg_7d": null,
-     "thin": true,
-     "url": "https://polymarket.com/event/how-low-will-5-year-treasury-yield-get-in-november"
+     "thin": false,
+     "url": "https://polymarket.com/event/how-low-will-10-year-treasury-yield-get-in-november"
     },
     {
      "month": "2026-12",
-     "question": "Will the 5-year Treasury yield dip below 4.35% before 2027?",
-     "outcome": "Below 4.35%",
+     "question": "Will the 10-year Treasury yield dip below 4.6% before 2027?",
+     "outcome": "Below 4.6%",
      "span": null,
      "prob": 21,
      "prob_text": "21%",
-     "chg_7d": 4,
+     "chg_7d": -1,
      "thin": false,
-     "url": "https://polymarket.com/event/how-low-will-5-year-treasury-yield-get-before-2027"
+     "url": "https://polymarket.com/event/how-low-will-10-year-treasury-yield-get-before-2027"
     }
    ]
   },
@@ -355,7 +355,7 @@
      "span": null,
      "prob": 67,
      "prob_text": "67%",
-     "chg_7d": 3,
+     "chg_7d": 6,
      "thin": false,
      "url": "https://kalshi.com/markets/kxtaipeimayor"
     }
@@ -364,82 +364,126 @@
   {
    "category": "geopolitics",
    "topic": "Middle East (Iran / Israel / Hormuz)",
-   "row": "US announces end of Iranian blockade",
+   "row": "Israel x Iran ceasefire continues",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/us-announces-end-of-iranian-blockade-byptptpt-20260713152715080",
+   "url": "https://polymarket.com/event/israel-x-iran-ceasefire-continues-throughptptpt-20260716224448963",
    "cells": [
     {
      "month": "2026-11",
-     "question": "US announces end of Iranian blockade by November 30, 2026?",
+     "question": "Israel x Iran ceasefire continues through November 30?",
      "outcome": null,
      "span": null,
-     "prob": 16,
-     "prob_text": "16%",
-     "chg_7d": -11,
+     "prob": 86,
+     "prob_text": "86%",
+     "chg_7d": 37,
      "thin": false,
-     "url": "https://polymarket.com/event/us-announces-end-of-iranian-blockade-byptptpt-20260713152715080"
+     "url": "https://polymarket.com/event/israel-x-iran-ceasefire-continues-throughptptpt-20260716224448963"
     },
     {
      "month": "2026-12",
-     "question": "US announces end of Iranian blockade by December 31, 2026?",
-     "outcome": null,
-     "span": null,
-     "prob": 40,
-     "prob_text": "40%",
-     "chg_7d": -1,
-     "thin": false,
-     "url": "https://polymarket.com/event/us-announces-end-of-iranian-blockade-byptptpt-20260713152715080"
-    },
-    {
-     "month": "2027-03",
-     "question": "US announces end of Iranian blockade by March 31, 2027?",
+     "question": "Israel x Iran ceasefire continues through December 31?",
      "outcome": null,
      "span": null,
      "prob": 70,
      "prob_text": "70%",
-     "chg_7d": 7,
+     "chg_7d": 33,
      "thin": false,
-     "url": "https://polymarket.com/event/us-announces-end-of-iranian-blockade-byptptpt-20260713152715080"
+     "url": "https://polymarket.com/event/israel-x-iran-ceasefire-continues-throughptptpt-20260716224448963"
     }
    ]
   },
   {
    "category": "geopolitics",
    "topic": "Russia / Ukraine / NATO",
-   "row": "Where will Trump and Putin meet next",
+   "row": "Russia x Ukraine ceasefire agreement",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/where-will-trump-and-putin-meet-next-678",
+   "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by",
    "cells": [
     {
-     "month": "2026-12",
-     "question": "Will Trump and Putin not meet?",
-     "outcome": "No meeting by December 31",
-     "span": "in 2026",
-     "prob": 11,
-     "prob_text": "11%",
-     "chg_7d": -3,
+     "month": "2026-11",
+     "question": "Russia x Ukraine ceasefire agreement by November 30, 2026?",
+     "outcome": null,
+     "span": null,
+     "prob": 5,
+     "prob_text": "5%",
+     "chg_7d": -2,
      "thin": false,
-     "url": "https://polymarket.com/event/where-will-trump-and-putin-meet-next-678"
+     "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by"
+    },
+    {
+     "month": "2026-12",
+     "question": "Russia x Ukraine ceasefire agreement by December 31, 2026?",
+     "outcome": null,
+     "span": null,
+     "prob": 15,
+     "prob_text": "15%",
+     "chg_7d": -2,
+     "thin": false,
+     "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by"
+    },
+    {
+     "month": "2027-01",
+     "question": "Russia x Ukraine ceasefire agreement by January 31, 2027?",
+     "outcome": null,
+     "span": null,
+     "prob": 25,
+     "prob_text": "25%",
+     "chg_7d": 2,
+     "thin": false,
+     "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by"
+    },
+    {
+     "month": "2027-02",
+     "question": "Russia x Ukraine ceasefire agreement by February 28, 2027?",
+     "outcome": null,
+     "span": null,
+     "prob": 28,
+     "prob_text": "28%",
+     "chg_7d": 1,
+     "thin": false,
+     "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by"
+    },
+    {
+     "month": "2027-03",
+     "question": "Russia x Ukraine ceasefire agreement by March 31, 2027?",
+     "outcome": null,
+     "span": null,
+     "prob": 36,
+     "prob_text": "36%",
+     "chg_7d": 2,
+     "thin": false,
+     "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by"
+    },
+    {
+     "month": "2027-04",
+     "question": "Russia x Ukraine ceasefire agreement by April 30, 2027?",
+     "outcome": null,
+     "span": null,
+     "prob": 42,
+     "prob_text": "42%",
+     "chg_7d": 0,
+     "thin": false,
+     "url": "https://polymarket.com/event/russia-x-ukraine-ceasefire-agreement-by"
     }
    ]
   },
   {
    "category": "geopolitics",
    "topic": "China / Taiwan / Korea",
-   "row": "Will China invade Taiwan",
+   "row": "Xi Jinping out",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/will-china-invade-taiwan-before-2027",
+   "url": "https://polymarket.com/event/xi-jinping-out-before-2027",
    "cells": [
     {
      "month": "2026-12",
-     "question": "Will China invade Taiwan by end of 2026?",
+     "question": "Xi Jinping out before 2027?",
      "outcome": null,
      "span": null,
      "prob": 2,
      "prob_text": "2%",
-     "chg_7d": 0,
+     "chg_7d": -1,
      "thin": false,
-     "url": "https://polymarket.com/event/will-china-invade-taiwan-before-2027"
+     "url": "https://polymarket.com/event/xi-jinping-out-before-2027"
     }
    ]
   },
@@ -455,9 +499,9 @@
      "question": "Who will officially lead Venezuela at the end of 2026? (Dec 31, 2026): Nicolás Maduro",
      "outcome": "Nicolás Maduro",
      "span": null,
-     "prob": 92,
-     "prob_text": "92%",
-     "chg_7d": 8,
+     "prob": 91,
+     "prob_text": "91%",
+     "chg_7d": 5,
      "thin": false,
      "url": "https://kalshi.com/markets/kxvenezuelaleader"
     }
@@ -495,8 +539,8 @@
      "question": "Pete Hegseth out as Secretary of Defense by November 30?",
      "outcome": null,
      "span": null,
-     "prob": 27,
-     "prob_text": "27%",
+     "prob": 11,
+     "prob_text": "11%",
      "chg_7d": null,
      "thin": false,
      "url": "https://polymarket.com/event/pete-hegseth-out-as-secretary-of-defense-by-november-30-20261001003401433"
@@ -506,9 +550,9 @@
      "question": "Pete Hegseth out as Secretary of Defense by December 31?",
      "outcome": null,
      "span": null,
-     "prob": 41,
-     "prob_text": "41%",
-     "chg_7d": 7,
+     "prob": 26,
+     "prob_text": "26%",
+     "chg_7d": -13,
      "thin": false,
      "url": "https://polymarket.com/event/pete-hegseth-out-as-secretary-of-defense-by-december-31"
     }
@@ -517,53 +561,31 @@
   {
    "category": "us_politics",
    "topic": "Shutdown / legislation / cabinet",
-   "row": "Hegseth out by...?",
+   "row": "Will Pete Hegseth be impeached?",
    "venue": "kalshi",
-   "url": "https://kalshi.com/markets/kxhegsethout",
+   "url": "https://kalshi.com/markets/kxhegsethimpeach",
    "cells": [
     {
      "month": "2026-11",
-     "question": "Pete Hegseth out as Secretary of Defense? (Before Apr 2026): Before Dec 1, 2026",
+     "question": "Will Pete Hegseth be impeached? (Before Jul 1, 2027): Before Nov 21, 2026",
      "outcome": null,
-     "span": null,
-     "prob": 28,
-     "prob_text": "28%",
+     "span": "by Nov 21",
+     "prob": 70,
+     "prob_text": "70%",
      "chg_7d": null,
      "thin": false,
-     "url": "https://kalshi.com/markets/kxhegsethout"
+     "url": "https://kalshi.com/markets/kxhegsethimpeach"
     },
     {
      "month": "2026-12",
-     "question": "Pete Hegseth out as Secretary of Defense? (Before Apr 2026): Before Jan 1, 2027",
+     "question": "Will Pete Hegseth be impeached? (Before Jul 1, 2027): Before Jan 1, 2027",
      "outcome": null,
      "span": null,
-     "prob": 40,
-     "prob_text": "40%",
+     "prob": 72,
+     "prob_text": "72%",
      "chg_7d": null,
      "thin": false,
-     "url": "https://kalshi.com/markets/kxhegsethout"
-    },
-    {
-     "month": "2027-01",
-     "question": "Pete Hegseth out as Secretary of Defense? (Before Apr 2026): Before Feb 1, 2027",
-     "outcome": null,
-     "span": null,
-     "prob": 60,
-     "prob_text": "60%",
-     "chg_7d": null,
-     "thin": false,
-     "url": "https://kalshi.com/markets/kxhegsethout"
-    },
-    {
-     "month": "2027-03",
-     "question": "Pete Hegseth out as Secretary of Defense? (Before Apr 2026): Before Apr 1, 2027",
-     "outcome": null,
-     "span": null,
-     "prob": 76,
-     "prob_text": "76%",
-     "chg_7d": null,
-     "thin": false,
-     "url": "https://kalshi.com/markets/kxhegsethout"
+     "url": "https://kalshi.com/markets/kxhegsethimpeach"
     }
    ]
   },
@@ -579,9 +601,9 @@
      "question": "Alaska Senate winner? (In 2026): Democratic party",
      "outcome": "Democratic party",
      "span": null,
-     "prob": 97,
-     "prob_text": "97%",
-     "chg_7d": 26,
+     "prob": 98,
+     "prob_text": "98%",
+     "chg_7d": null,
      "thin": false,
      "url": "https://kalshi.com/markets/senateak"
     }
@@ -590,71 +612,40 @@
   {
    "category": "us_politics",
    "topic": "Other us_politics",
-   "row": "Next Senate Majority Leader",
+   "row": "Alaska Senate Election Winner",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/next-senate-majority-leader-485",
+   "url": "https://polymarket.com/event/alaska-senate-election-winner",
    "cells": [
     {
      "month": "2026-11",
-     "question": "Will Chuck Schumer be the next Senate Majority Leader?",
-     "outcome": "Chuck Schumer",
+     "question": "Will Mary Peltola win the Alaska Senate race in 2026?",
+     "outcome": "Mary Peltola (D)",
      "span": null,
-     "prob": 91,
-     "prob_text": "91%",
-     "chg_7d": 30,
+     "prob": 99,
+     "prob_text": "99%",
+     "chg_7d": null,
      "thin": false,
-     "url": "https://polymarket.com/event/next-senate-majority-leader-485"
+     "url": "https://polymarket.com/event/alaska-senate-election-winner"
     }
    ]
   },
   {
    "category": "us_politics",
    "topic": "Other us_politics",
-   "row": "Mississippi Senate race",
+   "row": "House Race Winner?",
    "venue": "kalshi",
-   "url": "https://kalshi.com/markets/senatems",
+   "url": "https://kalshi.com/markets/kxhouserace",
    "cells": [
     {
      "month": "2026-11",
-     "question": "Mississippi Senate winner? (In 2026): Scott Colom",
-     "outcome": "Scott Colom",
-     "span": null,
-     "prob": 99,
-     "prob_text": "99%",
-     "chg_7d": 85,
+     "question": "NC-03 House winner? (NC-03): Raymond Smith Jr.",
+     "outcome": "Raymond Smith Jr.",
+     "span": "NC-03",
+     "prob": 97,
+     "prob_text": "97%",
+     "chg_7d": null,
      "thin": false,
-     "url": "https://kalshi.com/markets/senatems"
-    }
-   ]
-  },
-  {
-   "category": "commodities",
-   "topic": "Oil (WTI / Brent) price ladders",
-   "row": "Crude Oil all time high",
-   "venue": "polymarket",
-   "url": "https://polymarket.com/event/crude-oil-all-time-high-by",
-   "cells": [
-    {
-     "month": "2026-12",
-     "question": "Will Crude Oil reach a new all-time high by December 31?",
-     "outcome": null,
-     "span": null,
-     "prob": 5,
-     "prob_text": "5%",
-     "chg_7d": -13,
-     "thin": false,
-     "url": "https://polymarket.com/event/crude-oil-all-time-high-by"
-    },
-    {
-     "month": "2027-03",
-     "question": "Will Crude Oil reach a new all-time high by March 31, 2027?",
-     "outcome": null,
-     "span": null,
-     "prob": 18,
-     "prob_text": "18%",
-     "chg_7d": -10,
-     "thin": false,
-     "url": "https://polymarket.com/event/crude-oil-all-time-high-by"
+     "url": "https://kalshi.com/markets/kxhouserace"
     }
    ]
   },
@@ -670,11 +661,42 @@
      "question": "Will WTI Crude Oil (WTI) hit (HIGH) $125 in November?",
      "outcome": "↑ $125",
      "span": null,
-     "prob": 4,
-     "prob_text": "4%",
+     "prob": 3,
+     "prob_text": "3%",
      "chg_7d": null,
      "thin": false,
      "url": "https://polymarket.com/event/what-price-will-wti-hit-in-november-2026"
+    }
+   ]
+  },
+  {
+   "category": "commodities",
+   "topic": "Oil (WTI / Brent) price ladders",
+   "row": "Crude Oil all time high",
+   "venue": "polymarket",
+   "url": "https://polymarket.com/event/crude-oil-all-time-high-by",
+   "cells": [
+    {
+     "month": "2026-12",
+     "question": "Will Crude Oil reach a new all-time high by December 31?",
+     "outcome": null,
+     "span": null,
+     "prob": 6,
+     "prob_text": "6%",
+     "chg_7d": -7,
+     "thin": false,
+     "url": "https://polymarket.com/event/crude-oil-all-time-high-by"
+    },
+    {
+     "month": "2027-03",
+     "question": "Will Crude Oil reach a new all-time high by March 31, 2027?",
+     "outcome": null,
+     "span": null,
+     "prob": 16,
+     "prob_text": "16%",
+     "chg_7d": -13,
+     "thin": false,
+     "url": "https://polymarket.com/event/crude-oil-all-time-high-by"
     }
    ]
   },
@@ -687,13 +709,13 @@
    "cells": [
     {
      "month": "2026-11",
-     "question": "How high will WTI oil get by Nov 30, 2026? (In 2026): 109.51 or above",
-     "outcome": "109.51 or above",
+     "question": "How high will WTI oil get by Nov 30, 2026? (In 2026): 109.01 or above",
+     "outcome": "109.01 or above",
      "span": null,
-     "prob": 26,
-     "prob_text": "26%",
+     "prob": 7,
+     "prob_text": "7%",
      "chg_7d": null,
-     "thin": true,
+     "thin": false,
      "url": "https://kalshi.com/markets/kxwtimax"
     },
     {
@@ -701,9 +723,9 @@
      "question": "How high will oil (WTI) get by Dec 31, 2026? (In 2026): $115.01 or above",
      "outcome": "$115.01 or above",
      "span": null,
-     "prob": 14,
-     "prob_text": "14%",
-     "chg_7d": -23,
+     "prob": 11,
+     "prob_text": "11%",
+     "chg_7d": -21,
      "thin": false,
      "url": "https://kalshi.com/markets/kxwtimax"
     }
@@ -721,9 +743,9 @@
      "question": "Will Gold (GC) hit (HIGH) $5,000 by end of December?",
      "outcome": "↑ $5,000",
      "span": null,
-     "prob": 7,
-     "prob_text": "7%",
-     "chg_7d": 1,
+     "prob": 4,
+     "prob_text": "4%",
+     "chg_7d": 0,
      "thin": false,
      "url": "https://polymarket.com/event/what-will-gold-gc-hit-by-end-of-december"
     }
@@ -732,20 +754,40 @@
   {
    "category": "commodities",
    "topic": "Other commodities",
-   "row": "US highest gas price yearly",
+   "row": "US gas price up",
    "venue": "kalshi",
-   "url": "https://kalshi.com/markets/kxaaagasmax",
+   "url": "https://kalshi.com/markets/kxaaagasw",
    "cells": [
     {
-     "month": "2026-12",
-     "question": "How high will US gas prices get in 2026? (In 2026): Above $4.60",
-     "outcome": "Above $4.60",
-     "span": "in 2026",
-     "prob": 14,
-     "prob_text": "14%",
-     "chg_7d": -24,
+     "month": "2026-11",
+     "question": "US gas prices this week (On Nov 16, 2026): Above 3.80",
+     "outcome": "Above 3.80",
+     "span": "on Nov 16",
+     "prob": 57,
+     "prob_text": "57%",
+     "chg_7d": null,
      "thin": false,
-     "url": "https://kalshi.com/markets/kxaaagasmax"
+     "url": "https://kalshi.com/markets/kxaaagasw"
+    }
+   ]
+  },
+  {
+   "category": "commodities",
+   "topic": "Other commodities",
+   "row": "US gas price",
+   "venue": "kalshi",
+   "url": "https://kalshi.com/markets/kxaaagasm",
+   "cells": [
+    {
+     "month": "2026-11",
+     "question": "Gas prices in the US in Nov 2026? (On Nov 30, 2026): Above 3.70",
+     "outcome": "Above 3.70",
+     "span": null,
+     "prob": 36,
+     "prob_text": "36%",
+     "chg_7d": null,
+     "thin": false,
+     "url": "https://kalshi.com/markets/kxaaagasm"
     }
    ]
   },
@@ -758,23 +800,23 @@
    "cells": [
     {
      "month": "2026-11",
-     "question": "Will Bitcoin reach $80,000 in November?",
-     "outcome": "↑ 80,000",
+     "question": "Will Bitcoin dip to $70,000 in November?",
+     "outcome": "↓ 70,000",
      "span": "in November",
-     "prob": 48,
-     "prob_text": "48%",
-     "chg_7d": null,
+     "prob": 54,
+     "prob_text": "54%",
+     "chg_7d": 20,
      "thin": false,
      "url": "https://polymarket.com/event/what-price-will-bitcoin-hit-in-november-2026"
     },
     {
      "month": "2026-12",
-     "question": "Will Bitcoin dip to $70,000 by December 31, 2026?",
-     "outcome": "↓ 70,000",
+     "question": "Will Bitcoin dip to $65,000 by December 31, 2026?",
+     "outcome": "↓ 65,000",
      "span": "in 2026",
-     "prob": 58,
-     "prob_text": "58%",
-     "chg_7d": 16,
+     "prob": 36,
+     "prob_text": "36%",
+     "chg_7d": 11,
      "thin": false,
      "url": "https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027"
     }
@@ -792,8 +834,8 @@
      "question": "BTC price on Nov 13, 2026 at 5pm EST? (On Nov 13, 2026 at 5pm EST): $74,500 or above",
      "outcome": "$74,500 or above",
      "span": "on Nov 13",
-     "prob": 57,
-     "prob_text": "57%",
+     "prob": 42,
+     "prob_text": "42%",
      "chg_7d": null,
      "thin": false,
      "url": "https://kalshi.com/markets/kxbtcd"
@@ -803,20 +845,20 @@
   {
    "category": "crypto",
    "topic": "Bitcoin price ladders",
-   "row": "Will Satoshi move any Bitcoin",
-   "venue": "polymarket",
-   "url": "https://polymarket.com/event/will-satoshi-move-any-bitcoin-in-2026",
+   "row": "BTC one touch minimum",
+   "venue": "kalshi",
+   "url": "https://kalshi.com/markets/kxbtcminmon",
    "cells": [
     {
-     "month": "2026-12",
-     "question": "Will Satoshi move any Bitcoin in 2026?",
-     "outcome": null,
-     "span": "in 2026",
-     "prob": 2,
-     "prob_text": "2%",
-     "chg_7d": -1,
+     "month": "2026-11",
+     "question": "How low will BTC get in November? (November): Below $70,000.00",
+     "outcome": "Below $70,000.00",
+     "span": null,
+     "prob": 57,
+     "prob_text": "57%",
+     "chg_7d": null,
      "thin": false,
-     "url": "https://polymarket.com/event/will-satoshi-move-any-bitcoin-in-2026"
+     "url": "https://kalshi.com/markets/kxbtcminmon"
     }
    ]
   },
@@ -829,23 +871,23 @@
    "cells": [
     {
      "month": "2026-11",
-     "question": "Will Ethereum dip to $2,000 in November?",
-     "outcome": "↓ 2,000",
+     "question": "Will Ethereum dip to $1,900 in November?",
+     "outcome": "↓ 1,900",
      "span": null,
-     "prob": 64,
-     "prob_text": "64%",
+     "prob": 53,
+     "prob_text": "53%",
      "chg_7d": null,
      "thin": false,
      "url": "https://polymarket.com/event/what-price-will-ethereum-hit-in-november-2026"
     },
     {
      "month": "2026-12",
-     "question": "Will Ethereum dip to $2,000 by December 31, 2026?",
-     "outcome": "↓ 2,000",
+     "question": "Will Ethereum dip to $1,750 by December 31, 2026?",
+     "outcome": "↓ 1,750",
      "span": "in 2026",
-     "prob": 67,
-     "prob_text": "67%",
-     "chg_7d": 25,
+     "prob": 30,
+     "prob_text": "30%",
+     "chg_7d": 13,
      "thin": false,
      "url": "https://polymarket.com/event/what-price-will-ethereum-hit-before-2027"
     }
@@ -854,51 +896,51 @@
   {
    "category": "crypto",
    "topic": "Ethereum price ladders",
-   "row": "ETH price EOY",
+   "row": "How low will Ethereum fall this year?",
    "venue": "kalshi",
-   "url": "https://kalshi.com/markets/kxethy",
+   "url": "https://kalshi.com/markets/kxethminy",
    "cells": [
     {
      "month": "2026-12",
-     "question": "Ethereum price at the end of 2026 (On Jan 1, 2027 at 12am EST): 5,000 or above",
-     "outcome": "5,000 or above",
-     "span": null,
-     "prob": 1,
-     "prob_text": "1%",
-     "chg_7d": null,
+     "question": "How low will Ethereum get in 2026? (2026): Below $1,500.00",
+     "outcome": "Below $1,500.00",
+     "span": "in 2026",
+     "prob": 16,
+     "prob_text": "16%",
+     "chg_7d": 3,
      "thin": false,
-     "url": "https://kalshi.com/markets/kxethy"
+     "url": "https://kalshi.com/markets/kxethminy"
     }
    ]
   },
   {
    "category": "crypto",
    "topic": "Other crypto",
-   "row": "What price will XRP hit",
+   "row": "What price will Solana hit",
    "venue": "polymarket",
-   "url": "https://polymarket.com/event/what-price-will-xrp-hit-in-november-2026",
+   "url": "https://polymarket.com/event/what-price-will-solana-hit-in-november-2026",
    "cells": [
     {
      "month": "2026-11",
-     "question": "Will XRP reach $2.00 in November?",
-     "outcome": "↑ 2.00",
+     "question": "Will Solana dip to $60 in November?",
+     "outcome": "↓ 60",
      "span": null,
-     "prob": 1,
-     "prob_text": "1%",
+     "prob": 5,
+     "prob_text": "5%",
      "chg_7d": null,
      "thin": false,
-     "url": "https://polymarket.com/event/what-price-will-xrp-hit-in-november-2026"
+     "url": "https://polymarket.com/event/what-price-will-solana-hit-in-november-2026"
     },
     {
      "month": "2026-12",
-     "question": "Will XRP reach $5.00 by December 31, 2026?",
-     "outcome": "↑ 5.00",
+     "question": "Will Solana reach $140 by December 31, 2026?",
+     "outcome": "↑ 140",
      "span": "in 2026",
-     "prob": 2,
-     "prob_text": "2%",
-     "chg_7d": -1,
+     "prob": 6,
+     "prob_text": "6%",
+     "chg_7d": null,
      "thin": false,
-     "url": "https://polymarket.com/event/what-price-will-xrp-hit-before-2027"
+     "url": "https://polymarket.com/event/what-price-will-solana-hit-before-2027"
     }
    ]
   }
