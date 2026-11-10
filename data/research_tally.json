@@ -30,7 +30,7 @@
    "id": "hunt_loop",
    "label": "Strategy Hunt Loop backtests (since 24 Sep 2026)",
    "unit": "strategies",
-   "n": 30
+   "n": 31
   },
   {
    "id": "pipeline",
@@ -39,6 +39,6 @@
    "n": 2
   }
  ],
- "total": 319,
+ "total": 320,
  "unclassified_findings": []
 }

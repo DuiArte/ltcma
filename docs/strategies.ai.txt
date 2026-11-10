@@ -13,7 +13,7 @@ weights inverse-vol: Anchor 33pct, Rates 42pct, Crypto 7pct, EM 18pct
 latest: ensemble=98.66 reference=98.36
 backtest 2017-26: Sharpe=1.79 OOS (+0.44 vs flagship), PBO=0.20; caveats: GFC untestable, benign window, crypto rho 0.48, ~69pct lift = rates sleeve
 OUT-OF-SAMPLE REPLAYS (frozen rules re-run daily on public prices; NOT live trading)
-buy_the_dip | 2026-05-26..2026-11-09 | return -0.00% | max drawdown -2.04% | rules frozen 2026-05-26
-static_diversification | 2026-05-26..2026-11-09 | return -2.66% | max drawdown -6.62% | rules frozen 2026-05-26
+buy_the_dip | 2026-05-26..2026-11-10 | return +0.01% | max drawdown -2.04% | rules frozen 2026-05-26
+static_diversification | 2026-05-26..2026-11-10 | return -3.93% | max drawdown -6.62% | rules frozen 2026-05-26
 crt | FROZEN: no comparable data; not carried forward
-static_drift_weights | 2026-04-30..2026-11-09 | return -2.34% | max drawdown -4.56% | rules frozen 2026-05-30
+static_drift_weights | 2026-04-30..2026-11-10 | return -2.73% | max drawdown -4.56% | rules frozen 2026-05-30
