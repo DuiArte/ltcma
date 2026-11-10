@@ -22,15 +22,31 @@ padding:14px 18px;margin:.4rem 0 2.2rem}
 @media(max-width:560px){.oos-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav><a href="index.html">Dashboard</a><a href="report.html">Full Report</a><a href="portfolio.html">Portfolio</a><a href="strategies.html">Strategies</a><a href="research.html">Research Notes</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="congressional-activity.html">Congress</a><a href="projects.html">Projects</a><a href="glossary.html">Glossary</a><a href="index.html#about">About</a></nav><script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
-// sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
-if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav class="tabs" aria-label="Main"><a href="index.html">Dashboard</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="congressional-activity.html">Congress</a><a href="index.html#about">About</a></nav><div class="rcn" role="navigation" aria-label="Research"><details class="rc"><summary aria-label="Research corner: research pages and sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>Research<svg class="car" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><div class="rc-menu"><p class="rc-k">The foundation: model, research, sources</p><a href="research-library.html"><b>Research Library</b><span>Search every published note, backtest, project and report section</span></a><a href="report.html"><b>Full Report</b><span>The 12-year model: method, return tables and limits</span></a><a href="research.html"><b>Research Notes</b><span>The research record, negative results included</span></a><a href="strategies.html"><b>Strategies</b><span>The strategy catalogue and its backtest reports</span></a><a href="projects.html"><b>Projects</b><span>The public repositories behind this site</span></a><a href="glossary.html"><b>Glossary</b><span>Plain-language definitions of every term</span></a><a href="research-library.html#sources" class="rc-src"><b>Sources</b><span>Every data source and publisher behind the public pages</span></a></div></details></div><script>(function(){var d=document.documentElement;d.classList.add('js');
+var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';
+var sh=document.querySelector('.shell'),nv=sh&&sh.querySelector('nav.tabs'),rc=sh&&sh.querySelector('details.rc');
+if(nv)[].forEach.call(nv.querySelectorAll('a'),function(a){if(a.getAttribute('href')===p){a.classList.add('active');a.setAttribute('aria-current','page');}});
+if(rc){[].forEach.call(rc.querySelectorAll('.rc-menu a'),function(a){if(a.getAttribute('href')===p){a.setAttribute('aria-current','page');rc.classList.add('active');}});
+document.addEventListener('click',function(e){if(rc.open&&!rc.contains(e.target))rc.open=false;});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&rc.open){rc.open=false;rc.querySelector('summary').focus();}});
+rc.addEventListener('focusout',function(e){if(rc.open&&e.relatedTarget&&!rc.contains(e.relatedTarget))rc.open=false;});}
+function fade(){if(!nv)return;var m=nv.scrollWidth-nv.clientWidth;nv.classList.toggle('fl',m>1&&nv.scrollLeft>1);nv.classList.toggle('fr',m>1&&nv.scrollLeft<m-1);}
+function hdr(){if(sh)d.style.setProperty('--hdr',sh.offsetHeight+'px');fade();}
+if(nv)nv.addEventListener('scroll',fade,{passive:true});
+window.addEventListener('resize',hdr);window.addEventListener('load',hdr);
+try{document.fonts.ready.then(hdr);}catch(_e){}
+document.addEventListener('DOMContentLoaded',function(){
+var a=nv&&nv.querySelector('a.active');if(a&&nv.scrollWidth>nv.clientWidth){var r=a.getBoundingClientRect(),q=nv.getBoundingClientRect();
+nv.scrollLeft=Math.max(0,nv.scrollLeft+(r.left-q.left)-(q.width-r.width)/2);}
+hdr();var rd=function(){d.classList.add('ready');};requestAnimationFrame(function(){requestAnimationFrame(rd);});setTimeout(rd,400);
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
 document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoundingClientRect();if(r.top<window.innerHeight){el.classList.add('vis');return;}el.classList.add('rv');io.observe(el);});
 setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
-});</script><script>(function(){
+});})();</script><script>(function(){
 var MOB=640,st=new WeakMap();
 /* read the breakpoint from --bp-sm so CSS and JS cannot drift; 640 is the fallback
    and the token resolves to that same 640, so both paths agree today. */
