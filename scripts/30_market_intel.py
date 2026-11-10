@@ -1,8 +1,9 @@
 """LTCMA — Step 30: Market Intel consensus page (docs/ltcma-consensus.html).
 
-Renders the monthly "consensus of the Street" from data/market_intel/consensus_public.json,
+Renders the "consensus of the Street" from data/market_intel/consensus_public.json,
 which is produced OFF this repo by the Market Intel pipeline (Trading_Index/market_intel,
-task market-intel-monthly) and is already publish-safe: numbers only from publishers whose
+task market-intel-monthly: since 2026-11-10 it checks the publishers every weekday and rebuilds
+only when one has a new edition) and is already publish-safe: numbers only from publishers whose
 material may be republished, everything else as qualitative stances (SPEC 4.6).
 This step only renders, so it is safe in the daily chain (keeps NAV/design current).
 Pure HTML/CSS (no Plotly): the range bars are CSS, so the chart guards have nothing to read.
@@ -17,10 +18,14 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from glossary import NAV
 from design_system import CSS_LINKS
-from paths import DATA, DOCS
+from paths import DATA, DOCS, cuser
 
 SRC = os.path.join(DATA, "market_intel", "consensus_public.json")
 OUT = os.path.join(DOCS, "ltcma-consensus.html")
+# Host-only input (2026-11-10): the consensus job writes this PRIVATE file every weekday after it checked the
+# publishers (a date and two counts, nothing else is read). The daily refresh renders it as "publishers last
+# checked <date>", so the page shows the check without a commit by that job. Absent elsewhere: line left out.
+CHECK_SRC = os.environ.get("MARKET_INTEL_CHECK_FILE") or cuser("Documents", "Market_Intel", "state", "check_A_latest.json")
 ARROW = {"up": ("&#9650;", "up"), "down": ("&#9660;", "dn"), "flat": ("&#9632;", "fl")}
 STANCE = {"overweight": "up", "underweight": "down", "neutral": "flat"}
 CONV = {"high": "H", "medium": "M", "low": "L"}
@@ -97,6 +102,23 @@ def pct(x, nd=1):
     if x is None:
         return ""
     return str(Decimal(str(x)).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_HALF_UP))
+
+
+def check_note(run):
+    """' · publishers last checked <date> (k of n documents reachable)' from the host-only check file, or ''.
+    No stamp wording ('as of' / 'updated' / 'built' / 'priced'): guard_freshness keeps grading the edition."""
+    try:
+        with open(CHECK_SRC, encoding="utf-8") as fh:
+            c = json.load(fh)
+        d = date.fromisoformat(str(c.get("date"))[:10])
+    except (OSError, ValueError, TypeError, AttributeError):
+        return ""
+    if d < run:
+        return ""
+    n, ok = c.get("documents"), c.get("reachable")
+    counts = (f" ({ok} of {n} documents reachable)" if isinstance(n, int) and isinstance(ok, int)
+              and not isinstance(n, bool) and 0 <= ok <= n and n > 0 else "")
+    return f" &middot; publishers last checked {d.strftime('%d %b %Y')}{counts}"
 
 
 def range_bar(st, carlos, lo_ax, hi_ax):
@@ -252,14 +274,14 @@ def main():
                  f'{e(br.get("argument"))}<div class="data">Leans on: {e(br.get("data_used"))}</div></div></div>'
                  f'<div class="watch"><b>What would settle it:</b> {e(x.get("what_to_watch"))}</div></div>')
     if not divs:
-        divs = '<p class="note">No row crossed the divergence rule this month.</p>'
+        divs = '<p class="note">No row crosses the divergence rule in this edition.</p>'
 
     # ---- vs this site's LTCMA
     car_rows = ""
     for r in d["diff_carlos"]["rows"]:
         if r.get("gap_bp") is None:
             car_rows += (f'<tr><td style="text-align:left">{e(r["label"])}</td><td>{pct(r["carlos"])}%</td>'
-                         f'<td colspan="4" style="color:var(--muted)">no public estimate this month</td></tr>')
+                         f'<td colspan="4" style="color:var(--muted)">no public estimate in this edition</td></tr>')
             continue
         side = {"above": "this site above the band", "below": "this site below the band", "inside": "inside"}[r["carlos_side"]]
         band = f'{pct(r["band"][0])}-{pct(r["band"][1])}%'
@@ -267,14 +289,25 @@ def main():
                      f'<td>{pct(r["public_median"])}%</td><td>{r["gap_bp"]:+d}</td><td>{band}</td>'
                      f'<td style="text-align:left">{side} (n={r["public_n"]})</td></tr>')
 
-    # ---- changes vs last month
+    # ---- changes vs last month (the previous month's edition as last rebuilt; the consensus can rebuild several
+    # times a month since 2026-11-10, and every build compares with the final state of an earlier month)
     dp = d.get("diff_prior") or {}
+    changes_h = "What changed since last month"
     if not dp.get("available"):
-        changes = f'<p class="note">{e(dp.get("note") or "First edition.")} The first official monthly comparison will appear here after the {official} run.</p>'
+        changes = f'<p class="note">{e(dp.get("note") or "First edition.")} A comparison appears here once there is an edition from an earlier month.</p>'
     else:
+        try:
+            pm_label = date.fromisoformat(dp["prior_month"] + "-01").strftime("%B %Y")
+        except (ValueError, TypeError, KeyError):
+            pm_label = str(dp.get("prior_month"))
+        changes_h = f"What changed since the {pm_label} edition"
+        try:
+            last = f', as last rebuilt on {date.fromisoformat(dp["prior_run_date"]).strftime("%d %b %Y")}'
+        except (ValueError, TypeError, KeyError):
+            last = ""
         ch = "".join(f'<tr><td style="text-align:left">{e(r["label"])}</td><td>{pct(r.get("median_prior"))}%</td>'
                      f'<td>{pct(r["median_now"])}%</td><td>{r.get("delta_bp", 0):+d}</td></tr>' for r in dp.get("assets", [])[:15])
-        changes = (f'<p class="note">Versus the {e(dp["prior_month"])} edition. New editions this month: '
+        changes = (f'<p class="note">Versus the {e(pm_label)} edition{e(last)}. New editions since then: '
                    f'{e(", ".join(dp.get("new_editions", [])) or "none")}.</p>'
                    f'<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Asset class</th>'
                    f'<th>Prior median</th><th>Now</th><th>Change (bp)</th></tr></thead><tbody>{ch}</tbody></table></div>')
@@ -317,7 +350,7 @@ def main():
     prelim = ""
     if d.get("edition") == "preliminary":
         prelim = (f'<div class="prelim"><b>Preliminary edition.</b> Built from {n_docs} documents by {n_firms} firms that are '
-                  f'reachable today; the first official monthly run is {official}. Still to come through the manual '
+                  f'reachable today; the first official run is {official}. Still to come through the manual '
                   f'channel: {e(pending)}.</div>')
 
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -335,7 +368,7 @@ def main():
 grid in US dollars (nominal) and set against this site's own capital market assumptions. Where the
 publishers disagree, both sides of the argument are laid out with the evidence each one leans on.
 Prediction-market odds for the macro calls are shown alongside.</p>
-<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "monthly edition"} &middot; {n_firms_num} firms with numbers shown, {n_firms_view} with stated views only, {n_firms_stance} with a regime stance only</p>
+<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "rebuilt on each new publisher edition"}{check_note(run)} &middot; {n_firms_num} firms with numbers shown, {n_firms_view} with stated views only, {n_firms_stance} with a regime stance only</p>
 </div></section>
 <main class="container">
 <div class="toc"><a href="#summary">Summary</a><a href="#odds">Market-implied odds</a><a href="#matrix">The grid</a>
@@ -381,7 +414,7 @@ the median.</p>
 <th>This site</th><th>Public median</th><th>Gap (bp)</th><th>Band</th><th style="text-align:left">Position</th></tr></thead>
 <tbody>{car_rows}</tbody></table></div></section>
 
-<section class="block" id="changes"><h2>What changed since last month</h2>{changes}</section>
+<section class="block" id="changes"><h2>{e(changes_h)}</h2>{changes}</section>
 
 <section class="block" id="regimes"><h2>Regime calls and risks</h2>
 <p class="note">Each publisher's read of the cycle and the risks it flags, paraphrased.</p>
@@ -391,7 +424,8 @@ the median.</p>
 <section class="block" id="sources"><h2>Sources &amp; method</h2>
 <div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Publisher</th><th style="text-align:left">Document</th>
 <th style="text-align:left">Edition</th><th>Horizon</th><th>Basis</th><th>Shown</th><th></th></tr></thead><tbody>{src_rows}</tbody></table></div>
-<p class="note" style="margin-top:1rem"><b>Method.</b> Documents are collected monthly from the publishers' public pages.
+<p class="note" style="margin-top:1rem"><b>Method.</b> The publishers' public pages are checked every weekday; when a document has a
+new edition it is read again and the consensus is rebuilt.
 Each one is read into a fixed schema by a language model that must quote every number verbatim. A number that cannot be found in the
 document text is dropped. Ranges become midpoints. Real forecasts become nominal using the publisher's own inflation assumption.
 Arithmetic averages become geometric with the publisher's own volatility (g = a &minus; &sigma;&sup2;/2), so every figure compounds the same way.
@@ -522,7 +556,7 @@ def pc(x):
 def render_fed_path():
     """'If no change is expected this month, when does the market see one?' One row per FOMC meeting:
     Kalshi cut / hold / hike odds (Polymarket alongside where it lists the meeting). Refreshed daily by
-    market-intel-daily. No 'as of' wording: the page's freshness stamp stays the monthly edition."""
+    market-intel-daily. No 'as of' wording: the page's freshness stamp stays the consensus edition."""
     if not os.path.exists(FED_SRC):
         return ""
     f = json.load(open(FED_SRC, encoding="utf-8"))
@@ -619,7 +653,7 @@ def render_event_outlook(now=None):
     about when its column does not ('Oct CPI' under Nov, 'Q3 2026', 'in 2026', 'Sep–Oct–Dec'), a shorter window, or
     the event's own words. Changes are labelled with the JSON's change_days (none shown without a sane value).
     FOMC meetings stay in the Fed-path table above.
-    Like the Fed-path table, no 'as of' wording ("Market prices from"): the page's graded stamp stays the monthly
+    Like the Fed-path table, no 'as of' wording ("Market prices from"): the page's graded stamp stays the consensus
     edition. Its own budget instead: prices older than OUTLOOK_MAX_AGE_D days (UTC, at render time) leave the panel out,
     as does a missing, unparsable or malformed file (never the page build)."""
     if not os.path.exists(OUTLOOK_SRC):
@@ -758,7 +792,8 @@ def money(x):
 
 
 def render_congress():
-    """Congressional Periodic Transaction Reports, weekly. Built off-repo by Trading_Index/market_intel
+    """Congressional Periodic Transaction Reports, checked every weekday (since 2026-11-10; the data file changes only
+    when a new filing arrives). Built off-repo by Trading_Index/market_intel
     (congress_house.py + congress_senate_mirror.py -> congress_build.py); render-only here. House: our own
     parse of the House Clerk PDFs. Senate (and scanned House PDFs): the open dataset built from the official
     filings, on the page with Carlos's OK; those rows carry via=mirror and are marked with a dagger.
@@ -821,8 +856,8 @@ def render_congress():
                f'<a href="https://github.com/DuiArte/ltcma/blob/main/data/market_intel/congress_public.json">data file</a>.</p>'
                if len(c["rows"]) > MAXROWS else "")
     if mirror:
-        lede = ("Stock and bond trades that members of the U.S. House and Senate report under the STOCK Act, updated "
-                "every week, with the members' committees attached.")
+        lede = ("Stock and bond trades that members of the U.S. House and Senate report under the STOCK Act, checked "
+                "for new filings every weekday, with the members' committees attached.")
         cover = (f'House: {h["filings_parsed"]} filings, {h["rows"]} trades since {e(h["since"])} &middot; '
                  f'Senate: {sen.get("rows", n_sen)} trades')
         boxtxt = (f'<b>Coverage.</b> Both chambers. <b>House</b> trades are read by this site from the House Clerk\'s '
@@ -838,7 +873,7 @@ def render_congress():
                 'unitedstates/congress-legislators. Not investment advice.')
     else:
         lede = ("Stock and bond trades that members of the U.S. House report under the STOCK Act, read from the "
-                "official House Clerk filings every week, with the members' committees attached.")
+                "official House Clerk filings every weekday, with the members' committees attached.")
         cover = (f'House: {h["filings_parsed"]} filings, {h["rows"]} trades since {e(h["since"])} &middot; '
                  f'<b>Senate: not covered</b>')
         boxtxt = (f'<b>Coverage.</b> House only. The Senate\'s disclosure site blocks automated access and this site '

@@ -47,11 +47,17 @@ KNOWN_DEBT = {  # page -> why it is allowed to be old; must be cleared by a huma
 # scanned and reported like KNOWN_DEBT -- moving the page must not make the debt vanish.
 ARCHIVE_DEBT = "archived edition; republish via TAB_RESYNC (D-20260924-004)"
 BUDGET_DAYS = [(re.compile(r"(?i)model"), 10),
-               # ltcma-consensus.html is a MONTHLY edition (Market Intel, task market-intel-monthly,
-               # day 1); 38 d = one month + a missed-run margin. MARKET_INTEL_SPEC.md 2/8.
+               # ltcma-consensus.html: "Consensus as of" = the last REBUILD. Since 2026-11-10 the job
+               # (market-intel-monthly) checks the publishers every weekday and rebuilds only on a new
+               # edition, so the stamp moves with the publishers (BII's weekly commentary alone moves it
+               # weekly). 38 d with no new edition at all = the check or the fetch layer is broken.
+               # The daily check itself shows as "publishers last checked <date>" (no stamp wording, not
+               # graded here). MARKET_INTEL_SPEC.md 2/8.
                (re.compile(r"(?i)consensus"), 38),
-               # congressional-activity.html: WEEKLY House disclosures (Market Intel Track B); the stamp
-               # is the newest filing date, so 9 d = one week + a missed-run margin (MARKET_INTEL_WEEKLY.md)
+               # congressional-activity.html: the stamp is the newest FILING date. Since 2026-11-10 the job
+               # (market-intel-weekly) runs every weekday; filings arrive on ~3 of 4 weekdays with gaps of up
+               # to 5 calendar days (Apr-Nov 2026) and longer in recess weeks, so 9 d stays: a budget on
+               # filing gaps, not on the job cadence (MARKET_INTEL_WEEKLY.md)
                (re.compile(r"(?i)disclosures"), 9)]
 
 

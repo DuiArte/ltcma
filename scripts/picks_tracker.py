@@ -981,7 +981,7 @@ made under such a plan. {src}</p>{own_note}</div>""")
                      f'<td>{e(d["side"])}</td><td>{e(d["amount"])}</td>'
                      f'<td>{dfmt(d["traded"], True)}</td><td><a href="{e(d["source"])}">filing</a>{"&dagger;" if d["mirror"] else ""}</td></tr>'
                      for d in co.get("detail") or [])
-        stale = f" The weekly file is {co['age_days']} days old." if co.get("stale") else ""
+        stale = f" The congress file is {co['age_days']} days old." if co.get("stale") else ""
         mix = owner_mix(co.get("owners"))
         body = (f"{plural(co['n'], 'trade')} filed: {plural(co['buys'], 'buy')}, {plural(co['sells'], 'sale')}"
                 f"{', ' + str(co['other']) + ' other' if co['other'] else ''}, filed by {co['members']} member"
@@ -990,14 +990,15 @@ made under such a plan. {src}</p>{own_note}</div>""")
                 f"or a dependent child's account, as the Owner column shows. Amount bands: "
                 f"{e(', '.join(f'{k} ({v})' for k, v in co['bands'].items()))}."
                 if co["n"] else "No trades in this ticker were filed in the window.")
-        # "disclosures as of" is graded by guard_freshness on the weekly cadence (9 days), like the
-        # congressional activity page's own stamp; a daily-cadence label here would go red every Wednesday.
+        # "disclosures as of" is graded by guard_freshness on the 9-day budget, like the congressional activity
+        # page's own stamp. Since 2026-11-10 the congress job checks for new filings every weekday, but the file only
+        # changes on a new filing (gaps of up to 5 calendar days), so a daily-cadence label here would go red.
         blocks.append(f"""<div class="ptb wide"><h4>Congress (STOCK Act filings)</h4><p>{body}</p>
 {('<table class="ptmini"><tr><th>Filed</th><th>Member</th><th>Chamber</th><th>Owner</th><th>Side</th><th>Amount</th><th>Traded</th><th></th></tr>' + dl + '</table>') if dl else ''}
 <p class="tn">Filed {dfmt(w[0], True)} to {dfmt(w[1], True)} (the public dataset keeps 13 weeks; not 365 days). Amounts are the disclosed
 ranges. Owner: self, SP spouse, JT joint, DC dependent child, as filed. &dagger; = row from the open Senate / scanned-House
-dataset. All rows on the <a href="{e('congressional-activity.html')}">congressional activity page</a>; weekly file,
-disclosures as of {dfmt(co['as_of'], True)}.{stale}</p></div>""")
+dataset. All rows on the <a href="{e('congressional-activity.html')}">congressional activity page</a>; checked for new
+filings every weekday, disclosures as of {dfmt(co['as_of'], True)}.{stale}</p></div>""")
     else:
         blocks.append(f'<div class="ptb"><h4>Congress</h4><p>{gap_cell(co)}: {gap_why(co)}</p></div>')
     return "".join(blocks)
@@ -1517,8 +1518,8 @@ SPY, a sale when it lagged). 10b5-1 plan trades are not counted, only trades who
 and the number of independent (non-overlapping) windows comes first: the result is shown as "k of n" only from 3
 independent windows, otherwise as too few independent trades. The horizon was fixed before any result was seen. It
 is descriptive and small-sample (only the Form 4s the site holds count; the insider detail says from when), not a
-forecast. Congress trades come from the site's weekly STOCK Act
-dataset, counted by the member who filed them, with the owner (self, spouse, joint, dependent child) as filed.
+forecast. Congress trades come from the site's STOCK Act dataset (checked for new filings every weekday),
+counted by the member who filed them, with the owner (self, spouse, joint, dependent child) as filed.
 News sentiment is not covered. None of the overlays enters the composite or the ranks.</p>"""
 
 
