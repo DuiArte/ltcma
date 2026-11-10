@@ -2,12 +2,12 @@
 # Confidentiality sanity scan for the public site. Run before every push:
 #   bash scripts/confscan.sh
 # Flags anything that should be redacted on backtests.html / strategies.html /
-# *.ai.txt. Allowed/expected hits: the headline ratio 50/30/20, the viewport
+# research-library.html (2026-11-10: it indexes the research pages) / *.ai.txt. Allowed/expected hits: the headline ratio 50/30/20, the viewport
 # meta initial-scale=1, embedded JS slider vars, and metric-label fragments in
 # the .ai.txt (Tail=/Sharpe=/Omega= etc.). Anything else -> redact in
 # glossary._BT_PUBLIC / _bt_redact and rebuild. See AI_PROCEDURES/WEBSITE_DEPLOY.md.
 cd "$(dirname "$0")/../docs" || exit 1
-for f in backtests.html strategies.html strategies.ai.txt research.html research.ai.txt; do
+for f in backtests.html strategies.html strategies.ai.txt research.html research.ai.txt research-library.html research-library.ai.txt; do
   [ -f "$f" ] || continue
   echo "============ $f ============"
   echo "--- dollar amounts ---"; grep -oE '\$[0-9][0-9,.]+' "$f" | sort -u | head

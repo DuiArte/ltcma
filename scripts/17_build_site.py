@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
                       bt_indicators, bt_g100, BT_JS)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
+from design_system import hero, photo, credits_footer, ET_CSS, TABS_JS   # 2026-11-10 remake
 import design_system
 
 import paths
@@ -585,33 +586,352 @@ except Exception as _e:
     print(f"  home: portfolio card skipped ({_e})")
 
 
+# ---------- 2026-11-10 remake: the home as an EXECUTIVE SUMMARY ---------------------------------------
+# Carlos approved the design canvas ("El diseno quedo muy bien, hazle push, pero manten varias de las
+# pestanas"). On top: a JWST hero, "the site in 30 seconds" (Expect / Hold / Watch), an interactive "Today"
+# panel and cards into every tab; then EVERY section the home had before, unchanged in substance.
+# Each figure here comes from the SAME source and the SAME code path as the page that publishes it.
+# Round 1 (2026-11-10 review):
+#   * CONTAINMENT (P1). This step is load-bearing, so every block below is built inside its own try: a data file
+#     whose shape changed (a feed without 'alerts', a meeting without a Kalshi price, a missing CSV) leaves THAT
+#     view out with a "WARN home:" line (daily_refresh.ps1 logs WARN lines of successful steps) instead of
+#     aborting the refresh. The only deliberate failure is SUMMARY GUARD below. 30_market_intel.py is NOT
+#     imported: pc / money / the firm count live in design_system, shared with 30.
+#   * The build-time checks are SELF-CONSISTENCY checks: each summary figure is compared with the section of THIS
+#     page (or the chart) it restates, so they catch code drift, not stale data. The cross-page check is
+#     tools/ds_gate.py R6 on the rendered pages (run by the refresh after step 31, guard_site_rules.py), and 18
+#     re-checks the Hold card against its own tiles.
+#   * Vintage (P2 / DATA-1). market-intel-daily refreshes the Fed prices at 16:45, after this step, and the
+#     Congress file can change at 08:00: every Fed and Congress figure here prints the date of its data, and R6
+#     compares those pairs only when both pages were built from the same file (WARN otherwise).
+from html import escape as _he
+from design_system import pc as _pcf, money as _money, cma_firms as _cma_firms
+_CHK = []
+
+
+def _chk(what, cond):
+    if not cond:
+        raise SystemExit(f"SUMMARY GUARD: {what} -- the home summary disagrees with the section it restates")
+    _CHK.append(what)
+
+
+def _warn(what, e):
+    print(f"  WARN home: {what} left out ({type(e).__name__}: {e})")
+
+
+def _day(iso):
+    return pd.Timestamp(str(iso)[:10]).strftime("%d %b %Y")
+
+
+# --- EXPECT: the 12-year model's base case (the risk/return map's own points)
+_EXP_HTML = ""
+try:
+    _EXP_KEYS = [("EM_Eq", "EM equity"), ("DM_exUS_Eq", "Developed ex-US equity"), ("US_SmallCap", "US small cap"),
+                 ("US_LargeCap", "US large cap"), ("US_Treas_Interm", "Intermediate Treasuries"),
+                 ("US_Cash_TBill", "Cash / T-bills")]
+    _f2pts = {t: float(yv) for tr in f2.data for t, yv in zip(tr.text, tr.y)}
+    _EXP = []
+    for _k, _lab in _EXP_KEYS:
+        if _k in summ.index:
+            _v = float(summ.loc[_k, "ER_lambda0.5"]) * 100
+            _chk(f"expect {_k} = risk/return map point", abs(_f2pts[_k.replace("_", " ")] - _v) < 1e-9)
+            _EXP.append((_lab, _v, summ.loc[_k, "class"]))
+    if _EXP:
+        _vmax = max(v for _, v, _c in _EXP) or 1
+        _hi = max(_EXP, key=lambda r: r[1]); _lo = min(_EXP, key=lambda r: r[1])
+        _rows = "".join(
+            f'<div class="brow"><span class="lb">{_lab}</span><div class="bar"><i class="{"" if _c == "Equity" else "mute"}" '
+            f'style="width:{max(v / _vmax * 100, 2):.0f}%"></i></div><span class="v" data-sum="exp:{_lab}">{v:.1f}%</span></div>'
+            for _lab, v, _c in _EXP)
+        _EXP_HTML = (
+            '<article class="xcard"><p class="xk"><i>1</i>Expect &middot; the 12-year model</p>'
+            f'<p class="xh">Of these six, the model expects {_hi[0]} to return the most over the next 12 years '
+            f'({_hi[1]:.1f}% a year) and {_lo[0]} '
+            f'the least ({_lo[1]:.1f}%).</p>'
+            f'<div class="bars">{_rows}</div>'
+            f'<p class="xn">Expected return a year, nominal USD, base case (the model run of {MODEL_ASOF}); a model '
+            'estimate, not a promise. <a href="#model">Model output &darr;</a></p></article>')
+except Exception as _e:  # noqa: BLE001
+    _warn("Expect card", _e)
+
+# --- HOLD: my own book vs the S&P 500 (the Live Portfolio card's figures, same sidecar, same functions as 18)
+_HOLD_HTML, _HERO_PANEL, _HOLD_TWRR = "", "", None
+try:
+    if PF_CARD:
+        _tw, _sp5, _mwr_s = _pp(_y["book_usd"]), _pp(_y["spy_usd"]), _pp(_mw["book_usd"])
+        _al = f"{(_y['book_usd'] - _y['spy_usd']) * 100:+.2f} pp"
+        for _lbl, _val in (("TWRR", _tw), ("S&P 500", _sp5), ("MWRR", _mwr_s), ("alpha", _al)):
+            _chk(f"hold {_lbl} = Live Portfolio tile", f'data-usd="{_val}"' in PF_CARD)
+        _up = _y["book_usd"] >= 0
+        _ahead = _y["book_usd"] >= _y["spy_usd"]
+        _gap = abs(_y["book_usd"] - _y["spy_usd"]) * 100
+        _kp = lambda v, lab, key: (f'<div class="kpi"><b data-sum="{key}">{v}</b><span>{lab}</span></div>')
+        _HOLD_HTML = (
+            f'<article class="xcard" data-sum-asof="{_pk["as_of"]}"><p class="xk"><i>2</i>Hold &middot; what I own</p>'
+            f'<p class="xh">My real equity book is {"up" if _up else "down"} '
+            f'<span data-sum="hold:twrr_abs">{abs(_y["book_usd"]) * 100:.2f}%</span> this year '
+            f'(time-weighted, USD) against {_sp5} for the S&amp;P 500: <span data-sum="hold:gap">{_gap:.2f}</span> points '
+            f'{"ahead of" if _ahead else "behind"} the index.</p>'
+            '<div class="kpis">' + _kp(_tw, "Portfolio TWRR, YTD", "twrr_usd") + _kp(_sp5, "S&amp;P 500, YTD", "spy_usd")
+            + _kp(_mwr_s, "Money-weighted", "mwrr_usd") + _kp(_al, "vs the index", "alpha_usd") + '</div>'
+            f'<p class="xn">My own portfolio, shown for transparency (figures through {_pk["as_of"]}); not a recommendation. '
+            '<a href="portfolio.html">The full book &rarr;</a></p></article>')
+        _bmax = max(abs(_y["book_usd"]), abs(_y["spy_usd"])) or 1
+        # HON-2 (safe default; whether this panel should headline the hero stays Carlos's call): dated, labelled as
+        # my own book, not a recommendation
+        _HERO_PANEL = (
+            '<aside class="hero-panel" aria-label="My own book against the S&amp;P 500 this year">'
+            '<p class="hp-k"><span>My live book vs S&amp;P 500 &middot; YTD</span><span>USD</span></p>'
+            f'<p class="hp-big{"" if _ahead else " neg"}" data-sum="hp:alpha_usd">{_al}</p>'
+            f'<p class="hp-sub">{"ahead of" if _ahead else "behind"} the index this year</p>'
+            f'<div class="hp-row"><span>Portfolio (time-weighted)</span><b data-sum="hp:twrr_usd">{_tw}</b></div>'
+            f'<div class="hp-bar"><i style="width:{abs(_y["book_usd"]) / _bmax * 100:.0f}%"></i></div>'
+            f'<div class="hp-row"><span>S&amp;P 500 (total return)</span><b data-sum="hp:spy_usd">{_sp5}</b></div>'
+            f'<div class="hp-bar"><i class="b" style="width:{abs(_y["spy_usd"]) / _bmax * 100:.0f}%"></i></div>'
+            f'<p class="hp-foot">Money-weighted since the first trade: <b data-sum="hp:mwrr_usd">{_mwr_s}</b></p>'
+            f'<p class="hp-foot">Figures through {_pk["as_of"]} &middot; my own book, shown for transparency; not a '
+            'recommendation, and past performance is no guide to the future.</p></aside>')
+        _HOLD_TWRR = _tw
+except Exception as _e:  # noqa: BLE001
+    _HOLD_HTML = _HERO_PANEL = ""
+    _HOLD_TWRR = None
+    _warn("Hold card and hero panel", _e)
+
+# --- WATCH + the Fed view: the Market Intel data file, formatted with the same pc() as 30; regime from
+# regime_state.json (20's single writer)
+_FED_ROWS, _WATCH_FED, _fp, _fp_day = "", "", None, ""
+try:
+    _fp = _load_json(f"{D}/market_intel/fed_path_public.json", None)
+    if _fp and _fp.get("meetings"):
+        _fp_day = (_fp.get("taken_at") or "")[:10]
+        for _m in _fp["meetings"][:4]:
+            _kk = _m["kalshi"]
+            _c, _h, _k = _pcf(_kk["cut"]), _pcf(_kk["hold"]), _pcf(_kk["hike"])
+            _FED_ROWS += (f'<div class="fedrow" data-sum="fed:{_he(_m["meeting"])}"><span class="m">{_he(_m["meeting"])}</span>'
+                          f'<div class="stack" role="img" aria-label="cut {_c}, hold {_h}, hike {_k}">'
+                          f'<i class="c" style="width:{_kk["cut"] * 100:.1f}%"></i><i class="h" style="width:{_kk["hold"] * 100:.1f}%"></i>'
+                          f'<i class="k" style="width:{_kk["hike"] * 100:.1f}%"></i></div>'
+                          f'<span class="t">{_c} / {_h} / {_k}</span></div>')
+        _nx, _fm = _fp["next"], _fp.get("first_likely_move")
+        _top = max(("cut", "hold", "hike"), key=lambda x: _nx["kalshi"][x])
+        _WATCH_FED = (f'<div class="wline"><span>{_top.capitalize()} at the next FOMC ({_day(_nx["date"])})</span>'
+                      f'<b class="{"amb" if _top == "hike" else ""}" data-sum="fed_next">{_pcf(_nx["kalshi"][_top])}</b></div>')
+        if _fm and _fm["meeting"] != _nx["meeting"]:
+            _WATCH_FED += (f'<div class="wline"><span>First meeting where a move is more likely than not: '
+                           f'{_day(_fm["date"])}</span>'
+                           f'<b data-sum="fed_first">{_fm["direction"]} {_pcf(_fm["prob"])}</b></div>')
+        elif not _fm:
+            _WATCH_FED += '<div class="wline"><span>No meeting in the listed horizon has a move priced above 50%</span><b>&ndash;</b></div>'
+except Exception as _e:  # noqa: BLE001
+    _FED_ROWS = _WATCH_FED = ""
+    _warn("Fed view and Watch line", _e)
+_WATCH_HTML = ""
+try:
+    _reg = ""
+    if _rs:
+        _pos = min(max((float(_rs["stress"]) + 2) / 4 * 100, 2), 98)
+        _reg = (f'<div><div class="wline" style="border:0;padding:0"><span>Market regime (composite stress)</span>'
+                f'<b class="sm" data-sum="regime">{_rs["state"].capitalize()} &middot; {float(_rs["stress"]):+.2f}&sigma;</b></div>'
+                f'<div class="gauge" role="img" aria-label="stress {float(_rs["stress"]):+.2f} sigma on a scale from minus 2 to plus 2">'
+                f'<i style="left:{_pos:.1f}%"></i></div><div class="gends"><span>calm</span><span>stress</span></div></div>')
+    if _WATCH_FED or _reg:
+        _fed_src = (f'Fed odds: Kalshi decision-market prices from {_day(_fp_day)}, refreshed every weekday (the Market Intel page can be a day newer). '
+                    if _WATCH_FED and _fp_day else "")
+        _WATCH_HTML = ('<article class="xcard"' + (f' data-fed-taken="{_fp_day}"' if _WATCH_FED else "") + '>'
+                       '<p class="xk"><i>3</i>Watch &middot; what markets price</p>'
+                       '<p class="xh">What the Fed decision markets and the market-stress gauge last showed.</p>'
+                       f'{_WATCH_FED}{_reg}'
+                       f'<p class="xn">{_fed_src}Prices, not forecasts. <a href="ltcma-consensus.html#odds">Fed path and '
+                       'event odds</a> &middot; <a href="regime.html">regime tracker</a></p></article>')
+except Exception as _e:  # noqa: BLE001
+    _WATCH_HTML = ""
+    _warn("Watch card", _e)
+
+# --- Today: Markets = the snapshot tiles' own values; Congress = the Market Intel file; picks = the published list
+_TODAY_MK = ""
+try:
+    for _k in ("US 10Y Treasury", "Fed Funds", "10Y Breakeven Inflation", "HY credit spread", "VIX", "USD / MXN"):
+        _v = dict(SNAP)[_k]
+        _chk(f"today {_k} = snapshot tile", f'<div class="mv">{_v}</div><div class="mk">{_k}</div>' in snap)
+        _TODAY_MK += (f'<div class="mtile"><p class="k">{_k}</p><p class="v" data-sum="mk:{_k}">{_v}</p>'
+                      f'<p class="d">{_DELTA.get(_DKEY.get(_k, _k), "")}</p></div>')
+except Exception as _e:  # noqa: BLE001
+    _TODAY_MK = ""
+    _warn("Today: Markets view", _e)
+_cg, _TODAY_CG, _cg_day = None, "", ""
+try:
+    _cg = _load_json(f"{D}/market_intel/congress_public.json", None)
+    if _cg and _cg.get("flows"):
+        _cg_day = str(_cg.get("as_of") or "")[:10]
+        _cnt = {t: sum(1 for a in _cg["alerts"] if a["type"] == t) for t in ("LARGE", "OPTIONS", "LATE")}
+        _lab = {"LARGE": "trades over $500K", "OPTIONS": "option trades", "LATE": "filed more than 45 days late"}
+        _w = "91d" if "91d" in _cg["flows"] else sorted(_cg["flows"])[-1]
+        _fl = _cg["flows"][_w][:8]
+        _fmax = max([abs(r["net"]) for r in _fl] or [1]) or 1
+        _frows = "".join(
+            f'<div class="flow" data-sum="flow:{_he(r["sector"])}"><span class="lb">{_he(r["sector"])}</span>'
+            f'<span class="n"><i style="width:{(abs(r["net"]) / _fmax * 100) if r["net"] < 0 else 0:.0f}%"></i></span>'
+            f'<span class="p"><i style="width:{(r["net"] / _fmax * 100) if r["net"] > 0 else 0:.0f}%"></i></span>'
+            f'<span class="v">{_money(r["net"])}</span></div>' for r in _fl)
+        _TODAY_CG = (
+            f'<div data-cg-asof="{_cg_day}"><div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr))">'
+            + "".join(f'<div class="kpi"><b data-sum="cg:{t}">{_cnt[t]}</b><span>{_lab[t]}</span></div>' for t in _cnt)
+            + '</div>'
+            f'<p style="margin:18px 0 8px;font-size:13.5px;font-weight:500">Net buying by sector, last {_w.replace("d", " days")} '
+            f'(by filing date)</p><div class="bars">{_frows}</div>'
+            f'<p class="xn" style="margin-top:12px;font-size:12.5px;color:var(--sec)">Sold on the left, bought on the right, '
+            f'at the midpoint of each disclosed range. Members file up to 45 days after a trade, so this is late by design; '
+            f'newest filing {_day(_cg["as_of"])}. '
+            '<a href="congressional-activity.html">Every trade &rarr;</a></p></div>')
+except Exception as _e:  # noqa: BLE001
+    _TODAY_CG = ""
+    _warn("Today: Congress view", _e)
+_TODAY_PK, _lst = "", None
+try:
+    import picks_history as _ph
+    _phd = pd.read_csv(f"{D}/picks_history.csv")
+    _ses = _phd["snapshot_date"].max()
+    _lst = _phd[(_phd["snapshot_date"] == _ses) & (_phd["on_list"].astype(str) == "True")].sort_values("rank")
+    if len(_lst):
+        _un = int(_phd[_phd["snapshot_date"] == _ses]["universe_n"].max())
+        _TODAY_PK = (
+            '<div class="picks5">' + "".join(
+                f'<a class="pick xcard hov" href="stocks.html#picks" data-sum="pick:{int(r["rank"])}">'
+                f'<span class="r">#{int(r["rank"])} of {_un}</span><span class="t">{_he(r["ticker"])}</span>'
+                f'<span class="s">{_he(r["sector"])}</span></a>' for _, r in _lst.head(5).iterrows())
+            + '</div>'
+            f'<p class="xn" style="margin-top:12px;font-size:12.5px;color:var(--sec)" data-sum-session="{_ses}">'
+            f'The top 5 of the {len(_lst)} names on the published list (list of {_day(_ses)}). '
+            f'A listed name stays while it ranks {_ph.STAY}th or better; a new one enters at {_ph.ENTER}th or better. '
+            'Research, not a recommendation. <a href="stocks.html">The full list and its track record &rarr;</a></p>')
+except Exception as _e:  # noqa: BLE001
+    _TODAY_PK, _lst = "", None
+    _warn("Today: Stock picks view", _e)
+_VIEWS = []
+if _TODAY_MK:
+    _VIEWS.append(("markets", "Markets", f'<div class="mtiles">{_TODAY_MK}</div><p class="xn" style="margin-top:12px;font-size:12.5px;'
+                   'color:var(--sec)">Arrows show direction only. Official series publish a day or more late. Sources: FRED, Yahoo '
+                   'Finance. <a href="#snapshot">The full snapshot &darr;</a></p>'))
+if _FED_ROWS:
+    _VIEWS.append(("fed", "Fed path", f'<div class="fed" data-fed-taken="{_fp_day}"><div class="lg"><span><i class="c"></i>Cut</span>'
+                   '<span><i class="h"></i>Hold</span><span><i class="k"></i>Hike</span></div>' + _FED_ROWS + '</div>'
+                   f'<p class="xn" style="margin-top:12px;font-size:12.5px;color:var(--sec)">Kalshi decision markets, '
+                   f'market prices from {_he(_fp_day)}. A price of 0.80 pays out as if the event were 80% '
+                   'likely. <a href="ltcma-consensus.html#odds">Every meeting &rarr;</a></p>'))
+if _TODAY_CG:
+    _VIEWS.append(("congress", "Congress", _TODAY_CG))
+if _TODAY_PK:
+    _VIEWS.append(("picks", "Stock picks", _TODAY_PK))
+TODAY = ""
+if _VIEWS:
+    TODAY = (
+        '<section class="block panel" id="today" aria-labelledby="today-h">'
+        '<div class="today-head"><div><p class="kicker">Today</p><h2 id="today-h">The dashboard, one tab at a time</h2></div>'
+        '<div class="ptabs" role="tablist" aria-label="Today views" data-tabs="1">'
+        + "".join(f'<button type="button" role="tab" id="tt-{k}" aria-controls="tp-{k}" aria-selected="{"true" if i == 0 else "false"}">'
+                  f'{lab}</button>' for i, (k, lab, _b) in enumerate(_VIEWS))
+        + '</div></div>'
+        + "".join(f'<div class="tpanel" id="tp-{k}" role="tabpanel" aria-labelledby="tt-{k}" tabindex="0">'
+                  f'<h3 class="tph">{lab}</h3>{b}</div>' for k, lab, b in _VIEWS)
+        + '</section>')
+
+# --- hub cards: one big number per card, each figure from the data the page it opens is built from; each carries
+# data-sum="hub:<page>" (and the data vintage where one applies) so ds_gate R6 can compare it with that page
+_HUBS = []
+
+
+def _hub(fn, what):
+    try:
+        h = fn()
+        if h:
+            _HUBS.append(h)
+    except Exception as _e:  # noqa: BLE001
+        _warn(f"{what} hub card", _e)
+
+
+_hub(lambda: ("portfolio.html", "Portfolio", _HOLD_TWRR, "time-weighted return this year, USD",
+              "Holdings, FX attribution, realized P&amp;L and the trade-by-trade curve", "") if _HOLD_TWRR else None,
+     "Portfolio")
+_cons = _load_json(f"{D}/market_intel/consensus_public.json", None)
+_hub(lambda: ("ltcma-consensus.html", "Market Intel", f"{len(_cma_firms(_cons['publishers']))} firms",
+              f"in the Street consensus of {_day(_cons['run_date'])}, against this model",
+              "Fed path, event odds, the Street's long-run numbers and where they disagree",
+              f' data-cons-run="{_cons["run_date"]}"') if _cons else None, "Market Intel")
+_hub(lambda: ("congressional-activity.html", "Congress", f"{len(_cg['rows']):,} trades",
+              f"filed by members in the 13 weeks through {_day(_cg['as_of'])}",
+              "Signals, the most active members, sector flows", f' data-cg-asof="{_cg_day}"') if _cg else None,
+     "Congress")
+_hub(lambda: ("regime.html", "Regime Tracker", _rs["state"].capitalize(), "composite market stress state",
+              "Stress index from volatility, credit, the curve, geopolitics and policy uncertainty", "") if _rs else None,
+     "Regime Tracker")
+_hub(lambda: ("stocks.html", "Stock Research", f"{len(_lst)} picks", f"on the list of {_day(_ses)}, ranked every weekday",
+              "Composite picks, the pick tracker, macro signals and CFA company reports",
+              f' data-sum-session="{_ses}"') if _TODAY_PK else None, "Stock Research")
+
+
+def _research_hub():
+    import research_index as _rix
+    _nfind = len(_rix.literal("27_research_notes.py", "FINDINGS"))
+    return ("research-library.html", "Research Library", f"{_nfind} findings",
+            "plus the backtests, public projects and report sections they rest on",
+            "Search the research behind the site, and the sources of every public page", "")
+
+
+_hub(_research_hub, "Research Library")
+HUBS = ""
+if _HUBS:
+    HUBS = ('<section class="block" id="hubs"><p class="kicker">Go deeper</p><h2>Every tab, one click away</h2>'
+            '<div class="xgrid">' + "".join(
+                f'<a class="xcard" href="{h}"{attr}><p class="xk">{t}</p><span class="xbig" data-sum="hub:{h}">{big}</span>'
+                f'<p class="xn">{bl}</p><p class="xn" style="border-top:1px solid var(--line);padding-top:10px">{inside}</p>'
+                '<span class="xgo">Open &rarr;</span></a>' for h, t, big, bl, inside, attr in _HUBS) + '</div></section>')
+SUMMARY = ""
+if _EXP_HTML or _HOLD_HTML or _WATCH_HTML:
+    SUMMARY = ('<section class="block" id="summary" aria-labelledby="sum-h"><div class="sec-h"><p class="kicker">Executive summary</p>'
+               '<h2 id="sum-h">The site in 30 seconds: expect, hold, watch</h2></div>'
+               f'<div class="xgrid">{_EXP_HTML}{_HOLD_HTML}{_WATCH_HTML}</div></section>')
+_HERO_IN = (
+    '<div class="hero-grid"><div class="hero-main">'
+    '<p class="kicker">Carlos Duarte &middot; Quantitative Research</p>'
+    '<h1>One real portfolio, a 12-year market model, and the signals behind them.</h1>'
+    '<p class="lede">What global markets are expected to return over the next 12 years (a model estimate), how my live '
+    'book is doing against the S&amp;P 500, and what prices, the Fed and Congress are signalling. Built on free public '
+    'data, rebuilt every weekday.</p><div class="cta">'
+    + ('<a class="btn" href="#summary">Read the 30-second summary</a>' if SUMMARY else '')
+    + '<a class="btn btn-ghost" href="#about">About me</a></div>'
+    f'<p class="asof">Signals as of {ASOF} &middot; LTCMA model as of {MODEL_ASOF}\n{VAL_LINE} &middot; base currency USD '
+    '&middot; built on free public data</p></div>' + _HERO_PANEL + '</div>')
+print(f"  home: executive summary built ({len(_CHK)} self-consistency checks passed; views: "
+      f"{', '.join(v[1] for v in _VIEWS) or 'none'}; hub cards: {len(_HUBS)})")
+
+
 INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Capital Market Assumptions</title>
+<meta name="ltcma-summary-checks" content="{len(_CHK)} self-consistency checks passed at build">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 {CSS_LINKS}<link rel="stylesheet" href="style.css"><script src="{PLOTLY}"></script></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-<section class="hero"><div class="container">
-<h1>Long-Term Capital Market Assumptions</h1>
-<p class="lede">A proprietary 12-year forward outlook for global asset classes —
-building-block expected returns, Ledoit-Wolf risk modelling, and a
-regime-switching GPU Monte Carlo engine.</p>
-<p class="asof">Signals as of {ASOF} &middot; LTCMA model as of {MODEL_ASOF}
-{VAL_LINE} &middot; base currency USD &middot; built on free public data</p>
-</div></section>
+{hero("cliffs", _HERO_IN, DOCS, pos="center 38%")}
 <main class="container">
+{SUMMARY}
+{TODAY}
+{HUBS}
 {PF_CARD}
-<section class="block"><h2>Market Snapshot</h2>{ccy_badge("USD")}
+<section class="block" id="snapshot"><h2>Market Snapshot</h2>{ccy_badge("USD")}
 <p class="note">Where the market sits and how each reading moved against the one
 before it. Each tile shows the date of its latest observation &mdash; official series
 (FRED) publish with a lag of a day or more. Refreshed daily from public data (FRED, Yahoo
 Finance, GPR / EPU uncertainty indices). Arrows show direction only, not good or bad. New to a term? See
 the <a href="glossary.html">Glossary</a>.</p>
 <div class="metrics" style="grid-template-columns:repeat(3,1fr)">{snap}</div></section>
-<section class="block"><h2>Model Output</h2>
+<section class="block" id="model"><h2>Model Output</h2>
 {ccy_badge("USD", "all expected returns are in US dollars")}
+<p class="note"><b>Long-Term Capital Market Assumptions.</b> A proprietary 12-year forward outlook for global asset
+classes &mdash; building-block expected returns, Ledoit-Wolf risk modelling, and a regime-switching GPU Monte Carlo
+engine.</p>
 <p class="note">Each chart below has a plain-language explanation; full
 definitions are in the <a href="glossary.html">Glossary</a>.</p>
 <div class="grid">{charts}</div>{STREET_CMP}</section>
@@ -620,7 +940,8 @@ definitions are in the <a href="glossary.html">Glossary</a>.</p>
 <p>Complete analysis — methodology, macro backdrop, return tables, the
 strategic-edge scan, the methodology backtest and limitations.{_REPORT_NOTE}</p>
 <a class="btn" href="{ARCHIVE_PATH if REPORT_ARCHIVED else 'report.html'}">{_REPORT_BTN} &rarr;</a></section>
-<section class="block" id="about"><h2>About — Carlos Alberto Duarte Morales</h2>
+<section class="block" id="about"><p class="kicker">Who builds this</p><h2>About — Carlos Alberto Duarte Morales</h2>
+<div class="about-flex">{photo(DOCS)}<div class="about-text">
 <p class="lede2">Financial advisor and systems engineer specialised in
 quantitative systems, risk management and data pipelines for financial
 applications. Mexico City &middot; CFA Level I Candidate.</p>
@@ -629,12 +950,13 @@ applications. Mexico City &middot; CFA Level I Candidate.</p>
 <h3>Credentials &amp; Education</h3><ul class="certs">{certs}</ul>
 <h3>Technical Skills</h3><div class="tags">{skills}</div>
 <h3>Open Source</h3>
-<p>Open-source: <a href="https://github.com/DuiArte/terse">Terse &mdash; token-efficient LLM language</a> &middot; <a href="https://github.com/DuiArte/ilml">ILML &mdash; a language for AI-to-AI communication</a></p></section>
+<p>Open-source: <a href="https://github.com/DuiArte/terse">Terse &mdash; token-efficient LLM language</a> &middot; <a href="https://github.com/DuiArte/ilml">ILML &mdash; a language for AI-to-AI communication</a></p></div></div></section>
 </main>
 <footer class="shell-foot"><div class="container">
 <p>Built with free public data and open-source tools. Expected returns are
 forward-looking estimates, not guarantees; actual outcomes will differ.
-This is research, not investment advice.</p></div></footer>
+This is research, not investment advice.</p>{credits_footer("cliffs")}</div></footer>
+{TABS_JS}
 </body></html>"""
 open(f"{DOCS}/index.html", "w", encoding="utf-8").write(INDEX)
 
@@ -642,7 +964,8 @@ open(f"{DOCS}/index.html", "w", encoding="utf-8").write(INDEX)
 for f in os.listdir(f"{REP}/figures"):
     shutil.copy(f"{REP}/figures/{f}", f"{DOCS}/figures/{f}")
 _md = open(f"{REP}/LTCMA_2026.md", encoding="utf-8").read()
-body = markdown.markdown(_md, extensions=["tables", "fenced_code", "sane_lists"])
+# "toc" only adds an id to each heading (2026-11-10): the Research Library links the report section by section.
+body = markdown.markdown(_md, extensions=["tables", "fenced_code", "sane_lists", "toc"])
 
 _banner = ""
 if REPORT_ARCHIVED:
@@ -1128,7 +1451,9 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
   .btn{padding:.8rem 1.2rem;display:block;text-align:center}
 }
 """
-open(f"{DOCS}/style.css", "w", encoding="utf-8").write(CSS)
+# 2026-11-10: the Editorial Terminal layer (design_system.ET_CSS) is appended AFTER the legacy rules, so it
+# overrides them; removing this "+ ET_CSS" restores the previous look on every page at once.
+open(f"{DOCS}/style.css", "w", encoding="utf-8").write(CSS + ET_CSS)
 # Design-system sheets are build outputs like style.css above -- emitted every run so
 # `git clean -fd docs data` can never orphan them (REDESIGN_PLAN D1). tokens.css and
 # base.css are <link>ed BEFORE style.css, so style.css still wins every shared selector

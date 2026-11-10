@@ -19,6 +19,15 @@ job, script or clone that writes here, check this list — and add yourself to i
 `daily_refresh.ps1` also runs `scripts/34_site_freshness.py` (2026-10-07), which writes
 exactly one extra file, `docs/internal/freshness.html`, from pipeline v2 layer 7's content audit.
 
+It also runs `scripts/31_research_library.py` (2026-11-10, the Research Library tab behind the header's
+"Research" corner), which writes exactly `docs/research-library.html` + `docs/research-library.ai.txt`: an
+index of every research item the other generators publish (built from the same data, every link checked against
+the pages) and the sources behind the public pages. Render-only, no network. Right after it the refresh runs
+`scripts/guard_site_rules.py` (ds_gate R1-R7 on the built pages; writes nothing). The image heroes (2026-11-10) are
+emitted by `scripts/design_system.py` `emit_assets()` from the committed `assets/img/` into `docs/assets/img/`,
+byte-identical, by every generator whose page shows one (17, 18, 30, 31), so a single job's render (e.g. the
+07:00 consensus job running 30 alone) never leaves a page without its image.
+
 It also runs `scripts/35_bt_replay.py` (2026-10-07), which writes only `data/bt_replay/<key>.json`
 (the out-of-sample replays of the public backtests, rendered by `24_backtests.py` on `bt_*.html`
 and by `23_strategies.py` on the cards). It imports the private engines at runtime from the

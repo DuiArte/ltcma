@@ -3,6 +3,10 @@
 Institutional editorial identity. Reference: FT research / Bridgewater Daily
 Observations. **Restraint is the design constraint — when in doubt, remove decoration.**
 
+> **2026-11-10: superseded in part by "Editorial Terminal"** (Carlos approved the design canvas: "El diseno quedo
+> muy bien, hazle push, pero manten varias de las pestanas"). The section at the END of this file wins where it
+> disagrees with the older rules below (palette, card corners, shadows on hover, image heroes, the header).
+
 ## Source of truth
 - Tokens live in `scripts/17_build_site.py` → `CSS` var → written to `docs/style.css`.
   Every page `<link>`s `style.css`; edit the CSS var, not per-page.
@@ -77,3 +81,48 @@ Observations. **Restraint is the design constraint — when in doubt, remove dec
   CSS var in `17_build_site.py` and re-run renderers, or transform `docs/*.html`.
 - Verify computed styles with a static server + DOM inspect (screenshots block on
   the slow Fonts CDN `load` event; inspect/eval are reliable).
+
+## 2026-11-10: Editorial Terminal (binding since the remake; wins over the rules above)
+Source of truth: `scripts/design_system.py` (`ET` tokens, `ET_CSS` appended to `docs/style.css` by
+`17_build_site.py`, `hero()`, `photo()`, `credits_footer()`, `TABS_JS`). The legacy rules above stay in `style.css`
+underneath; removing the appended layer restores the previous look on every page at once. Light theme only (dark
+mode deferred: not provably safe for every Plotly chart).
+
+| token | hex | use |
+|---|---|---|
+| ground `--bg` | `#F6F5F1` | page background (warm) |
+| card `--panel` | `#FFFFFF` | tiles, cards |
+| line / strong | `#E3E1DA` / `#C9C6BC` | hairlines, pill borders |
+| ink / secondary / muted | `#0E1726` / `#4A5568` / `#667085` | text (every text pair >= 4.5:1) |
+| chip | `#EFEDE6` | as-of chip, bar tracks |
+| accent | `#0A2540` | Oxford blue, unchanged: links, the active tab, primary series |
+| **amber** `--amber` | `#B45309` | NEW, highlight only: kicker labels, a hike, the one number to look at |
+| up / down `--up` `--down` | `#0F5E9C` / `#C2410C` | NEW components only: bought / up vs sold / down (colour-blind safe). Existing `--pos` / `--neg` and the chart `POS` / `NEG` are unchanged in this wave |
+
+- **Type:** unchanged families (Spectral display, Inter body/UI, JetBrains Mono for every number; ds_gate A9).
+  Weights stay <= 500 in shared CSS (the pages load Inter 400/500).
+- **Header:** brand (CD monogram) + the main tabs (underline, sticky: Dashboard, Portfolio, Stock Research, Regime
+  Tracker, Market Intel, Congress, About) + the **Research corner** at the right end (`<details>` menu inside its own
+  "Research" navigation landmark: Research Library, Full Report, Research Notes, Strategies, Projects, Glossary,
+  Sources). Defined once in `glossary.NAV`; works without JS, with the keyboard (focus leaving the menu closes it)
+  and on touch; the menu scrolls inside itself on short screens. One row from 1280 px (`design_system.NAV_BP` =
+  1279: below it the header wraps to two rows and the tabs scroll, with a fade on the side where a tab is cut).
+  Every page under `docs/` must be a main tab, a corner page, a `glossary.SUBPAGES` sub-page or a redirect stub
+  (ds_gate R1). Anchors and sticky table heads clear the header (`--hdr`, `scroll-padding-top`).
+- **Cards:** radius 14-18 px, hairline border, hover lifts 2 px with a soft shadow and the accent border (150 ms);
+  `prefers-reduced-motion` turns motion off. One big number per card; kicker label in amber, uppercase.
+- **Pill tabs / toggles / chips / the Research button:** min-height 44 px, selected = ink fill. In-page tabs use
+  `design_system.TABS_JS` (ARIA tablist, arrows / Home / End; without JS every panel shows).
+- **One as-of chip per page** (the hero's `.asof` line renders as the chip; the text is unchanged because the
+  freshness guards and the market-intel jobs read it).
+- **Image heroes (JWST):** only on Dashboard (Cosmic Cliffs), Portfolio and the Research Library (Cliffs detail),
+  Market Intel (Pillars), Congress (Pillars, lower detail). Under a 64% dark layer (a little deeper under the text
+  column, 72% on phones; small text over a hero sits on its own dark backdrop: worst-pixel contrast >= 4.5:1), never
+  behind a chart, credit line visible in the hero AND in the footer (title, "cropped", credit, CC BY 4.0 + links).
+  Images live in `assets/img/` (committed, EXIF-free) and are emitted byte-identically into `docs/assets/img/` by
+  each generator that shows one. No image > 1.2 MB; phones get a 9:16 portrait WebP (720 / 1080 px, <= 250 KB),
+  larger screens the 16:9 WebP 1600 / 2560 / 2880 / 3840 (tablets ask for 150vw: a 16:9 image covering a taller box
+  is drawn wider than the screen). On phones the heroes stay about one screen tall (stats 2 x 2, CTAs side by side;
+  the home's performance panel shows from 641 px up, since the Hold card restates it right below).
+- **Photo:** the About section shows Carlos's portrait (EXIF-free copies only; never the original in Pictures).
+- **Charts:** unchanged in this wave (palette, heights, hovers, guards).

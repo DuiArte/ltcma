@@ -1,0 +1,38 @@
+{
+ "_about": "Source images for the site's heroes and About photo. Generators copy them byte-identically into docs/assets/img/ (scripts/design_system.py emit_assets). Hero crops are 16:9 cuts of the ESA/Webb Large JPEGs (phones get 9:16 portrait centre crops of the 3840 px cut, hero_<key>_p720 / _p1080), re-encoded without metadata; every page that shows one prints its credit line. The photo is the site author's own portrait (EXIF-free copies only).",
+ "license_url": "https://creativecommons.org/licenses/by/4.0/",
+ "heroes": {
+  "cliffs": {
+   "title": "Cosmic Cliffs in Carina (JWST NIRCam)",
+   "source": "https://esawebb.org/images/weic2205a/",
+   "credit": "NASA, ESA, CSA, STScI",
+   "license": "CC BY 4.0",
+   "crop_px": [14575, 8198]
+  },
+  "cliffs_detail": {
+   "title": "Cosmic Cliffs in Carina (JWST NIRCam), detail",
+   "source": "https://esawebb.org/images/weic2205a/",
+   "credit": "NASA, ESA, CSA, STScI",
+   "license": "CC BY 4.0",
+   "crop_px": [8016, 4509]
+  },
+  "pillars": {
+   "title": "Pillars of Creation (JWST NIRCam)",
+   "source": "https://esawebb.org/images/weic2216b/",
+   "credit": "NASA, ESA, CSA, STScI; J. DePasquale, A. Koekemoer, A. Pagan (STScI)",
+   "license": "CC BY 4.0",
+   "crop_px": [8423, 4738]
+  },
+  "pillars_base": {
+   "title": "Pillars of Creation (JWST NIRCam), lower detail",
+   "source": "https://esawebb.org/images/weic2216b/",
+   "credit": "NASA, ESA, CSA, STScI; J. DePasquale, A. Koekemoer, A. Pagan (STScI)",
+   "license": "CC BY 4.0",
+   "crop_px": [8423, 4738]
+  }
+ },
+ "photo": {
+  "files": ["carlos_duarte_640x800.jpg", "carlos_duarte_1200x1500.jpg"],
+  "alt": "Carlos Duarte"
+ }
+}

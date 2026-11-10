@@ -70,6 +70,7 @@ import yahoo_session as ys              # honest Yahoo transport, no browser imp
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
+from design_system import hero, credits_footer          # 2026-11-10 remake: image hero + its credit
 
 import paths
 FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")  # lot-history DATA cache only
@@ -2071,14 +2072,13 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-<section class="hero"><div class="container">
+{hero("cliffs_detail", f'''<p class="kicker">Portfolio</p>
 <h1>Stock Portfolio Tracker</h1>
 <p class="lede">A live view of the broker equity book &mdash; every position
 measured against its cost basis and against the portfolio as a whole.
 Figures convert between Mexican pesos and US dollars at the current rate.</p>
 <p class="asof">As of {asof} &middot; broker equity holdings &middot;
-USD/MXN {RATE:.4f}</p>
-</div></section>
+USD/MXN {RATE:.4f}</p>''', DOCS, pos="center 40%")}
 <main class="container">
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
@@ -2194,7 +2194,7 @@ filter. Sorting and filtering are display-only; the TOTAL row stays pinned.</p><
 <div class="tile chart"><div class="ch">{div(f3, "pf-alloc")}</div></div></div></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Figures scaled for
-confidentiality. Research and monitoring, not investment advice.</p></div></footer>
+confidentiality. Research and monitoring, not investment advice.</p>{credits_footer("cliffs_detail")}</div></footer>
 {JS}</body></html>"""
 
 # --- confidentiality guard -------------------------------------------------
@@ -2353,6 +2353,28 @@ HTML = HTML.replace("</head>", f'<meta name="ltcma-marks" content="asof={priced_
                     "\n</head>", 1)
 from design_system import guard_plotly_html
 print(f"  plotly html guard OK | {guard_plotly_html(HTML, 'portfolio.html')} charts")
+
+# The home's executive summary (2026-11-10) quotes this page's return tiles in its "Hold" card. 17 builds it from the
+# same sidecar with the same two functions; when docs/index.html was built from THIS sidecar vintage (same as_of: the
+# daily refresh runs 17 minutes before 18), its four figures must equal this page's tiles exactly, or the build fails.
+import re as _reS
+try:
+    _ix = open(f"{DOCS}/index.html", encoding="utf-8").read()
+except OSError:
+    _ix = ""
+_hm = _reS.search(r'data-sum-asof="([^"]+)"', _ix)
+if _hm and _hm.group(1) == str(PK["as_of"]):
+    _mine = {"twrr_usd": f"{BOOK_YTD_USD*100:+.2f}%", "spy_usd": f"{SPY_YTD_USD*100:+.2f}%",
+             "mwrr_usd": f"{MW['book_usd']*100:+.2f}%", "alpha_usd": f"{(BOOK_YTD_USD - SPY_YTD_USD)*100:+.2f} pp"}
+    for _k, _v in _mine.items():
+        _got = _reS.search(r'data-sum="%s">([^<]+)<' % _k, _ix)
+        if not _got or _got.group(1) != _v or f'data-usd="{_v}"' not in HTML:
+            raise SystemExit(f"SUMMARY GUARD: index.html {_k} = {_got.group(1) if _got else None!r}, "
+                             f"portfolio.html tile = {_v!r} (same sidecar {PK['as_of']})")
+    print(f"  home summary cross-check OK | Hold card = this page's tiles ({', '.join(_mine.values())})")
+else:
+    print(f"  home summary cross-check skipped (index.html built from "
+          f"{_hm.group(1) if _hm else 'no summary'}, this page from {PK['as_of']})")
 open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
 print(f"Portfolio tracker built -> {DOCS}/portfolio.html")
 print(f"  {len(latest)} holdings | value(scaled) MXN {tot_val:,.0f} / "

@@ -5,9 +5,9 @@
   "tiles": 0
  },
  "bt_buy_the_dip.html": {
-  "charts": 1,
+  "charts": 2,
   "tables": 5,
-  "tiles": 1
+  "tiles": 2
  },
  "bt_crt.html": {
   "charts": 1,
@@ -15,14 +15,19 @@
   "tiles": 1
  },
  "bt_static_diversification.html": {
-  "charts": 1,
+  "charts": 2,
   "tables": 3,
-  "tiles": 1
+  "tiles": 2
  },
  "bt_static_drift_weights.html": {
-  "charts": 1,
+  "charts": 2,
   "tables": 10,
-  "tiles": 1
+  "tiles": 2
+ },
+ "congressional-activity.html": {
+  "charts": 1,
+  "tables": 4,
+  "tiles": 0
  },
  "glossary.html": {
   "charts": 1,
@@ -31,13 +36,18 @@
  },
  "index.html": {
   "charts": 10,
-  "tables": 1,
-  "tiles": 10
+  "tables": 2,
+  "tiles": 11
+ },
+ "ltcma-consensus.html": {
+  "charts": 1,
+  "tables": 7,
+  "tiles": 5
  },
  "portfolio.html": {
-  "charts": 5,
+  "charts": 7,
   "tables": 3,
-  "tiles": 7
+  "tiles": 9
  },
  "projects.html": {
   "charts": 1,
@@ -50,14 +60,19 @@
   "tiles": 5
  },
  "report.html": {
+  "charts": 0,
+  "tables": 0,
+  "tiles": 0
+ },
+ "research-library.html": {
   "charts": 1,
-  "tables": 15,
-  "tiles": 1
+  "tables": 0,
+  "tiles": 0
  },
  "research.html": {
   "charts": 1,
-  "tables": 1,
-  "tiles": 19
+  "tables": 2,
+  "tiles": 20
  },
  "signals.html": {
   "charts": 0,
@@ -105,9 +120,9 @@
   "tiles": 6
  },
  "stocks.html": {
-  "charts": 2,
-  "tables": 3,
-  "tiles": 13
+  "charts": 3,
+  "tables": 158,
+  "tiles": 17
  },
  "strategies.html": {
   "charts": 5,

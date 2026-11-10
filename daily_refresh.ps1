@@ -17,7 +17,8 @@
        35 out-of-sample replay of the public backtests.
     3. Site rebuild: 17 site, 23 strategies, 27 research notes, 25 stock picks,
        21 signals redirect, 18 portfolio, 26 real-numbers, 22 AI copies,
-       24 backtests redirect.  (17 and 23 are load-bearing: failure aborts.)
+       24 backtests redirect, 31 research library, site rules R1-R7.  (17 and
+       23 are load-bearing: failure aborts.)
     4. Mirror docs/ + data/ backup -> Documents\CarlosDuarteWebsite.
     5. Verify as-of stamps + no fxaANEL/fxaOS CSS regression.
     6. git add docs data; commit; push; live-verify GitHub Pages.
@@ -151,6 +152,13 @@ function Run-Step {
         $tail = ($r.Text -split "`n" | Select-Object -Last 12) -join "`n"
         if ($LoadBearing) { Fail "$Name FAILED (load-bearing):`n$tail" }
         Log "$Name failed (continuing):`n$tail" 'WARN'
+    } else {
+        # 2026-11-10: a step that succeeds can still have left something out (17's home views, 31's library items,
+        # 18's marks): its "WARN" lines reach this log instead of being discarded with the rest of its output.
+        $warn = @($r.Text -split "`n" | Where-Object { $_ -match '^\s*(\*\*\s*)?WARN\b' })
+        if ($warn.Count -gt 0) {
+            Log ("$Name OK with {0} warning line(s):`n{1}" -f $warn.Count, (($warn | Select-Object -First 12) -join "`n")) 'WARN'
+        }
     }
     return $r
 }
@@ -281,6 +289,16 @@ try {
     Run-Step '26_real_numbers_refresh.py' | Out-Null
     Run-Step '22_ai_copies.py'       | Out-Null
     Run-Step '24_backtests.py'       | Out-Null
+    # Research Library (2026-11-10, the header's Research corner): indexes every research item the steps above
+    # just published (17 report sections, 27 notes, 23/24 strategies + backtest reports, 17 projects, 19 stock
+    # pages) and lists the sources behind the public pages, checking every link against those pages -- so it runs
+    # after all of them and before 34. Best-effort: an item whose link no longer resolves is left out, never
+    # published broken; the page is still written and the step exits 2, so the log shows "failed (continuing)" + why.
+    Run-Step '31_research_library.py' | Out-Null
+    # Site rules R1-R7 (tools/ds_gate.py --rules-only): the header on every page, every page reachable, Street held,
+    # image credits / budgets / metadata, the home summary against the pages it restates (a pair built from two
+    # data vintages is a WARN), the library's links and sources. Best-effort: it writes nothing and never blocks.
+    Run-Step 'guard_site_rules.py'   | Out-Null
     # Content-age audit (2026-10-07): runs pipeline v2 layer 7 against what was JUST built and
     # emits docs/internal/freshness.html (unlinked). Must follow every generator. Best-effort:
     # host-only inputs; on failure the committed page stays and shows its own stamp. Layer 7

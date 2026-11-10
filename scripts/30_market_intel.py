@@ -17,7 +17,9 @@ from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 
 from glossary import NAV
-from design_system import CSS_LINKS
+from design_system import CSS_LINKS, hero, credits_footer, TABS_JS   # hero/credits/tabs: 2026-11-10 remake
+# pc / money / the firm count are shared with the home summary (17), which must not import this script (round 1, P1)
+from design_system import pc, money, cma_firm, cma_firms
 from paths import DATA, DOCS, cuser
 
 SRC = os.path.join(DATA, "market_intel", "consensus_public.json")
@@ -31,12 +33,21 @@ STANCE = {"overweight": "up", "underweight": "down", "neutral": "flat"}
 CONV = {"high": "H", "medium": "M", "low": "L"}
 
 CSS = """
-.toc{display:flex;flex-wrap:wrap;gap:0;border:1px solid #d4d4d4;margin:0 0 1.6rem;width:fit-content;max-width:100%}
-.toc a{font:500 12.5px 'Inter',sans-serif;color:#555;text-decoration:none;padding:8px 16px;
-border-right:1px solid #d4d4d4;letter-spacing:.01em;transition:background .12s,color .12s}
-.toc a:last-child{border-right:0}
-.toc a:hover{background:rgba(10,37,64,.05);color:#111}
-@media(max-width:560px){.toc{width:100%}.toc a{flex:1 1 auto;text-align:center;padding:8px 8px}}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 1.6rem;max-width:100%}
+.toc a{font:500 13px 'Inter',sans-serif;color:var(--sec);text-decoration:none;padding:0 16px;min-height:44px;
+display:inline-flex;align-items:center;border:1px solid var(--line-strong);border-radius:999px;transition:background .12s,color .12s}
+.toc a:hover{border-color:var(--ink);color:var(--ink)}
+.vtabs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 2rem}
+.vtabs [role=tablist]{display:flex;flex-wrap:wrap;gap:8px}
+.vtabs .vt-out{border-style:dashed}
+@media(max-width:640px){.vtabs,.vtabs [role=tablist]{flex-wrap:nowrap}
+.vtabs{overflow-x:auto;scrollbar-width:none;margin:0 -16px 1.6rem;padding:0 16px 2px;
+-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent)}
+.vtabs::-webkit-scrollbar{display:none}.vtabs a{flex:0 0 auto}}
+.ovc{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));margin-top:1.4rem}
+.fwins{display:flex;flex-wrap:wrap;gap:8px;margin:.2rem 0 1rem}
+.fwin+.fwin{margin-top:1.6rem}
+.js .fwin[hidden]{display:none}
 .mi-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .mi{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;min-width:100%}
 .mi th,.mi td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
@@ -147,8 +158,8 @@ def main():
     qual_pubs = [p for p in pubs if p not in num_pubs]
     # count FIRMS, not documents (Schroders has a 10y and a 30y document; BlackRock = CMA data + BII
     # weekly). C-20261007-01: the hero said "21 asset managers" for 21 documents from 19 firms.
-    firm = lambda p: p.get("firm") or p["publisher"]
-    n_docs, n_firms = len(pubs), len({firm(p) for p in pubs})
+    firm = cma_firm
+    n_docs, n_firms = len(pubs), len(cma_firms(pubs))
     # what is ACTUALLY rendered per document (labels must not promise views that are not on the grid)
     has_num = {pid for row in d["matrix"].values() for pid, c in row.items() if "v" in c}
     has_arrow = {pid for row in d["matrix"].values() for pid, c in row.items() if c.get("stance")}
@@ -280,12 +291,12 @@ def main():
     car_rows = ""
     for r in d["diff_carlos"]["rows"]:
         if r.get("gap_bp") is None:
-            car_rows += (f'<tr><td style="text-align:left">{e(r["label"])}</td><td>{pct(r["carlos"])}%</td>'
+            car_rows += (f'<tr data-side="none"><td style="text-align:left">{e(r["label"])}</td><td>{pct(r["carlos"])}%</td>'
                          f'<td colspan="4" style="color:var(--muted)">no public estimate in this edition</td></tr>')
             continue
         side = {"above": "this site above the band", "below": "this site below the band", "inside": "inside"}[r["carlos_side"]]
         band = f'{pct(r["band"][0])}-{pct(r["band"][1])}%'
-        car_rows += (f'<tr><td style="text-align:left">{e(r["label"])}</td><td>{pct(r["carlos"])}%</td>'
+        car_rows += (f'<tr data-side="{e(r["carlos_side"])}"><td style="text-align:left">{e(r["label"])}</td><td>{pct(r["carlos"])}%</td>'
                      f'<td>{pct(r["public_median"])}%</td><td>{r["gap_bp"]:+d}</td><td>{band}</td>'
                      f'<td style="text-align:left">{side} (n={r["public_n"]})</td></tr>')
 
@@ -353,6 +364,56 @@ def main():
                   f'reachable today; the first official run is {official}. Still to come through the manual '
                   f'channel: {e(pending)}.</div>')
 
+    # ---- 2026-11-10 remake: Pillars hero with four headline figures, each one already on this page (the Fed table,
+    # the hero's firm count, the "Versus this site's LTCMA" table), and in-page views that group the EXISTING sections
+    stats = []
+    try:
+        fp = json.load(open(FED_SRC, encoding="utf-8")) if fed_html and os.path.exists(FED_SRC) else None
+    except (OSError, ValueError):
+        fp = None
+    # every Fed figure carries the date of its prices (round 1, DATA-1): the 16:45 job refreshes them every weekday,
+    # after the home summary is built, so "today" would not be true all day ("prices from" is not a graded stamp)
+    taken = ((fp or {}).get("taken_at") or "")[:10]
+    taken_s = f", Kalshi prices from {date.fromisoformat(taken).strftime('%d %b %Y')}" if taken else ""
+    fed_top = None
+    for m in ((fp or {}).get("meetings") or [])[:2]:
+        kk = m.get("kalshi")
+        if not isinstance(kk, dict):
+            continue
+        top = max(("cut", "hold", "hike"), key=lambda x: kk[x])
+        fed_top = fed_top or top
+        stats.append((pc(kk[top]), f'odds of a {top} at the {date.fromisoformat(m["date"]).strftime("%d %b %Y")} FOMC'
+                      f'{taken_s}', "amb" if top == "hike" else "", "#odds"))
+    stats.append((str(n_firms), f"asset managers and banks in the consensus ({n_docs} documents)", "", "#matrix"))
+    rows_g = [r for r in d["diff_carlos"]["rows"] if r.get("gap_bp") is not None]
+    n_out = sum(1 for r in rows_g if r.get("carlos_side") != "inside")
+    stats.append((f"{n_out} of {len(rows_g)}", "asset classes where this site's model sits outside the Street's middle half",
+                  "up", "#vs-ltcma"))
+    hstats = ('<div class="hero-stats">' + "".join(
+        f'<a class="hero-stat" href="{h}"><span class="v {c}">{v}</span><span class="l">{e(lab)}</span></a>'
+        for v, lab, c, h in stats) + '</div>')
+    n_div = sum(1 for x in d.get("divergences", []) if x.get("headline"))
+    ovc = [(f"Fed path &middot; {fed_top} odds, next FOMC" if fed_top else "Fed path",
+            stats[0][0] if fed_top else "&ndash;", "Cut / hold / hike odds for every FOMC meeting, Kalshi and "
+            f"Polymarket{e(taken_s)}, with the six-month event outlook.", "#odds"),
+           ("The grid", f'{len(d["matrix"])} rows', f"{n_firms_num} firms with numbers shown, {n_firms_view} with stated "
+            "views only, side by side in US dollars.", "#matrix"),
+           ("Divergences", str(n_div), "Rows where the publishers materially disagree, with both sides' arguments.",
+            "#divergences"),
+           ("Versus this site", f"{n_out} of {len(rows_g)}", "Asset classes where this site's model sits outside the "
+            "Street's middle half.", "#vs-ltcma")]
+    ov_html = ('<div class="ovc">' + "".join(
+        f'<a class="xcard" href="{h}"><p class="xk">{k}</p><span class="xbig">{v}</span><p class="xn">{t}</p>'
+        f'<span class="xgo">Open &rarr;</span></a>' for k, v, t, h in ovc) + '</div>')
+    hero_in = (f"""<p class="kicker">Market Intel</p>
+<h1>Market Intel — what the Street expects</h1>
+<p class="lede">Long-run expected returns and outlooks from {n_firms} asset managers and banks ({n_docs} documents), put on one
+grid in US dollars (nominal) and set against this site's own capital market assumptions. Where the
+publishers disagree, both sides of the argument are laid out with the evidence each one leans on.
+Prediction-market odds for the macro calls are shown alongside.</p>
+<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "rebuilt on each new publisher edition"}{check_note(run)} &middot; {n_firms_num} firms with numbers shown, {n_firms_view} with stated views only, {n_firms_stance} with a regime stance only</p>
+{hstats}""")
+
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="ltcma-content-asof" content="{d['run_date']}">
@@ -362,20 +423,16 @@ def main():
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-<section class="hero"><div class="container">
-<h1>Market Intel — what the Street expects</h1>
-<p class="lede">Long-run expected returns and outlooks from {n_firms} asset managers and banks ({n_docs} documents), put on one
-grid in US dollars (nominal) and set against this site's own capital market assumptions. Where the
-publishers disagree, both sides of the argument are laid out with the evidence each one leans on.
-Prediction-market odds for the macro calls are shown alongside.</p>
-<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "rebuilt on each new publisher edition"}{check_note(run)} &middot; {n_firms_num} firms with numbers shown, {n_firms_view} with stated views only, {n_firms_stance} with a regime stance only</p>
-</div></section>
+{hero("pillars", hero_in, DOCS, pos="center 30%")}
 <main class="container">
-<div class="toc"><a href="#summary">Summary</a><a href="#odds">Market-implied odds</a><a href="#matrix">The grid</a>
-<a href="#divergences">Divergences</a><a href="#vs-ltcma">vs this site's LTCMA</a><a href="#changes">Changes</a>
-<a href="#regimes">Regime calls</a><a href="#sources">Sources &amp; method</a></div>
+<div class="vtabs"><div role="tablist" aria-label="Market Intel views" data-tabs="hash">
+<a role="tab" id="vt-over" href="#summary" aria-controls="vg-over">Overview</a><a role="tab" id="vt-fed" href="#odds" aria-controls="vg-fed">Fed and events</a><a role="tab" id="vt-street" href="#matrix" aria-controls="vg-street">Street vs model</a><a role="tab" id="vt-src" href="#sources" aria-controls="vg-src">Sources and method</a></div>
+<a class="chipbtn vt-out" href="congressional-activity.html">Congress &rarr;</a></div>
+<div class="vgroup" id="vg-over" role="tabpanel" aria-labelledby="vt-over">
 {prelim}
-<section class="block" id="summary"><h2>Summary</h2><ul class="sumlist">{summary}</ul></section>
+<section class="block" id="summary"><h2>Summary</h2><ul class="sumlist">{summary}</ul>{ov_html}</section>
+</div>
+<div class="vgroup" id="vg-fed" role="tabpanel" aria-labelledby="vt-fed">
 
 <section class="block" id="odds"><h2>Market-implied odds</h2>
 <p class="note">Prices on Kalshi and Polymarket, read from their public market data. Each part of this section is
@@ -385,7 +442,8 @@ read at a different time and gives the date of its own prices, so the same marke
 {outlook_html}
 {snap_note}
 <div class="odds" style="margin-top:.4rem">{odds_html or '<p class="note">No snapshot available.</p>'}</div></section>
-
+</div>
+<div class="vgroup" id="vg-street" role="tabpanel" aria-labelledby="vt-street">
 <section class="block" id="matrix"><h2>The grid — expected annual return, % nominal</h2>
 <p class="note">Each publisher's long-horizon forecast for the asset class (the horizon closest to 12 years when several
 are given). <b>Consensus</b> is the median of the publishers shown with numbers, in USD only; the bar spans their range,
@@ -410,7 +468,8 @@ publisher number is ever an input to this site's model. Band = middle half of th
 (full range when fewer than four). Gap (bp) = public median minus this site, computed from unrounded
 values (so it can differ slightly from the rounded percentages shown); positive means this site is below
 the median.</p>
-<div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Asset class</th>
+<p class="sidefilter"><button type="button" class="chipbtn jsonly" id="side-only" aria-pressed="false">Only where this site is outside the band</button></p>
+<div class="tile" style="overflow-x:auto"><table class="ptable" id="vs-table"><thead><tr><th style="text-align:left">Asset class</th>
 <th>This site</th><th>Public median</th><th>Gap (bp)</th><th>Band</th><th style="text-align:left">Position</th></tr></thead>
 <tbody>{car_rows}</tbody></table></div></section>
 
@@ -420,7 +479,8 @@ the median.</p>
 <p class="note">Each publisher's read of the cycle and the risks it flags, paraphrased.</p>
 <div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Publisher</th><th>Risk stance</th>
 <th style="text-align:left">Cycle</th><th style="text-align:left">Call</th><th style="text-align:left">Key risks</th></tr></thead><tbody>{reg}</tbody></table></div></section>
-
+</div>
+<div class="vgroup" id="vg-src" role="tabpanel" aria-labelledby="vt-src">
 <section class="block" id="sources"><h2>Sources &amp; method</h2>
 <div class="tile" style="overflow-x:auto"><table class="ptable"><thead><tr><th style="text-align:left">Publisher</th><th style="text-align:left">Document</th>
 <th style="text-align:left">Edition</th><th>Horizon</th><th>Basis</th><th>Shown</th><th></th></tr></thead><tbody>{src_rows}</tbody></table></div>
@@ -434,9 +494,14 @@ Horizons and currencies are never adjusted: they are labelled, and non-USD figur
 material may be republished appear with numbers; the rest appear as their stated views, with a link to the original.
 Prediction-market odds are read-only public prices. Figures are the publishers' own estimates, not this site's, and nothing
 here is investment advice.</p></section>
+</div>
 </main>
 <footer class="shell-foot"><div class="container"><p>Third-party forecasts are attributed to their publishers and
-linked to the originals. Not investment advice.</p></div></footer>
+linked to the originals. Not investment advice.</p>{credits_footer("pillars")}</div></footer>
+{TABS_JS}
+<script>(function(){{var b=document.getElementById('side-only'),t=document.getElementById('vs-table');if(!b||!t)return;
+b.addEventListener('click',function(){{var on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on?'true':'false');
+[].forEach.call(t.querySelectorAll('tbody tr'),function(r){{var s=r.getAttribute('data-side');r.hidden=on&&(s==='inside'||s==='none');}});}});}})();</script>
 </body></html>"""
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(page)
@@ -547,10 +612,6 @@ firms listed. Not investment advice.</p></div></footer>
 
 # ---- Fed path: market-implied odds meeting by meeting (Carlos 2026-10-22) ---------------------
 FED_SRC = os.path.join(DATA, "market_intel", "fed_path_public.json")
-
-
-def pc(x):
-    return str((Decimal(str(x)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)) + "%"
 
 
 def render_fed_path():
@@ -787,10 +848,6 @@ def dp2(s):
     return re.sub(r"(\d+\.\d\d)\d+", r"\1", s or "")
 
 
-def money(x):
-    return f"${x / 1e6:,.1f}M" if abs(x) >= 1e6 else f"${x / 1e3:,.0f}K"
-
-
 def render_congress():
     """Congressional Periodic Transaction Reports, checked every weekday (since 2026-11-10; the data file changes only
     when a new filing arrives). Built off-repo by Trading_Index/market_intel
@@ -840,13 +897,32 @@ def render_congress():
     mt = "".join(f'<tr><td class="a">{who(m)}</td><td>{m["trades"]}</td><td class="v">{money(m["buy_mid"])}</td>'
                  f'<td class="v">{money(m["sell_mid"])}</td><td class="v">{m["median_lag"]:.0f} d</td><td>{m["late"]}</td>'
                  f'<td>{e(m["last_filed"])}</td></tr>' for m in c["members"][:25])
-    fl = ""
+    fl, wins = "", list(c["flows"].keys())
+    dflt = "91d" if "91d" in wins else (wins[-1] if wins else "")
     for w, rows in c["flows"].items():
+        top = rows[:12]
+        mx = max([abs(r["net"]) for r in top] or [1]) or 1
+        bars = "".join(
+            f'<div class="flow"><span class="lb">{e(r["sector"])}</span>'
+            f'<span class="n"><i style="width:{(abs(r["net"]) / mx * 100) if r["net"] < 0 else 0:.0f}%"></i></span>'
+            f'<span class="p"><i style="width:{(r["net"] / mx * 100) if r["net"] > 0 else 0:.0f}%"></i></span>'
+            f'<span class="v">{money(r["net"])}</span></div>' for r in top)
         trs = "".join(f'<tr><td class="a">{e(r["sector"])}</td><td>{r["n"]}</td><td class="v">{money(r["buy"])}</td>'
                       f'<td class="v">{money(r["sell"])}</td><td class="v"><b>{money(r["net"])}</b></td></tr>' for r in rows[:12])
-        fl += (f'<h3 style="font-size:14.5px;margin:1rem 0 .3rem">Last {w.replace("d", " days")} (by filing date)</h3>'
+        fl += (f'<div class="fwin" data-win="{e(w)}" id="win-{e(w)}"><h3 style="font-size:14.5px;margin:1rem 0 .3rem">Last {w.replace("d", " days")} (by filing date)</h3>'
+               f'<div class="bars" style="margin:.4rem 0 1rem" role="img" aria-label="Net buying by sector, last {w.replace("d", " days")}: '
+               f'the table below lists the same figures">{bars}</div>'
                f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Trades</th><th>Bought</th>'
-               f'<th>Sold</th><th>Net</th></tr></thead><tbody>{trs}</tbody></table></div>')
+               f'<th>Sold</th><th>Net</th></tr></thead><tbody>{trs}</tbody></table></div></div>')
+    wbtn = ("".join(f'<button type="button" class="chipbtn jsonly" data-win="{e(w)}" aria-pressed="{"true" if w == dflt else "false"}">'
+                    f'Last {w.replace("d", " days")}</button>' for w in wins) if len(wins) > 1 else "")
+    cnt = {t: sum(1 for a in c["alerts"] if a["type"] == t) for t in ("LARGE", "OPTIONS", "LATE")}
+    cstats = [(f'{len(c["rows"]):,}', "trades filed in the last 13 weeks", "#trades"),
+              (str(cnt["LARGE"]), "trades over $500K", "#alerts"), (str(cnt["OPTIONS"]), "option trades", "#alerts"),
+              (str(cnt["LATE"]), "filed more than 45 days late", "#alerts")]
+    hstats = ('<div class="hero-stats">' + "".join(
+        f'<a class="hero-stat" href="{h}"><span class="v">{v}</span><span class="l">{lab}</span></a>' for v, lab, h in cstats)
+        + '</div>')
     tr = "".join(f'<tr><td>{e(r["filed_date"])}</td><td class="a">{who(r)}</td><td><b>{e(r["ticker"] or "")}</b></td>'
                  f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(dp2(r["asset"][:70]))}</td>'
                  f'<td>{e(ATYPE.get(r["asset_type"], r["asset_type"]))}</td><td>{DIR.get(r["direction"], e(r["direction"]))}</td>'
@@ -881,6 +957,9 @@ def render_congress():
                   f'are scanned images and {h["parse_fail"]} could not be read; they are counted, not dropped.')
         foot = ('Source: U.S. House of Representatives, Office of the Clerk, financial disclosure reports. Committee '
                 'data: unitedstates/congress-legislators. Not investment advice.')
+    hero_c = hero("pillars_base", '<p class="kicker">Congress</p><h1>Congressional trading — what members disclose</h1>'
+                  f'<p class="lede">{lede}</p> <p class="asof">Disclosures as of {asof} &middot; {cover}</p>{hstats}',
+                  DOCS, pos="center 60%")
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="ltcma-content-asof" content="{c['as_of']}">
@@ -890,11 +969,7 @@ def render_congress():
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-<section class="hero"><div class="container">
-<h1>Congressional trading — what members disclose</h1>
-<p class="lede">{lede}</p>
-<p class="asof">Disclosures as of {asof} &middot; {cover}</p>
-</div></section>
+{hero_c}
 <main class="container">
 <div class="prelim">{boxtxt}</div>
 <div class="toc"><a href="#alerts">Signals</a><a href="#members">Members</a><a href="#sectors">Sectors</a><a href="#trades">Trades</a><a href="#method">Method</a></div>
@@ -902,7 +977,7 @@ def render_congress():
 <section class="block" id="members"><h2>Most active members</h2>
 <div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Member</th><th>Trades</th><th>Bought</th><th>Sold</th>
 <th>Median filing lag</th><th>Late</th><th>Last filed</th></tr></thead><tbody>{mt}</tbody></table></div></section>
-<section class="block" id="sectors"><h2>Net flow by sector</h2>{fl}</section>
+<section class="block" id="sectors"><h2>Net flow by sector</h2>{('<div class="fwins" role="group" aria-label="Window">' + wbtn + '</div>') if wbtn else ''}{fl}</section>
 <section class="block" id="trades"><h2>Trades filed in the last 13 weeks</h2>
 <div class="mi-wrap"><table class="mi"><thead><tr><th>Filed</th><th class="a">Member</th><th>Ticker</th><th>Asset</th><th>Type</th>
 <th>Side</th><th>Amount</th><th>Traded</th><th>Owner</th><th>Jurisdiction</th><th>Source</th></tr></thead><tbody>{tr}</tbody></table></div>{capnote}</section>
@@ -915,7 +990,11 @@ JUR-3 a member. Only current roles count, and the committee-to-sector map is app
 members trading the same stock the same way within 14 days, totalling $500K or more. Disclosures are public records
 reproduced for research. Not investment advice.</p></section>
 </main>
-<footer class="shell-foot"><div class="container"><p>{foot}</p></div></footer>
+<footer class="shell-foot"><div class="container"><p>{foot}</p>{credits_footer("pillars_base")}</div></footer>
+<script>(function(){{var bs=[].slice.call(document.querySelectorAll('.fwins [data-win]'));if(!bs.length)return;
+function pick(w){{bs.forEach(function(b){{b.setAttribute('aria-pressed',b.getAttribute('data-win')===w?'true':'false');}});
+[].forEach.call(document.querySelectorAll('.fwin'),function(d){{d.hidden=d.getAttribute('data-win')!==w;}});}}
+bs.forEach(function(b){{b.addEventListener('click',function(){{pick(b.getAttribute('data-win'));}});}});pick('{dflt}');}})();</script>
 </body></html>"""
     with open(CONG_OUT, "w", encoding="utf-8") as f:
         f.write(page)

@@ -14,28 +14,76 @@ _STREET = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__))
 _CONGRESS = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data",
                                         "market_intel", "congress_public.json"))
 
-NAV = ('<nav><a href="index.html">Dashboard</a>'
-       '<a href="report.html">Full Report</a>'
-       '<a href="portfolio.html">Portfolio</a>'
-       '<a href="strategies.html">Strategies</a>'
-       '<a href="research.html">Research Notes</a>'
-       '<a href="stocks.html">Stock Research</a>'
-       '<a href="regime.html">Regime Tracker</a>'
-       '<a href="ltcma-consensus.html">Market Intel</a>'
-       + ('<a href="street-ltcma.html">Street LTCMA</a>' if _STREET else '')
-       + ('<a href="congressional-activity.html">Congress</a>' if _CONGRESS else '')
-       + '<a href="projects.html">Projects</a>'
-       '<a href="glossary.html">Glossary</a>'
-       '<a href="index.html#about">About</a></nav>'
-       """<script>document.addEventListener('DOMContentLoaded',function(){var p=(location.pathname.split('/').pop()||'index.html');
-// sub-pages light their parent tab: a backtest report sits under Strategies, a single-stock page under Stock Research
-if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';document.querySelectorAll('nav a').forEach(function(a){if(a.getAttribute('href')===p)a.classList.add('active');});
+# --- the header (2026-11-10 remake). Carlos, written: "manten varias de las pestanas, no purgues todo"
+# + "pon la parte de research en un rincon que se pueda explorar mejor. El fundamento de todo esto, las
+# fuentes". So the market / portfolio pages stay TABS, one click away, and the research material moves
+# into the "Research" corner at the right end of the header: a <details> menu (works without JS, with the
+# keyboard and on touch) listing every research page with a one-line description, the Research Library
+# hub and its Sources section. Every page imports NAV, so this is the one place the header is defined.
+MAIN_TABS = ([("index.html", "Dashboard"), ("portfolio.html", "Portfolio"), ("stocks.html", "Stock Research"),
+              ("regime.html", "Regime Tracker"), ("ltcma-consensus.html", "Market Intel")]
+             + ([("street-ltcma.html", "Street LTCMA")] if _STREET else [])
+             + ([("congressional-activity.html", "Congress")] if _CONGRESS else [])
+             + [("index.html#about", "About")])
+RESEARCH_LINKS = [
+    ("research-library.html", "Research Library", "Search every published note, backtest, project and report section"),
+    ("report.html", "Full Report", "The 12-year model: method, return tables and limits"),
+    ("research.html", "Research Notes", "The research record, negative results included"),
+    ("strategies.html", "Strategies", "The strategy catalogue and its backtest reports"),
+    ("projects.html", "Projects", "The public repositories behind this site"),
+    ("glossary.html", "Glossary", "Plain-language definitions of every term"),
+    ("research-library.html#sources", "Sources", "Every data source and publisher behind the public pages"),
+]
+# pages that light the Research corner (sub-pages map to their parent in the script below)
+RESEARCH_PAGES = sorted({h.split("#")[0] for h, _, _ in RESEARCH_LINKS})
+# Sub-pages and the tab / corner entry they light (the same mapping as the header script below). Every page under
+# docs/ is a main tab, a Research-corner page, one of these, or a redirect stub: tools/ds_gate.py R1 enforces it.
+SUBPAGES = [(r"bt_[a-z0-9_]+\.html", "strategies.html"), (r"stock_[A-Z.\-]+\.html", "stocks.html"),
+            (r"archive/report_[0-9\-]+\.html", "report.html")]
+_BOOK = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+         'aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/>'
+         '<path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>')
+_CARET = ('<svg class="car" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+          'stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>')
+# Round 1 (2026-11-10 review): the corner sits in its own navigation landmark (a div with role=navigation, not a
+# second <nav>: the legacy style.css styles every bare `nav` / `nav a` as the old tab bar, which would clip the menu);
+# the script runs right after this markup, so the active tab / corner state is set before the first paint (V11); a
+# keyboard focus leaving the menu closes it (V5); the tab row fades on the side where a tab is cut (V2); --hdr keeps
+# anchors and sticky table heads below the header (V4).
+NAV = ('<nav class="tabs" aria-label="Main">'
+       + "".join(f'<a href="{h}">{t}</a>' for h, t in MAIN_TABS)
+       + '</nav><div class="rcn" role="navigation" aria-label="Research"><details class="rc">'
+       '<summary aria-label="Research corner: research pages and sources">'
+       + _BOOK + 'Research' + _CARET + '</summary><div class="rc-menu">'
+       '<p class="rc-k">The foundation: model, research, sources</p>'
+       + "".join('<a href="%s"%s><b>%s</b><span>%s</span></a>' % (h, ' class="rc-src"' if "#" in h else "", t, d)
+                 for h, t, d in RESEARCH_LINKS)
+       + '</div></details></div>'
+       """<script>(function(){var d=document.documentElement;d.classList.add('js');
+var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';
+var sh=document.querySelector('.shell'),nv=sh&&sh.querySelector('nav.tabs'),rc=sh&&sh.querySelector('details.rc');
+if(nv)[].forEach.call(nv.querySelectorAll('a'),function(a){if(a.getAttribute('href')===p){a.classList.add('active');a.setAttribute('aria-current','page');}});
+if(rc){[].forEach.call(rc.querySelectorAll('.rc-menu a'),function(a){if(a.getAttribute('href')===p){a.setAttribute('aria-current','page');rc.classList.add('active');}});
+document.addEventListener('click',function(e){if(rc.open&&!rc.contains(e.target))rc.open=false;});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&rc.open){rc.open=false;rc.querySelector('summary').focus();}});
+rc.addEventListener('focusout',function(e){if(rc.open&&e.relatedTarget&&!rc.contains(e.relatedTarget))rc.open=false;});}
+function fade(){if(!nv)return;var m=nv.scrollWidth-nv.clientWidth;nv.classList.toggle('fl',m>1&&nv.scrollLeft>1);nv.classList.toggle('fr',m>1&&nv.scrollLeft<m-1);}
+function hdr(){if(sh)d.style.setProperty('--hdr',sh.offsetHeight+'px');fade();}
+if(nv)nv.addEventListener('scroll',fade,{passive:true});
+window.addEventListener('resize',hdr);window.addEventListener('load',hdr);
+try{document.fonts.ready.then(hdr);}catch(_e){}
+document.addEventListener('DOMContentLoaded',function(){
+var a=nv&&nv.querySelector('a.active');if(a&&nv.scrollWidth>nv.clientWidth){var r=a.getBoundingClientRect(),q=nv.getBoundingClientRect();
+nv.scrollLeft=Math.max(0,nv.scrollLeft+(r.left-q.left)-(q.width-r.width)/2);}
+hdr();var rd=function(){d.classList.add('ready');};requestAnimationFrame(function(){requestAnimationFrame(rd);});setTimeout(rd,400);
 // subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
 try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
 document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoundingClientRect();if(r.top<window.innerHeight){el.classList.add('vis');return;}el.classList.add('rv');io.observe(el);});
 setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
-});</script>"""
+});})();</script>"""
        + MOBILE_CHARTS_JS)
 
 
