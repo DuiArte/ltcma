@@ -3,32 +3,32 @@
 <title>Carlos Duarte — Projects</title>
 <meta name="description" content="A portfolio of quantitative-research projects by Carlos Duarte — methodology, deployed strategies and tooling, each linking to its own GitHub repository.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="style.css">
+<script>(function(){var d=document.documentElement,p='auto',m=false;try{p=localStorage.getItem('ltcma-theme')||'auto';}catch(e){}if(p!=='light'&&p!=='dark')p='auto';try{m=window.matchMedia('(prefers-color-scheme: dark)').matches;}catch(e){}d.setAttribute('data-theme-pref',p);d.setAttribute('data-theme',p==='dark'||(p==='auto'&&m)?'dark':'light');})();</script><link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="_design_system/theme.css"><link rel="stylesheet" href="style.css">
 <style>
 .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem;margin-top:8px}
-.proj-card{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:0;
-padding:20px 22px;text-decoration:none;color:#111;transition:background .15s ease-out,border-color .15s ease-out}
-.proj-card:hover{border-color:#d4d4d4;background:rgba(10,37,64,.045)}
+.proj-card{display:block;background:var(--panel,#fff);border:1px solid var(--l-line,#e5e5e5);border-radius:0;
+padding:20px 22px;text-decoration:none;color:var(--l-ink,#111);transition:background .15s ease-out,border-color .15s ease-out}
+.proj-card:hover{border-color:var(--l-line2,#d4d4d4);background:var(--l-tint45,rgba(10,37,64,.045))}
 .proj-soon{opacity:.7}
-.proj-top{display:flex;align-items:center;gap:8px;color:#111;margin-bottom:10px}
+.proj-top{display:flex;align-items:center;gap:8px;color:var(--l-ink,#111);margin-bottom:10px}
 .gh-mark{flex:none}
 .proj-handle{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;font-size:13px;
-color:#0a2540;font-weight:500;word-break:break-all}
+color:var(--accent,#0a2540);font-weight:500;word-break:break-all}
 .proj-name{font-family:'Spectral',Georgia,serif;font-size:18px;font-weight:500;margin-bottom:6px}
-.proj-desc{font-size:14px;color:#555;margin:0 0 16px;line-height:1.55}
+.proj-desc{font-size:14px;color:var(--l-sec,#555);margin:0 0 16px;line-height:1.55}
 .proj-updated{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;
-font-size:11.5px;color:#888;margin:-6px 0 14px}
+font-size:11.5px;color:var(--l-muted,#888);margin:-6px 0 14px}
 .proj-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pbadge{font-size:10.5px;font-weight:500;padding:3px 9px;border-radius:0;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent}
-.badge-deployed{background:none;color:#0a5d3a;border-color:rgba(10,93,58,.35)}
-.badge-research{background:none;color:#1e3a8a;border-color:rgba(30,58,138,.35)}
-.badge-tooling{background:none;color:#5b21b6;border-color:rgba(91,33,182,.35)}
-.badge-soon{background:none;color:#6b7280;border-color:#e5e5e5}
+.badge-deployed{background:none;color:var(--pos,#0a5d3a);border-color:var(--l-pos-line,rgba(10,93,58,.35))}
+.badge-research{background:none;color:var(--st-blue,#1e3a8a);border-color:var(--l-blue-line,rgba(30,58,138,.35))}
+.badge-tooling{background:none;color:var(--st-purple,#5b21b6);border-color:var(--l-purple-line,rgba(91,33,182,.35))}
+.badge-soon{background:none;color:var(--st-gray,#6b7280);border-color:var(--l-line,#e5e5e5)}
 .proj-cta{margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;
-font-size:12px;font-weight:500;color:#0a2540}
+font-size:12px;font-weight:500;color:var(--accent,#0a2540)}
 </style></head>
 <body><header class="shell"><div class="shell-in">
-<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav class="tabs" aria-label="Main"><a href="index.html">Dashboard</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="congressional-activity.html">Congress</a><a href="index.html#about">About</a></nav><div class="rcn" role="navigation" aria-label="Research"><details class="rc"><summary aria-label="Research corner: research pages and sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>Research<svg class="car" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><div class="rc-menu"><p class="rc-k">The foundation: model, research, sources</p><a href="research-library.html"><b>Research Library</b><span>Search every published note, backtest, project and report section</span></a><a href="report.html"><b>Full Report</b><span>The 12-year model: method, return tables and limits</span></a><a href="research.html"><b>Research Notes</b><span>The research record, negative results included</span></a><a href="strategies.html"><b>Strategies</b><span>The strategy catalogue and its backtest reports</span></a><a href="projects.html"><b>Projects</b><span>The public repositories behind this site</span></a><a href="glossary.html"><b>Glossary</b><span>Plain-language definitions of every term</span></a><a href="research-library.html#sources" class="rc-src"><b>Sources</b><span>Every data source and publisher behind the public pages</span></a></div></details></div><script>(function(){var d=document.documentElement;d.classList.add('js');
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span><nav class="tabs" aria-label="Main"><a href="index.html">Dashboard</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="congressional-activity.html">Congress</a><a href="index.html#about">About</a></nav><div class="rcn" role="navigation" aria-label="Research"><details class="rc"><summary aria-label="Research corner: research pages and sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>Research<svg class="car" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><div class="rc-menu"><p class="rc-k">The foundation: model, research, sources</p><a href="research-library.html"><b>Research Library</b><span>Search every published note, backtest, project and report section</span></a><a href="report.html"><b>Full Report</b><span>The 12-year model: method, return tables and limits</span></a><a href="research.html"><b>Research Notes</b><span>The research record, negative results included</span></a><a href="strategies.html"><b>Strategies</b><span>The strategy catalogue and its backtest reports</span></a><a href="projects.html"><b>Projects</b><span>The public repositories behind this site</span></a><a href="glossary.html"><b>Glossary</b><span>Plain-language definitions of every term</span></a><a href="research-library.html#sources" class="rc-src"><b>Sources</b><span>Every data source and publisher behind the public pages</span></a></div></details></div><button type="button" class="thm" id="thm" aria-label="Colour theme: Auto (follows your device). Activate to switch between light and dark." title="Theme: Auto (follows your device)"><svg class="ti-a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5z" fill="currentColor" stroke="none"/></svg><svg class="ti-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg><svg class="ti-d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M20 14.6A8.5 8.5 0 0 1 9.4 4a8.5 8.5 0 1 0 10.6 10.6z"/></svg></button><span class="thm-st" id="thm-st" role="status" aria-live="polite"></span><script>(function(){var d=document.documentElement;d.classList.add('js');
 var p=(location.pathname.split('/').pop()||'index.html');
 // sub-pages light their parent: a backtest report sits under Strategies, a single-stock page under Stock Research
 if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';
@@ -190,6 +190,88 @@ function retry(){[0,250,900,2000,3500].forEach(function(ms){setTimeout(tune,ms);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',retry);else retry();
 var tid;function later(){clearTimeout(tid);tid=setTimeout(tune,160);}
 window.addEventListener('resize',later);window.addEventListener('orientationchange',later);
+})();</script><script>(function(){
+var d=document.documentElement;if(!d.hasAttribute('data-theme-pref'))return;   /* page not themed: stay light, control hidden */
+var K='ltcma-theme',LB={auto:'Auto (follows your device)',light:'Light',dark:'Dark'},
+MQ=null,PRINT=false;try{MQ=window.matchMedia('(prefers-color-scheme: dark)');}catch(e){}
+function pref(){var p=d.getAttribute('data-theme-pref');return p==='light'||p==='dark'?p:'auto';}
+function eff(p){return p==='dark'||(p==='auto'&&MQ&&MQ.matches)?'dark':'light';}
+function sys(){return MQ&&MQ.matches?'dark':'light';}
+/* the next look is always the other one; if that is the device's own, the choice is Auto again (follow the device) */
+function nx(){var o=eff(pref())==='dark'?'light':'dark';return o===sys()?'auto':o;}
+/* theme.css sets --thm-ok: if it did not load, the page is light and so are its charts */
+function ok(){try{return getComputedStyle(d).getPropertyValue('--thm-ok').trim()==='1';}catch(e){return true;}}
+function cur(){return PRINT||!ok()?'light':(d.getAttribute('data-theme')==='dark'?'dark':'light');}
+function ui(){var b=document.getElementById('thm');if(!b)return;var p=pref(),n=nx(),lk=eff(n)==='dark'?'Dark':'Light';
+b.setAttribute('data-mode',p);
+b.setAttribute('aria-label','Colour theme: '+LB[p]+'. Activate for '+lk+(n==='auto'?' (follows your device)':'')+'.');
+b.title='Theme: '+LB[p];}
+function set(p,save,say){d.setAttribute('data-theme-pref',p);d.setAttribute('data-theme',eff(p));
+if(save){try{localStorage.setItem(K,p);}catch(e){}}ui();all();
+if(say){var s=document.getElementById('thm-st');if(s)s.textContent=LB[p].split(' (')[0]+' theme'+(p==='auto'?', now '+eff(p):'');}
+try{window.dispatchEvent(new CustomEvent('ltcma-theme',{detail:{pref:p,theme:eff(p)}}));}catch(e){}}
+/* ---- charts: ONE light->dark map (design_system.CHART_DARK), inverted for the way back ---- */
+var MAP={"#ffffff":"#171B21","#111111":"#E9E7E2","#2a3f5f":"#D9DEE6","#0a2540":"#8DB4EC","#5b7c99":"#3D70D6","#0f766e":"#3CB7A8","#9aa5b1":"#808389","#b6bec8":"#6F7A8A","#e5e5e5":"#2B3139","#d4d4d4":"#3D444E","#ebf0f8":"#343B45","#c9c9c9":"#59616D","#888888":"#A3A3A3","#666666":"#AEB4BE","#555555":"#B9BFC8","#6b7280":"#8C93A0","#0a5d3a":"#55C08A","#7c2d12":"#F08A62","#f1f1f1":"#22272F","#f4f4f2":"#2A2F37","#7fb3ad":"#2F6F68","#7e97b3":"#4E6688","#8a3ffc":"#B58CFF","#009d9a":"#2EC4C0","#fa4d56":"#E25083","#0f5e9c":"#74B6EE","#c2410c":"#F4925F","#b45309":"#F0A65A","rgba(255,255,255,.97)":"rgba(31,36,44,.97)","rgba(15,98,254,0.13)":"rgba(120,170,255,0.16)","rgba(10,37,64,0.07)":"rgba(141,180,236,0.10)","rgba(10,37,64,0.12)":"rgba(141,180,236,0.16)","rgba(154,165,177,0.20)":"rgba(128,131,137,0.24)","rgba(154,165,177,0.12)":"rgba(128,131,137,0.15)","rgba(15,118,110,0.08)":"rgba(60,183,168,0.11)"},NM={white:'255,255,255,1',black:'0,0,0,1',transparent:'0,0,0,0'},FW={},BW={};
+function r3(a){return String(Math.round(a*1000)/1000);}
+function cn(c){if(typeof c!=='string')return null;var s=c.replace(/\s+/g,'').toLowerCase(),m,h,p;if(NM[s])return NM[s];
+if(s.charAt(0)==='#'){h=s.slice(1);if(h.length===3||h.length===4)h=h.replace(/./g,'$&$&');if(h.length===6)h+='ff';
+if(!/^[0-9a-f]{8}$/.test(h))return null;return parseInt(h.substr(0,2),16)+','+parseInt(h.substr(2,2),16)+','+parseInt(h.substr(4,2),16)+','+r3(parseInt(h.substr(6,2),16)/255);}
+m=/^rgba?\(([^)]*)\)$/.exec(s);if(!m)return null;p=m[1].split(',');if(p.length<3)return null;
+return Math.round(+p[0])+','+Math.round(+p[1])+','+Math.round(+p[2])+','+r3(p.length>3?+p[3]:1);}
+for(var k in MAP){var a=cn(k),b=cn(MAP[k]);if(a&&b){FW[a]=MAP[k];BW[b]=k;}}
+function mc(c,T){var k=cn(c);if(k===null)return c;if(T[k]!==undefined)return T[k];var i=k.lastIndexOf(','),al=k.slice(i+1),t;
+if(al!=='1'&&al!=='0'){t=T[k.slice(0,i)+',1'];if(t!==undefined){var q=cn(t).split(',');return 'rgba('+q[0]+','+q[1]+','+q[2]+','+al+')';}}return c;}
+var RX=/(colou?r\s*:\s*)(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\))/g;
+function ms(s,T){return (typeof s==='string'&&s.indexOf('olo')>=0)?s.replace(RX,function(_,p,c){return p+mc(c,T);}):s;}
+function mv(v,T,str){if(typeof v==='string')return str?ms(v,T):mc(v,T);
+if(Array.isArray(v))return v.map(function(x){return (typeof x==='string'||Array.isArray(x))?mv(x,T,str):x;});return v;}
+function eq(a,b){return a===b||JSON.stringify(a)===JSON.stringify(b);}
+function gp(o,p){var s=p.split('.');for(var i=0;i<s.length;i++){if(o===null||o===undefined)return undefined;o=o[s[i]];}return o;}
+var TC=['line.color','marker.color','marker.colors','marker.line.color','fillcolor','textfont.color','insidetextfont.color',
+'outsidetextfont.color','error_x.color','error_y.color','hoverlabel.bgcolor','hoverlabel.bordercolor','hoverlabel.font.color',
+'colorscale','marker.colorscale','connector.line.color','increasing.line.color','decreasing.line.color',
+'increasing.marker.color','decreasing.marker.color','totals.marker.color','colorbar.tickfont.color','colorbar.title.font.color',
+'marker.colorbar.tickfont.color','marker.colorbar.title.font.color','colorbar.bgcolor','colorbar.bordercolor','colorbar.outlinecolor'],
+TS=['text','hovertext','hovertemplate','texttemplate'],TD=['line.color','marker.color','fillcolor'],
+LF=['paper_bgcolor','plot_bgcolor','font.color'],AF=['gridcolor','linecolor','zerolinecolor','tickcolor','spikecolor'],
+LU=['title.font.color','legend.bgcolor','legend.bordercolor','legend.font.color','legend.title.font.color','hoverlabel.bgcolor',
+'hoverlabel.bordercolor','hoverlabel.font.color','coloraxis.colorbar.tickfont.color','coloraxis.colorbar.title.font.color'];
+function th(g){if(!g||!g._fullLayout||!g.data||!window.Plotly)return;var T=cur()==='dark'?FW:BW,F=g._fullLayout,L=g.layout||{},lu={};
+function put(p,v,str){if(v===undefined||v===null)return;var w=mv(v,T,str);if(!eq(w,v))lu[p]=w;}
+LF.forEach(function(p){put(p,gp(F,p));});
+Object.keys(F).forEach(function(ax){if(!/^[xy]axis\d*$/.test(ax))return;AF.forEach(function(p){put(ax+'.'+p,gp(F[ax],p));});
+['tickfont.color','title.font.color'].forEach(function(p){put(ax+'.'+p,gp(L[ax],p));});put(ax+'.title.text',gp(L[ax],'title.text'),true);});
+LU.forEach(function(p){put(p,gp(L,p));});put('title.text',gp(L,'title.text'),true);
+(L.annotations||[]).forEach(function(a,i){['font.color','bgcolor','bordercolor','arrowcolor'].forEach(function(p){put('annotations['+i+'].'+p,gp(a,p));});
+put('annotations['+i+'].text',a.text,true);});
+(L.shapes||[]).forEach(function(s,i){['line.color','fillcolor','label.font.color'].forEach(function(p){put('shapes['+i+'].'+p,gp(s,p));});});
+var ch={},idx=[],fd=g._fullData||[];
+g.data.forEach(function(t,i){var f=null;fd.some(function(x){if(x.index===i){f=x;return true;}return false;});
+function tr(p,str){var v=gp(t,p);if(v===undefined&&!str&&f&&f.visible!==false&&TD.indexOf(p)>=0)v=gp(f,p);
+if(v===undefined||v===null)return;var w=mv(v,T,str);if(!eq(w,v)){(ch[p]=ch[p]||{})[i]=w;if(idx.indexOf(i)<0)idx.push(i);}}
+TC.forEach(function(p){tr(p,false);});TS.forEach(function(p){tr(p,true);});});
+if(!Object.keys(lu).length&&!idx.length)return;
+var now=Date.now();if(!g.__thT||now-g.__thT>1500){g.__thT=now;g.__thN=0;}if(++g.__thN>6)return;   /* safety valve */
+var tu={};Object.keys(ch).forEach(function(p){tu[p]=idx.map(function(i){return ch[p][i];});});
+try{window.Plotly.update(g,tu,lu,idx.length?idx:undefined);}catch(e){}}
+function hook(g){if(!g||g.__thh||!g.on)return;g.__thh=true;var q=false,f=function(){if(q)return;q=true;
+Promise.resolve().then(function(){q=false;th(g);});};
+['plotly_afterplot','plotly_restyle','plotly_relayout','plotly_update'].forEach(function(e){g.on(e,f);});}
+function all(){[].forEach.call(document.querySelectorAll('.js-plotly-plot'),function(g){hook(g);th(g);});}
+function wrap(){var P=window.Plotly;if(!P||P.__thw||!P.newPlot)return;P.__thw=true;var np=P.newPlot;
+P.newPlot=function(g){var r=np.apply(this,arguments),el=typeof g==='string'?document.getElementById(g):g;
+try{hook(el);if(el&&el._fullLayout)th(el);}catch(e){}if(r&&r.then)r.then(function(){try{hook(el);th(el);}catch(e){}});return r;};}
+wrap();
+function wire(){var b=document.getElementById('thm');if(b&&!b.__thw){b.__thw=true;b.addEventListener('click',function(){set(nx(),true,true);});}ui();}
+wire();document.addEventListener('DOMContentLoaded',function(){wrap();wire();all();});window.addEventListener('load',all);
+/* Auto follows the system: the MediaQueryList change event, and -- for a change that event missed (a tab in the
+   background, some embedded browsers) -- a re-check whenever the page is focused or shown again */
+var mf=function(){if(pref()==='auto'&&d.getAttribute('data-theme')!==eff('auto'))set('auto',false,false);else ui();};
+if(MQ){if(MQ.addEventListener)MQ.addEventListener('change',mf);else if(MQ.addListener)MQ.addListener(mf);}
+window.addEventListener('focus',mf);document.addEventListener('visibilitychange',function(){if(!document.hidden)mf();});
+window.addEventListener('storage',function(e){if(e.key===K){var p=e.newValue;set(p==='light'||p==='dark'?p:'auto',false,false);}});
+window.addEventListener('beforeprint',function(){PRINT=true;all();});window.addEventListener('afterprint',function(){PRINT=false;all();});
+window.ltcmaTheme={set:function(p){set(p==='light'||p==='dark'?p:'auto',true,false);},pref:pref,theme:cur,apply:all,map:function(c,dk){return mc(c,dk?FW:BW);}};
 })();</script>
 </div></header>
 <section class="hero"><div class="container"><h1>Projects</h1>
