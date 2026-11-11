@@ -11,6 +11,7 @@ from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
                       bt_indicators, bt_g100, BT_JS)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import hero, photo, credits_footer, ET_CSS, TABS_JS   # 2026-11-10 remake
+from design_system import themed, themed_css   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 import design_system
 
 import paths
@@ -316,7 +317,7 @@ CHARTS = [
  ("lambda", f4, False, "How the expected return shifts depending on how "
   "strongly we assume expensive markets cool back down (the λ dial: 0 = today's "
   "valuations persist, 1 = they fully revert to their long-run norm)."),
- ("correlation", f5, True, "Which assets move together (dark blue) and which move in "
+ ("correlation", f5, True, "Which assets move together (blue) and which move in "
   "opposite directions (teal). Opposites are what makes diversification work."),
  ("regimes", f6, True, "Two news-based gauges of how tense the world is. "
   "Shaded bands are 'stress' months when markets get jumpier."),
@@ -537,48 +538,12 @@ try:
     # MWRR = the exact IRR of every dated trade (money_weighted.py), not P&L / peak capital
     # (Carlos, 2026-10-07: "el mas objetivo posible") - same figure as portfolio.html.
     _mw = _mwr(_pk["curve"], _pk["markers"])
-    _tiles = [
-        ("MWRR", _pp(_mw["book_usd"]), _pp(_mw["book_mxn"]),
-         "what the money earned (IRR since the first trade)"),
-        ("TWRR", _pp(_y["book_usd"]), _pp(_y["book_mxn"]),
-         "what the decisions earned, year to date"),
-        ("S&P 500", _pp(_y["spy_usd"]), _pp(_y["spy_mxn"]),
-         '<span class="cval" data-usd="index total return YTD, USD" '
-         'data-mxn="index total return YTD, MXN">index total return YTD, USD</span>'),
-        ("Alpha", f"{(_y['book_usd']-_y['spy_usd'])*100:+.2f} pp",
-         f"{(_y['book_mxn']-_y['spy_mxn'])*100:+.2f} pp",
-         f'<span class="cval" data-usd="USD TWRR ({_pp(_y["book_usd"])}) less the S&amp;P YTD" '
-         f'data-mxn="MXN TWRR ({_pp(_y["book_mxn"])}) less the S&amp;P YTD in MXN">'
-         f'USD TWRR ({_pp(_y["book_usd"])}) less the S&amp;P YTD</span>'),
-    ]
-    _cells = "".join(
-        f'<div class="metric"><div class="mv">'
-        f'<span class="cval" data-mxn="{m}" data-usd="{u}">{u}</span></div>'
-        f'<div class="mk">{k}</div><div class="mh">{h}</div></div>'
-        for k, u, m, h in _tiles)
-    PF_CARD = f"""<section class="block"><h2>Live Portfolio</h2>
-<div class="ccy-toggle">
-<button data-cur="usd" class="active" onclick="setCurrency('usd')">USD</button>
-<button data-cur="mxn" onclick="setCurrency('mxn')">MXN</button></div>
-<p class="note">The real equity book. <b>Two returns, because they answer different
-questions:</b> MWRR is what the money earned &mdash; the internal rate of return of every
-dated trade &mdash; and TWRR is what the decisions earned with the flows stripped out; only
-the second can fairly be set against an index's year. Full detail, holdings and
-the trade-by-trade curve on the <a href="portfolio.html">Portfolio</a> page.</p>
-<div class="metrics" style="grid-template-columns:repeat(4,1fr)">{_cells}</div>
-<p class="note" style="margin-top:.9rem">Book as of {_pk['as_of']} &middot; share counts
-independently reconciled to {_pk.get('recon_asof', 'n/a')} &middot; returns are exact
-(display scaling cancels in a ratio) &middot; <a href="portfolio.html">see the full book
-&rarr;</a></p>
-<script>
-function setCurrency(c){{
-  document.querySelectorAll('.cval').forEach(function(e){{
-    if(e.dataset[c])e.textContent=e.dataset[c];}});
-  document.querySelectorAll('.ccy-toggle button').forEach(function(b){{
-    b.classList.toggle('active',b.dataset.cur===c);}});
-}}
-</script></section>"""
-    print(f"  home: portfolio card (MWRR/IRR {_mw['book_usd']*100:.2f}% / TWRR YTD "
+    # 2026-11-10 wave "no repeats" (Carlos: "corrigelo e intenta que no se repita info en la misma pestana"): the old
+    # "Live Portfolio" section restated the hero panel, the Hold card and the Portfolio hub card. It is MERGED into
+    # the Hold card below (its explanation, its reconciliation date and its MXN figures move there); PF_CARD stays
+    # only as the "the sidecar loaded" flag the blocks below test, and no longer renders a section of its own.
+    PF_CARD = "loaded"
+    print(f"  home: portfolio figures (MWRR/IRR {_mw['book_usd']*100:.2f}% / TWRR YTD "
           f"{_y['book_usd']*100:.2f}% / alpha vs S&P YTD {(_y['book_usd']-_y['spy_usd'])*100:+.2f} pp)")
 except FileNotFoundError:
     print("  home: no peak sidecar -> portfolio card omitted")
@@ -645,9 +610,9 @@ try:
             for _lab, v, _c in _EXP)
         _EXP_HTML = (
             '<article class="xcard"><p class="xk"><i>1</i>Expect &middot; the 12-year model</p>'
-            f'<p class="xh">Of these six, the model expects {_hi[0]} to return the most over the next 12 years '
-            f'({_hi[1]:.1f}% a year) and {_lo[0]} '
-            f'the least ({_lo[1]:.1f}%).</p>'
+            # the figures are the bars right below: the sentence names the ends, it does not restate them
+            f'<p class="xh">Of these six, the model expects {_hi[0]} to return the most each year over the next 12 years '
+            f'and {_lo[0]} the least.</p>'
             f'<div class="bars">{_rows}</div>'
             f'<p class="xn">Expected return a year, nominal USD, base case (the model run of {MODEL_ASOF}); a model '
             'estimate, not a promise. <a href="#model">Model output &darr;</a></p></article>')
@@ -660,22 +625,38 @@ try:
     if PF_CARD:
         _tw, _sp5, _mwr_s = _pp(_y["book_usd"]), _pp(_y["spy_usd"]), _pp(_mw["book_usd"])
         _al = f"{(_y['book_usd'] - _y['spy_usd']) * 100:+.2f} pp"
-        for _lbl, _val in (("TWRR", _tw), ("S&P 500", _sp5), ("MWRR", _mwr_s), ("alpha", _al)):
-            _chk(f"hold {_lbl} = Live Portfolio tile", f'data-usd="{_val}"' in PF_CARD)
+        _twm, _spm, _mwm = _pp(_y["book_mxn"]), _pp(_y["spy_mxn"]), _pp(_mw["book_mxn"])
+        _alm = f"{(_y['book_mxn'] - _y['spy_mxn']) * 100:+.2f} pp"
         _up = _y["book_usd"] >= 0
         _ahead = _y["book_usd"] >= _y["spy_usd"]
-        _gap = abs(_y["book_usd"] - _y["spy_usd"]) * 100
+        _ahead_m = _y["book_mxn"] >= _y["spy_mxn"]
         _kp = lambda v, lab, key: (f'<div class="kpi"><b data-sum="{key}">{v}</b><span>{lab}</span></div>')
+        # 2026-11-10 wave "no repeats": ONE place per figure per screen. From 641 px up the hero panel shows the
+        # dollar figures, so the card's dollar row is phones-only (.ph-only: the panel is hidden there); the peso row
+        # (the old Live Portfolio's MXN view) and the explanation of the two returns are shown everywhere. The
+        # sentence names the direction, the tiles carry the numbers.
+        _dir = (f'{"ahead of" if _ahead else "behind"} the S&amp;P 500 this year, time-weighted, in dollars and in pesos'
+                if _ahead == _ahead_m else
+                f'{"ahead of" if _ahead else "behind"} the S&amp;P 500 this year in dollars and '
+                f'{"ahead of" if _ahead_m else "behind"} it in pesos, time-weighted')
         _HOLD_HTML = (
             f'<article class="xcard" data-sum-asof="{_pk["as_of"]}"><p class="xk"><i>2</i>Hold &middot; what I own</p>'
-            f'<p class="xh">My real equity book is {"up" if _up else "down"} '
-            f'<span data-sum="hold:twrr_abs">{abs(_y["book_usd"]) * 100:.2f}%</span> this year '
-            f'(time-weighted, USD) against {_sp5} for the S&amp;P 500: <span data-sum="hold:gap">{_gap:.2f}</span> points '
-            f'{"ahead of" if _ahead else "behind"} the index.</p>'
-            '<div class="kpis">' + _kp(_tw, "Portfolio TWRR, YTD", "twrr_usd") + _kp(_sp5, "S&amp;P 500, YTD", "spy_usd")
+            f'<p class="xh">My real equity book is {_dir}.</p>'
+            '<p class="kcap ph-only">In dollars</p>'
+            '<div class="kpis ph-only">' + _kp(_tw, "Portfolio TWRR, YTD", "twrr_usd") + _kp(_sp5, "S&amp;P 500, YTD", "spy_usd")
             + _kp(_mwr_s, "Money-weighted", "mwrr_usd") + _kp(_al, "vs the index", "alpha_usd") + '</div>'
-            f'<p class="xn">My own portfolio, shown for transparency (figures through {_pk["as_of"]}); not a recommendation. '
-            '<a href="portfolio.html">The full book &rarr;</a></p></article>')
+            '<p class="kcap">In pesos <span>the same trades; the S&amp;P 500 as SPY &times; USD/MXN</span></p>'
+            '<div class="kpis">' + _kp(_twm, "Portfolio TWRR, YTD", "twrr_mxn") + _kp(_spm, "S&amp;P 500, YTD", "spy_mxn")
+            + _kp(_mwm, "Money-weighted", "mwrr_mxn") + _kp(_alm, "vs the index", "alpha_mxn") + '</div>'
+            # round 1 (review V4): the same facts in about two thirds of the words (the card was a 12-line block)
+            '<p class="xn"><b>TWRR</b> is what the decisions earned, flows removed (the weeks before the first trade at '
+            '0%), the one to set against an index; <b>money-weighted</b> is what the money earned, the IRR of every dated '
+            'trade. '
+            # "Book as of <date>" is the phrase layer 7's content rule for the home reads (refresh_manifest: index)
+            f'Book as of {_pk["as_of"]}; share counts reconciled to {_pk.get("recon_asof", "n/a")}; returns exact '
+            '(the scaling cancels in a ratio). My own portfolio, shown for transparency; not a recommendation; past '
+            'performance is no guide to the future. <a href="portfolio.html#entries">Entries vs the peaks</a> &middot; '
+            '<a href="portfolio.html">the full book &rarr;</a></p></article>')
         _bmax = max(abs(_y["book_usd"]), abs(_y["spy_usd"])) or 1
         # HON-2 (safe default; whether this panel should headline the hero stays Carlos's call): dated, labelled as
         # my own book, not a recommendation
@@ -704,22 +685,31 @@ try:
     _fp = _load_json(f"{D}/market_intel/fed_path_public.json", None)
     if _fp and _fp.get("meetings"):
         _fp_day = (_fp.get("taken_at") or "")[:10]
+        _nx, _fm = _fp["next"], _fp.get("first_likely_move")
+        # wave "no repeats": the Watch card states the next meeting (its three odds); the Fed view draws that
+        # meeting's bar without restating the numbers ("in Watch above") and prints the figures of the later ones
+        _shown = [m["meeting"] for m in _fp["meetings"][:4]]
         for _m in _fp["meetings"][:4]:
             _kk = _m["kalshi"]
             _c, _h, _k = _pcf(_kk["cut"]), _pcf(_kk["hold"]), _pcf(_kk["hike"])
+            _txt = ('<span class="t">next meeting &middot; in Watch above</span>' if _m["meeting"] == _nx["meeting"]
+                    else f'<span class="t">{_c} / {_h} / {_k}</span>')
             _FED_ROWS += (f'<div class="fedrow" data-sum="fed:{_he(_m["meeting"])}"><span class="m">{_he(_m["meeting"])}</span>'
                           f'<div class="stack" role="img" aria-label="cut {_c}, hold {_h}, hike {_k}">'
                           f'<i class="c" style="width:{_kk["cut"] * 100:.1f}%"></i><i class="h" style="width:{_kk["hold"] * 100:.1f}%"></i>'
                           f'<i class="k" style="width:{_kk["hike"] * 100:.1f}%"></i></div>'
-                          f'<span class="t">{_c} / {_h} / {_k}</span></div>')
-        _nx, _fm = _fp["next"], _fp.get("first_likely_move")
+                          f'{_txt}</div>')
         _top = max(("cut", "hold", "hike"), key=lambda x: _nx["kalshi"][x])
-        _WATCH_FED = (f'<div class="wline"><span>{_top.capitalize()} at the next FOMC ({_day(_nx["date"])})</span>'
+        _rest = " &middot; ".join(f"{x} {_pcf(_nx['kalshi'][x])}" for x in ("hold", "cut", "hike") if x != _top)
+        _WATCH_FED = (f'<div class="wline"><span>{_top.capitalize()} at the next FOMC ({_day(_nx["date"])})'
+                      f'<em class="wsub" data-sum="fed_next_rest">{_rest}</em></span>'
                       f'<b class="{"amb" if _top == "hike" else ""}" data-sum="fed_next">{_pcf(_nx["kalshi"][_top])}</b></div>')
         if _fm and _fm["meeting"] != _nx["meeting"]:
+            # a meeting the Fed view lists already shows its odds there: name it and its direction only
+            _fval = ("" if _fm["meeting"] in _shown else f' {_pcf(_fm["prob"])}')
             _WATCH_FED += (f'<div class="wline"><span>First meeting where a move is more likely than not: '
                            f'{_day(_fm["date"])}</span>'
-                           f'<b data-sum="fed_first">{_fm["direction"]} {_pcf(_fm["prob"])}</b></div>')
+                           f'<b data-sum="fed_first">{_fm["direction"]}{_fval}</b></div>')
         elif not _fm:
             _WATCH_FED += '<div class="wline"><span>No meeting in the listed horizon has a move priced above 50%</span><b>&ndash;</b></div>'
 except Exception as _e:  # noqa: BLE001
@@ -750,9 +740,12 @@ except Exception as _e:  # noqa: BLE001
 # --- Today: Markets = the snapshot tiles' own values; Congress = the Market Intel file; picks = the published list
 _TODAY_MK = ""
 try:
-    for _k in ("US 10Y Treasury", "Fed Funds", "10Y Breakeven Inflation", "HY credit spread", "VIX", "USD / MXN"):
+    # wave "no repeats": the old "Market Snapshot" section showed these six tiles again (plus GPR, EPU and the regime).
+    # MERGED here: GPR and EPU join the Markets view, the regime lives in the Watch card (state, sigma and gauge), the
+    # snapshot's note joins this view's note and its #snapshot anchor moves onto this view's heading.
+    for _k in ("US 10Y Treasury", "Fed Funds", "10Y Breakeven Inflation", "HY credit spread", "VIX", "USD / MXN",
+               "Geopolitical Risk (GPR)", "Policy Uncertainty (EPU)"):
         _v = dict(SNAP)[_k]
-        _chk(f"today {_k} = snapshot tile", f'<div class="mv">{_v}</div><div class="mk">{_k}</div>' in snap)
         _TODAY_MK += (f'<div class="mtile"><p class="k">{_k}</p><p class="v" data-sum="mk:{_k}">{_v}</p>'
                       f'<p class="d">{_DELTA.get(_DKEY.get(_k, _k), "")}</p></div>')
 except Exception as _e:  # noqa: BLE001
@@ -801,7 +794,7 @@ try:
                 f'<span class="s">{_he(r["sector"])}</span></a>' for _, r in _lst.head(5).iterrows())
             + '</div>'
             f'<p class="xn" style="margin-top:12px;font-size:12.5px;color:var(--sec)" data-sum-session="{_ses}">'
-            f'The top 5 of the {len(_lst)} names on the published list (list of {_day(_ses)}). '
+            f'The top 5 names on the published list (list of {_day(_ses)}; its size is on the Stock Research card below). '
             f'A listed name stays while it ranks {_ph.STAY}th or better; a new one enters at {_ph.ENTER}th or better. '
             'Research, not a recommendation. <a href="stocks.html">The full list and its track record &rarr;</a></p>')
 except Exception as _e:  # noqa: BLE001
@@ -810,19 +803,29 @@ except Exception as _e:  # noqa: BLE001
 _VIEWS = []
 if _TODAY_MK:
     _VIEWS.append(("markets", "Markets", f'<div class="mtiles">{_TODAY_MK}</div><p class="xn" style="margin-top:12px;font-size:12.5px;'
-                   'color:var(--sec)">Arrows show direction only. Official series publish a day or more late. Sources: FRED, Yahoo '
-                   'Finance. <a href="#snapshot">The full snapshot &darr;</a></p>'))
+                   'color:var(--sec)">Where the market sits and how each reading moved against the one before it. Each tile shows '
+                   'the date of its latest observation: official series (FRED) publish with a lag of a day or more; GPR and '
+                   'EPU are monthly news-based uncertainty indices. Arrows show direction only, not good or bad. Levels in US '
+                   'terms. Sources: FRED, Yahoo Finance, the GPR / EPU indices. The market regime is in the Watch card above. '
+                   'New to a term? See the <a href="glossary.html">Glossary</a>.</p>'))
 if _FED_ROWS:
     _VIEWS.append(("fed", "Fed path", f'<div class="fed" data-fed-taken="{_fp_day}"><div class="lg"><span><i class="c"></i>Cut</span>'
                    '<span><i class="h"></i>Hold</span><span><i class="k"></i>Hike</span></div>' + _FED_ROWS + '</div>'
                    f'<p class="xn" style="margin-top:12px;font-size:12.5px;color:var(--sec)">Kalshi decision markets, '
-                   f'market prices from {_he(_fp_day)}. A price of 0.80 pays out as if the event were 80% '
-                   'likely. <a href="ltcma-consensus.html#odds">Every meeting &rarr;</a></p>'))
+                   f'market prices from {_he(_fp_day)}, cut / hold / hike. Each price reads as the market&rsquo;s implied '
+                   'probability of that outcome. <a href="ltcma-consensus.html#odds">Every meeting &rarr;</a></p>'))
 if _TODAY_CG:
     _VIEWS.append(("congress", "Congress", _TODAY_CG))
 if _TODAY_PK:
     _VIEWS.append(("picks", "Stock picks", _TODAY_PK))
+# containment: if the Markets view could not be built, the full snapshot section comes back (nothing is lost)
+_SNAP_FALLBACK = "" if _TODAY_MK else (
+    f'<section class="block" id="snapshot"><h2>Market Snapshot</h2>{ccy_badge("USD")}'
+    '<p class="note">Where the market sits and how each reading moved against the one before it. Each tile shows the '
+    'date of its latest observation; official series (FRED) publish with a lag of a day or more.</p>'
+    f'<div class="metrics" style="grid-template-columns:repeat(3,1fr)">{snap}</div></section>')
 TODAY = ""
+_TPH_ID ={"markets": ' id="snapshot"'}      # the merged Market Snapshot's anchor (index.html#snapshot keeps resolving)
 if _VIEWS:
     TODAY = (
         '<section class="block panel" id="today" aria-labelledby="today-h">'
@@ -832,7 +835,7 @@ if _VIEWS:
                   f'{lab}</button>' for i, (k, lab, _b) in enumerate(_VIEWS))
         + '</div></div>'
         + "".join(f'<div class="tpanel" id="tp-{k}" role="tabpanel" aria-labelledby="tt-{k}" tabindex="0">'
-                  f'<h3 class="tph">{lab}</h3>{b}</div>' for k, lab, b in _VIEWS)
+                  f'<h3 class="tph"{_TPH_ID.get(k, "")}>{lab}</h3>{b}</div>' for k, lab, b in _VIEWS)
         + '</section>')
 
 # --- hub cards: one big number per card, each figure from the data the page it opens is built from; each carries
@@ -849,8 +852,12 @@ def _hub(fn, what):
         _warn(f"{what} hub card", _e)
 
 
-_hub(lambda: ("portfolio.html", "Portfolio", _HOLD_TWRR, "time-weighted return this year, USD",
-              "Holdings, FX attribution, realized P&amp;L and the trade-by-trade curve", "") if _HOLD_TWRR else None,
+# wave "no repeats": the Portfolio card's big number was the TWRR the hero panel and the Hold card already show; it is
+# now the number of open positions (the sidecar's positions = the rows of portfolio.html's Holdings table, R6)
+_hub(lambda: ("portfolio.html", "Portfolio", f"{len(_pk['positions'])} holdings",
+              f"open positions in my book, marked through {_day(_pk['as_of'])}",
+              "Holdings, FX attribution, realized P&amp;L, the trade-by-trade curve and entries vs the peaks",
+              f' data-sum-asof="{_pk["as_of"]}"') if _HOLD_TWRR and _pk.get("positions") else None,
      "Portfolio")
 _cons = _load_json(f"{D}/market_intel/consensus_public.json", None)
 _hub(lambda: ("ltcma-consensus.html", "Market Intel", f"{len(_cma_firms(_cons['publishers']))} firms",
@@ -861,9 +868,12 @@ _hub(lambda: ("congressional-activity.html", "Congress", f"{len(_cg['rows']):,} 
               f"filed by members in the 13 weeks through {_day(_cg['as_of'])}",
               "Signals, the most active members, sector flows", f' data-cg-asof="{_cg_day}"') if _cg else None,
      "Congress")
-_hub(lambda: ("regime.html", "Regime Tracker", _rs["state"].capitalize(), "composite market stress state",
-              "Stress index from volatility, credit, the curve, geopolitics and policy uncertainty", "") if _rs else None,
-     "Regime Tracker")
+# wave "no repeats": the state is in the Watch card (with its sigma and gauge); the card shows how long it has lasted
+_hub(lambda: ("regime.html", "Regime Tracker",
+              f"{int(_rs['months_in_state'])} month{'' if int(_rs['months_in_state']) == 1 else 's'}",
+              "in the current regime of the composite market stress index",
+              "Stress index from volatility, credit, the curve, geopolitics and policy uncertainty", "")
+     if _rs and _rs.get("months_in_state") is not None else None, "Regime Tracker")
 _hub(lambda: ("stocks.html", "Stock Research", f"{len(_lst)} picks", f"on the list of {_day(_ses)}, ranked every weekday",
               "Composite picks, the pick tracker, macro signals and CFA company reports",
               f' data-sum-session="{_ses}"') if _TODAY_PK else None, "Stock Research")
@@ -919,14 +929,7 @@ INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 {SUMMARY}
 {TODAY}
 {HUBS}
-{PF_CARD}
-<section class="block" id="snapshot"><h2>Market Snapshot</h2>{ccy_badge("USD")}
-<p class="note">Where the market sits and how each reading moved against the one
-before it. Each tile shows the date of its latest observation &mdash; official series
-(FRED) publish with a lag of a day or more. Refreshed daily from public data (FRED, Yahoo
-Finance, GPR / EPU uncertainty indices). Arrows show direction only, not good or bad. New to a term? See
-the <a href="glossary.html">Glossary</a>.</p>
-<div class="metrics" style="grid-template-columns:repeat(3,1fr)">{snap}</div></section>
+{_SNAP_FALLBACK}
 <section class="block" id="model"><h2>Model Output</h2>
 {ccy_badge("USD", "all expected returns are in US dollars")}
 <p class="note"><b>Long-Term Capital Market Assumptions.</b> A proprietary 12-year forward outlook for global asset
@@ -958,7 +961,7 @@ forward-looking estimates, not guarantees; actual outcomes will differ.
 This is research, not investment advice.</p>{credits_footer("cliffs")}</div></footer>
 {TABS_JS}
 </body></html>"""
-open(f"{DOCS}/index.html", "w", encoding="utf-8").write(INDEX)
+open(f"{DOCS}/index.html", "w", encoding="utf-8").write(themed(INDEX, "index.html"))
 
 # ---------- report.html ----------
 for f in os.listdir(f"{REP}/figures"):
@@ -988,7 +991,7 @@ REPORT = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 advice.</p></div></footer></body></html>"""
 if REPORT_ARCHIVED:
     os.makedirs(f"{DOCS}/archive", exist_ok=True)
-    open(f"{DOCS}/{ARCHIVE_PATH}", "w", encoding="utf-8").write(REPORT)
+    open(f"{DOCS}/{ARCHIVE_PATH}", "w", encoding="utf-8").write(themed(REPORT, ARCHIVE_PATH))
     open(f"{DOCS}/report.html", "w", encoding="utf-8").write(
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         f'<meta http-equiv="refresh" content="0; url={ARCHIVE_PATH}">'
@@ -1000,7 +1003,7 @@ if REPORT_ARCHIVED:
     print(f"  report.html -> {ARCHIVE_PATH} (edition {REPORT_ASOF:%d %b %Y} vs model "
           f"{MODEL_ASOF}: archived until TAB_RESYNC, D-20260924-004)")
 else:
-    open(f"{DOCS}/report.html", "w", encoding="utf-8").write(REPORT)
+    open(f"{DOCS}/report.html", "w", encoding="utf-8").write(themed(REPORT, "report.html"))
 
 # ---------- glossary.html ----------
 gloss_html = ""
@@ -1023,7 +1026,7 @@ site — no math, no jargon. If a term on any page is unclear, it is defined her
 <main class="container">{gloss_html}</main>
 <footer class="shell-foot"><div class="container"><p>Research, not investment
 advice.</p></div></footer></body></html>"""
-open(f"{DOCS}/glossary.html", "w", encoding="utf-8").write(GLOSSARY_PAGE)
+open(f"{DOCS}/glossary.html", "w", encoding="utf-8").write(themed(GLOSSARY_PAGE, "glossary.html"))
 
 # ---------- projects.html (GitHub-style repo cards) ----------
 # Each project links to its own repo. Placeholder repos render "Coming soon"
@@ -1138,7 +1141,7 @@ private. Restraint is deliberate: enough to build on, not enough to copy.</p>
 <footer class="shell-foot"><div class="container"><p>Each link opens the project's
 GitHub repository. Research and monitoring, not investment advice.</p></div></footer>
 </body></html>"""
-open(f"{DOCS}/projects.html", "w", encoding="utf-8").write(PROJECTS_PAGE)
+open(f"{DOCS}/projects.html", "w", encoding="utf-8").write(themed(PROJECTS_PAGE, "projects.html"))
 
 # ---------- Carbon-style CSS ----------
 CSS = r"""/* ============================================================================
@@ -1412,6 +1415,9 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
 @media(max-width:820px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  /* round 1 (review V9): the 5-across rule above (<= 1100 px, 3 columns) out-specified this one, so on a phone
+     portfolio's money tiles sat 3 to a row and ran 25 px past their cards */
+  .metrics[style*="repeat(5"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .hero{padding:3.5rem 0 2.5rem}
 }
 @media(max-width:560px){
@@ -1453,7 +1459,9 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
 """
 # 2026-11-10: the Editorial Terminal layer (design_system.ET_CSS) is appended AFTER the legacy rules, so it
 # overrides them; removing this "+ ET_CSS" restores the previous look on every page at once.
-open(f"{DOCS}/style.css", "w", encoding="utf-8").write(CSS + ET_CSS)
+# 2026-11-10 wave r2: written through themed_css(): each colour literal becomes var(--token, the same literal),
+# so the light rendering is the literal itself and _design_system/theme.css can give it a dark value.
+open(f"{DOCS}/style.css", "w", encoding="utf-8").write(themed_css(CSS + ET_CSS, "style.css"))
 # Design-system sheets are build outputs like style.css above -- emitted every run so
 # `git clean -fd docs data` can never orphan them (REDESIGN_PLAN D1). tokens.css and
 # base.css are <link>ed BEFORE style.css, so style.css still wins every shared selector

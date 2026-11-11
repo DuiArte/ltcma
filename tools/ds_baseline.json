@@ -45,9 +45,9 @@
   "tiles": 5
  },
  "portfolio.html": {
-  "charts": 7,
+  "charts": 8,
   "tables": 3,
-  "tiles": 9
+  "tiles": 10
  },
  "projects.html": {
   "charts": 1,
@@ -121,7 +121,7 @@
  },
  "stocks.html": {
   "charts": 3,
-  "tables": 158,
+  "tables": 159,
   "tiles": 17
  },
  "strategies.html": {

@@ -71,6 +71,8 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import hero, credits_footer          # 2026-11-10 remake: image hero + its credit
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
+from design_system import TINT, TEAL as _DS_TEAL, GRIDLN as _GRIDLN, BP_SM   # 2026-11-10: entries chart (palette tokens)
 
 import paths
 FXA = paths.cuser("Downloads", "fx_attribution_2026-05-26", "code")  # lot-history DATA cache only
@@ -838,8 +840,9 @@ scaled; percentages are exact.
 <table class="ptable" style="min-width:560px"><thead><tr>
 <th>Holding</th><th>Stock P/L</th><th>FX P/L</th><th>Interaction</th><th>Total P/L</th><th>Return</th>
 </tr></thead><tbody>{body}{foot}</tbody></table></div>
-<p class="note" style="margin-top:.8rem">Net FX impact this period: <b>{cval(T_fx, signed=True)}</b>
-MXN ({T_fx/tot_cost*100:+.2f}% of cost) &mdash; a stronger peso is a drag on dollar holdings.</p>
+<p class="note" style="margin-top:.8rem">Net FX impact this period: <b><span class="cval" data-mxn="{fmts(T_fx)} MXN"
+data-usd="{fmts(T_fx / RATE)} USD">{fmts(T_fx)} MXN</span></b>
+({T_fx/tot_cost*100:+.2f}% of cost) &mdash; a stronger peso is a drag on dollar holdings.</p>
 </section>"""
 fxa_section = build_fxa()
 
@@ -1038,18 +1041,17 @@ _ddpct = _dd["usd"]
 # return. One colour doing two semantic jobs on one page teaches the reader nothing; a
 # drawdown chart is ALREADY entirely negative, so the colour carries no information at
 # all. Navy, like every other series about this book.
+# 2026-11-10 (Carlos: "se pueda segmentar entre mxn y usd, no que los dos esten encimados"): ONE currency at a time.
+# Both traces exist; the page's MXN | USD switch shows one (meta = its currency, VIS below). Same style for both.
 f1b = go.Figure()
-f1b.add_scatter(x=dates, y=_dd["usd"], mode="lines", name="USD",
-                line=dict(color=BLUE, width=1.6), fill="tozeroy",
-                fillcolor="rgba(10,37,64,0.07)",
-                hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra>USD</extra>")
-f1b.add_scatter(x=dates, y=_dd["mxn"], mode="lines", name="MXN",
-                line=dict(color=BLUE, width=1.2, dash="dot"),
-                hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra>MXN</extra>")
-f1b.update_layout(title="Drawdown of the decisions (time-weighted, flows removed)",
-                  yaxis_title="below prior high (%)", height=260, showlegend=True,
-                  legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="right",
-                              x=1, font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
+for _c in ("mxn", "usd"):
+    f1b.add_scatter(x=dates, y=_dd[_c], mode="lines", name=_c.upper(), meta=_c, visible=(_c == "mxn"),
+                    line=dict(color=BLUE, width=1.6), fill="tozeroy",
+                    fillcolor=TINT["navy"],
+                    hovertemplate="%{x|%d %b %Y} \u00b7 %{y:.2f}%<extra>" + _c.upper() + "</extra>")
+_F1B_T = "Drawdown of the decisions (time-weighted, flows removed)"
+_F1B_Y = "below prior high, {} (%)"     # the currency shown is named on the y-axis (VIS / TTL below)
+f1b.update_layout(title=_F1B_T, yaxis_title=_F1B_Y.format("MXN"), height=260, showlegend=False)
 print(f"  drawdown (TWR, flows removed): max {_dd['usd'].min():.2f}% USD / "
       f"{_dd['mxn'].min():.2f}% MXN  (market-value 'drawdown' would read "
       f"{(ts['total'] / ts['total'].cummax() - 1).min() * 100:.2f}%)")
@@ -1535,13 +1537,46 @@ for _key in sorted(_agg):
 # x-values at the identical y (the curve is daily), so they would render as one blob
 # with five sixths of them unhoverable -- day+side is the finest granularity the chart
 # can actually show, and every fill still appears in that day's hover.
-_MKDAY = {}
+# 2026-11-10 round 1 (review DC-3): a marker's DOLLAR amount is each fill's pesos at that fill's OWN rate. The peak
+# sidecar walks every fill at its executed USD/MXN (net_mxn / net_usd; the USD cost basis steps by exactly those
+# dollars), so the hover in USD now agrees with the per-fill-FX capital line it sits on (chart 6) instead of dividing
+# by today's rate. Lookup: the sidecar's fills of that day, side and name; else of that day and side; else the walk's
+# daily rate (`fx` of the curve). Rates are public information; nothing new is published (the scaled USD cost series
+# already steps by these amounts).
+_FXG, _FXDAY = {}, {}
+for _m in PK["markers"]:
+    _d0 = pd.Timestamp(_m["d"])
+    for _kk, _tb in (((_d0, _m["side"], _nk(_m["t"])), _FXG), ((_d0, _m["side"]), _FXDAY)):
+        _acc = _tb.setdefault(_kk, [0.0, 0.0])
+        _acc[0] += float(_m["net_mxn"])
+        _acc[1] += float(_m["net_usd"])
+_FXCURVE = _pc["fx"].astype(float)
+_FXSRC = {"fill": 0, "day": 0, "curve": 0}
+
+
+def _fill_fx(_d, _k, _t):
+    for _kk, _tb, _src in (((pd.Timestamp(_d), _k, _nk(_t)), _FXG, "fill"), ((pd.Timestamp(_d), _k), _FXDAY, "day")):
+        _acc = _tb.get(_kk)
+        if _acc and _acc[1]:
+            _FXSRC[_src] += 1
+            return _acc[0] / _acc[1]
+    _s = _FXCURVE[_FXCURVE.index <= pd.Timestamp(_d)]
+    _FXSRC["curve"] += 1
+    return float(_s.iloc[-1]) if len(_s) else float(_FXCURVE.iloc[0])
+
+
+_MKDAY, _MKFX = {}, {}
 for _key in sorted(_agg):
     _d, _k, _t = _key
     _a = _agg[_key]
-    _r = _MKDAY.setdefault((_d, _k), {"mxn": 0.0, "lines": []})
+    _r = _MKDAY.setdefault((_d, _k), {"mxn": 0.0, "usd": 0.0, "lines": []})
+    _fxl = _fill_fx(_d, _k, _t)
+    _MKFX[(_d, _k, _t + _tag[_key])] = _fxl
     _r["mxn"] += _a["mxn"]
+    _r["usd"] += _a["mxn"] / _fxl
     _r["lines"].append((_a["mxn"], _t + _tag[_key], _a["sh"], _a["mxn"] / _a["sh"]))
+print(f"  marker FX: {_FXSRC['fill']} name-day(s) at the sidecar fill's own rate, {_FXSRC['day']} at that day's fills, "
+      f"{_FXSRC['curve']} at the walk's daily rate")
 
 def _eq_at(_dt, _col="total"):
     _s = ts[_col][ts.index <= _dt]
@@ -1560,13 +1595,14 @@ _MK_LINECAP = 6
 _amax = max([_r["mxn"] for (_d, _k), _r in _MKDAY.items()
              if _d >= _MK_WINDOW_START] or [1.0])
 def _mk_txt(_d, _k, _r, _cur):
-    """Hover body. `x unified` already prints the date as the box header."""
-    _dv = 1.0 if _cur == "mxn" else RATE
+    """Hover body. `x unified` already prints the date as the box header. USD: each fill at its own rate (DC-3)."""
     _hd = ("▲ Buy" if _k == "buy" else "▼ Sell")
-    _out = [f"<b>{_hd}</b> · {_r['mxn'] * SCALE / _dv:,.0f} {_cur.upper()}"]
+    _tot = _r["mxn"] if _cur == "mxn" else _r["usd"]
+    _out = [f"<b>{_hd}</b> · {_tot * SCALE:,.0f} {_cur.upper()}"]
     _ls = sorted(_r["lines"], key=lambda x: -x[0])
     for _m, _t, _sh, _px in _ls[:_MK_LINECAP]:
         _j = _anon_j(_t, _sh, _px)          # solo el precio; los titulos NO se tocan
+        _dv = 1.0 if _cur == "mxn" else _MKFX[(_d, _k, _t)]
         _out.append(f"{_t} {fmt_sh(_sh * SCALE)} @ {_px * _j / _dv:,.2f}")
     if len(_ls) > _MK_LINECAP:
         _out.append(f"··· +{len(_ls) - _MK_LINECAP} more")
@@ -1586,6 +1622,57 @@ for (_d, _k), _r in sorted(_MKDAY.items()):
         d=_dj, y=_y, y_usd=_eq_at(_dj, "total_usd"),
         size=float(np.clip(7.0 + 11.0 * np.sqrt(max(_r["mxn"], 0.0) / _amax), 7.0, 18.0)),
         mxn=_mk_txt(_d, _k, _r, "mxn"), usd=_mk_txt(_d, _k, _r, "usd")))
+# DC-3 guard: on a day the sidecar shows buys only, a marker's USD amount (each fill at its own rate) must be the step
+# the USD cost basis takes that day -- the line chart 6 draws it on. Ledger amounts are gross (shares x price) and the
+# walk's are all-in, so a commission-sized gap is expected; a rate error (today's rate for a February fill) is ~10%.
+_cu = _pc["cost_usd"].astype(float)
+_sell_days = {_d0 for (_d0, _s0) in _FXDAY if _s0 == "sell"}
+# a "clean" day: the ledger's buys and the sidecar's buys of that day are the same names and share counts (on the
+# other days the two sources date or split some fills differently, so a day total cannot be compared)
+_side_sh = {}
+for _m in PK["markers"]:
+    if _m["side"] == "buy":
+        _bk = _side_sh.setdefault(pd.Timestamp(_m["d"]), {})
+        _bk[_nk(_m["t"])] = _bk.get(_nk(_m["t"]), 0.0) + float(_m["sh"])
+_dc3, _dc3_skip = [], 0
+for (_d, _k), _r in _MKDAY.items():
+    _dd = pd.Timestamp(_d)
+    if _k != "buy" or _dd in _sell_days or (_dd, "buy") not in _FXDAY or _dd not in _cu.index:
+        continue
+    _led = {}
+    for (_d1, _k1, _t1), _a1 in _agg.items():
+        if pd.Timestamp(_d1) == _dd and _k1 == "buy":
+            _led[_nk(_t1)] = _led.get(_nk(_t1), 0.0) + _a1["sh"]
+    _sc = _side_sh.get(_dd, {})
+    if set(_led) != set(_sc) or any(abs(_led[n] - _sc[n]) > 1e-6 for n in _led):
+        _dc3_skip += 1
+        continue
+    _i = _cu.index.get_loc(_dd)
+    _step = float(_cu.iloc[_i] - _cu.iloc[_i - 1]) if _i > 0 else 0.0
+    if _step > 0:
+        _dc3.append((abs(_r["usd"] / _step - 1.0), _dd.strftime("%Y-%m-%d"), abs(_r["usd"] - _step)))
+# Recheck RC1-3 (2026-11-10): 18 is load-bearing, so this guard must never stop the refresh over a small gap and must
+# still stop a wrong dollar amount. Both sides carry the SAME executed rate (the sidecar's net_mxn / net_usd), so what
+# separates them is fees (ledger amounts gross, the walk's all-in: 0.23% at most today), never FX noise:
+#   gap <= 2%, or <= 50 USD (real) in absolute terms (a commission-sized gap on a small buy) -> OK
+#   2% < gap <= 5%                                                                            -> WARN in the log, ships
+#   gap > 5% and > 50 USD -> SystemExit: no fee explains it; a wrong rate or amount reached the hover (today's rate on
+#   a February fill, the DC-3 bug, put the first buy 8.3% off; a unit or scale error is far larger)
+_DC3_WARN, _DC3_FAIL, _DC3_FLOOR = 0.02, 0.05, 50.0
+_dc3_big = [x for x in _dc3 if x[2] > _DC3_FLOOR]
+_dc3_fail = sorted((x for x in _dc3_big if x[0] > _DC3_FAIL), reverse=True)
+_dc3_warn = sorted((x for x in _dc3_big if _DC3_WARN < x[0] <= _DC3_FAIL), reverse=True)
+if _dc3_fail:
+    raise SystemExit(f"MARKER FX GUARD: on {_dc3_fail[0][1]} the USD buy amount is {_dc3_fail[0][0]*100:.2f}% off the "
+                     f"USD cost-basis step of that day ({len(_dc3_fail)} day(s) above {_DC3_FAIL*100:.0f}%; no fee "
+                     f"explains it) -- a wrong rate or amount would reach the dollar hover")
+for _x in _dc3_warn:
+    print(f"  WARN marker FX guard: on {_x[1]} the USD buy amount is {_x[0]*100:.2f}% off the USD cost-basis step "
+          f"(warn above {_DC3_WARN*100:.0f}%, stop above {_DC3_FAIL*100:.0f}%): the page ships; check that day's fills")
+print(f"  marker FX guard: {len(_dc3)} clean buy-only day(s) ({_dc3_skip} where the ledger and the walk split the "
+      f"fills differently not compared), USD amount vs the USD cost-basis step within "
+      f"{(max(_dc3)[0] if _dc3 else 0)*100:.2f}% (warn {_DC3_WARN*100:.0f}%, stop {_DC3_FAIL*100:.0f}% above "
+      f"{_DC3_FLOOR:.0f} USD; {len(_dc3_warn)} warned)")
 print(f"  trade markers: {len(_mkf)} fills from {len(_MK_SRC)} archive exports -> "
       f"{len(_MKPTS['buy'])} buy-days + {len(_MKPTS['sell'])} sell-days on the curve"
       + (f" | {len(_MK_DROPPED)} pre-curve day(s) dropped "
@@ -1654,23 +1741,22 @@ _MW_LBL = "annualized" if MW["annualized"] else "over the period, not annualized
 print(f"  money-weighted (IRR) since {MW['first_trade']}, {MW['days']} d, {_MW_LBL}: book USD "
       f"{MW['book_usd']*100:+.2f}% MXN {MW['book_mxn']*100:+.2f}% | S&P same money USD "
       f"{MW['spy_usd']*100:+.2f}% MXN {MW['spy_mxn']*100:+.2f}%")
+# 2026-11-10: one currency at a time (the page's switch); the currency's share of the difference is stated once,
+# in FX Attribution, instead of being read off two pairs of overlaid lines.
 f4 = go.Figure()
-f4.add_scatter(x=_md, y=_mp["book_usd"] * 100, mode="lines", name="This book · USD",
-               line=dict(color=NAVY, width=2.4),
-               hovertemplate="%{y:.2f}%<extra>Book · USD</extra>")
-f4.add_scatter(x=_md, y=_mp["book_mxn"] * 100, mode="lines", name="This book · MXN",
-               line=dict(color=NAVY, width=1.6, dash="dot"),
-               hovertemplate="%{y:.2f}%<extra>Book · MXN</extra>")
-f4.add_scatter(x=_md, y=_mp["spy_usd"] * 100, mode="lines", name="S&P 500, same money · USD",
-               line=dict(color=BENCH, width=1.8),
-               hovertemplate="%{y:.2f}%<extra>S&P 500 · USD</extra>")
-f4.add_scatter(x=_md, y=_mp["spy_mxn"] * 100, mode="lines", name="S&P 500, same money · MXN",
-               line=dict(color=BENCH, width=1.3, dash="dot"),
-               hovertemplate="%{y:.2f}%<extra>S&P 500 · MXN</extra>")
+for _c in ("mxn", "usd"):
+    f4.add_scatter(x=_md, y=_mp[f"book_{_c}"] * 100, mode="lines", name="This book", meta=_c,
+                   visible=(_c == "mxn"), line=dict(color=NAVY, width=2.4),
+                   hovertemplate="%{y:.2f}%<extra>Book · " + _c.upper() + "</extra>")
+    f4.add_scatter(x=_md, y=_mp[f"spy_{_c}"] * 100, mode="lines", name="S&P 500, same money", meta=_c,
+                   visible=(_c == "mxn"), line=dict(color=BENCH, width=1.8),
+                   hovertemplate="%{y:.2f}%<extra>S&P 500 · " + _c.upper() + "</extra>")
 f4.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
+_F4_T = "What the money earned since the first trade (money-weighted)"
+_F4_Y = "money-weighted return, {} (%)"
 f4.update_layout(
-    title="What the money earned since the first trade (money-weighted)",
-    yaxis=dict(title="money-weighted return (%)", gridcolor="#e5e5e5",
+    title=_F4_T,
+    yaxis=dict(title=_F4_Y.format("MXN"), gridcolor="#e5e5e5",
                tickfont=dict(family=MONO, size=11), zeroline=False),
     hovermode="x unified", height=330,
     legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
@@ -1707,23 +1793,194 @@ if YTD["first_trade"] > YTD["year_end"]:
                  line_width=0, layer="below", annotation_text="in cash, by choice",
                  annotation_position="top left",
                  annotation_font=dict(family=SANS, size=10, color=GREY))
-f5.add_scatter(x=_yd, y=_yp["book_usd"] * 100, mode="lines", name="This book · USD",
-               line=dict(color=NAVY, width=2.4),
-               hovertemplate="%{y:.2f}%<extra>Book · USD</extra>")
-f5.add_scatter(x=_yd, y=_yp["book_mxn"] * 100, mode="lines", name="This book · MXN",
-               line=dict(color=NAVY, width=1.5, dash="dot"),
-               hovertemplate="%{y:.2f}%<extra>Book · MXN</extra>")
-f5.add_scatter(x=_yd, y=_yp["spy_usd"] * 100, mode="lines", name="S&P 500 · USD",
-               line=dict(color=BENCH, width=1.8),
-               hovertemplate="%{y:.2f}%<extra>S&P 500 · USD</extra>")
-f5.add_scatter(x=_yd, y=_yp["spy_mxn"] * 100, mode="lines", name="S&P 500 · MXN",
-               line=dict(color=BENCH, width=1.3, dash="dot"),
-               hovertemplate="%{y:.2f}%<extra>S&P 500 · MXN</extra>")
+for _c in ("mxn", "usd"):
+    f5.add_scatter(x=_yd, y=_yp[f"book_{_c}"] * 100, mode="lines", name="This book", meta=_c,
+                   visible=(_c == "mxn"), line=dict(color=NAVY, width=2.4),
+                   hovertemplate="%{y:.2f}%<extra>Book · " + _c.upper() + "</extra>")
+    f5.add_scatter(x=_yd, y=_yp[f"spy_{_c}"] * 100, mode="lines", name="S&P 500", meta=_c,
+                   visible=(_c == "mxn"), line=dict(color=BENCH, width=1.8),
+                   hovertemplate="%{y:.2f}%<extra>S&P 500 · " + _c.upper() + "</extra>")
 f5.add_hline(y=0, line=dict(color="#d4d4d4", width=1))
-f5.update_layout(title="Investment decisions vs the index, year to date (flows removed)",
-                 yaxis_title="cumulative return (%)", hovermode="x unified", height=330,
+_F5_T = "Investment decisions vs the index, year to date (flows removed)"
+_F5_Y = "cumulative return, {} (%)"
+f5.update_layout(title=_F5_T,
+                 yaxis_title=_F5_Y.format("MXN"), hovermode="x unified", height=330,
                  legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
                              font=dict(size=11), bgcolor="rgba(0,0,0,0)"))
+
+# ---------- chart 6 (2026-11-10, Carlos): entries and exits against the market's and the book's peaks ----------
+# Carlos (written, 2026-11-10): "una que se interpongan capital deployed y el rendimiento como para tambien ver bien
+# los exits y entries conforme al peak del mercado / cartera contra las compras y ventas, que no se vea sucio, se pueda
+# segmentar entre mxn y usd, no que los dos esten encimados". Two stacked panels on ONE date axis, ONE currency at a
+# time (the page's MXN | USD switch; both currencies' traces exist, `meta` names each one's currency):
+#   top    = the time-weighted return year to date (flows removed: the decisions) of the book and of the S&P 500 --
+#            the same YTD path as chart 5 -- each shaded down from its OWN running peak, so the shading is the
+#            distance below that peak (no shading = at a new high);
+#   bottom = capital deployed: the open cost basis, the SAME scaled series as chart 1's cost-basis line (SCALE was
+#            applied once, at `ts`; asserted below), never a share of a peak (the peak is not published, 10-30);
+#   both   = chart 1's buy / sell markers: the same (published, already shifted) days, the same shape / colour / size
+#            and the same hover, plus how far the S&P 500 and the book sat below their own peaks that day.
+# Nothing new is read: `_yp` (benchmark_ytd), `ts` (the peak sidecar's curve, scaled), `_MKPTS`.
+from plotly.subplots import make_subplots
+_ep = _yp.assign(d=_yd).drop_duplicates("d", keep="last").set_index("d").sort_index()
+# round 1 (review PIPE-1): the top panel is THIS year (benchmark_ytd: from the year-end close; from 2027 on its first
+# row is the 2026-12-31 base), chart 1's markers run from inception. Chart 6 keeps the markers -- and the bottom
+# panel -- inside the top panel's window, so a 2026 trade can never be read against a 2027 path (it used to crash on
+# `None < 0.005` from the first 2027 session: 18 is load-bearing).
+_E0 = _ep.index[0]
+_EPK = {}
+for _c in ("mxn", "usd"):
+    for _s in ("book", "spy"):
+        _ix = 1.0 + _ep[f"{_s}_{_c}"].astype(float)
+        _EPK[(_s, _c)] = dict(r=(_ix - 1.0) * 100.0, peak=(_ix.cummax() - 1.0) * 100.0,
+                              below=(1.0 - _ix / _ix.cummax()) * 100.0)
+_ECAP = {"mxn": ts["realized_pool"].astype(float), "usd": ts["realized_pool_usd"].astype(float)}
+_ECAP = {_c: _v[_v.index >= _E0] for _c, _v in _ECAP.items()}
+
+
+def _e_at(series, d):
+    _s = series[series.index <= d]
+    return float(_s.iloc[-1]) if len(_s) else None
+
+
+def _e_peak_txt(v):
+    if v is None:
+        return "n/a"
+    return "at its peak" if v < 0.005 else f"{v:.2f}% below its peak"
+
+
+def _e_r(v, nd=4):
+    return None if v is None else (round(v, nd) if nd else round(v))
+
+
+_EMK = {"buy": [], "sell": []}
+for _k in ("buy", "sell"):
+    for _q in _MKPTS[_k]:
+        if _q["d"] < _E0:
+            continue                       # before this year's window: chart 1 still shows it
+        _row = {"d": _q["d"], "size": _q["size"]}
+        for _c in ("mxn", "usd"):
+            _bb, _sb = _e_at(_EPK[("book", _c)]["below"], _q["d"]), _e_at(_EPK[("spy", _c)]["below"], _q["d"])
+            # DC-1: the marker days carry the page's privacy offset; the distances are read on the day SHOWN
+            _pk_line = ("S&P 500 " + _e_peak_txt(_sb) + " · book " + _e_peak_txt(_bb) + " on the day shown ("
+                        + _c.upper() + ")")
+            _row[f"top_{_c}"] = _e_at(_EPK[("book", _c)]["r"], _q["d"])
+            _row[f"cap_{_c}"] = _e_at(_ECAP[_c], _q["d"])
+            _row[f"txt_{_c}"] = _q[_c] + "<br>" + _pk_line                       # chart 1's hover + the peaks
+            _row[f"stx_{_c}"] = _q[_c].split("<br>")[0] + "<br>" + _pk_line      # bottom panel: the headline line
+        _EMK[_k].append(_row)
+# ONE set of 9 traces (like chart 1: the page switch swaps their data, E6 below), drawn in MXN as built.
+# Dates as plain YYYY-MM-DD strings: the page carries both currencies' numbers, not two copies of every date.
+_E_IX = [d.strftime("%Y-%m-%d") for d in _ep.index]
+_E_CX = [d.strftime("%Y-%m-%d") for d in _ECAP["mxn"].index]
+_E_MX = {k: [m["d"].strftime("%Y-%m-%d") for m in _EMK[k]] for k in ("buy", "sell")}
+
+
+def _e_ticks(vmax):
+    """y2 tick values without the 0 (it sat on the first date label, review V7): 3-5 round steps up to the top"""
+    if not vmax or vmax <= 0:
+        return []
+    _raw = vmax / 3.0
+    _mag = 10 ** np.floor(np.log10(_raw))
+    _st = min((f * _mag for f in (1, 2, 2.5, 5, 10)), key=lambda s: abs(s - _raw))
+    return [float(_st * i) for i in range(1, int(vmax * 1.04 // _st) + 1)]
+
+
+def _e6_data(c):
+    """per-trace data of chart 6 in currency c, in trace order (rounded the way the hovers print them, + 2 dp)"""
+    y = [list(_EPK[("spy", c)]["peak"].round(4)), list(_EPK[("spy", c)]["r"].round(4)),
+         list(_EPK[("book", c)]["peak"].round(4)), list(_EPK[("book", c)]["r"].round(4)),
+         [_e_r(m[f"top_{c}"]) for m in _EMK["buy"]], [_e_r(m[f"top_{c}"]) for m in _EMK["sell"]],
+         [round(v) for v in _ECAP[c]],
+         [_e_r(m[f"cap_{c}"], 0) for m in _EMK["buy"]], [_e_r(m[f"cap_{c}"], 0) for m in _EMK["sell"]]]
+    cd = [list(_EPK[("spy", c)]["below"].round(4)), list(_EPK[("book", c)]["below"].round(4))]
+    tx = [[m[f"txt_{c}"] for m in _EMK["buy"]], [m[f"txt_{c}"] for m in _EMK["sell"]],
+          [m[f"stx_{c}"] for m in _EMK["buy"]], [m[f"stx_{c}"] for m in _EMK["sell"]]]
+    ht = ["%{y:,.0f}<extra>capital deployed (scaled) · " + c.upper() + "</extra>"]
+    return {"y": y, "cd": cd, "tx": tx, "ht": ht}
+
+
+_E6 = {c: _e6_data(c) for c in ("mxn", "usd")}
+_E6T2 = {c: _e_ticks(max(_ECAP[c]) if len(_ECAP[c]) else 0) for c in ("mxn", "usd")}     # y2 ticks per currency
+_m6 = _E6["mxn"]
+f6 = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.07, row_heights=[0.58, 0.42])
+for _j, (_s, _col, _w, _fill, _nm) in enumerate((("spy", BENCH, 1.8, TINT["bench"], "S&P 500"),
+                                                 ("book", NAVY, 2.4, TINT["navy_peak"], "This book"))):
+    # the running peak (no line, no hover) and the return shaded up to it: the shading = distance below the peak
+    f6.add_scatter(x=_E_IX, y=_m6["y"][2 * _j], mode="lines", showlegend=False,
+                   line=dict(width=0, color=_col), hoverinfo="skip", row=1, col=1)
+    # round 1 (review V7): the two lines are named in a legend, as in chart 1 and charts 4 / 5
+    f6.add_scatter(x=_E_IX, y=_m6["y"][2 * _j + 1], mode="lines", name=_nm, showlegend=True, legendrank=2 - _j,
+                   line=dict(color=_col, width=_w), fill="tonexty", fillcolor=_fill, customdata=_m6["cd"][_j],
+                   hovertemplate=_nm + " %{y:.2f}% · %{customdata:.2f}% below its peak<extra></extra>",
+                   row=1, col=1)
+# V7: on the top panel the triangles mark the DAY at one small size (amount-sized triangles hid the line on a phone);
+# the bottom panel keeps chart 1's amount-sized ones (the note's ▲ / ▼ say which is which; the legend names the lines).
+for _j, (_k, _mc, _sym) in enumerate((("buy", GREEN, "triangle-up"), ("sell", RED, "triangle-down"))):
+    f6.add_scatter(x=_E_MX[_k], y=_m6["y"][4 + _j], mode="markers", name="Buy" if _k == "buy" else "Sell",
+                   showlegend=False, legendgroup=_k,
+                   marker=dict(color=_mc, symbol=_sym, opacity=.93, size=8, line=dict(width=1.1, color="#ffffff")),
+                   text=_m6["tx"][_j], hovertemplate="%{text}<extra></extra>", hoverlabel=dict(bordercolor=_mc),
+                   row=1, col=1)
+f6.add_scatter(x=_E_CX, y=_m6["y"][6], mode="lines", name="Capital deployed", showlegend=True, legendrank=3,
+               line=dict(color=_DS_TEAL, width=1.6), fill="tozeroy", fillcolor=TINT["teal"],
+               hovertemplate=_m6["ht"][0], row=2, col=1)
+for _j, (_k, _mc, _sym) in enumerate((("buy", GREEN, "triangle-up"), ("sell", RED, "triangle-down"))):
+    f6.add_scatter(x=_E_MX[_k], y=_m6["y"][7 + _j], mode="markers", name="Buy" if _k == "buy" else "Sell",
+                   showlegend=False, legendgroup=_k, marker=dict(color=_mc, symbol=_sym, opacity=.93,
+                                                                 size=[m["size"] for m in _EMK[_k]],
+                                                                 line=dict(width=1.1, color="#ffffff")),
+                   text=_m6["tx"][2 + _j], hovertemplate="%{text}<extra></extra>", hoverlabel=dict(bordercolor=_mc),
+                   row=2, col=1)
+if YTD["first_trade"] > YTD["year_end"]:
+    f6.add_vrect(x0=YTD["year_end"], x1=YTD["first_trade"], fillcolor="#f1f1f1", opacity=1, line_width=0,
+                 layer="below", row="all", col=1)
+    # inside the top panel (the legend sits above it); the mobile tuner hides it on phones, as on every chart
+    f6.add_annotation(x=YTD["year_end"], y=1.0, xref="x", yref="paper", xanchor="left", yanchor="top",
+                      showarrow=False, text="in cash, by choice", font=dict(family=SANS, size=10, color=GREY))
+f6.add_hline(y=0, line=dict(color="#d4d4d4", width=1), row=1, col=1)
+_F6_Y2 = "{} (scaled)"                 # DC-7: the money axis says what chart 1's says (display scaling)
+f6.update_layout(height=580, hovermode="x unified", margin=dict(l=72, r=24, t=56, b=40),
+                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(size=11),
+                             bgcolor="rgba(0,0,0,0)", itemsizing="constant", traceorder="normal"))
+f6.update_yaxes(title_text="return YTD (%)", row=1, col=1)
+f6.update_yaxes(title_text=_F6_Y2.format("MXN"), title_font=dict(size=11), rangemode="tozero",
+                tickmode="array", tickvals=_E6T2["mxn"], row=2, col=1)
+f6.update_xaxes(gridcolor=_GRIDLN, tickfont=dict(family=MONO, size=11))      # both panels, as LAYOUT does for one
+f6.update_yaxes(gridcolor=_GRIDLN, tickfont=dict(family=MONO, size=11))
+f6.update_xaxes(type="date", hoverformat="%d %b %Y", showspikes=True, spikemode="across", spikethickness=1,
+                spikecolor="#c9c9c9", spikedash="dot")
+# --- guards: the plotted levels are the page's own, scaled once; the end points are the tiles' figures
+for _c in ("mxn", "usd"):
+    _src = _pc[f"cost_{_c}"].astype(float)
+    _src = _src[_src.index >= _E0]
+    _rat = (_ECAP[_c] / _src)[_src > 0]
+    if not len(_rat) or not ((_rat - SCALE).abs() < 1e-9).all():
+        raise SystemExit(f"ENTRIES GUARD: capital deployed ({_c}) is not the private cost basis x SCALE on every day")
+    _tile_cost = PK["curve"][-1][f"cost_{_c}"] * SCALE
+    if fmt(float(_ECAP[_c].iloc[-1])) != fmt(_tile_cost):
+        raise SystemExit(f"ENTRIES GUARD: capital deployed ends at {fmt(float(_ECAP[_c].iloc[-1]))} {_c}, the Cost "
+                         f"basis tile says {fmt(_tile_cost)}")
+    _tw_end, _tw_tile = float(_EPK[("book", _c)]["r"].iloc[-1]), (BOOK_YTD_USD if _c == "usd" else BOOK_YTD_MXN) * 100
+    if abs(_tw_end - _tw_tile) > 1e-9 or f"{_tw_end:+.2f}%" != f"{_tw_tile:+.2f}%":
+        raise SystemExit(f"ENTRIES GUARD: the book's line ends at {_tw_end:+.4f}% {_c}, the TWRR tile is {_tw_tile:+.4f}%")
+    for _k in ("buy", "sell"):
+        for _m in _EMK[_k]:
+            _sv = _e_at(_src, _m["d"])
+            if _sv and abs(_m[f"cap_{_c}"] / _sv - SCALE) > 1e-9:
+                raise SystemExit(f"ENTRIES GUARD: a {_k} marker sits on an unscaled level ({_c}, {_m['d']:%Y-%m-%d})")
+for _k in ("buy", "sell"):
+    if [m["d"] for m in _EMK[_k]] != [q["d"] for q in _MKPTS[_k] if q["d"] >= _E0]:
+        raise SystemExit(f"ENTRIES GUARD: {len(_EMK[_k])} {_k} markers vs chart 1's "
+                         f"{sum(1 for q in _MKPTS[_k] if q['d'] >= _E0)} inside this year's window")
+_E_NPRE = sum(1 for _k in ("buy", "sell") for q in _MKPTS[_k] if q["d"] < _E0)
+print(f"  entries chart: {len(_EMK['buy'])} buy-days + {len(_EMK['sell'])} sell-days (= chart 1's inside the window "
+      f"from {_E0:%Y-%m-%d}; {_E_NPRE} earlier day(s) only in chart 1) on both panels | capital deployed ends at the "
+      f"Cost basis tile in MXN and USD, every level = source x SCALE | the book's line ends at the TWRR tile in MXN and USD")
+
+# ---------- the currency effect, stated once (it used to be read off four overlaid lines in charts 4 and 5) ----
+_FXE = {"twr_book": (BOOK_YTD_MXN - BOOK_YTD_USD) * 100, "twr_spy": (SPY_YTD_MXN - SPY_YTD_USD) * 100,
+        "mw_book": (MW["book_mxn"] - MW["book_usd"]) * 100, "mw_spy": (MW["spy_mxn"] - MW["spy_usd"]) * 100}
 
 # ---------- the headline figures, each labelled with WHAT IT MEASURES ----------
 def _pct(x, dec=2):
@@ -1767,13 +2024,15 @@ KPI_MONEY = [
 ]
 def pkpct(usd, mxn, dec=2, unit="%"):
     """A return that reads differently in each currency, and says so when toggled."""
+    # the text without JS is the page default, MXN (as cval / pkval); it was the USD one until 2026-11-10, so a
+    # reader without JS saw peso money tiles beside dollar return tiles
     return (f'<span class="cval" data-mxn="{mxn*100:+.{dec}f}{unit}" '
-            f'data-usd="{usd*100:+.{dec}f}{unit}">{usd*100:+.{dec}f}{unit}</span>')
+            f'data-usd="{usd*100:+.{dec}f}{unit}">{mxn*100:+.{dec}f}{unit}</span>')
 
 
 def pktxt(usd, mxn):
     """Static wording that has to name the currency the tile beside it is showing."""
-    return f'<span class="cval" data-mxn="{mxn}" data-usd="{usd}">{usd}</span>'
+    return f'<span class="cval" data-mxn="{mxn}" data-usd="{usd}">{mxn}</span>'
 
 
 # The S&P tiles toggle WITH the book (Carlos, 2026-10-06). Like for like is the only honest
@@ -1792,12 +2051,38 @@ KPI_RET = [
            f"index total return in MXN (SPY &times; USD/MXN), year to date (from the {_YE} close)")),
     # Name the operand: a reader subtracts in their head, so the tile says which TWRR.
     ("vs index", pkpct(BOOK_YTD_USD - SPY_YTD_USD, BOOK_YTD_MXN - SPY_YTD_MXN, unit=" pp"),
-     pktxt(f"USD TWRR ({_pct(BOOK_YTD_USD)}) less the S&amp;P YTD in USD",
-           f"MXN TWRR ({_pct(BOOK_YTD_MXN)}) less the S&amp;P YTD in MXN")),
+     pktxt("the TWRR tile less the S&amp;P 500 tile, both in USD",
+           "the TWRR tile less the S&amp;P 500 tile, both in MXN")),
     # 2026-10-30 (Carlos): "Capital in use" (cost / peak) read 100% after every DCA week.
     ("S&amp;P, same money", pkpct(MW["spy_usd"], MW["spy_mxn"]),
      "IRR of the identical dated flows put into SPY"),
 ]
+def _MWTW(c):
+    """Money-weighted vs time-weighted (both since the first trade) in one currency, worded for that currency."""
+    mw, tw = MW[f"book_{c}"], PK[f"twrr_{c}"]
+    word = "in dollars" if c == "usd" else "in pesos"
+    if mw >= tw:
+        return (f"{abs(mw - tw) * 100:.1f} points above time-weighted {word}: more money was at work while returns "
+                "were higher, so the sizing and timing of the capital added to what the decisions earned")
+    return (f"{abs(mw - tw) * 100:.1f} points below time-weighted {word}: more money was at work while returns were "
+            "lower, so the sizing and timing of the capital cost part of what the decisions earned")
+
+
+def _MWSP(c):
+    """The book's money-weighted return against the S&P 500 fed the identical flows, in one currency."""
+    d = (MW[f"book_{c}"] - MW[f"spy_{c}"]) * 100
+    return f"{abs(d):.2f} points {'above' if d >= 0 else 'below'} the index&rsquo;s, {'in dollars' if c == 'usd' else 'in pesos'}"
+
+
+# The FX effect the four overlaid lines of charts 4 and 5 used to show, stated ONCE (in FX Attribution)
+_FXE_HTML = (f'<p class="note"><b>The currency in the returns.</b> Year to date, time-weighted, the book&rsquo;s return '
+             f'in pesos sits {_FXE["twr_book"]:+.2f} points from its return in dollars; for the S&amp;P 500 (SPY &times; '
+             f'USD/MXN against SPY) the gap is {_FXE["twr_spy"]:+.2f} points. Money-weighted, since the first trade, it '
+             f'is {_FXE["mw_book"]:+.2f} points for the book and {_FXE["mw_spy"]:+.2f} for the S&amp;P 500 fed the same '
+             'money. The gap is the peso&rsquo;s move against the dollar, weighted by when the book held what &mdash; '
+             'which is why every chart on this page shows one currency at a time (the currency switch at the top of the page) instead '
+             'of both on top of each other. Same daily walk and YTD path as the Performance tiles.</p>')
+fxa_section = fxa_section.replace("<h2>FX Attribution</h2>", "<h2>FX Attribution</h2>" + _FXE_HTML, 1)
 kpi_money = "".join(
     f'<div class="metric"><div class="mv">{v}</div><div class="mk">{k}</div>'
     f'<div class="mh">{h}</div></div>' for k, v, h in KPI_MONEY)
@@ -1947,6 +2232,29 @@ _pfrm, _pfru = _num(PFR["mxn"]), _num(PFR["usd"])
 _pfrtm, _pfrtu = _str(PFR_TXT["mxn"]), _str(PFR_TXT["usd"])
 _pfrcm, _pfrcu = _str(PFR_COL["mxn"]), _str(PFR_COL["usd"])
 _pfrlm, _pfrlu = f'{_PORT["mxn"]*100:.4f}', f'{_PORT["usd"]*100:.4f}'
+# one currency per chart: which traces show in each currency (from each trace's `meta`), and the text naming it
+_VFIGS = {"pf-dd": f1b, "pf-peak": f4, "pf-twr": f5}       # pf-entry swaps its data instead (E6), like pf-value
+_VIS = {k: {c: [(getattr(t, "meta", None) in (None, c)) for t in f.data] for c in ("mxn", "usd")}
+        for k, f in _VFIGS.items()}
+for _k, _f in _VFIGS.items():
+    # every trace belongs to one currency, and the figure as built shows the MXN set (the page default)
+    if any(getattr(t, "meta", None) not in ("mxn", "usd") for t in _f.data) or \
+            [bool(t.visible) for t in _f.data] != _VIS[_k]["mxn"]:
+        raise SystemExit(f"CURRENCY GUARD: {_k} would show a trace of the other currency, or one with no currency")
+# the currency shown is named on each chart's y-axis (design_system's mobile tuner re-applies cached TITLES on a
+# resize, so a title would revert to MXN; axis titles it leaves alone)
+_TTL = {"pf-dd": {c: {"yaxis.title.text": _F1B_Y.format(c.upper())} for c in ("mxn", "usd")},
+        "pf-peak": {c: {"yaxis.title.text": _F4_Y.format(c.upper())} for c in ("mxn", "usd")},
+        "pf-twr": {c: {"yaxis.title.text": _F5_Y.format(c.upper())} for c in ("mxn", "usd")},
+        "pf-entry": {c: {"yaxis2.title.text": _F6_Y2.format(c.upper()), "yaxis2.tickvals": _E6T2[c]}
+                     for c in ("mxn", "usd")}}
+_VIS_JS, _TTL_JS = json.dumps(_VIS), json.dumps(_TTL, ensure_ascii=False)
+if len(f6.data) != 9 or any(len(_E6[c]["y"]) != 9 for c in _E6):
+    raise SystemExit("CURRENCY GUARD: chart 6 must be ONE set of 9 traces whose data the switch swaps")
+# only the USD set is shipped: the figure itself carries the MXN one (the JS keeps it before the first swap)
+if [list(t.y) for t in f6.data] != _E6["mxn"]["y"] or [f6.data[4].text, f6.data[5].text] != [tuple(x) for x in _E6["mxn"]["tx"][:2]]:
+    raise SystemExit("CURRENCY GUARD: chart 6 as built is not its MXN data set")
+_E6_JS = json.dumps({"usd": _E6["usd"]}, ensure_ascii=False, separators=(",", ":"))
 JS = """
 <script>
 var TOT={mxn:[__TOTM__],usd:[__TOTU__]},REAL={mxn:[__REAM__],usd:[__REAU__]};
@@ -1957,6 +2265,40 @@ var PFR={mxn:[__PFRM__],usd:[__PFRU__]};
 var PFRT={mxn:[__PFRTM__],usd:[__PFRTU__]};
 var PFRC={mxn:[__PFRCM__],usd:[__PFRCU__]};
 var PFRL={mxn:__PFRLM__,usd:__PFRLU__};
+// 2026-11-10: ONE currency per chart. VIS = each chart's traces visible in each currency (both exist; `meta` in the
+// figure names a trace's currency), TTL = the layout text that names the currency shown.
+var VIS=__VIS__,TTL=__TTL__,E6=__E6__;
+function setVis(c){
+  if(!window.Plotly)return;
+  Object.keys(VIS).forEach(function(id){
+    var d=document.getElementById(id);if(!d||!d.data)return;
+    var v=VIS[id][c],ix=[];for(var i=0;i<v.length;i++)ix.push(i);
+    Plotly.restyle(d,{visible:v},ix);
+    if(TTL[id])Plotly.relayout(d,TTL[id][c]);
+  });
+  // chart 6 (entries vs the peaks): one set of traces, its data swapped per currency (as pf-value's)
+  var e=document.getElementById('pf-entry');
+  if(e&&e.data&&!E6.mxn){   // the figure is built in MXN: keep that set before the first swap (not shipped twice)
+    var cp=function(a){return a&&a.slice?a.slice():a;};
+    E6.mxn={y:e.data.map(function(t){return cp(t.y);}),cd:[cp(e.data[1].customdata),cp(e.data[3].customdata)],
+      tx:[cp(e.data[4].text),cp(e.data[5].text),cp(e.data[7].text),cp(e.data[8].text)],ht:[e.data[6].hovertemplate]};
+  }
+  if(e&&e.data&&E6[c]){
+    Plotly.restyle(e,{y:E6[c].y},[0,1,2,3,4,5,6,7,8]);
+    Plotly.restyle(e,{customdata:E6[c].cd},[1,3]);
+    Plotly.restyle(e,{text:E6[c].tx},[4,5,7,8]);
+    Plotly.restyle(e,{hovertemplate:E6[c].ht},[6]);
+    if(TTL['pf-entry'])Plotly.relayout(e,TTL['pf-entry'][c]);
+  }
+}
+// recheck RC1-4: below 641 px the top panel of chart 6 is ~210 px wide and its day triangles covered the book line:
+// 5 px there, 8 px from 641 px up (the same breakpoint as the hero panel); the bottom panel keeps chart 1's sizes
+function e6Size(){
+  var e=document.getElementById('pf-entry');if(!e||!e.data||!window.Plotly)return;
+  var s=8;try{if(window.matchMedia('(max-width:640.98px)').matches)s=5;}catch(_e){}
+  if(e.__e6s===s)return;e.__e6s=s;
+  Plotly.restyle(e,{'marker.size':s},[4,5]);
+}
 function applyRange(m){
   PF_RANGE=m;
   var d=document.getElementById('pf-value'),dd=document.getElementById('pf-dd');
@@ -1979,10 +2321,14 @@ function applyRange(m){
     b.classList.toggle('on',b.getAttribute('data-pr')===String(m));});
 }
 function setCurrency(c){
+  if(c!=='usd')c='mxn';
   CUR=c;
   document.querySelectorAll('.cval').forEach(function(e){e.textContent=e.dataset[c];});
   document.querySelectorAll('.ccy-toggle button').forEach(function(b){
-    b.classList.toggle('active',b.dataset.cur===c);});
+    var on=b.dataset.cur===c;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');});
+  // per-viewer convenience only (never shared, never read back by anything else); private windows may refuse it
+  try{window.localStorage.setItem('ltcma-portfolio-ccy',c);}catch(_e){}
+  setVis(c);
   var lbl=document.getElementById('ccy-label');
   if(lbl) lbl.textContent=c.toUpperCase();
   var rel=document.getElementById('pf-rel');
@@ -2003,7 +2349,12 @@ function setCurrency(c){
   }
 }
 document.addEventListener('DOMContentLoaded',function(){
-  setCurrency('mxn');
+  var c0='mxn';
+  try{var s0=window.localStorage.getItem('ltcma-portfolio-ccy');if(s0==='usd'||s0==='mxn')c0=s0;}catch(_e){}
+  setCurrency(c0);
+  e6Size();
+  try{var q6=window.matchMedia('(max-width:640.98px)');
+    if(q6.addEventListener)q6.addEventListener('change',e6Size);else if(q6.addListener)q6.addListener(e6Size);}catch(_e){}
   document.querySelectorAll('[data-pr]').forEach(function(b){
     b.addEventListener('click',function(){applyRange(b.getAttribute('data-pr'));});});
   // holdings table: click-to-sort headers + ticker filter + "/" shortcut
@@ -2047,7 +2398,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 });
 </script>
-""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__BTM__", _btm).replace("__BTU__", _btu).replace("__STM__", _stm).replace("__STU__", _stu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}").replace("__PFRM__", _pfrm).replace("__PFRU__", _pfru).replace("__PFRTM__", _pfrtm).replace("__PFRTU__", _pfrtu).replace("__PFRCM__", _pfrcm).replace("__PFRCU__", _pfrcu).replace("__PFRLM__", _pfrlm).replace("__PFRLU__", _pfrlu)
+""".replace("__TOTM__", _totm).replace("__TOTU__", _totu).replace("__REAM__", _ream).replace("__REAU__", _reau).replace("__BYM__", _bym).replace("__BYU__", _byu).replace("__SYM__", _sym2).replace("__SYU__", _syu).replace("__BTM__", _btm).replace("__BTU__", _btu).replace("__STM__", _stm).replace("__STU__", _stu).replace("__PFD__", _pfd).replace("__CAP__", f"{CAPITAL:.0f}").replace("__RATE__", f"{RATE:.6f}").replace("__PFRM__", _pfrm).replace("__PFRU__", _pfru).replace("__PFRTM__", _pfrtm).replace("__PFRTU__", _pfrtu).replace("__PFRCM__", _pfrcm).replace("__PFRCU__", _pfrcu).replace("__PFRLM__", _pfrlm).replace("__PFRLU__", _pfrlu).replace("__VIS__", _VIS_JS).replace("__TTL__", _TTL_JS).replace("__E6__", _E6_JS)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -2068,6 +2419,24 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 .ptable td.neg{{color:var(--neg)}}
 .ptable tr.h-total td{{font-weight:700;border-top:2px solid var(--line-strong);background:#fbfaf8}}
 .ptable tr.h-total td:first-child{{letter-spacing:.06em;color:var(--ink)}}
+/* 2026-11-10: ONE currency switch for every figure and chart on the page, in a thin bar that stays under the header
+   while the page scrolls (a child of <main>, so it is sticky for the whole page). Colours: design-system tokens only. */
+.ccy-bar{{position:sticky;top:var(--hdr);z-index:30;display:flex;justify-content:flex-end;
+  background:var(--bg);border-bottom:1px solid var(--line);padding:6px 0;margin:-1.2rem 0 .9rem}}
+.ccy-in{{display:inline-flex;align-items:center;gap:10px}}
+.ccy-lbl{{font-size:11.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--sec)}}
+.ccy-sub{{font-size:12.5px;color:var(--muted)}}
+.ccy-bar .ccy-toggle{{margin:0}}
+.ccy-bar .ccy-toggle button{{min-height:44px;min-width:58px}}
+.ccy-help{{margin-top:0}}
+@media(max-width:{BP_SM}px){{.ccy-sub{{display:none}}}}
+/* anchors and sticky table heads clear the bar as well as the header */
+:root{{--ccyh:57px}}
+html{{scroll-padding-top:calc(var(--hdr) + var(--ccyh) + 14px)}}
+.ptable thead th{{top:calc(var(--hdr) + var(--ccyh) - 1px)}}
+/* round 1 (review V5): on a landscape phone the header + a sticky bar covered 44% of the screen: there the bar
+   scrolls with the page (anchors and table heads then clear the header only; after the :root rule above, so it wins) */
+@media(max-height:500px){{.ccy-bar{{position:static}}:root{{--ccyh:0px}}}}
 </style></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
@@ -2076,10 +2445,20 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <h1>Stock Portfolio Tracker</h1>
 <p class="lede">A live view of the broker equity book &mdash; every position
 measured against its cost basis and against the portfolio as a whole.
-Figures convert between Mexican pesos and US dollars at the current rate.</p>
+Table figures convert between Mexican pesos and US dollars at the current rate; the performance tiles, the
+curves and the trade markers carry each trade&rsquo;s own exchange rate.</p>
 <p class="asof">As of {asof} &middot; broker equity holdings &middot;
 USD/MXN {RATE:.4f}</p>''', DOCS, pos="center 40%")}
 <main class="container">
+<div class="ccy-bar"><div class="ccy-in" role="group" aria-label="Currency for every figure and chart on this page">
+<span class="ccy-lbl">Currency</span><span class="ccy-sub">one switch for the whole page</span>
+<div class="ccy-toggle">
+<button type="button" data-cur="mxn" class="active" aria-pressed="true" onclick="setCurrency('mxn')">MXN</button>
+<button type="button" data-cur="usd" aria-pressed="false" onclick="setCurrency('usd')">USD</button></div></div></div>
+<p class="note ccy-help">Pesos by default, the book&rsquo;s own currency. The switch above (it stays in reach as you
+scroll) moves every figure and every chart on this page to US dollars and back, one currency at a time; your choice
+is remembered on this device only.
+<noscript>JavaScript is off, so the page stays in pesos and the charts do not draw.</noscript></p>
 <div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
 amounts; prices, returns and weights are exact. Positions and cost basis come
@@ -2093,9 +2472,6 @@ interaction term, itemized separately in <b>FX Attribution</b> below.) The MXN m
 cash sleeve, FX positions and non-custodian bank cash are excluded from the equity
 book.</div>
 <section class="block"><h2>Performance</h2>
-<div class="ccy-toggle">
-<button data-cur="mxn" class="active" onclick="setCurrency('mxn')">MXN</button>
-<button data-cur="usd" onclick="setCurrency('usd')">USD</button></div>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
 &middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
 {PK['fx_today']:.4f} (fixed at build)</p>
@@ -2110,38 +2486,33 @@ decisions earned. No peak-capital or fixed-base denominator is used anywhere on 
 <p class="note" style="margin-top:.8rem">Each point is the money-weighted return from the
 first trade to that day: the one rate at which every buy and sale up to then, and that
 day&rsquo;s value, net to zero &mdash; expressed {_MW_LBL}, as the record is
-{"over" if MW["annualized"] else "under"} a year old. The grey lines put the identical cash
-flows into the S&amp;P 500 on the same dates, so both face exactly the same money. Solid is
-dollars, dotted the same trades in pesos; the gap between them is the currency, not the
-investing.</p>
+{"over" if MW["annualized"] else "under"} a year old. The grey line puts the identical cash
+flows into the S&amp;P 500 on the same dates, so both face exactly the same money. The chart shows the
+currency the switch above is set to; how much of the return is the currency, not the investing, is stated
+once, in FX Attribution below.</p>
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f5, "pf-twr")}</div></div>
 <div class="twonote">
-<div><h4>MWRR &mdash; {_pct(MW['book_usd'])} <span>(USD)</span></h4>
+<div><h4>MWRR &mdash; what the money earned</h4>
 <p>The internal rate of return of every dated trade against today&rsquo;s value, over the
-{MW['days']} days since the first trade ({_MW_LBL}). This is <b>what the money earned</b>,
-weighted by how much was invested and for how long &mdash; no peak, no average, no
-assumed base. In pesos the same trades read {_pct(MW['book_mxn'])}.</p></div>
-<div><h4>TWRR &mdash; {_pct(PK['twrr_usd'])} <span>(USD)</span></h4>
+{MW['days']} days since the first trade ({_MW_LBL}). It weighs each return by how much was
+invested and for how long &mdash; no peak, no average, no assumed base. Its figure is the MWRR tile
+above, in the currency the switch shows.</p></div>
+<div><h4>TWRR &mdash; what the decisions earned</h4>
 <p>Daily returns chain-linked with deposits and withdrawals stripped out. This is
 <b>what the decisions earned</b>, independent of how much money happened to be in at
 the time. It is the industry standard (GIPS) and the only one of the two that can
 fairly be set against an index.</p></div></div>
 <p class="note"><b>Both numbers are true and they are not interchangeable.</b>
-Money-weighted sits {abs(MW['book_usd']-PK['twrr_usd'])*100:.1f} points
-{"above" if MW['book_usd'] >= PK['twrr_usd'] else "below"} time-weighted (in dollars):
-{"more money was at work while returns were higher, so the sizing and timing of the capital added to what the decisions earned" if MW['book_usd'] >= PK['twrr_usd'] else "more money was at work while returns were lower, so the sizing and timing of the capital cost part of what the decisions earned"}.
+Money-weighted sits {pktxt(_MWTW("usd"), _MWTW("mxn"))}.
 Quoting either one without saying which it is, is the mistake this panel exists to
 prevent.</p>
-<p class="note">Against the index, both ways: on <b>decisions</b>, year to date, the book
-returned {_pct(BOOK_YTD_USD)} against the S&amp;P 500&rsquo;s {_pct(SPY_YTD_USD)} from the
-{_YE} close, a {(BOOK_YTD_USD-SPY_YTD_USD)*100:+.2f}-point difference (in pesos
-{_pct(BOOK_YTD_MXN)} against {_pct(SPY_YTD_MXN)}). The book bought nothing before {_FT}:
+<p class="note">Against the index, both ways. On <b>decisions</b>, year to date, the vs index tile is the
+book&rsquo;s TWRR less the S&amp;P 500 from the {_YE} close. The book bought nothing before {_FT}:
 staying out was a decision, so its year counts those weeks at 0% while the index carries
 whatever it did over them. On <b>money</b> &mdash;
 putting the identical {len(PK['markers'])} cash movements into SPY on the identical
-dates &mdash; the index would have earned {_pct(MW['spy_usd'])} money-weighted against the
-book&rsquo;s {_pct(MW['book_usd'])}, a {(MW['book_usd']-MW['spy_usd'])*100:+.2f}-point
-difference (in pesos {_pct(MW['spy_mxn'])} against {_pct(MW['book_mxn'])}). The second is
+dates, the S&amp;P, same money tile &mdash; the book&rsquo;s money-weighted return is
+{pktxt(_MWSP("usd"), _MWSP("mxn"))}. The second is
 the harder test and the one that cannot be flattered by the timing of the flows: both
 sides receive exactly the same money on exactly the same days.</p>
 <p class="note"><b>What this does not prove.</b> {RECON_ASOF} is the last date on which
@@ -2152,6 +2523,22 @@ would not show up until a newer statement is loaded. The peso series also carrie
 small approximation between its endpoints, where the one peso-quoted holding is ramped
 rather than marked daily; every headline figure above reads an endpoint, where it is
 exact.</p></section>
+<section class="block" id="entries"><h2>When I bought and sold, against the market&rsquo;s and my book&rsquo;s peaks</h2>
+<p class="note">One date axis for what the charts around it show apart: on top, the time-weighted return this year
+of the book and of the S&amp;P 500 (the two lines of the chart above, flows removed &mdash; the decisions, not the
+deposits); below, the capital deployed, the open cost basis (the same scaled series as the cost-basis line in the
+next chart); and that chart&rsquo;s trading days this year &mdash;
+<span style="color:var(--pos)">&#9650;</span> buys, <span style="color:var(--neg)">&#9660;</span> sells; on the
+bottom panel sized by the amount dealt. Each line is shaded from itself up to its own running peak (no shading
+means a new high), so an entry made deep in a dip or an exit made at a peak shows as a triangle in or out of the
+shading; the hover gives the fall from that peak in percent.
+For privacy the marker days carry a small offset (a day or so), so read entry and exit timing to within a couple
+of trading days; the distances below the peaks are read on the day shown. Hover or tap a day for both lines; a
+triangle for the trades behind it. One currency at a time: the switch at the top of the page.</p>
+<div class="tile chart"><div class="ch">{div(f6, "pf-entry")}</div></div>
+<p class="note" style="margin-top:.8rem">Timing read off a chart is a description of what happened, not a test of
+skill and not a recommendation; past performance is no guide to the future. Money levels carry the
+page&rsquo;s display scaling; returns are exact.</p></section>
 <section class="block"><h2>Market Value vs Cost Basis</h2>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Equity curve as of
 {_CURVE_ASOF} &middot; trades through {_MK_LAST_S} &middot; {_N_BUYD} buy days
@@ -2216,19 +2603,20 @@ if _leaked:
 # shipped RAW fill shares beside the scaled holdings table, which hands a reader the
 # ratio for any name it could be matched against. Regenerate each hover body WITHOUT
 # the scaling and fail if that string reached the page, in either JSON escaping.
-def _mk_raw(_d, _k, _r):
+def _mk_raw(_d, _k, _r, _cur="mxn"):
     """La version VERDADERAMENTE cruda: sin escala y sin jitter. Si esa cadena llega a
-    la pagina, la anonimizacion no corrio."""
-    _o = ["<b>%s</b> · %s MXN" % ("▲ Buy" if _k == "buy" else "▼ Sell",
-                                  format(_r["mxn"], ",.0f"))]
+    la pagina, la anonimizacion no corrio. (round 1: also the dollar body, each fill at its own rate)"""
+    _o = ["<b>%s</b> · %s %s" % ("▲ Buy" if _k == "buy" else "▼ Sell",
+                                 format(_r[_cur], ",.0f"), _cur.upper())]
     for _m, _t, _sh, _px in sorted(_r["lines"], key=lambda x: -x[0])[:_MK_LINECAP]:
-        _o.append(f"{_t} {fmt_sh(_sh)} @ {_px:,.2f}")
+        _o.append(f"{_t} {fmt_sh(_sh)} @ {_px / (1.0 if _cur == 'mxn' else _MKFX[(_d, _k, _t)]):,.2f}")
     if len(_r["lines"]) > _MK_LINECAP:
         _o.append(f"··· +{len(_r['lines']) - _MK_LINECAP} more")
     return "<br>".join(_o)
-_mkleak = [f"{_d.date()} {_k}" for (_d, _k), _r in _MKDAY.items() if _d >= _MK_WINDOW_START
-           for _s in [_mk_raw(_d, _k, _r)]
-           if json.dumps(_s) in HTML or json.dumps(_s, ensure_ascii=False) in HTML]
+_mkleak = [f"{_d.date()} {_k} {_c}" for (_d, _k), _r in _MKDAY.items() if _d >= _MK_WINDOW_START
+           for _c in ("mxn", "usd") for _s in [_mk_raw(_d, _k, _r, _c)]
+           if json.dumps(_s) in HTML or json.dumps(_s, ensure_ascii=False) in HTML
+           or _s.split("<br>")[0] in HTML]
 if _mkleak:
     raise SystemExit("CONFIDENTIALITY GUARD FAILED: unscaled trade-marker hover reached "
                      "the chart -> " + ", ".join(_mkleak))
@@ -2311,7 +2699,10 @@ for (_dq, _kq), _rq in _MKDAY.items():
     if _dq < _MK_WINDOW_START:
         continue
     for _mq, _tq, _shq, _pxq in sorted(_rq["lines"], key=lambda x: -x[0])[:_MK_LINECAP]:
-        for _dvq in (1.0, RATE):
+        # round 1 (DC-3): the USD hover divides by the fill's OWN rate, so that is the unjittered dollar price to look
+        # for (today's rate is no longer used there; a jittered price at a fill rate can coincide with an unjittered
+        # one at today's rate to the cent, which is not a broker figure)
+        for _dvq in (1.0, _MKFX[(_dq, _kq, _tq)]):
             _sq = f"{_tq} {fmt_sh(_shq * SCALE)} @ {_pxq / _dvq:,.2f}"
             if _sq in HTML:
                 _pxleak.append("%s %s" % (_dq, _sq))
@@ -2365,17 +2756,102 @@ except OSError:
 _hm = _reS.search(r'data-sum-asof="([^"]+)"', _ix)
 if _hm and _hm.group(1) == str(PK["as_of"]):
     _mine = {"twrr_usd": f"{BOOK_YTD_USD*100:+.2f}%", "spy_usd": f"{SPY_YTD_USD*100:+.2f}%",
-             "mwrr_usd": f"{MW['book_usd']*100:+.2f}%", "alpha_usd": f"{(BOOK_YTD_USD - SPY_YTD_USD)*100:+.2f} pp"}
+             "mwrr_usd": f"{MW['book_usd']*100:+.2f}%", "alpha_usd": f"{(BOOK_YTD_USD - SPY_YTD_USD)*100:+.2f} pp",
+             # 2026-11-10: the Hold card also carries the peso row (merged from the old Live Portfolio section)
+             "twrr_mxn": f"{BOOK_YTD_MXN*100:+.2f}%", "spy_mxn": f"{SPY_YTD_MXN*100:+.2f}%",
+             "mwrr_mxn": f"{MW['book_mxn']*100:+.2f}%", "alpha_mxn": f"{(BOOK_YTD_MXN - SPY_YTD_MXN)*100:+.2f} pp"}
     for _k, _v in _mine.items():
         _got = _reS.search(r'data-sum="%s">([^<]+)<' % _k, _ix)
-        if not _got or _got.group(1) != _v or f'data-usd="{_v}"' not in HTML:
+        if not _got or _got.group(1) != _v or f'data-{_k[-3:]}="{_v}"' not in HTML:
             raise SystemExit(f"SUMMARY GUARD: index.html {_k} = {_got.group(1) if _got else None!r}, "
                              f"portfolio.html tile = {_v!r} (same sidecar {PK['as_of']})")
-    print(f"  home summary cross-check OK | Hold card = this page's tiles ({', '.join(_mine.values())})")
+    # the Portfolio hub card counts the open positions: the rows of this page's Holdings table
+    _hub_n = _reS.search(r'data-sum="hub:portfolio.html">(\d+) holdings<', _ix)
+    if _hub_n and int(_hub_n.group(1)) != len(latest):      # a count, not a figure 17 restates: WARN (ds_gate R6 FAILs)
+        print(f"  WARN home Portfolio hub says {_hub_n.group(1)} holdings, the Holdings table here has "
+              f"{len(latest)} rows (same sidecar {PK['as_of']})")
+    print(f"  home summary cross-check OK | Hold card = this page's tiles ({', '.join(_mine.values())})"
+          + (f" | hub {_hub_n.group(1)} holdings = the table" if _hub_n else ""))
 else:
     print(f"  home summary cross-check skipped (index.html built from "
           f"{_hm.group(1) if _hm else 'no summary'}, this page from {PK['as_of']})")
-open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(HTML)
+_FINAL = themed(HTML, "portfolio.html")
+
+
+# --- ENTRIES GUARD on the FINAL bytes (round 1, review DC-2): the checks above read the build's intermediates; what a
+# reader downloads is the figure JSON of #pf-entry (the MXN set) and the E6 object of the switch script (the USD set).
+# Both are decoded from the page and compared with values recomputed HERE from the private sidecar -- every money
+# level must be the sidecar's cost basis x SCALE (rounded as shipped), the lines must end at the TWRR / S&P tiles,
+# the below-peak hover at the recomputed distance, and the hover text must be chart 1's body + the peak line.
+def _e6_html_guard(page):
+    import base64 as _b64
+
+    def _dec(v):
+        if isinstance(v, dict) and "bdata" in v:
+            return [float(x) for x in np.frombuffer(_b64.b64decode(v["bdata"]), dtype=np.dtype(v["dtype"]))]
+        return list(v) if v is not None else []
+
+    _calls = {did: (data, lay) for did, data, lay in __import__("design_system")._plotly_calls(page)}
+    if "pf-entry" not in _calls:
+        raise SystemExit("ENTRIES GUARD (page): #pf-entry is not in the page")
+    _fig = _calls["pf-entry"][0]
+    _i = page.find("E6=", page.find("var VIS="))
+    if _i < 0:
+        raise SystemExit("ENTRIES GUARD (page): the E6 object of the currency switch is not in the page")
+    _shipped = json.JSONDecoder().raw_decode(page, _i + 3)[0]
+    if set(_shipped) != {"usd"}:
+        raise SystemExit(f"ENTRIES GUARD (page): E6 ships {sorted(_shipped)}, expected the USD set only")
+    _cv = [c for c in PK["curve"] if pd.Timestamp(c["d"]) >= _E0]
+    _pth = [p for p in YTD["path"]]
+
+    def _expect(c):
+        cost = [(pd.Timestamp(x["d"]), float(x[f"cost_{c}"])) for x in _cv]
+        at = lambda d: next((v for dd, v in reversed(cost) if dd <= d), None)
+        mk = {k: [q for q in _MKPTS[k] if q["d"] >= _E0] for k in ("buy", "sell")}
+        ix = {}
+        for s in ("book", "spy"):
+            seq = pd.Series([1.0 + float(p[f"{s}_{c}"]) for p in _pth], index=pd.to_datetime([p["d"] for p in _pth]))
+            seq = seq[~seq.index.duplicated(keep="last")].sort_index()
+            ix[s] = (seq, (1.0 - seq / seq.cummax()) * 100.0)
+        return dict(cap=[round(v * SCALE) for _, v in cost],
+                    mcap={k: [round(at(q["d"]) * SCALE) for q in mk[k]] for k in mk},
+                    end={"book": round((BOOK_YTD_MXN if c == "mxn" else BOOK_YTD_USD) * 100, 4),
+                         "spy": round((SPY_YTD_MXN if c == "mxn" else SPY_YTD_USD) * 100, 4)},
+                    below={s: [round(v, 4) for v in ix[s][1]] for s in ix},
+                    body={k: [q[c] for q in mk[k]] for k in mk})
+
+    for c, (Y, CD, TX) in (("mxn", ([_dec(t.get("y")) for t in _fig], [_dec(_fig[1].get("customdata")),
+                                                                         _dec(_fig[3].get("customdata"))],
+                                    [list(_fig[i].get("text") or []) for i in (4, 5, 7, 8)])),
+                           ("usd", (_shipped["usd"]["y"], _shipped["usd"]["cd"], _shipped["usd"]["tx"]))):
+        X = _expect(c)
+        if len(Y) != 9:
+            raise SystemExit(f"ENTRIES GUARD (page, {c}): {len(Y)} trace data sets, expected 9")
+        if [round(float(v)) for v in Y[6]] != X["cap"] or any(abs(float(a) - b) > 0.5 for a, b in zip(Y[6], X["cap"])):
+            raise SystemExit(f"ENTRIES GUARD (page, {c}): the published capital line is not the sidecar's cost basis "
+                             f"x SCALE on every day")
+        for j, k in ((7, "buy"), (8, "sell")):
+            if [round(float(v)) for v in Y[j]] != X["mcap"][k]:
+                raise SystemExit(f"ENTRIES GUARD (page, {c}): a published {k} marker is not on the scaled cost basis")
+        if abs(float(Y[3][-1]) - X["end"]["book"]) > 2e-4 or abs(float(Y[1][-1]) - X["end"]["spy"]) > 2e-4:
+            raise SystemExit(f"ENTRIES GUARD (page, {c}): the published lines end at {Y[3][-1]} / {Y[1][-1]}, the TWRR "
+                             f"/ S&P tiles say {X['end']['book']} / {X['end']['spy']}")
+        if [round(float(v), 4) for v in CD[0]] != X["below"]["spy"] or \
+                [round(float(v), 4) for v in CD[1]] != X["below"]["book"]:
+            raise SystemExit(f"ENTRIES GUARD (page, {c}): the published below-peak hover is not the recomputed distance")
+        def _hover_ok(t, b, full):
+            head = b if full else b.split("<br>")[0]
+            return t.startswith(head + "<br>S&P 500 ") and (" below its peak" in t or "at its peak" in t)
+
+        for j, k in ((0, "buy"), (1, "sell"), (2, "buy"), (3, "sell")):
+            if len(TX[j]) != len(X["body"][k]) or not all(_hover_ok(t, b, j < 2) for t, b in zip(TX[j], X["body"][k])):
+                raise SystemExit(f"ENTRIES GUARD (page, {c}): a published {k} hover is not chart 1's body + the peaks")
+    return sum(len(x) for x in _shipped["usd"]["y"])
+
+
+print(f"  entries guard on the final page OK | #pf-entry (MXN) and the shipped USD set ({_e6_html_guard(_FINAL):,} "
+      f"values) = the sidecar x SCALE, the tiles and chart 1's hovers")
+open(f"{DOCS}/portfolio.html", "w", encoding="utf-8").write(_FINAL)
 print(f"Portfolio tracker built -> {DOCS}/portfolio.html")
 print(f"  {len(latest)} holdings | value(scaled) MXN {tot_val:,.0f} / "
       f"USD {tot_val/RATE:,.0f} | return {port_ret*100:+.1f}% | "

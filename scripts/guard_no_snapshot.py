@@ -13,7 +13,8 @@ words: "FX contribution" legitimately appears in the FX Attribution JS text, and
 guard that fires on prose gets disabled the first week.
 
 Also asserts the opposite direction: the MXN/USD toggle must still exist, at the top
-of the Performance section -- Carlos asked for it kept, and it drives every `.cval`.
+of the Performance section (since 2026-11-10: the page-wide sticky switch right before it) -- Carlos asked for it
+kept, and it drives every `.cval` and every chart's currency.
 
 Exit 1 (load-bearing in daily_refresh.ps1) on any hit -- the refresh fails before it
 commits, so a reintroduced Snapshot never reaches GitHub Pages.
@@ -45,10 +46,14 @@ if "Combined weights the two by their cost bases" in html or \
     bad.append("Snapshot explanatory paragraph (Realized/Unrealized/Combined)")
 
 perf = PERF.search(html)
+# 2026-11-10: the toggle became ONE sticky switch for the whole page (every figure and chart follows it), so it sits at
+# the top of <main>, right before the Performance section, instead of inside it. Kept means: it exists, it drives
+# setCurrency('usd'), and it comes before the Performance tiles.
+tog = html.find('class="ccy-toggle"')
 if not perf:
     bad.append("Performance section not found")
-elif 'class="ccy-toggle"' not in perf.group(1) or "setCurrency('usd')" not in perf.group(1):
-    bad.append("MXN/USD toggle missing from the Performance section (must be kept)")
+elif tog < 0 or "setCurrency('usd')" not in html[tog:tog + 600] or tog > perf.end(1):
+    bad.append("MXN/USD toggle missing before / in the Performance section (must be kept)")
 
 if bad:
     print(f"FAIL guard_no_snapshot: {os.path.basename(PAGE)} -- the retired Snapshot block "

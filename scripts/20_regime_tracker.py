@@ -2,7 +2,7 @@
 credit spreads, the yield curve, GPR (geopolitical risk) and EPU (economic
 policy uncertainty). The page flags the current regime state, the most recent
 transitions, and a near-term tactical overlay (VIX-bucket forward returns plus
-the post-FOMC drift finding from the companion macro_event_study work).
+the post-FOMC drift finding from the companion macro event-study work).
 
 Output: docs/regime.html
 """
@@ -17,6 +17,7 @@ from glossary import NAV, ccy_badge
 
 from paths import DATA_S as DATA, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
@@ -303,8 +304,8 @@ is the actionable signal &mdash; not a single noisy reading.</p>
 </section>
 
 <section class="block"><h2>Tactical Overlay — Near-Term Patterns</h2>
-<p class="note">Findings drawn from the companion macro-overlay event-study work
-(<code>macro_event_study.py</code>). These are short-horizon patterns that sit
+<p class="note">Findings drawn from the companion macro-overlay event-study work.
+These are short-horizon patterns that sit
 above the LTCMA's 12-year base case &mdash; useful for timing entries and exits
 inside the strategic allocation, not for resetting it.</p>
 <div class="grid">
@@ -339,7 +340,7 @@ Definitions in the <a href="glossary.html">Glossary</a>.</p>
 </main>
 <footer class="shell-foot"><div class="container"><p>Research and monitoring,
 not investment advice.</p></div></footer></body></html>"""
-open(f"{DOCS}/regime.html", "w", encoding="utf-8").write(HTML)
+open(f"{DOCS}/regime.html", "w", encoding="utf-8").write(themed(HTML, "regime.html"))
 # The home's "Market Regime" tile reads THIS state. Until 2026-10-01 it computed its own
 # (GPR+EPU only, top-tercile cut) and the two pages disagreed on the same day: home
 # STRESS, regime.html NEUTRAL, both under the label "regime". One definition, one writer.

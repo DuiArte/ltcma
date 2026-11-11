@@ -23,7 +23,7 @@ It also runs `scripts/31_research_library.py` (2026-11-10, the Research Library 
 "Research" corner), which writes exactly `docs/research-library.html` + `docs/research-library.ai.txt`: an
 index of every research item the other generators publish (built from the same data, every link checked against
 the pages) and the sources behind the public pages. Render-only, no network. Right after it the refresh runs
-`scripts/guard_site_rules.py` (ds_gate R1-R7 on the built pages; writes nothing). The image heroes (2026-11-10) are
+`scripts/guard_site_rules.py` (ds_gate R1-R9 on the built pages; writes nothing; R8 = no headline figure shown twice on a page, `scripts/fig_repeats.py`; R9 = dark mode, `tools/theme_gate.py`). Dark mode (2026-11-10 wave r2) adds one generated file, `docs/_design_system/theme.css`, written by 17 with tokens.css / base.css (`design_system.emit()`); every public generator passes its page through `design_system.themed()`. The deploy's page transformation ships with the sources (`tools/deploy_docs_r2.py`, `tools/theme_transform.py`, the header / head strings in `tools/theme_kit/`): it writes the generated commit of that wave and is the rollback's reverse step (`--reverse`), so neither depends on a local folder. The image heroes (2026-11-10) are
 emitted by `scripts/design_system.py` `emit_assets()` from the committed `assets/img/` into `docs/assets/img/`,
 byte-identical, by every generator whose page shows one (17, 18, 30, 31), so a single job's render (e.g. the
 07:00 consensus job running 30 alone) never leaves a page without its image.
@@ -72,7 +72,8 @@ partial: `docs/*.html` are emitted whole by Python (`17_build_site.py`, `18_port
 
 - `scripts/guard_no_snapshot.py` — load-bearing in `daily_refresh.ps1`; fails the run
   (before commit) if `portfolio.html` regains the Snapshot `<h2>`, any of the 8 retired
-  tiles or the Realized/Combined paragraph, or loses the MXN/USD toggle from Performance.
+  tiles or the Realized/Combined paragraph, or loses the MXN/USD toggle (since 2026-11-10 the page-wide sticky
+  switch right before Performance: every figure and every chart follows it, one currency at a time).
 - If the live site shows content a commit removed: check `git log origin/main -- docs/<page>`
   for the author/message of the last write (the WSL job's commits read
   `Portfolio tracker update YYYY-MM-DD_HH:MM`), then GitHub Pages caching (deploy takes

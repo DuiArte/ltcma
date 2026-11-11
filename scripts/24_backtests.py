@@ -32,8 +32,9 @@ HUB_CANDIDATES = [
 ]
 
 sys.path.insert(0, HERE)
-from glossary import NAV, bt_card, bt_replay, bt_day, bt_pct, BT_FROZEN  # noqa: E402
+from glossary import NAV, bt_card, bt_replay, bt_day, bt_pct, BT_FROZEN, bt_scrub_vendor  # noqa: E402
 from design_system import CSS_LINKS, axis_formats, assert_no_entities, NAVY, BENCH  # noqa: E402
+from design_system import themed  # noqa: E402  (2026-11-10 wave r2: dark mode)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -440,8 +441,11 @@ def render_report_page(strat):
             f'{html}</article></main>')
     out = shell(f"{esc(strat['name'])} — Backtest Report", body, plot=has_chart,
                 css=OOS_CSS if oos else "")
+    # 2026-11-10 (Carlos, written): no private market-data vendor on a public page -- the same scrub as the cards
+    # (glossary.bt_scrub_vendor), next to the private-path redaction above, over the whole page (title included)
+    out = bt_scrub_vendor(out)
     with open(os.path.join(DOCS, out_name), "w", encoding="utf-8") as fh:
-        fh.write(out)
+        fh.write(themed(out, out_name))
     return out_name
 
 

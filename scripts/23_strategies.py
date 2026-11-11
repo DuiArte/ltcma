@@ -12,6 +12,7 @@ from glossary import (NAV, bt_load, bt_common, bt_indicators, bt_g100, bt_dd, BT
                       bt_catalog, bt_card, BT_CARD_CSS, _bt_redact, bt_oos_note, bt_replay,
                       BT_FROZEN)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 import pandas as pd
@@ -421,7 +422,7 @@ EPISODE_JS = r"""<script>
           +'<td>'+down+' m</td><td>'+rec+'</td></tr>';
       });
     });
-    tb.innerHTML=html||'<tr><td colspan="6" style="text-align:left;color:#888">Window too short for episode analysis.</td></tr>';
+    tb.innerHTML=html||'<tr><td colspan="6" style="text-align:left;color:var(--l-muted,#888)">Window too short for episode analysis.</td></tr>';
     tb.querySelectorAll('.ep-row').forEach(function(r){
       r.style.cursor='pointer';
       r.addEventListener('click',function(){
@@ -430,7 +431,7 @@ EPISODE_JS = r"""<script>
         var upd={'xaxis.range':[x0,x1]};
         if(k==='BARS'){if(document.getElementById('bars'))Plotly.relayout('bars',upd);}
         else{['eq','dd'].forEach(function(id){if(document.getElementById(id))Plotly.relayout(id,upd);});}
-        r.style.background='rgba(10,37,64,.07)';
+        r.style.background='var(--l-tint07,rgba(10,37,64,.07))';
         setTimeout(function(){r.style.background='';},600);
       });
     });
@@ -650,7 +651,7 @@ Backtested results are hypothetical and do not represent actual trading.</p></di
 {STRAT_FILTER_JS}
 </body></html>"""
 
-open(f"{DOCS}/strategies.html", "w", encoding="utf-8").write(HTML)
+open(f"{DOCS}/strategies.html", "w", encoding="utf-8").write(themed(HTML, "strategies.html"))
 
 
 # ── low-token AI companion (standing rule: every human output gets an AI copy) ─

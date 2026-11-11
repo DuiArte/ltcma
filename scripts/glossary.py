@@ -3,7 +3,7 @@ and the currency badge. Imported by 17/18/19 so there is one source of truth.
 """
 import os
 
-from design_system import MOBILE_CHARTS_JS
+from design_system import MOBILE_CHARTS_JS, THEME_BUTTON, THEME_JS
 
 # Street LTCMA tab only while its data is published: it was taken down 2026-10-07 (Market Intel
 # correction C-20261007-02) and a nav link to a withdrawn page 404s on every page. It comes back by
@@ -59,6 +59,9 @@ NAV = ('<nav class="tabs" aria-label="Main">'
        + "".join('<a href="%s"%s><b>%s</b><span>%s</span></a>' % (h, ' class="rc-src"' if "#" in h else "", t, d)
                  for h, t, d in RESEARCH_LINKS)
        + '</div></details></div>'
+       # the colour-theme control (2026-11-10 wave r2: Auto / Dark / Light, design_system.THEME_BUTTON); hidden
+       # until the page's boot script ran, i.e. on a page design_system.themed() made dark-capable
+       + THEME_BUTTON +
        """<script>(function(){var d=document.documentElement;d.classList.add('js');
 var p=(location.pathname.split('/').pop()||'index.html');
 // sub-pages light their parent: a backtest report sits under Strategies, a single-stock page under Stock Research
@@ -84,7 +87,7 @@ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isInter
 document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoundingClientRect();if(r.top<window.innerHeight){el.classList.add('vis');return;}el.classList.add('rv');io.observe(el);});
 setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
 });})();</script>"""
-       + MOBILE_CHARTS_JS)
+       + MOBILE_CHARTS_JS + THEME_JS)
 
 
 def ccy_badge(currency, note=""):
@@ -740,6 +743,24 @@ def _bt_redact(text):
     return _re.sub(r"\[assets\](?:\s*[/+,&-]?\s*\[assets\])+", "[assets]", text)
 
 
+# 2026-11-10 (Carlos, written): no market-data vendor of the private research stack on a public page. ONE scrub,
+# applied at render time to every text that reaches a backtest card (bt_card, the whole card) or a bt_*.html report
+# page (24_backtests.render_report_page, the whole page), so neither the catalogue (data/backtests_strategies.json /
+# the private hub) nor a REPORT.md can bring it back; tools/ds_gate.py R2 fails any page that names it. FxPro and
+# MetaTrader are NOT touched here (an open question for Carlos).
+#   "23y Dukascopy revalidation" -> "23y revalidation"; "(Dukascopy XAU + extended" -> "(XAU + extended"
+_BT_VENDOR = ((_re.compile(r"\(Dukascopy ", _re.I), "("), (_re.compile(r"\s*\bDukascopy\b", _re.I), ""))
+
+
+def bt_scrub_vendor(text):
+    """Drop the private market-data vendor's name from public card / report text (case-insensitive)."""
+    if not text:
+        return text
+    for rx, repl in _BT_VENDOR:
+        text = rx.sub(repl, text)
+    return text
+
+
 # Curated public-safe (name, what_it_tests, verdict) for each public entry. Keeps
 # the thesis, verdict and all performance metrics; drops tickers, universe lists,
 # entry/exit mechanics, sleeve compositions and parameter values.
@@ -870,7 +891,8 @@ def bt_card(strat, report_link=None, xref="", note=""):
     """Render one strategy as a card. report_link -> "Full report" anchor;
     xref -> an optional cross-reference line (e.g. deployment status / sibling page);
     note -> an optional out-of-sample replay / frozen line (bt_oos_note).
-    Name/description/verdict are routed through the confidentiality filter."""
+    Name/description/verdict are routed through the confidentiality filter; the whole card through
+    bt_scrub_vendor (badge, verdict, data span, cross-reference, note)."""
     badge = strat.get("badge", "red")
     label = strat.get("verdict") or BT_BADGE.get(badge, ("", ""))[0]
     pname, ptests, pverd = _bt_public(strat)
@@ -885,7 +907,7 @@ def bt_card(strat, report_link=None, xref="", note=""):
     link = (f'<a class="bt-link" href="{report_link}">Full report &rarr;</a>'
             if report_link else '<span class="bt-span">report on local disk</span>')
     xr = f'<p class="bt-xref">{xref}</p>' if xref else ""
-    return (
+    return bt_scrub_vendor(
         f'<article class="btcard bt-{badge}">'
         f'<div class="bt-head"><span class="bt-badge bt-{badge}">{_bt_esc(_bt_redact(label))}</span>'
         f'<span class="bt-date">{_bt_esc(run)}</span></div>'

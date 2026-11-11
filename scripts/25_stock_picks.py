@@ -46,6 +46,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 import picker
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
@@ -666,7 +667,7 @@ future returns.</p></div></section>
             f'<footer class="shell-foot"><div class="container"><p>Composite picker '
             f'and CFA-framework analysis on free public data. Educational research, '
             f'not investment advice.</p></div></footer>{FILTER_JS}{extra.get("js", "")}</body></html>')
-    open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(html)
+    open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(themed(html, "stocks.html"))
 
     # low-token AI copy + reproducibility dump (weights stay OUT of the public copy)
     # wave 14: the pick lines are the PUBLISHED list (rank order), which may include a name ranked 21-25

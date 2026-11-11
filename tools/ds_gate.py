@@ -16,6 +16,11 @@ The assertions split cleanly by what they need:
     R1-R7 (2026-11-10 remake) header completeness, Street held, hero credits, assets / budgets / EXIF,
          the home summary against the pages it summarises, the Research Library's links and sources --
          see remake_gate() below.
+    R8   (2026-11-10, wave "no repeats") no page shows the same headline figure twice in one view
+         (scripts/fig_repeats.py; functional repeats are listed in its ALLOW with a reason)
+    R9   (2026-11-10, wave r2, dark mode) tools/theme_gate.py T1-T7: every page with the header is themed (boot,
+         control, theme.css), no light-only colour literal left, the light theme keeps its colours, the chart
+         palette map inverts exactly and clears 3:1 in dark, the dark text tokens clear 4.5:1
 
   BROWSER (A1-A8) -- need a real HTTP origin and an interactive session:
     python -m http.server 8777 --directory docs
@@ -161,7 +166,9 @@ def static_gate(write_baseline=False):
 #       (glossary.MAIN_TABS / RESEARCH_LINKS), exactly once each, in a details.rc menu inside the "Research"
 #       navigation landmark; and every page under docs/ (+ archive/) is reachable: a main tab, a Research-corner
 #       page, a declared sub-page (glossary.SUBPAGES) or a redirect stub (round 1, P9)
-#   R2  no page links to the held Street LTCMA page while its public JSON is absent (street.hold)
+#   R2  no page links to the held Street LTCMA page while its public JSON is absent (street.hold); and (addendum
+#       2026-11-10, Carlos, written) no public file under docs/ names a denylisted private source or script
+#       (PRIVATE_NAMES, case-insensitive: every .html / .txt / .css / .js / .json / .xml under docs/, archive/ included)
 #   R3  every image hero has its picture AND a visible credit line (credit + CC BY 4.0 + source link);
 #       a hero rendered without its image (hero--plain) fails; every page that shows an image prints the
 #       credit in its footer too
@@ -177,6 +184,11 @@ def static_gate(write_baseline=False):
 #   R7  the Research Library: every item resolves to an existing page / anchor, every published research
 #       page is indexed, the counts reconcile, every listed source's evidence holds, and the page lists
 #       exactly the items the index builds
+#   R8  (wave "no repeats", Carlos 2026-11-10: "intenta que no se repita info en la misma pestana") no page shows the
+#       same headline figure twice in one view (phone / desktop x the MXN / USD states): scripts/fig_repeats.py reads
+#       every visible figure with its component, and a figure in a headline component (hero stat / panel, tile,
+#       card, badge, bar list, lede) that appears again in another headline component or in prose of the same page,
+#       or a bar list that restates its own table, is a FAIL unless fig_repeats.ALLOW lists it with a reason
 # =====================================================================================================
 import hashlib
 import struct
@@ -192,6 +204,32 @@ def _scripts_import():
     import glossary
     import research_index
     return glossary, research_index
+
+
+# R2 denylist (addendum 2026-11-10, Carlos, written): names of the private research stack that must never reach a
+# public file. "dukascopy" = a market-data vendor (cards and report pages scrub it at render time:
+# glossary.bt_scrub_vendor); "macro_event_study" = a private research script (regime.html's Tactical Overlay note).
+# Add a name here and the gate fails wherever it appears; FxPro / MetaTrader are an open question, not listed.
+PRIVATE_NAMES = ("dukascopy", "macro_event_study")
+_PN_EXT = (".html", ".htm", ".txt", ".css", ".js", ".json", ".xml")
+
+
+def private_name_checks(docs=None):
+    """R2 denylist over every public text file under docs/ (recursive). Returns the failure lines."""
+    docs = docs or DOCS
+    rx = re.compile("|".join(re.escape(n) for n in PRIVATE_NAMES), re.I)
+    out = []
+    for dp, dn, fns in os.walk(docs):
+        dn.sort()
+        for fn in sorted(fns):
+            if not fn.lower().endswith(_PN_EXT):
+                continue
+            p = os.path.join(dp, fn)
+            hits = sorted({m.group(0).lower() for m in rx.finditer(open(p, encoding="utf-8", errors="replace").read())})
+            if hits:
+                out.append(f"R2 {os.path.relpath(p, docs).replace(os.sep, '/')}: names a private source / script "
+                           f"{hits} (denylist ds_gate.PRIVATE_NAMES) -- scrub it in the generator")
+    return out
 
 
 def _all_pages():
@@ -282,6 +320,9 @@ def remake_gate(errs, warns):
                 f = os.path.join(DOCS, "assets", "img", lcp)
                 if os.path.exists(f) and os.path.getsize(f) > LCP_MAX:
                     fail(f"R4 {name}: phone hero {lcp} is {os.path.getsize(f):,} B > {LCP_MAX:,}", errs)
+    # R2 denylist: no private source / script name in any public file
+    for e in private_name_checks(DOCS):
+        fail(e, errs)
     # R4 assets
     pub = os.path.join(DOCS, "assets", "img")
     src = os.path.join(ROOT, "assets", "img")
@@ -309,8 +350,13 @@ def remake_gate(errs, warns):
     n6 = _summary_checks(errs, warns)
     # R7 research library
     n7 = _library_checks(ri, errs, warns)
+    # R8 no repeated figure on a page
+    n8p, n8f = _repeat_checks(errs, warns)
+    # R9 dark mode (static half; the browser half is tools/theme_browser_check.js)
+    n9 = _theme_checks(errs, warns)
     print(f"remake gate: {n_hdr} headers, {n_hero} image heroes, {len(have)} published images "
-          f"({sum(os.path.getsize(os.path.join(pub, f)) for f in have):,} B), {n6} summary pairs, {n7} library items")
+          f"({sum(os.path.getsize(os.path.join(pub, f)) for f in have):,} B), {n6} summary pairs, {n7} library items, "
+          f"{n8p} pages / {n8f} counted figures checked for repeats, {n9}")
 
 
 def _read(name):
@@ -349,10 +395,25 @@ def _summary_checks(errs, warns):
     asof = re.search(r'data-sum-asof="([^"]+)"', ix)
     pfa = re.search(r"Performance as of (\d{4}-\d{2}-\d{2})", pf)
     if asof and pfa and asof.group(1) == pfa.group(1):
-        tiles = {k: v for v, k in re.findall(r'<div class="mv"><span class="cval" data-mxn="[^"]*" data-usd="([^"]+)">[^<]*</span>'
-                                             r'</div><div class="mk">([^<]+)</div>', pf)}
-        for key, lab in (("twrr_usd", "TWRR"), ("spy_usd", "S&amp;P 500"), ("mwrr_usd", "MWRR"), ("alpha_usd", "vs index")):
-            same(key, sv.get(key), tiles.get(lab), f"portfolio.html tile {lab}")
+        tiles = {k: (u, m) for m, u, k in re.findall(r'<div class="mv"><span class="cval" data-mxn="([^"]*)" data-usd="([^"]+)">'
+                                                     r'[^<]*</span></div><div class="mk">([^<]+)</div>', pf)}
+        for key, lab in (("twrr", "TWRR"), ("spy", "S&amp;P 500"), ("mwrr", "MWRR"), ("alpha", "vs index")):
+            same(f"{key}_usd", sv.get(f"{key}_usd"), (tiles.get(lab) or (None, None))[0], f"portfolio.html tile {lab} (USD)")
+            # wave "no repeats" (2026-11-10): the Hold card also carries the peso row of the old Live Portfolio section
+            if f"{key}_mxn" in sv:
+                same(f"{key}_mxn", sv.get(f"{key}_mxn"), (tiles.get(lab) or (None, None))[1],
+                     f"portfolio.html tile {lab} (MXN)")
+        # the Portfolio hub card counts the open positions = the rows of portfolio.html's Holdings table
+        if "hub:portfolio.html" in sv:
+            body = re.search(r'<tbody id="h-body">(.*?)</tbody>', pf, re.S)
+            same("Portfolio hub", sv["hub:portfolio.html"],
+                 f"{len(re.findall(r'<tr>', body.group(1)))} holdings" if body else None,
+                 "the rows of portfolio.html's Holdings table")
+        # the home's USD / MXN tile reads the same sidecar rate as portfolio.html's Performance stamp
+        fx = re.search(r"Performance as of \d{4}-\d{2}-\d{2}.*?USD/MXN\s+(\d+\.\d+)", pf, re.S)
+        if "mk:USD / MXN" in sv:
+            same("Today USD / MXN", sv["mk:USD / MXN"], f"{float(fx.group(1)):.2f}" if fx else None,
+                 "portfolio.html's USD/MXN (Performance stamp)")
     elif asof:
         fail(f"R6 index.html Hold card from {asof.group(1)}, portfolio.html from "
              f"{pfa.group(1) if pfa else '?'}: re-render both", warns)
@@ -363,8 +424,6 @@ def _summary_checks(errs, warns):
         same("Hold prose TWRR", sv["hold:twrr_abs"], (sv.get("twrr_usd") or "").lstrip("+-"), "the Hold card")
     if "hold:gap" in sv:
         same("Hold prose gap", sv["hold:gap"], (sv.get("alpha_usd") or "").replace(" pp", "").lstrip("+-"), "the Hold card")
-    if "hub:portfolio.html" in sv:
-        same("Portfolio hub", sv["hub:portfolio.html"], sv.get("twrr_usd"), "the Hold card")
 
     # ---- Fed: the rows of the Fed view and the Watch lines = Market Intel's Fed-path table and its head line
     mi = _read("ltcma-consensus.html")
@@ -377,34 +436,49 @@ def _summary_checks(errs, warns):
         fail(f"R6 Fed: home prices from {fh.group(1)}, Market Intel prices from {fm.group(1)} (the 16:45 job ran "
              "after the home was built; both dated on the page, compared once they match)", warns)
     elif has_fed:
+        def mi_row(meet):
+            r = re.search(re.escape(f'<td class="a">{meet} <span class="cv">') + r'[^<]*</span>(?:\s*<span[^>]*>[^<]*</span>)?</td>'
+                          r'<td class="v">([^<]+)</td><td class="v"><b>([^<]+)</b></td><td class="v">([^<]+)</td>', mi)
+            return r.groups() if r else None
+        nxt = None
         for meet, txt in re.findall(r'<div class="fedrow" data-sum="fed:([^"]+)">.*?<span class="t">([^<]+)</span>', ix, re.S):
+            if "/" not in txt:                  # wave "no repeats": the next meeting's odds are in the Watch line
+                nxt = meet
+                continue
             c, h, k = [x.strip() for x in txt.split("/")]
             n += 1
-            if not re.search(re.escape(f'<td class="a">{meet} <span class="cv">') + r'[^<]*</span>(?:\s*<span[^>]*>[^<]*</span>)?</td>'
-                             + re.escape(f'<td class="v">{c}</td><td class="v"><b>{h}</b></td><td class="v">{k}</td>'), mi):
-                fail(f"R6 index Fed {meet} {txt!r} not the Market Intel row", errs)
-        wn = re.search(r'<span>(\w+) at the next FOMC \(([^)]+)\)</span><b[^>]*data-sum="fed_next">([^<]+)<', ix)
-        hd = re.search(r"Next meeting \(([^)]+)\): the market prices a <b>(\w+)</b> at (\d+%)", mi)
+            if mi_row(meet) != (c, h, k):
+                fail(f"R6 index Fed {meet} {txt!r} not the Market Intel row {mi_row(meet)}", errs)
+        # the Watch line (the top outcome + the other two) = the Market Intel hero stat and its Fed-table row
+        wn = re.search(r'<span>(\w+) at the next FOMC \(([^)]+)\)(?:<em class="wsub" data-sum="fed_next_rest">([^<]+)</em>)?'
+                       r'</span><b[^>]*data-sum="fed_next">([^<]+)<', ix)
+        hs = re.search(r'<span class="v[^"]*">(\d+%)</span><span class="l">odds of a (\w+) at the ([^<,]+?) FOMC', mi)
         if wn:
             n += 1
-            if not hd or (wn.group(1).lower(), wn.group(2), wn.group(3)) != (hd.group(2).lower(), hd.group(1), hd.group(3)):
-                fail(f"R6 index Watch next FOMC {wn.groups()} != Market Intel {hd.groups() if hd else None}", errs)
-        ff = re.search(r'more likely than not: ([^<]+)</span><b data-sum="fed_first">(\w+) (\d+%)<', ix)
+            if not hs or (wn.group(1).lower(), wn.group(2), wn.group(4)) != (hs.group(2).lower(), hs.group(3), hs.group(1)):
+                fail(f"R6 index Watch next FOMC {wn.groups()} != Market Intel hero {hs.groups() if hs else None}", errs)
+            if wn.group(3) and nxt:
+                n += 1
+                got = dict(x.strip().split(" ", 1) for x in _h.unescape(wn.group(3)).split("\u00b7"))
+                got[wn.group(1).lower()] = wn.group(4)
+                if mi_row(nxt) != (got.get("cut"), got.get("hold"), got.get("hike")):
+                    fail(f"R6 index Watch {nxt} {got} not the Market Intel row {mi_row(nxt)}", errs)
+        ff = re.search(r'more likely than not: ([^<]+)</span><b data-sum="fed_first">(\w+)(?: (\d+%))?<', ix)
         if ff:
             n += 1
-            mf = re.search(r"The first meeting where a move is more likely than not is <b>([^<]+)</b>: a <b>(\w+)</b> at (\d+%)", mi)
+            mf = re.search(r"The first meeting where a move is more likely than not is <b>([^<]+)</b>: a <b>(\w+)</b>(?: at (\d+%))?", mi)
             if not mf or (ff.group(1).strip(), ff.group(2), ff.group(3)) != (mf.group(1), mf.group(2), mf.group(3)):
                 fail(f"R6 index Watch first move {ff.groups()} != Market Intel {mf.groups() if mf else None}", errs)
 
     # ---- Market Intel hub: firm count = the Market Intel lede (same consensus edition)
     if "hub:ltcma-consensus.html" in sv:
         run = re.search(r'data-cons-run="(\d{4}-\d{2}-\d{2})"', ix)
-        lede = re.search(r"outlooks from (\d+) asset managers and banks", mi)
+        lede = re.search(r'<span class="v[^"]*">(\d+)</span><span class="l">asset managers and banks in the consensus', mi)
         if run and run.group(1) != _meta_asof(mi):
             fail(f"R6 Market Intel hub: consensus of {run.group(1)}, page of {_meta_asof(mi)} (compared once they match)", warns)
         else:
             same("Market Intel hub", sv["hub:ltcma-consensus.html"], f"{lede.group(1)} firms" if lede else None,
-                 "the Market Intel lede")
+                 "the Market Intel hero count")
 
     # ---- Congress: badges, 91-day flows and the hub count = the congress page (same file)
     cg = _read("congressional-activity.html")
@@ -414,15 +488,16 @@ def _summary_checks(errs, warns):
         fail(f"R6 Congress: home built from the file of {ch.group(1)}, the page from {_meta_asof(cg)} "
              "(compared once they match)", warns)
     elif has_cg:
-        for t, lab in (("LARGE", "Large (&gt; $500K)"), ("OPTIONS", "Options"), ("LATE", "Filed late (&gt; 45 days)")):
+        for t, lab in (("LARGE", "trades over $500K"), ("OPTIONS", "option trades"), ("LATE", "filed more than 45 days late")):
             if f"cg:{t}" in sv:
-                b = re.search(re.escape(lab) + r' <span class="badge">(\d+)</span>', cg)
-                same(f"Congress {t}", sv[f"cg:{t}"], b.group(1) if b else None, "the page badge")
+                b = re.search(r'<span class="v">(\d+)</span><span class="l">' + re.escape(lab) + "<", cg)
+                same(f"Congress {t}", sv[f"cg:{t}"], b.group(1) if b else None, "the page's hero count")
         win = cg[cg.find('id="win-91d"'):] if 'id="win-91d"' in cg else cg
         for sec_, val in re.findall(r'<div class="flow" data-sum="flow:([^"]+)">.*?<span class="v">([^<]+)</span>', ix, re.S):
             n += 1
-            if not re.search(r'<td class="a">' + re.escape(sec_) + r'</td><td>\d+</td><td class="v">[^<]+</td><td class="v">[^<]+</td>'
-                             r'<td class="v"><b>' + re.escape(val) + "</b>", win):
+            # wave "no repeats": the Net cell carries its bar and sits right after Sector
+            if not re.search(r'<td class="a">' + re.escape(sec_) + r'</td><td class="v nb"><span class="nbar"[^>]*>.*?</span></span>'
+                             r'<b>' + re.escape(val) + "</b></td>", win):
                 fail(f"R6 index Congress flow {sec_} {val!r} not on the page's 91-day table", errs)
         if "hub:congressional-activity.html" in sv:
             hs = re.search(r'<span class="v">([0-9,]+)</span><span class="l">trades filed in the last 13 weeks', cg)
@@ -444,15 +519,15 @@ def _summary_checks(errs, warns):
             fail(f"R6 index regime {sv['regime']!r} not what regime.html shows", errs)
     if "hub:regime.html" in sv:
         n += 1
-        if sv["hub:regime.html"].upper() not in rg.upper():
-            fail(f"R6 Regime hub {sv['hub:regime.html']!r} not what regime.html shows", errs)
+        mo = re.search(r'<div class="mv">(\d+)</div><div class="mk">Months in Regime</div>', rg)
+        hm = re.match(r"(\d+) months?$", sv["hub:regime.html"])
+        if not (mo and hm and mo.group(1) == hm.group(1)):
+            fail(f"R6 Regime hub {sv['hub:regime.html']!r} not regime.html's months in regime "
+                 f"{mo.group(1) if mo else None!r}", errs)
 
-    # ---- snapshot tiles on the same page
-    for key, val in sv.items():
-        if key.startswith("mk:"):
-            n += 1
-            if f'<div class="mv">{val}</div><div class="mk">{key[3:]}</div>' not in ix:
-                fail(f"R6 index Today {key[3:]} {val!r} != the snapshot tile", errs)
+    # ---- (wave "no repeats", 2026-11-10) the Market Snapshot section was merged into the Today view: its tiles had
+    # no counterpart but their own copy on the home, so those same-page pairs are gone; USD / MXN is compared with
+    # portfolio.html above. If the Markets view is ever left out, 17 renders the full snapshot section instead.
 
     # ---- picks + the Stock Research hub (only when the stocks page shows the same session)
     ses = re.search(r'data-sum-session="(\d{4}-\d{2}-\d{2})"', ix)
@@ -496,8 +571,39 @@ def _library_checks(ri, errs, warns):
     return len(ids)
 
 
+def _repeat_checks(errs, warns):
+    """R8. Every page under docs/ (redirect stubs skipped): a headline figure shown twice in one view FAILs."""
+    if SCRIPTS not in sys.path:
+        sys.path.insert(0, SCRIPTS)
+    import fig_repeats
+    e8, w8, npg, nfig = fig_repeats.gate(DOCS)
+    for e in e8:
+        fail(e, errs)
+    for w in w8:
+        fail(w, warns)
+    return npg, nfig
+
+
+def _theme_checks(errs, warns):
+    """R9. tools/theme_gate.py's static rules T1-T7 over docs/ (each finding prefixed R9)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("theme_gate", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                       "theme_gate.py"))
+    tg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tg)
+    e9, w9, info = [], [], []
+    pages = tg.check_pages(DOCS, e9, w9, info)
+    tg.check_palette(DOCS, pages, e9, w9, info)
+    tg.check_tokens(e9, info)
+    for e in e9:
+        fail("R9 " + e, errs)
+    for w in w9:
+        fail("R9 " + w, warns)
+    return "dark mode: " + "; ".join(info)
+
+
 def rules_gate():
-    """R1-R7 only (scripts/guard_site_rules.py runs this in the refresh, after step 31). The static S / A rules stay
+    """R1-R9 only (scripts/guard_site_rules.py runs this in the refresh, after step 31). The static S / A rules stay
     in the full gate: A10 parity moves legitimately with content and is re-based by hand."""
     errs, warns = [], []
     try:
@@ -508,13 +614,13 @@ def rules_gate():
         print(f"  WARN site rules: {w}")
     for e in errs:
         print(f"  FAIL  {e}")
-    print("SITE RULES (R1-R7):", "PASS" if not errs else f"FAIL ({len(errs)})")
+    print("SITE RULES (R1-R9):", "PASS" if not errs else f"FAIL ({len(errs)})")
     return 1 if errs else 0
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--write-baseline", action="store_true")
-    ap.add_argument("--rules-only", action="store_true", help="R1-R7 only (what the refresh runs)")
+    ap.add_argument("--rules-only", action="store_true", help="R1-R9 only (what the refresh runs)")
     a_ = ap.parse_args()
     sys.exit(rules_gate() if a_.rules_only else static_gate(a_.write_baseline))

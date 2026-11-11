@@ -1,0 +1,245 @@
+<nav class="tabs" aria-label="Main"><a href="index.html">Dashboard</a><a href="portfolio.html">Portfolio</a><a href="stocks.html">Stock Research</a><a href="regime.html">Regime Tracker</a><a href="ltcma-consensus.html">Market Intel</a><a href="congressional-activity.html">Congress</a><a href="index.html#about">About</a></nav><div class="rcn" role="navigation" aria-label="Research"><details class="rc"><summary aria-label="Research corner: research pages and sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>Research<svg class="car" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><div class="rc-menu"><p class="rc-k">The foundation: model, research, sources</p><a href="research-library.html"><b>Research Library</b><span>Search every published note, backtest, project and report section</span></a><a href="report.html"><b>Full Report</b><span>The 12-year model: method, return tables and limits</span></a><a href="research.html"><b>Research Notes</b><span>The research record, negative results included</span></a><a href="strategies.html"><b>Strategies</b><span>The strategy catalogue and its backtest reports</span></a><a href="projects.html"><b>Projects</b><span>The public repositories behind this site</span></a><a href="glossary.html"><b>Glossary</b><span>Plain-language definitions of every term</span></a><a href="research-library.html#sources" class="rc-src"><b>Sources</b><span>Every data source and publisher behind the public pages</span></a></div></details></div><button type="button" class="thm" id="thm" aria-label="Colour theme: Auto (follows your device). Activate to switch between light and dark." title="Theme: Auto (follows your device)"><svg class="ti-a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5z" fill="currentColor" stroke="none"/></svg><svg class="ti-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg><svg class="ti-d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M20 14.6A8.5 8.5 0 0 1 9.4 4a8.5 8.5 0 1 0 10.6 10.6z"/></svg></button><span class="thm-st" id="thm-st" role="status" aria-live="polite"></span><script>(function(){var d=document.documentElement;d.classList.add('js');
+var p=(location.pathname.split('/').pop()||'index.html');
+// sub-pages light their parent: a backtest report sits under Strategies, a single-stock page under Stock Research
+if(/^bt_/.test(p))p='strategies.html';else if(/^stock_/.test(p))p='stocks.html';else if(/^report_/.test(p))p='report.html';
+var sh=document.querySelector('.shell'),nv=sh&&sh.querySelector('nav.tabs'),rc=sh&&sh.querySelector('details.rc');
+if(nv)[].forEach.call(nv.querySelectorAll('a'),function(a){if(a.getAttribute('href')===p){a.classList.add('active');a.setAttribute('aria-current','page');}});
+if(rc){[].forEach.call(rc.querySelectorAll('.rc-menu a'),function(a){if(a.getAttribute('href')===p){a.setAttribute('aria-current','page');rc.classList.add('active');}});
+document.addEventListener('click',function(e){if(rc.open&&!rc.contains(e.target))rc.open=false;});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&rc.open){rc.open=false;rc.querySelector('summary').focus();}});
+rc.addEventListener('focusout',function(e){if(rc.open&&e.relatedTarget&&!rc.contains(e.relatedTarget))rc.open=false;});}
+function fade(){if(!nv)return;var m=nv.scrollWidth-nv.clientWidth;nv.classList.toggle('fl',m>1&&nv.scrollLeft>1);nv.classList.toggle('fr',m>1&&nv.scrollLeft<m-1);}
+function hdr(){if(sh)d.style.setProperty('--hdr',sh.offsetHeight+'px');fade();}
+if(nv)nv.addEventListener('scroll',fade,{passive:true});
+window.addEventListener('resize',hdr);window.addEventListener('load',hdr);
+try{document.fonts.ready.then(hdr);}catch(_e){}
+document.addEventListener('DOMContentLoaded',function(){
+var a=nv&&nv.querySelector('a.active');if(a&&nv.scrollWidth>nv.clientWidth){var r=a.getBoundingClientRect(),q=nv.getBoundingClientRect();
+nv.scrollLeft=Math.max(0,nv.scrollLeft+(r.left-q.left)-(q.width-r.width)/2);}
+hdr();var rd=function(){d.classList.add('ready');};requestAnimationFrame(function(){requestAnimationFrame(rd);});setTimeout(rd,400);
+// subtle scroll-reveal on section blocks (institutional: opacity+6px only, reduced-motion-safe)
+try{if(window.IntersectionObserver&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.04,rootMargin:'0px 0px -4% 0px'});
+document.querySelectorAll('main .block').forEach(function(el,i){var r=el.getBoundingClientRect();if(r.top<window.innerHeight){el.classList.add('vis');return;}el.classList.add('rv');io.observe(el);});
+setTimeout(function(){document.querySelectorAll('.rv:not(.vis)').forEach(function(el){el.classList.add('vis');});},4000);}}catch(_e){}
+});})();</script><script>(function(){
+var MOB=640,st=new WeakMap();
+/* read the breakpoint from --bp-sm so CSS and JS cannot drift; 640 is the fallback
+   and the token resolves to that same 640, so both paths agree today. */
+try{var _bp=parseInt(getComputedStyle(document.documentElement)
+  .getPropertyValue('--bp-sm'),10);if(_bp>0)MOB=_bp;}catch(_e){}
+function wrap(t,cpl){
+  if(!t)return t;
+  var w=String(t).split(' '),ln=[],c='';
+  for(var i=0;i<w.length;i++){var n=c?c+' '+w[i]:w[i];
+    if(n.length>cpl&&c){ln.push(c);c=w[i];}else{c=n;}}
+  if(c)ln.push(c);
+  return ln.join('<br>');
+}
+function tune(){
+  if(!window.Plotly)return;
+  var mob=window.innerWidth<=MOB;
+  document.querySelectorAll('.plotly-graph-div').forEach(function(d){
+    if(!d._fullLayout)return;                       /* not rendered yet; a later retry gets it */
+    var rect=d.getBoundingClientRect();
+    if(!rect.width)return;
+    /* re-tune when the width BUCKET changes, not on every pixel: 375->414 must
+       re-wrap the title, but a scroll-driven 1px reflow must not relayout. */
+    var key=(mob?'m':'d')+Math.round(rect.width/30);
+    if(d.__tk===key)return;
+    var first=!d.__tk; d.__tk=key;
+    var o=st.get(d);
+    if(!o){var L=d.layout||{},FL=d._fullLayout;
+      o={t:(L.title&&L.title.text)||'',
+         ts:(FL.title&&FL.title.font&&FL.title.font.size)||15,
+         m:{l:FL.margin.l,r:FL.margin.r,t:FL.margin.t,b:FL.margin.b},
+         lg:(L.legend?JSON.parse(JSON.stringify(L.legend)):{}),
+         h:FL.height,dt:(L.yaxis&&L.yaxis.dtick)||null,sh:d.style.height,
+         an:(FL.annotations||[]).map(function(a){return a.visible!==false;}),
+         md:(d.data||[]).map(function(t){return t.mode;})};
+      st.set(d,o);}
+    /* Per-point text labels are unreadable once the plot is 283px wide: the
+       risk/return map packs 24 asset labels into that space and 22 of the 24
+       pairs overlap. Traces that carry many labels drop to markers-only on
+       mobile -- the class legend still identifies them and a tap still shows
+       the name on hover. The cutoff is 3, not 6: the 4-label Real Asset trace
+       still self-overlapped twice at 283px. */
+    function modes(mob){
+      var chg=false,arr=(d.data||[]).map(function(t,i){
+        var m=o.md[i];
+        if(!mob||!m||m.indexOf('text')<0)return m;
+        if(!t.text||t.text.length<=3)return m;
+        chg=true;return m.replace('+text','').replace('text+','').replace('text','markers');});
+      if(mob&&!chg)return;
+      if(!mob&&!(o.md||[]).some(function(m){return m&&m.indexOf('text')>=0;}))return;
+      try{Plotly.restyle(d,{mode:arr});}catch(e){}
+    }
+    /* Above the breakpoint a chart can still be narrow: the two-up grid puts a 405px
+       chart on a 1024px screen, and "Equity expected return across the valuation-
+       reversion dial" ran off its right edge, cropped by the tile (audit 2026-10-01;
+       same on regime-line at 864px). Wrap the title against the chart's OWN width.
+       Titles carrying markup are left alone -- wrap() splits on spaces. */
+    var dw=null;
+    if(!mob&&o.t&&o.t.indexOf('<')<0){
+      var avail=rect.width-o.m.l-14,pxc=o.ts*0.52;
+      if(o.t.length*pxc>avail){dw=wrap(o.t,Math.max(20,Math.floor(avail/pxc)));}
+    }
+    if(!mob){
+      if(first&&!dw)return;                         /* first sight on desktop, fits: nothing to do */
+      var dmt=o.m.t+(dw?(dw.split('<br>').length-1)*Math.round(o.ts*1.3):0);
+      if(first){                                    /* only the title moves; nothing else to undo */
+        try{Plotly.relayout(d,{'title.text':dw,'margin.t':dmt});}catch(e){}
+        return;}
+      var back={'title.text':dw||o.t,'title.font.size':o.ts,
+        'margin.l':o.m.l,'margin.r':o.m.r,'margin.b':o.m.b,
+        'margin.t':dmt,
+        'legend.font.size':(o.lg.font&&o.lg.font.size)||null,
+        'legend.orientation':o.lg.orientation||null,
+        'legend.x':(o.lg.x===undefined?null:o.lg.x),
+        'legend.xanchor':o.lg.xanchor||null,
+        'legend.y':(o.lg.y===undefined?null:o.lg.y),
+        'legend.yanchor':o.lg.yanchor||null};
+      if(d._fullLayout.xaxis){back['xaxis.tickfont.size']=null;back['xaxis.title.font.size']=null;}
+      if(d._fullLayout.yaxis){back['yaxis.tickfont.size']=null;back['yaxis.title.font.size']=null;
+        if(d._fullLayout.yaxis.type==='log')back['yaxis.dtick']=o.dt;}
+      if(o.h)back['height']=o.h;
+      d.style.height=o.sh;
+      o.an.forEach(function(v,i){back['annotations['+i+'].visible']=v;});
+      modes(false);
+      try{Plotly.relayout(d,back);Plotly.Plots.resize(d);}catch(e){}
+      return;}
+    /* SCALE the generator's margins, never replace them -- the correlation
+       heatmap carries 130px left/bottom margins for its asset labels, and a
+       flat 44px left margin would clip them off the chart entirely.
+       Margins resolve FIRST because the title is left-anchored at margin.l:
+       wrapping against the full div width let every title start 35px in and then
+       run 12-23px past the right edge, clipped by .tile{overflow:hidden}. */
+    var mL=Math.max(34,Math.round(o.m.l*0.72)),mR=Math.max(10,Math.round(o.m.r*0.5));
+    /* ~6.3px per char for Inter at 12.5px; the 8px pad keeps it off the edge. */
+    var cpl=Math.max(14,Math.floor((rect.width-mL-8)/6.3));
+    var txt=wrap(o.t,cpl),lines=txt?txt.split('<br>').length:0;
+    var up={'title.text':txt,'title.font.size':12.5,
+      'margin.l':mL,'margin.r':mR,
+      'margin.t':(lines>1?26+lines*15:Math.max(34,Math.round(o.m.t*0.8))),
+      'margin.b':Math.max(34,Math.round(o.m.b*0.82)),
+      'legend.font.size':9.5,'legend.orientation':'h',
+      'legend.x':0,'legend.xanchor':'left','legend.y':-0.24,'legend.yanchor':'top'};
+    if(d._fullLayout.xaxis){up['xaxis.tickfont.size']=10;up['xaxis.title.font.size']=10.5;}
+    if(d._fullLayout.yaxis){up['yaxis.tickfont.size']=10;up['yaxis.title.font.size']=10.5;}
+    /* config responsive:true only fires on window-resize EVENTS. A page loaded
+       straight into a 375px viewport therefore kept Plotly's default 700px SVG,
+       visually clipped to the 283px tile, ticks landing 360px past its right
+       edge. (Keep this comment free of `name=number` -- confscan greps it.) */
+    /* hline annotations ("stress threshold +0.5", "fed funds 3.63%") are drawn
+       INSIDE the plot area and sit on top of the data. At 283px they cover the
+       series they annotate. The dotted line itself stays -- only its caption is
+       hidden, and the surrounding prose already names the thresholds. This is
+       the one defect class the clip check cannot see: it never leaves the div. */
+    o.an.forEach(function(_,i){up['annotations['+i+'].visible']=false;});
+    /* A log y-axis renders minor decade labels (8, 9) that collide once the
+       plot is ~340px tall. Decades only on mobile. */
+    if(d._fullLayout.yaxis&&d._fullLayout.yaxis.type==='log')up['yaxis.dtick']=1;
+    /* Cap height so a chart is not a full portrait screen -- EXCEPT horizontal
+       bar charts with many categories, where the height IS the category axis and
+       shrinking it makes the labels collide instead. */
+    var hbar=(d.data||[]).some(function(t){return t.type==='bar'&&t.orientation==='h';});
+    var ncat=hbar?Math.max.apply(null,(d.data||[]).map(function(t){return (t.y||[]).length;})):0;
+    if(o.h&&o.h>360&&!(hbar&&ncat>8))up['height']=340;
+    modes(true);
+    /* to_html writes the layout height INLINE on the div (style height 640px for the
+       heatmap). relayout shrinks the SVG, not that box, so the tile kept 300px of blank
+       under the matrix on phones (audit 2026-10-01). Move the box with the figure. */
+    if(up['height'])d.style.height=up['height']+'px';
+    try{Plotly.relayout(d,up);Plotly.Plots.resize(d);}catch(e){}
+  });
+}
+/* Plotly renders from inline scripts and settles asynchronously (the 40x
+   under-report the old iframe gate hit), so poll a few times rather than
+   trusting one DOMContentLoaded pass. */
+function retry(){[0,250,900,2000,3500].forEach(function(ms){setTimeout(tune,ms);});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',retry);else retry();
+var tid;function later(){clearTimeout(tid);tid=setTimeout(tune,160);}
+window.addEventListener('resize',later);window.addEventListener('orientationchange',later);
+})();</script><script>(function(){
+var d=document.documentElement;if(!d.hasAttribute('data-theme-pref'))return;   /* page not themed: stay light, control hidden */
+var K='ltcma-theme',LB={auto:'Auto (follows your device)',light:'Light',dark:'Dark'},
+MQ=null,PRINT=false;try{MQ=window.matchMedia('(prefers-color-scheme: dark)');}catch(e){}
+function pref(){var p=d.getAttribute('data-theme-pref');return p==='light'||p==='dark'?p:'auto';}
+function eff(p){return p==='dark'||(p==='auto'&&MQ&&MQ.matches)?'dark':'light';}
+function sys(){return MQ&&MQ.matches?'dark':'light';}
+/* the next look is always the other one; if that is the device's own, the choice is Auto again (follow the device) */
+function nx(){var o=eff(pref())==='dark'?'light':'dark';return o===sys()?'auto':o;}
+/* theme.css sets --thm-ok: if it did not load, the page is light and so are its charts */
+function ok(){try{return getComputedStyle(d).getPropertyValue('--thm-ok').trim()==='1';}catch(e){return true;}}
+function cur(){return PRINT||!ok()?'light':(d.getAttribute('data-theme')==='dark'?'dark':'light');}
+function ui(){var b=document.getElementById('thm');if(!b)return;var p=pref(),n=nx(),lk=eff(n)==='dark'?'Dark':'Light';
+b.setAttribute('data-mode',p);
+b.setAttribute('aria-label','Colour theme: '+LB[p]+'. Activate for '+lk+(n==='auto'?' (follows your device)':'')+'.');
+b.title='Theme: '+LB[p];}
+function set(p,save,say){d.setAttribute('data-theme-pref',p);d.setAttribute('data-theme',eff(p));
+if(save){try{localStorage.setItem(K,p);}catch(e){}}ui();all();
+if(say){var s=document.getElementById('thm-st');if(s)s.textContent=LB[p].split(' (')[0]+' theme'+(p==='auto'?', now '+eff(p):'');}
+try{window.dispatchEvent(new CustomEvent('ltcma-theme',{detail:{pref:p,theme:eff(p)}}));}catch(e){}}
+/* ---- charts: ONE light->dark map (design_system.CHART_DARK), inverted for the way back ---- */
+var MAP={"#ffffff":"#171B21","#111111":"#E9E7E2","#2a3f5f":"#D9DEE6","#0a2540":"#8DB4EC","#5b7c99":"#3D70D6","#0f766e":"#3CB7A8","#9aa5b1":"#808389","#b6bec8":"#6F7A8A","#e5e5e5":"#2B3139","#d4d4d4":"#3D444E","#ebf0f8":"#343B45","#c9c9c9":"#59616D","#888888":"#A3A3A3","#666666":"#AEB4BE","#555555":"#B9BFC8","#6b7280":"#8C93A0","#0a5d3a":"#55C08A","#7c2d12":"#F08A62","#f1f1f1":"#22272F","#f4f4f2":"#2A2F37","#7fb3ad":"#2F6F68","#7e97b3":"#4E6688","#8a3ffc":"#B58CFF","#009d9a":"#2EC4C0","#fa4d56":"#E25083","#0f5e9c":"#74B6EE","#c2410c":"#F4925F","#b45309":"#F0A65A","rgba(255,255,255,.97)":"rgba(31,36,44,.97)","rgba(15,98,254,0.13)":"rgba(120,170,255,0.16)","rgba(10,37,64,0.07)":"rgba(141,180,236,0.10)","rgba(10,37,64,0.12)":"rgba(141,180,236,0.16)","rgba(154,165,177,0.20)":"rgba(128,131,137,0.24)","rgba(154,165,177,0.12)":"rgba(128,131,137,0.15)","rgba(15,118,110,0.08)":"rgba(60,183,168,0.11)"},NM={white:'255,255,255,1',black:'0,0,0,1',transparent:'0,0,0,0'},FW={},BW={};
+function r3(a){return String(Math.round(a*1000)/1000);}
+function cn(c){if(typeof c!=='string')return null;var s=c.replace(/\s+/g,'').toLowerCase(),m,h,p;if(NM[s])return NM[s];
+if(s.charAt(0)==='#'){h=s.slice(1);if(h.length===3||h.length===4)h=h.replace(/./g,'$&$&');if(h.length===6)h+='ff';
+if(!/^[0-9a-f]{8}$/.test(h))return null;return parseInt(h.substr(0,2),16)+','+parseInt(h.substr(2,2),16)+','+parseInt(h.substr(4,2),16)+','+r3(parseInt(h.substr(6,2),16)/255);}
+m=/^rgba?\(([^)]*)\)$/.exec(s);if(!m)return null;p=m[1].split(',');if(p.length<3)return null;
+return Math.round(+p[0])+','+Math.round(+p[1])+','+Math.round(+p[2])+','+r3(p.length>3?+p[3]:1);}
+for(var k in MAP){var a=cn(k),b=cn(MAP[k]);if(a&&b){FW[a]=MAP[k];BW[b]=k;}}
+function mc(c,T){var k=cn(c);if(k===null)return c;if(T[k]!==undefined)return T[k];var i=k.lastIndexOf(','),al=k.slice(i+1),t;
+if(al!=='1'&&al!=='0'){t=T[k.slice(0,i)+',1'];if(t!==undefined){var q=cn(t).split(',');return 'rgba('+q[0]+','+q[1]+','+q[2]+','+al+')';}}return c;}
+var RX=/(colou?r\s*:\s*)(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\))/g;
+function ms(s,T){return (typeof s==='string'&&s.indexOf('olo')>=0)?s.replace(RX,function(_,p,c){return p+mc(c,T);}):s;}
+function mv(v,T,str){if(typeof v==='string')return str?ms(v,T):mc(v,T);
+if(Array.isArray(v))return v.map(function(x){return (typeof x==='string'||Array.isArray(x))?mv(x,T,str):x;});return v;}
+function eq(a,b){return a===b||JSON.stringify(a)===JSON.stringify(b);}
+function gp(o,p){var s=p.split('.');for(var i=0;i<s.length;i++){if(o===null||o===undefined)return undefined;o=o[s[i]];}return o;}
+var TC=['line.color','marker.color','marker.colors','marker.line.color','fillcolor','textfont.color','insidetextfont.color',
+'outsidetextfont.color','error_x.color','error_y.color','hoverlabel.bgcolor','hoverlabel.bordercolor','hoverlabel.font.color',
+'colorscale','marker.colorscale','connector.line.color','increasing.line.color','decreasing.line.color',
+'increasing.marker.color','decreasing.marker.color','totals.marker.color','colorbar.tickfont.color','colorbar.title.font.color',
+'marker.colorbar.tickfont.color','marker.colorbar.title.font.color','colorbar.bgcolor','colorbar.bordercolor','colorbar.outlinecolor'],
+TS=['text','hovertext','hovertemplate','texttemplate'],TD=['line.color','marker.color','fillcolor'],
+LF=['paper_bgcolor','plot_bgcolor','font.color'],AF=['gridcolor','linecolor','zerolinecolor','tickcolor','spikecolor'],
+LU=['title.font.color','legend.bgcolor','legend.bordercolor','legend.font.color','legend.title.font.color','hoverlabel.bgcolor',
+'hoverlabel.bordercolor','hoverlabel.font.color','coloraxis.colorbar.tickfont.color','coloraxis.colorbar.title.font.color'];
+function th(g){if(!g||!g._fullLayout||!g.data||!window.Plotly)return;var T=cur()==='dark'?FW:BW,F=g._fullLayout,L=g.layout||{},lu={};
+function put(p,v,str){if(v===undefined||v===null)return;var w=mv(v,T,str);if(!eq(w,v))lu[p]=w;}
+LF.forEach(function(p){put(p,gp(F,p));});
+Object.keys(F).forEach(function(ax){if(!/^[xy]axis\d*$/.test(ax))return;AF.forEach(function(p){put(ax+'.'+p,gp(F[ax],p));});
+['tickfont.color','title.font.color'].forEach(function(p){put(ax+'.'+p,gp(L[ax],p));});put(ax+'.title.text',gp(L[ax],'title.text'),true);});
+LU.forEach(function(p){put(p,gp(L,p));});put('title.text',gp(L,'title.text'),true);
+(L.annotations||[]).forEach(function(a,i){['font.color','bgcolor','bordercolor','arrowcolor'].forEach(function(p){put('annotations['+i+'].'+p,gp(a,p));});
+put('annotations['+i+'].text',a.text,true);});
+(L.shapes||[]).forEach(function(s,i){['line.color','fillcolor','label.font.color'].forEach(function(p){put('shapes['+i+'].'+p,gp(s,p));});});
+var ch={},idx=[],fd=g._fullData||[];
+g.data.forEach(function(t,i){var f=null;fd.some(function(x){if(x.index===i){f=x;return true;}return false;});
+function tr(p,str){var v=gp(t,p);if(v===undefined&&!str&&f&&f.visible!==false&&TD.indexOf(p)>=0)v=gp(f,p);
+if(v===undefined||v===null)return;var w=mv(v,T,str);if(!eq(w,v)){(ch[p]=ch[p]||{})[i]=w;if(idx.indexOf(i)<0)idx.push(i);}}
+TC.forEach(function(p){tr(p,false);});TS.forEach(function(p){tr(p,true);});});
+if(!Object.keys(lu).length&&!idx.length)return;
+var now=Date.now();if(!g.__thT||now-g.__thT>1500){g.__thT=now;g.__thN=0;}if(++g.__thN>6)return;   /* safety valve */
+var tu={};Object.keys(ch).forEach(function(p){tu[p]=idx.map(function(i){return ch[p][i];});});
+try{window.Plotly.update(g,tu,lu,idx.length?idx:undefined);}catch(e){}}
+function hook(g){if(!g||g.__thh||!g.on)return;g.__thh=true;var q=false,f=function(){if(q)return;q=true;
+Promise.resolve().then(function(){q=false;th(g);});};
+['plotly_afterplot','plotly_restyle','plotly_relayout','plotly_update'].forEach(function(e){g.on(e,f);});}
+function all(){[].forEach.call(document.querySelectorAll('.js-plotly-plot'),function(g){hook(g);th(g);});}
+function wrap(){var P=window.Plotly;if(!P||P.__thw||!P.newPlot)return;P.__thw=true;var np=P.newPlot;
+P.newPlot=function(g){var r=np.apply(this,arguments),el=typeof g==='string'?document.getElementById(g):g;
+try{hook(el);if(el&&el._fullLayout)th(el);}catch(e){}if(r&&r.then)r.then(function(){try{hook(el);th(el);}catch(e){}});return r;};}
+wrap();
+function wire(){var b=document.getElementById('thm');if(b&&!b.__thw){b.__thw=true;b.addEventListener('click',function(){set(nx(),true,true);});}ui();}
+wire();document.addEventListener('DOMContentLoaded',function(){wrap();wire();all();});window.addEventListener('load',all);
+/* Auto follows the system: the MediaQueryList change event, and -- for a change that event missed (a tab in the
+   background, some embedded browsers) -- a re-check whenever the page is focused or shown again */
+var mf=function(){if(pref()==='auto'&&d.getAttribute('data-theme')!==eff('auto'))set('auto',false,false);else ui();};
+if(MQ){if(MQ.addEventListener)MQ.addEventListener('change',mf);else if(MQ.addListener)MQ.addListener(mf);}
+window.addEventListener('focus',mf);document.addEventListener('visibilitychange',function(){if(!document.hidden)mf();});
+window.addEventListener('storage',function(e){if(e.key===K){var p=e.newValue;set(p==='light'||p==='dark'?p:'auto',false,false);}});
+window.addEventListener('beforeprint',function(){PRINT=true;all();});window.addEventListener('afterprint',function(){PRINT=false;all();});
+window.ltcmaTheme={set:function(p){set(p==='light'||p==='dark'?p:'auto',true,false);},pref:pref,theme:cur,apply:all,map:function(c,dk){return mc(c,dk?FW:BW);}};
+})();</script>

@@ -16,6 +16,7 @@ from glossary import NAV, _bt_redact
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 from design_system import CSS_LINKS
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 ASOF = pd.Timestamp.today().strftime("%d %b %Y")
 
 # ── the funnel is DERIVED, never typed (Carlos, 2026-10-07) ────────────────
@@ -439,12 +440,11 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <section class="hero"><div class="container">
 <h1>Research Notes — the full record</h1>
 <p class="lede">What was tested, what failed, and the little that survived.
-{N_TESTED} signals and strategies tested &mdash; {_SL} pre-registered signal trials in the
-discovery batches and {N_TESTED - _SL} strategies tested end to end since &mdash; have produced
-exactly {_WORDS.get(DURABLE_EDGES, DURABLE_EDGES).lower()} durable feature-level edge and {_WORDS.get(N_STRAT, N_STRAT).lower()} deployable strategies, and
-every discovery batch since the first has promoted nothing. That is the honest base rate
+The pre-registered signal trials of the discovery batches, and the {N_TESTED - _SL} strategies
+tested end to end since, have produced very few survivors &mdash; the funnel below counts them
+&mdash; and every discovery batch since the first has promoted nothing. That is the honest base rate
 of systematic-edge discovery, and hiding it would misstate how hard this is.
-The {N_FINDINGS} load-bearing findings below are the working capital of the program.</p>
+The load-bearing findings below are the working capital of the program.</p>
 <p class="asof">As of {ASOF} &middot; negative results published by design</p>
 </div></section>
 <main class="container">
@@ -517,7 +517,7 @@ investment advice. Negative results are published by design.</p></div></footer>
 {FILTER_JS}
 </body></html>"""
 
-open(f"{DOCS}/research.html", "w", encoding="utf-8").write(HTML)
+open(f"{DOCS}/research.html", "w", encoding="utf-8").write(themed(HTML, "research.html"))
 
 # ── low-token AI companion ───────────────────────────────────────────────────
 ai = ["RESEARCH NOTES — AI COPY (low-token)",

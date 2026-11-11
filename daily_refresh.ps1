@@ -17,7 +17,7 @@
        35 out-of-sample replay of the public backtests.
     3. Site rebuild: 17 site, 23 strategies, 27 research notes, 25 stock picks,
        21 signals redirect, 18 portfolio, 26 real-numbers, 22 AI copies,
-       24 backtests redirect, 31 research library, site rules R1-R7.  (17 and
+       24 backtests redirect, 31 research library, site rules R1-R9.  (17 and
        23 are load-bearing: failure aborts.)
     4. Mirror docs/ + data/ backup -> Documents\CarlosDuarteWebsite.
     5. Verify as-of stamps + no fxaANEL/fxaOS CSS regression.
@@ -107,6 +107,10 @@ function Exit-RepoLock {
     }
 }
 
+# what the run has published so far: Fail() says it (2026-11-10: the alert said "Nothing was committed or pushed"
+# after a run that HAD pushed 6b3384c)
+$script:Committed = $null
+$script:Pushed = $false
 function Fail {
     param([string]$Msg)
     Log $Msg 'ERROR'
@@ -119,7 +123,9 @@ function Fail {
 $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') refresh FAILED
 $Msg
 Log: $LogFile
-Nothing was committed or pushed; the public site is still on the last good build.
+$(if ($script:Pushed) { "Commit $($script:Committed) WAS pushed to origin/main; the failure above came after the push (the repo is fine)." }
+  elseif ($script:Committed) { "Commit $($script:Committed) was made locally but NOT pushed; origin/main and the public site are still on the last good build." }
+  else { 'Nothing was committed or pushed; the public site is still on the last good build.' })
 "@
     } catch { }
     # REFRESH_ALERT.txt sat unread in Scripts\logs for the whole 2026-10-09..10-19 outage.
@@ -161,6 +167,87 @@ function Run-Step {
         }
     }
     return $r
+}
+
+# ---- Live verify (step 7), as functions: tools\test_refresh_f7.ps1 runs exactly this code on a throwaway clone ----
+# 2026-11-10 (wave r2): a brand-new page (research-library.html) took > 3.5 min to appear on GitHub Pages and the
+# 3 x 60 s rounds raised a false F7. Pages that are NEW in this push get extra rounds, checked alone, and only once
+# every EXISTING page has passed; an existing page that is still not current after the normal rounds fails as before.
+function Get-AddedPages {
+    param([string]$From, [string]$To = 'HEAD')
+    if (-not $From) { return @() }
+    $r = Invoke-Native { git diff --name-only --diff-filter=A $From $To -- 'docs/*.html' }
+    if ($r.Code -ne 0) { return @() }
+    return @($r.Text -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^docs/[^/]+\.html$' } |
+             ForEach-Object { $_.Substring(5) })
+}
+function Test-LivePage {
+    param([string]$Name, [hashtable]$Stamped)
+    $u = "$SiteBase/$Name"
+    try {
+        # -DisableKeepAlive + one retry (2026-09-30): after the 60s sleep the first
+        # requests reused a pooled keep-alive socket the server had already closed
+        # and hung to the 30s timeout -- always the FIRST pages alphabetically
+        # (backtests.html, bt_buy_the_dip.html), which curl served in 0.2s. That
+        # false F7 failed the 09-30 run after a successful publish.
+        try { $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30 -DisableKeepAlive }
+        catch { Start-Sleep -Seconds 3
+                $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30 -DisableKeepAlive }
+        if ($resp.StatusCode -ne 200) { return ("{0} HTTP {1}" -f $Name, $resp.StatusCode) }
+        if ($Stamped.ContainsKey($Name)) {
+            $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Today))) -or `
+                  ($resp.Content -match ("As of {0}" -f [regex]::Escape($TodayLong)))
+            if (-not $ok -and $MorningRun) {
+                $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Yesterday))) -or `
+                      ($resp.Content -match ("As of {0}" -f [regex]::Escape($YesterdayLong)))
+            }
+            if (-not $ok) { return ("{0} serving a stale 'As of'" -f $Name) }
+        }
+    } catch {
+        return ("{0} unreachable: {1}" -f $Name, $_.Exception.Message)
+    }
+    return $null
+}
+function Invoke-LiveVerify {
+    param([string[]]$Pages, [hashtable]$Stamped, [string[]]$NewPages = @(), [int]$Rounds = 3,
+          [int]$ExtraRounds = 5, [int]$SleepSeconds = 60)
+    $bad = @(); $badNames = @()
+    for ($round = 1; $round -le $Rounds; $round++) {
+        Log ("Waiting {0}s for GitHub Pages (round {1}/{2})..." -f $SleepSeconds, $round, $Rounds)
+        Start-Sleep -Seconds $SleepSeconds
+        $bad = @(); $badNames = @()
+        foreach ($n in $Pages) {
+            $b = Test-LivePage -Name $n -Stamped $Stamped
+            if ($b) { $bad += $b; $badNames += $n }
+        }
+        if ($bad.Count -eq 0) {
+            Log ("LIVE OK: all {0} pages HTTP 200; every stamped page shows today (round {1})." -f $Pages.Count, $round)
+            return [pscustomobject]@{ Ok = $true; Bad = @(); Message = '' }
+        }
+        Log ("LIVE round {0}: {1} page(s) not current yet -- {2}" -f $round, $bad.Count, (($bad | Select-Object -First 6) -join '; ')) 'WARN'
+    }
+    $oldBad = @($badNames | Where-Object { $NewPages -notcontains $_ })
+    if ($oldBad.Count -eq 0 -and $badNames.Count -gt 0 -and $ExtraRounds -gt 0) {
+        # only pages that are NEW in this push are missing: GitHub Pages can take longer to serve a new path
+        $left = @($badNames)
+        Log ("Only page(s) new in this push are not served yet ({0}): up to {1} extra round(s) for them alone." -f ($left -join ', '), $ExtraRounds) 'WARN'
+        for ($x = 1; $x -le $ExtraRounds; $x++) {
+            Log ("Waiting {0}s for GitHub Pages (new pages, extra round {1}/{2})..." -f $SleepSeconds, $x, $ExtraRounds)
+            Start-Sleep -Seconds $SleepSeconds
+            $bad = @(); $still = @()
+            foreach ($n in $left) {
+                $b = Test-LivePage -Name $n -Stamped $Stamped
+                if ($b) { $bad += $b; $still += $n }
+            }
+            if ($still.Count -eq 0) {
+                Log ("LIVE OK: all {0} pages HTTP 200; the new page(s) {1} appeared in extra round {2}." -f $Pages.Count, ($left -join ', '), $x)
+                return [pscustomobject]@{ Ok = $true; Bad = @(); Message = '' }
+            }
+            $left = $still
+        }
+        return [pscustomobject]@{ Ok = $false; Bad = $bad; Message = ("Pushed $hash; every existing page is live, but the page(s) new in this push are still not served after $Rounds + $ExtraRounds rounds ({0} page(s)). This is failure mode F7 for a NEW path -- check the 'pages build and deployment' workflow:`n{1}" -f $bad.Count, (($bad | Select-Object -First 12) -join "`n")) }
+    }
+    return [pscustomobject]@{ Ok = $false; Bad = $bad; Message = ("Pushed $hash but GitHub Pages is still not serving it after $Rounds rounds ({0} page(s)). This is failure mode F7 -- check the 'pages build and deployment' workflow, NOT refresh.yml:`n{1}" -f $bad.Count, (($bad | Select-Object -First 12) -join "`n")) }
 }
 
 $script:Start = Get-Date
@@ -295,9 +382,11 @@ try {
     # after all of them and before 34. Best-effort: an item whose link no longer resolves is left out, never
     # published broken; the page is still written and the step exits 2, so the log shows "failed (continuing)" + why.
     Run-Step '31_research_library.py' | Out-Null
-    # Site rules R1-R7 (tools/ds_gate.py --rules-only): the header on every page, every page reachable, Street held,
+    # Site rules R1-R9 (tools/ds_gate.py --rules-only): the header on every page, every page reachable, Street held,
     # image credits / budgets / metadata, the home summary against the pages it restates (a pair built from two
-    # data vintages is a WARN), the library's links and sources. Best-effort: it writes nothing and never blocks.
+    # data vintages is a WARN), the library's links and sources, no figure shown twice on a page (R8, 2026-11-10),
+    # dark mode: every page themed, no light-only colour, the chart palette map sound (R9, 2026-11-10 wave r2).
+    # Best-effort: it writes nothing and never blocks.
     Run-Step 'guard_site_rules.py'   | Out-Null
     # Content-age audit (2026-10-07): runs pipeline v2 layer 7 against what was JUST built and
     # emits docs/internal/freshness.html (unlinked). Must follow every generator. Best-effort:
@@ -366,6 +455,7 @@ try {
     }
 
     # ---- 6. commit + push + live verify ---------------------------------------
+    $preHead = (Invoke-Native { git rev-parse HEAD }).Text.Trim()   # step 7: which pages are NEW in this push
     (Invoke-Native { git add docs data }) | Out-Null
     $staged = (Invoke-Native { git diff --cached --name-only }).Text.Trim()
     if (-not $staged) {
@@ -378,8 +468,10 @@ try {
         $r = Invoke-Native { git commit -m $msg }
         if ($r.Code -ne 0) { Fail "git commit failed: $($r.Text)" }
         $hash = (Invoke-Native { git rev-parse --short HEAD }).Text.Trim()
+        $script:Committed = $hash
         $r = Invoke-Native { git push origin main }
         if ($r.Code -ne 0) { Fail "git push failed:`n$($r.Text)" }
+        $script:Pushed = $true
         Log "Pushed $hash to origin/main."
         Log "COMMIT_HASH=$hash"
     }
@@ -403,46 +495,10 @@ try {
     }
     Log ("Live-verifying {0} pages ({1} of them carry a today-stamped 'As of')." -f $pageFiles.Count, $stamped.Count)
 
-    $maxRounds = 3
-    $bad = @()
-    for ($round = 1; $round -le $maxRounds; $round++) {
-        Log ("Waiting 60s for GitHub Pages (round {0}/{1})..." -f $round, $maxRounds)
-        Start-Sleep -Seconds 60
-        $bad = @()
-        foreach ($f in $pageFiles) {
-            $u = "$SiteBase/$($f.Name)"
-            try {
-                # -DisableKeepAlive + one retry (2026-09-30): after the 60s sleep the first
-                # requests reused a pooled keep-alive socket the server had already closed
-                # and hung to the 30s timeout -- always the FIRST pages alphabetically
-                # (backtests.html, bt_buy_the_dip.html), which curl served in 0.2s. That
-                # false F7 failed the 09-30 run after a successful publish.
-                try { $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30 -DisableKeepAlive }
-                catch { Start-Sleep -Seconds 3
-                        $resp = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 30 -DisableKeepAlive }
-                if ($resp.StatusCode -ne 200) { $bad += ("{0} HTTP {1}" -f $f.Name, $resp.StatusCode); continue }
-                if ($stamped.ContainsKey($f.Name)) {
-                    $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Today))) -or `
-                          ($resp.Content -match ("As of {0}" -f [regex]::Escape($TodayLong)))
-                    if (-not $ok -and $MorningRun) {
-                        $ok = ($resp.Content -match ("As of {0}" -f [regex]::Escape($Yesterday))) -or `
-                              ($resp.Content -match ("As of {0}" -f [regex]::Escape($YesterdayLong)))
-                    }
-                    if (-not $ok) { $bad += ("{0} serving a stale 'As of'" -f $f.Name) }
-                }
-            } catch {
-                $bad += ("{0} unreachable: {1}" -f $f.Name, $_.Exception.Message)
-            }
-        }
-        if ($bad.Count -eq 0) {
-            Log ("LIVE OK: all {0} pages HTTP 200; every stamped page shows today (round {1})." -f $pageFiles.Count, $round)
-            break
-        }
-        Log ("LIVE round {0}: {1} page(s) not current yet -- {2}" -f $round, $bad.Count, (($bad | Select-Object -First 6) -join '; ')) 'WARN'
-    }
-    if ($bad.Count -gt 0) {
-        Fail ("Pushed $hash but GitHub Pages is still not serving it after $maxRounds rounds ({0} page(s)). This is failure mode F7 -- check the 'pages build and deployment' workflow, NOT refresh.yml:`n{1}" -f $bad.Count, (($bad | Select-Object -First 12) -join "`n"))
-    }
+    $newPages = @(Get-AddedPages -From $preHead -To 'HEAD')
+    if ($newPages.Count -gt 0) { Log ("New in this push: {0}" -f ($newPages -join ', ')) }
+    $lv = Invoke-LiveVerify -Pages @($pageFiles | ForEach-Object { $_.Name }) -Stamped $stamped -NewPages $newPages
+    if (-not $lv.Ok) { Fail $lv.Message }
 
     # ---- 8. freshness of EVERY stamp on EVERY live page -----------------------
     # Step 7 only re-checks pages that were already stamped today in the build, so a

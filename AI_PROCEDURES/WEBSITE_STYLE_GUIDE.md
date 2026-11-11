@@ -85,8 +85,8 @@ Observations. **Restraint is the design constraint — when in doubt, remove dec
 ## 2026-11-10: Editorial Terminal (binding since the remake; wins over the rules above)
 Source of truth: `scripts/design_system.py` (`ET` tokens, `ET_CSS` appended to `docs/style.css` by
 `17_build_site.py`, `hero()`, `photo()`, `credits_footer()`, `TABS_JS`). The legacy rules above stay in `style.css`
-underneath; removing the appended layer restores the previous look on every page at once. Light theme only (dark
-mode deferred: not provably safe for every Plotly chart).
+underneath; removing the appended layer restores the previous look on every page at once. Dark mode: see
+"2026-11-10 wave r2: dark mode" below.
 
 | token | hex | use |
 |---|---|---|
@@ -123,6 +123,84 @@ mode deferred: not provably safe for every Plotly chart).
   each generator that shows one. No image > 1.2 MB; phones get a 9:16 portrait WebP (720 / 1080 px, <= 250 KB),
   larger screens the 16:9 WebP 1600 / 2560 / 2880 / 3840 (tablets ask for 150vw: a 16:9 image covering a taller box
   is drawn wider than the screen). On phones the heroes stay about one screen tall (stats 2 x 2, CTAs side by side;
-  the home's performance panel shows from 641 px up, since the Hold card restates it right below).
+  the home's performance panel shows from 641 px up; the Hold card's dollar row is its phone twin, `.ph-only`).
 - **Photo:** the About section shows Carlos's portrait (EXIF-free copies only; never the original in Pictures).
-- **Charts:** unchanged in this wave (palette, heights, hovers, guards).
+- **Charts:** palette, heights, hovers and guards unchanged by the remake; dark mode maps them (below).
+- **One figure, one place (2026-11-10, Carlos: "intenta que no se repita info en la misma pestana").** A headline
+  figure (hero stat or panel, tile, card, badge, bar list, lede) is shown ONCE per page and viewport: prose names
+  the tile instead of restating it, a bar list draws its bars inside its own table, a summary card shows what the
+  page below does not. A copy shown only <= 640 px and another only >= 641 px is one place (`.ph-only` / the hero
+  panel). Tables, charts, chips, legends, the as-of chip and footers are not counted. ds_gate R8
+  (`scripts/fig_repeats.py`, run in the refresh by `guard_site_rules.py`) fails a repeat unless `fig_repeats.ALLOW`
+  lists it with a reason.
+- **One currency at a time (portfolio.html, 2026-11-10, Carlos: "se pueda segmentar entre mxn y usd, no que los
+  dos esten encimados").** One MXN | USD switch (sticky under the header, `aria-pressed`, remembered per viewer in
+  localStorage) drives every figure and every chart; no chart draws both currencies. Pesos without JavaScript
+  (the book's currency). The currency's share of a return is stated once, in FX Attribution.
+
+## 2026-11-10 wave r2: dark mode (Carlos: "Modo oscuro siguiente paso si")
+- **Mechanics (one place: the THEME block of `scripts/design_system.py`).** A page is dark-capable when its generator
+  writes it through `design_system.themed()`: the head gets `HEAD_LINKS` (a boot script that sets `data-theme` on
+  `<html>` BEFORE the first paint from the viewer's choice in localStorage `ltcma-theme`, every access in
+  try/catch, plus the link to `_design_system/theme.css`) and every colour literal in the page's `<style>` blocks and
+  `style=""` attributes becomes `var(--token, <the same literal>)`. `17` writes `style.css` through `themed_css()`.
+  The literal stays as the fallback, so the light theme renders the old colour by construction. `theme.css`
+  (`THEME_CSS`, emitted by `design_system.emit()` from 17) holds the dark value of every token, twice: under
+  `@media screen and (prefers-color-scheme: dark)` for `:root:not([data-theme="light"])` (no JS, or the control on
+  Auto) and under `@media screen` for `:root[data-theme="dark"]` (an explicit choice). Print never matches: it stays
+  light. A page that is not themed (an older committed copy, `internal/freshness.html`) does not link theme.css, so
+  it stays light whatever the system says: no page can go dark with unconverted CSS.
+- **The control** (`THEME_BUTTON` + `THEME_JS`, inside `glossary.NAV`, right of the Research corner): one 44 px button,
+  every press flips the look (light <-> dark); picking the device's own look means Auto again (follow the device),
+  so no press is ever invisible (review round 1). `aria-label` names the current mode and the next one, a polite
+  status line announces the change; theme.css sets `--thm-ok` and the script keeps charts light if it did not load; hidden without JS (the media query then follows the system). The header still fits one row
+  from 1280 px (control 44 px; tab padding 6 px there; 10 px to spare) and two rows down to 350 px.
+- **Charts:** ONE light -> dark map, `design_system.CHART_DARK` (alpha variants keep their alpha; it inverts exactly
+  for the way back). `THEME_JS` wraps `Plotly.newPlot` (a dark page never paints a light chart) and re-applies the map
+  after any restyle / relayout (the portfolio currency switch, the backtest range buttons, the mobile tuner) and on a
+  theme change: paper / plot ground, fonts, grid / zero / spike lines, legend, hover labels, annotations, shapes,
+  colour bars, every trace colour and inline `color:` in hover / text strings. Never style a chart for dark by hand:
+  add the light colour to CHART_DARK (theme_gate T5 fails a trace colour that is unmapped and below 3:1 on the dark
+  card, and two trace colours that share a chart and are >= 15 CIEDE2000 apart in light but not in dark: the
+  secondary series and the benchmark must not merge with the book's blue).
+- **Hero images** are dark in both themes and theme-invariant (their rules keep literals; the browser check compares
+  every hero element's computed colours between the themes).
+- **Rules:** never hard-code a colour a theme cannot reach: a literal in page CSS must be in the `design_system`
+  `_FG` / `_BG` / `_BD` / `_SH` tables (which give it a token) or in a theme-invariant context (image hero, print);
+  a script never sets a literal colour, nor writes one into an HTML fragment (use `var(--token, literal)`); a colour
+  a generator can emit only on some days (25's sector chips) is mapped too (theme_gate reads its palette); a new token needs a dark value with text
+  >= 4.5:1 and graphics >= 3:1 on the dark ground / card / chip. Gates: `tools/theme_gate.py` (T1-T7, also ds_gate
+  R9 in the refresh) and the real-browser half `tools/theme_browser_check.js` (computed contrast of every text node
+  and every chart at 1440 / 375 in both themes, hero invariance, palette left over from the other theme).
+- **Light theme: unchanged.** Its pre-existing contrast gaps (legacy greys `#888` / `#9ca3af` on white, white text
+  on the red / cyan sector chips, the recessive benchmark grey `#9aa5b1` and the muted bars `#b6bec8` in charts) are
+  measured and listed in the wave notes; changing them is Carlos's call.
+
+| token | light | dark | dark text contrast |
+|---|---|---|---|
+| `--bg` | `#F6F5F1` | `#101317` |  |
+| `--panel` | `#FFFFFF` | `#171B21` |  |
+| `--ink` | `#0E1726` | `#E9E7E2` | 12.46:1 (worst of ground / card / chip) |
+| `--sec` | `#4A5568` | `#B9BFC8` | 8.32:1 (worst of ground / card / chip) |
+| `--muted` | `#667085` | `#959CA8` | 5.57:1 (worst of ground / card / chip) |
+| `--line` | `#E3E1DA` | `#2B3139` |  |
+| `--line-strong` | `#C9C6BC` | `#3D444E` |  |
+| `--chip` | `#EFEDE6` | `#20252D` |  |
+| `--accent` | `#0A2540` | `#9CBDEB` | 7.99:1 (worst of ground / card / chip) |
+| `--accent-tint` | `rgba(10,37,64,.05)` | `rgba(156,189,235,.08)` |  |
+| `--accent-line` | `rgba(10,37,64,.28)` | `rgba(156,189,235,.38)` |  |
+| `--amber` | `#B45309` | `#F0A65A` | 7.56:1 (worst of ground / card / chip) |
+| `--up` | `#0F5E9C` | `#74B6EE` | 7.09:1 (worst of ground / card / chip) |
+| `--down` | `#C2410C` | `#F4925F` | 6.69:1 (worst of ground / card / chip) |
+| `--pos` | `#0a5d3a` | `#5CC68F` | 7.28:1 (worst of ground / card / chip) |
+| `--neg` | `#7c2d12` | `#F39673` | 6.91:1 (worst of ground / card / chip) |
+| `--st-green` | `#0a5d3a` | `#5CC68F` | 7.28:1 (worst of ground / card / chip) |
+| `--st-blue` | `#1e3a8a` | `#93AEF5` | 7.05:1 (worst of ground / card / chip) |
+| `--st-purple` | `#5b21b6` | `#B79CF5` | 6.66:1 (worst of ground / card / chip) |
+| `--st-gray` | `#6b7280` | `#9AA1AD` | 5.92:1 (worst of ground / card / chip) |
+| `--lift` | `0 8px 22px rgba(14,23,38,.08)` | `0 8px 22px rgba(0,0,0,.45)` |  |
+
+Tokens only the themed rewrite references (undefined in light, so the literal fallback applies; light -> dark):
+`--on-accent` #fff -> #0C1420, `--accent-hover` #0d3055 -> #B6CFF2, `--selection` rgba(180,83,9,.16) -> rgba(240,166,90,.30), `--neutral` #9AA5B4 -> #6E7886, `--teal` #0f766e -> #45BBAD, `--bench` #9aa5b1 -> #8B96A4, `--slate` #5b7c99 -> #94ABC2, `--warn` #8a5a00 -> #E0B05A, `--c-violet` #8a3ffc -> #B58CFF, `--c-red` #fa4d56 -> #E25083, `--c-cyan` #009d9a -> #2EC4C0, `--l-ink` #111 -> #E9E7E2, `--l-ink2` #333 -> #D7D9DD, `--l-ink25` #393939 -> #D2D4D8, `--l-ink3` #444 -> #C9CCD2, `--l-sec` #555 -> #B9BFC8, `--l-sec6` #666 -> #AEB4BE, `--l-muted` #888 -> #9EA5B0, `--l-muted2` #9ca3af -> #8F96A1, `--l-faint` #c4c9cf -> #8A929D, `--l-line` #e5e5e5 -> #2B3139, `--l-line2` #d4d4d4 -> #3D444E, `--l-line3` #eee -> #262B33, `--l-line4` #f0f0f0 -> #262B33, `--l-line5` #d8d5cf -> #3D444E, `--l-tot` #fbfaf8 -> #1C2027, `--l-row` #fbfbfb -> #1C2027, `--l-dim` #fcfcfc -> #191D23, `--l-grp` #f4f4f2 -> #1F242B, `--l-chip` #f4f4f4 -> #222730, `--l-code` #f0f0f0 -> #222730, `--l-track` #eef0f2 -> #262B33, `--l-track2` #c7d3df -> #46505C, `--l-prelim` #f5f8fb -> #18212B, `--l-tint45` rgba(10,37,64,.045) -> rgba(156,189,235,.07), `--l-tint35` rgba(10,37,64,.035) -> rgba(156,189,235,.06), `--l-tint07` rgba(10,37,64,.07) -> rgba(156,189,235,.12), `--l-tint-k` rgba(0,0,0,.05) -> rgba(255,255,255,.07), `--l-accent-line20` rgba(10,37,64,.2) -> rgba(156,189,235,.32), `--l-pos-line` rgba(10,93,58,.35) -> rgba(92,198,143,.45), `--l-neg-line` rgba(124,45,18,.45) -> rgba(243,150,115,.5), `--l-warn-line` rgba(138,90,0,.4) -> rgba(224,176,90,.5), `--l-blue-line` rgba(30,58,138,.35) -> rgba(147,174,245,.45), `--l-purple-line` rgba(91,33,182,.35) -> rgba(183,156,245,.45), `--l-sh08` rgba(14,23,38,.08) -> rgba(0,0,0,.45), `--l-sh16` rgba(14,23,38,.16) -> rgba(0,0,0,.55).
+
+Chart palette map (`CHART_DARK`, light -> dark): `#ffffff` -> `#171B21`, `#111111` -> `#E9E7E2`, `#2a3f5f` -> `#D9DEE6`, `#0a2540` -> `#8DB4EC`, `#5b7c99` -> `#3D70D6`, `#0f766e` -> `#3CB7A8`, `#9aa5b1` -> `#808389`, `#b6bec8` -> `#6F7A8A`, `#e5e5e5` -> `#2B3139`, `#d4d4d4` -> `#3D444E`, `#ebf0f8` -> `#343B45`, `#c9c9c9` -> `#59616D`, `#888888` -> `#A3A3A3`, `#666666` -> `#AEB4BE`, `#555555` -> `#B9BFC8`, `#6b7280` -> `#8C93A0`, `#0a5d3a` -> `#55C08A`, `#7c2d12` -> `#F08A62`, `#f1f1f1` -> `#22272F`, `#f4f4f2` -> `#2A2F37`, `#7fb3ad` -> `#2F6F68`, `#7e97b3` -> `#4E6688`, `#8a3ffc` -> `#B58CFF`, `#009d9a` -> `#2EC4C0`, `#fa4d56` -> `#E25083`, `#0f5e9c` -> `#74B6EE`, `#c2410c` -> `#F4925F`, `#b45309` -> `#F0A65A`, `rgba(255,255,255,.97)` -> `rgba(31,36,44,.97)`, `rgba(15,98,254,0.13)` -> `rgba(120,170,255,0.16)`, `rgba(10,37,64,0.07)` -> `rgba(141,180,236,0.10)`, `rgba(10,37,64,0.12)` -> `rgba(141,180,236,0.16)`, `rgba(154,165,177,0.20)` -> `rgba(128,131,137,0.24)`, `rgba(154,165,177,0.12)` -> `rgba(128,131,137,0.15)`, `rgba(15,118,110,0.08)` -> `rgba(60,183,168,0.11)`.

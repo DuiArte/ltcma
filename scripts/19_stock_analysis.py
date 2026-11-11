@@ -22,6 +22,7 @@ from glossary import NAV, ccy_badge
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)
@@ -115,7 +116,7 @@ def big(x):
     return f"${x:,.0f}"
 
 def page(title, body):
-    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    return themed(f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{title}</title>{FONTS}{CSS_LINKS}<link rel="stylesheet" href="style.css">'
             f'<script src="{PLOTLY}"></script></head><body>'
@@ -124,7 +125,64 @@ def page(title, body):
             f'</span>{NAV}</div></header>{body}'
             f'<footer class="shell-foot"><div class="container"><p>CFA-framework '
             f'analysis on free Yahoo Finance data. Educational research, not '
-            f'investment advice.</p></div></footer></body></html>')
+            f'investment advice.</p></div></footer></body></html>', title)
+
+# ---- wave "no repeats" (2026-11-10, Carlos: "intenta que no se repita info en la misma pestana") -------------------
+# The Snapshot tiles carry the price, the trailing P/E and the synthesized target; the Financial Health tiles carry the
+# earnings growth. The Forecast card, its footnote and the CFA View used to print those same figures again. These three
+# builders say what is NEW in each place (the distance to the price, the justified P/E, the direction) and point at the
+# tile for the rest. Pure functions of numbers already computed in analyze(), so the staged previews of the pages can
+# be rebuilt from the committed pages with exactly this code (tools/preview19.py).
+def syn_line_html(syn, upside):
+    """The Forecast card's caption: what its table holds (round 1, review V12: the synthesized target and its distance
+    to the price are the table's first row, not a pointer to the Snapshot tile)."""
+    if not syn:
+        return "<i>Synthesized target unavailable</i>"
+    return ("<b>12-month targets by method</b> "
+            "<span style='font-size:12.5px;color:var(--sec)'>(first row: the synthesized target, their average)</span>")
+
+
+def syn_row_html(syn, upside):
+    """The method table's first row: the synthesized 12-month target and how far it sits from the price."""
+    if not syn:
+        return ""
+    cls_up = "pos" if upside >= 0 else "neg"
+    return (f"<tr><td><b>Synthesized target</b></td><td><b>${syn:,.2f}</b></td>"
+            f"<td class='{cls_up}'><b>{upside*100:+.1f}%</b></td></tr>")
+
+
+def verdict_html(name, syn, upside, pe, just_pe, r, g, tgt_bit, payout):
+    """The CFA View: the direction and the comparisons, not the tiles' figures again.
+    2026-11-10 (Carlos, written): the justified P/E is compared only where the page applies it (payout >= 30%, the
+    same gate as the targets in analyze() and the Forecast note); below that it is n/m (not meaningful), since it
+    values only the dividend stream of a retention-heavy firm."""
+    bits = []
+    if syn:
+        bits.append(f"the CFA-framework methods put the 12-month fair value "
+                    f"{'above' if upside >= 0 else 'below'} the market price (the forecast above)")
+    if pe and just_pe:
+        if payout >= 0.30:
+            gap = ("above" if pe > just_pe * 1.15
+                   else "in line with" if pe > just_pe * 0.85 else "below")
+            bits.append(f"the trailing P/E sits {gap} its justified "
+                        f"P/E of {just_pe:.1f} (CAPM r={r*100:.1f}%, g={pct(g)})")
+        else:
+            bits.append(f"the justified P/E is n/m (payout {pct(payout)} &lt; 30%)")
+    if tgt_bit:
+        bits.append(tgt_bit)
+    return f"{name} &mdash; " + "; ".join(bits) + "."
+
+
+def g1_note_html(g1, eg, rg):
+    """The stage-1 growth input: named by its source when it IS a tile's figure, printed only when it is not."""
+    if num(eg) is not None and abs(g1 - eg) < 1e-12:
+        return ("stage-1 growth g&#8321; = the analyst earnings growth (Financial Health &amp; Growth below), "
+                "capped at 25%")
+    if num(eg) is None and num(rg) is not None and abs(g1 - rg) < 1e-12:
+        return ("stage-1 growth g&#8321; = the revenue growth (Financial Health &amp; Growth below; no earnings growth "
+                "given), capped at 25%")
+    return f"stage-1 growth g&#8321; = {pct(g1)} (analyst growth, floored at 0 and capped at 25%)"
+
 
 def tiles(items):
     n = len(items)
@@ -270,24 +328,13 @@ def analyze(ticker):
     c3.update_layout(title="Valuation multiples", yaxis_title="x")
     _headroom(c3, [v for _, v in mult])
 
-    # --- verdict ---
-    bits = []
-    if syn:
-        bits.append(f"the CFA-framework methods synthesize to a 12-month fair "
-                    f"value of ${syn:,.2f} ({upside*100:+.0f}% vs the "
-                    f"${price:,.2f} market price)")
-    if pe and just_pe:
-        gap = ("above" if pe > just_pe * 1.15
-               else "in line with" if pe > just_pe * 0.85 else "below")
-        bits.append(f"the trailing P/E of {pe:.1f} sits {gap} its justified "
-                    f"P/E of {just_pe:.1f} (CAPM r={r*100:.1f}%, g={pct(g)})")
-    if tgt:
-        bits.append(f"consensus analyst target ${tgt:,.0f} "
-                    f"({(tgt/price-1)*100:+.0f}%, "
-                    f"&lsquo;{info.get('recommendationKey','n/a')}&rsquo;)")
-    verdict = f"{name} &mdash; " + "; ".join(bits) + "."
+    # --- verdict (wave "no repeats": verdict_html above) ---
+    tgt_bit = (f"consensus analyst target ${tgt:,.0f} "
+               f"({(tgt/price-1)*100:+.0f}%, "
+               f"&lsquo;{info.get('recommendationKey','n/a')}&rsquo;)") if tgt else ""
+    verdict = verdict_html(name, syn, upside, pe, just_pe, r, g, tgt_bit, payout)
 
-    tr = ""
+    tr = syn_row_html(syn, upside)
     for lbl, v in targets.items():
         up_p = (v / price - 1) * 100
         cls = "pos" if up_p >= 0 else "neg"
@@ -298,14 +345,7 @@ def analyze(ticker):
         cls_a = "pos" if upa >= 0 else "neg"
         tr += (f"<tr><td><i>Analyst consensus (reference)</i></td>"
                f"<td>${tgt:,.2f}</td><td class='{cls_a}'>{upa:+.1f}%</td></tr>")
-    if syn:
-        cls_up = "pos" if upside >= 0 else "neg"
-        syn_line = (f"<b>Synthesized 12-month target</b> "
-                    f"<span style='color:#0a2540;font-size:20px;font-weight:600'>"
-                    f"${syn:,.2f}</span> <span class='{cls_up}' "
-                    f"style='font-weight:600'>{upside*100:+.1f}%</span>")
-    else:
-        syn_line = "<i>Synthesized target unavailable</i>"
+    syn_line = syn_line_html(syn, upside)
 
     snap = tiles([("Market Cap", big(info.get("marketCap"))),
                   ("Price", f"${price:,.2f}"), ("Trailing P/E", rt(pe)),
@@ -337,8 +377,8 @@ in the <a href="glossary.html">Glossary</a>.</p>
 <table class="ptable"><thead><tr><th>Method</th><th>Target</th><th>vs price</th></tr></thead>
 <tbody>{tr}</tbody></table>
 <p style="font-size:12px;color:#555555;margin-top:14px">
-CAPM r = {r*100:.1f}% &middot; stage-1 growth g&#8321; = {pct(g1)}
-(analyst, capped at 25%) &middot; terminal g&#8322; = {G_CAP*100:.1f}%
+CAPM r = {r*100:.1f}% &middot; {g1_note_html(g1, num(info.get('earningsGrowth')), num(info.get('revenueGrowth')))}
+&middot; terminal g&#8322; = {G_CAP*100:.1f}%
 &middot; payout {pct(payout)}.
 </p></div></div></section>
 <section class="block"><h2>Valuation Multiples</h2>

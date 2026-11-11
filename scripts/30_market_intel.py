@@ -18,6 +18,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from glossary import NAV
 from design_system import CSS_LINKS, hero, credits_footer, TABS_JS   # hero/credits/tabs: 2026-11-10 remake
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 # pc / money / the firm count are shared with the home summary (17), which must not import this script (round 1, P1)
 from design_system import pc, money, cma_firm, cma_firms
 from paths import DATA, DOCS, cuser
@@ -85,6 +86,13 @@ display:inline-flex;align-items:center;border:1px solid var(--line-strong);borde
 .odd .row span:last-child{font-family:var(--mono)}
 .odd .bar{height:4px;background:#eef0f2;margin:1px 0 4px}.odd .bar i{display:block;height:4px;background:#5b7c99}
 .sumlist li{margin:0 0 .55rem;line-height:1.55;max-width:60em}
+.mi td.nb{min-width:190px;white-space:nowrap}
+.mi td.nb .nbar{display:inline-grid;grid-template-columns:repeat(2,clamp(56px,10vw,140px));vertical-align:middle;
+  margin-right:8px}
+.mi td.nb .nbar span{display:flex;height:10px}
+.mi td.nb .nbar .n{justify-content:flex-end}
+.mi td.nb .nbar .n i{display:block;background:var(--down);border-radius:3px 0 0 3px}
+.mi td.nb .nbar .p i{display:block;background:var(--up);border-radius:0 3px 3px 0}
 .badge{display:inline-block;font-size:10.5px;font-family:var(--mono);padding:1px 6px;border:1px solid var(--line);color:var(--sec);margin-left:6px;vertical-align:middle}
 .prelim{border:1px solid #c7d3df;background:#f5f8fb;padding:10px 14px;font-size:13.5px;margin:0 0 1.2rem;max-width:60em}
 .mi.ol td{white-space:normal;min-width:74px;vertical-align:top}
@@ -393,25 +401,33 @@ def main():
         f'<a class="hero-stat" href="{h}"><span class="v {c}">{v}</span><span class="l">{e(lab)}</span></a>'
         for v, lab, c, h in stats) + '</div>')
     n_div = sum(1 for x in d.get("divergences", []) if x.get("headline"))
-    ovc = [(f"Fed path &middot; {fed_top} odds, next FOMC" if fed_top else "Fed path",
-            stats[0][0] if fed_top else "&ndash;", "Cut / hold / hike odds for every FOMC meeting, Kalshi and "
+    # wave "no repeats" (2026-11-10): the hero states the next two meetings' odds and the "N of M outside the band";
+    # the Fed and "Versus this site" cards show what the hero does not (meetings priced, the widest gap)
+    n_meet = len((fp or {}).get("meetings") or [])
+    wide = max(rows_g, key=lambda r: abs(r["gap_bp"])) if rows_g else None
+    ovc = [("Fed path &middot; FOMC meetings priced", f"{n_meet} meetings" if n_meet else "&ndash;",
+            "Cut / hold / hike odds for every FOMC meeting, Kalshi and "
             f"Polymarket{e(taken_s)}, with the six-month event outlook.", "#odds"),
            ("The grid", f'{len(d["matrix"])} rows', f"{n_firms_num} firms with numbers shown, {n_firms_view} with stated "
-            "views only, side by side in US dollars.", "#matrix"),
+            f"views only, {n_firms_stance} with a regime stance only, side by side in US dollars.", "#matrix"),
            ("Divergences", str(n_div), "Rows where the publishers materially disagree, with both sides' arguments.",
             "#divergences"),
-           ("Versus this site", f"{n_out} of {len(rows_g)}", "Asset classes where this site's model sits outside the "
-            "Street's middle half.", "#vs-ltcma")]
+           ("Versus this site &middot; widest gap", f'{abs(wide["gap_bp"])} bp' if wide else "&ndash;",
+            (f'{e(wide["label"])}: this site {"below" if wide["gap_bp"] > 0 else "above"} the public median. Every '
+             "asset class, its band and its gap, side by side." if wide else "No public estimate to compare yet."),
+            "#vs-ltcma")]
+    sum_px = (f"; the Fed odds in the hero above are Kalshi decision-market prices from "
+              f"{date.fromisoformat(taken).strftime('%d %b %Y')}, refreshed every weekday" if taken else "")
     ov_html = ('<div class="ovc">' + "".join(
         f'<a class="xcard" href="{h}"><p class="xk">{k}</p><span class="xbig">{v}</span><p class="xn">{t}</p>'
         f'<span class="xgo">Open &rarr;</span></a>' for k, v, t, h in ovc) + '</div>')
     hero_in = (f"""<p class="kicker">Market Intel</p>
 <h1>Market Intel — what the Street expects</h1>
-<p class="lede">Long-run expected returns and outlooks from {n_firms} asset managers and banks ({n_docs} documents), put on one
+<p class="lede">Long-run expected returns and outlooks from the asset managers and banks that publish them, put on one
 grid in US dollars (nominal) and set against this site's own capital market assumptions. Where the
 publishers disagree, both sides of the argument are laid out with the evidence each one leans on.
 Prediction-market odds for the macro calls are shown alongside.</p>
-<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "rebuilt on each new publisher edition"}{check_note(run)} &middot; {n_firms_num} firms with numbers shown, {n_firms_view} with stated views only, {n_firms_stance} with a regime stance only</p>
+<p class="asof">Consensus as of {asof} &middot; {"preliminary edition" if d.get("edition") == "preliminary" else "rebuilt on each new publisher edition"}{check_note(run)}</p>
 {hstats}""")
 
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -430,7 +446,8 @@ Prediction-market odds for the macro calls are shown alongside.</p>
 <a class="chipbtn vt-out" href="congressional-activity.html">Congress &rarr;</a></div>
 <div class="vgroup" id="vg-over" role="tabpanel" aria-labelledby="vt-over">
 {prelim}
-<section class="block" id="summary"><h2>Summary</h2><ul class="sumlist">{summary}</ul>{ov_html}</section>
+<section class="block" id="summary"><h2>Summary</h2><p class="note">Written with the consensus edition of {asof};
+market prices quoted in it are from that run{sum_px}.</p><ul class="sumlist">{summary}</ul>{ov_html}</section>
 </div>
 <div class="vgroup" id="vg-fed" role="tabpanel" aria-labelledby="vt-fed">
 
@@ -504,7 +521,7 @@ b.addEventListener('click',function(){{var on=b.getAttribute('aria-pressed')!=='
 [].forEach.call(t.querySelectorAll('tbody tr'),function(r){{var s=r.getAttribute('data-side');r.hidden=on&&(s==='inside'||s==='none');}});}});}})();</script>
 </body></html>"""
     with open(OUT, "w", encoding="utf-8") as f:
-        f.write(page)
+        f.write(themed(page))
     print(f"ltcma-consensus.html built ({len(pubs)} publishers, {len(d['matrix'])} rows, {len(d.get('divergences', []))} divergences)")
     render_street()
     render_congress()
@@ -606,7 +623,7 @@ consensus is a cross-check: it is never an input to this site's LTCMA model. Not
 firms listed. Not investment advice.</p></div></footer>
 </body></html>"""
     with open(STREET_OUT, "w", encoding="utf-8") as f:
-        f.write(page)
+        f.write(themed(page))
     print(f"street-ltcma.html built ({n_pub} rows, {len(idx.get('editions', []))} edition(s))")
 
 
@@ -630,10 +647,15 @@ def render_fed_path():
         return date.fromisoformat(d).strftime("%d %b %Y")
     k = nx["kalshi"]
     top = max(("cut", "hold", "hike"), key=lambda x: k[x])
-    head = f'Next meeting ({when(nx["date"])}): the market prices a <b>{top}</b> at {pc(k[top])}. '
+    # wave "no repeats" (2026-11-10): the page hero states the odds of the next two meetings; this line names the
+    # outcome and points at the table instead of restating the percentage
+    hero_meet = [m["meeting"] for m in ms[:2]]
+    head = (f'Next meeting ({when(nx["date"])}): the market prices a <b>{top}</b> as the most likely outcome '
+            '(its odds open the page and the first row below). ')
     if fm and fm["meeting"] != nx["meeting"]:
         head += (f'The first meeting where a move is more likely than not is <b>{when(fm["date"])}</b>: '
-                 f'a <b>{fm["direction"]}</b> at {pc(fm["prob"])}.')
+                 f'a <b>{fm["direction"]}</b>'
+                 + ('.' if fm["meeting"] in hero_meet else f' at {pc(fm["prob"])}.'))
     elif fm:
         head += f'A {fm["direction"]} is already more likely than not at this meeting.'
     else:
@@ -893,7 +915,10 @@ def render_congress():
                        f'&middot; {e(a["amount"])} &middot; traded {e(a["tx_date"])}, filed {e(a["filed_date"])} '
                        f'({a["lag_days"]} d) &middot; {src_link(a)}</li>')
         more = f'<p class="note">+{len(items) - 25} more in the data.</p>' if len(items) > 25 else ""
-        al += f'<h3 style="font-size:14.5px;margin:1rem 0 .3rem">{lab[t]} <span class="badge">{len(items)}</span></h3><ul class="sumlist">{li}</ul>{more}'
+        # wave "no repeats": the LARGE / OPTIONS / LATE counts are the page hero's stats (which link here); a
+        # heading carries a count only for the lists the hero does not count
+        badge = "" if t in ("LARGE", "OPTIONS", "LATE") else f' <span class="badge">{len(items)}</span>'
+        al += f'<h3 style="font-size:14.5px;margin:1rem 0 .3rem">{lab[t]}{badge}</h3><ul class="sumlist">{li}</ul>{more}'
     mt = "".join(f'<tr><td class="a">{who(m)}</td><td>{m["trades"]}</td><td class="v">{money(m["buy_mid"])}</td>'
                  f'<td class="v">{money(m["sell_mid"])}</td><td class="v">{m["median_lag"]:.0f} d</td><td>{m["late"]}</td>'
                  f'<td>{e(m["last_filed"])}</td></tr>' for m in c["members"][:25])
@@ -902,18 +927,19 @@ def render_congress():
     for w, rows in c["flows"].items():
         top = rows[:12]
         mx = max([abs(r["net"]) for r in top] or [1]) or 1
-        bars = "".join(
-            f'<div class="flow"><span class="lb">{e(r["sector"])}</span>'
-            f'<span class="n"><i style="width:{(abs(r["net"]) / mx * 100) if r["net"] < 0 else 0:.0f}%"></i></span>'
-            f'<span class="p"><i style="width:{(r["net"] / mx * 100) if r["net"] > 0 else 0:.0f}%"></i></span>'
-            f'<span class="v">{money(r["net"])}</span></div>' for r in top)
-        trs = "".join(f'<tr><td class="a">{e(r["sector"])}</td><td>{r["n"]}</td><td class="v">{money(r["buy"])}</td>'
-                      f'<td class="v">{money(r["sell"])}</td><td class="v"><b>{money(r["net"])}</b></td></tr>' for r in rows[:12])
+        # wave "no repeats" (2026-11-10): the sector bars printed the Net column a second time; the bar now sits IN
+        # the Net cell (sold to the left, bought to the right), so every figure shows once
+        def nbar(r):
+            return (f'<span class="nbar" aria-hidden="true">'
+                    f'<span class="n"><i style="width:{(abs(r["net"]) / mx * 100) if r["net"] < 0 else 0:.0f}%"></i></span>'
+                    f'<span class="p"><i style="width:{(r["net"] / mx * 100) if r["net"] > 0 else 0:.0f}%"></i></span></span>')
+        # Net (with its bar) right after Sector: on a phone the bars show without scrolling the table
+        trs = "".join(f'<tr><td class="a">{e(r["sector"])}</td><td class="v nb">{nbar(r)}<b>{money(r["net"])}</b></td>'
+                      f'<td>{r["n"]}</td><td class="v">{money(r["buy"])}</td><td class="v">{money(r["sell"])}</td></tr>'
+                      for r in rows[:12])
         fl += (f'<div class="fwin" data-win="{e(w)}" id="win-{e(w)}"><h3 style="font-size:14.5px;margin:1rem 0 .3rem">Last {w.replace("d", " days")} (by filing date)</h3>'
-               f'<div class="bars" style="margin:.4rem 0 1rem" role="img" aria-label="Net buying by sector, last {w.replace("d", " days")}: '
-               f'the table below lists the same figures">{bars}</div>'
-               f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Trades</th><th>Bought</th>'
-               f'<th>Sold</th><th>Net</th></tr></thead><tbody>{trs}</tbody></table></div></div>')
+               f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Net (sold &larr; &rarr; bought)</th>'
+               f'<th>Trades</th><th>Bought</th><th>Sold</th></tr></thead><tbody>{trs}</tbody></table></div></div>')
     wbtn = ("".join(f'<button type="button" class="chipbtn jsonly" data-win="{e(w)}" aria-pressed="{"true" if w == dflt else "false"}">'
                     f'Last {w.replace("d", " days")}</button>' for w in wins) if len(wins) > 1 else "")
     cnt = {t: sum(1 for a in c["alerts"] if a["type"] == t) for t in ("LARGE", "OPTIONS", "LATE")}
@@ -928,7 +954,7 @@ def render_congress():
                  f'<td>{e(ATYPE.get(r["asset_type"], r["asset_type"]))}</td><td>{DIR.get(r["direction"], e(r["direction"]))}</td>'
                  f'<td>{e(r["amount"])}</td><td>{e(r["tx_date"])}</td><td>{e(r["owner"])}</td>'
                  f'<td>{e(r.get("jur") or "")}</td><td>{src_link(r)}</td></tr>' for r in c["rows"][:MAXROWS])
-    capnote = (f'<p class="note">Showing the newest {MAXROWS} of {len(c["rows"])} trades. All of them are in the '
+    capnote = (f'<p class="note">Showing the newest {MAXROWS} of {len(c["rows"]):,} trades. All of them are in the '
                f'<a href="https://github.com/DuiArte/ltcma/blob/main/data/market_intel/congress_public.json">data file</a>.</p>'
                if len(c["rows"]) > MAXROWS else "")
     if mirror:
@@ -997,7 +1023,7 @@ function pick(w){{bs.forEach(function(b){{b.setAttribute('aria-pressed',b.getAtt
 bs.forEach(function(b){{b.addEventListener('click',function(){{pick(b.getAttribute('data-win'));}});}});pick('{dflt}');}})();</script>
 </body></html>"""
     with open(CONG_OUT, "w", encoding="utf-8") as f:
-        f.write(page)
+        f.write(themed(page))
     print(f"congressional-activity.html built ({len(c['rows'])} rows, {len(c['alerts'])} signals)")
 
 

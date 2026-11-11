@@ -23,6 +23,7 @@ from datetime import date
 
 import research_index as ri
 from design_system import CSS_LINKS, hero, credits_footer
+from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 from glossary import NAV
 from paths import DATA, DOCS
 
@@ -314,7 +315,7 @@ hypothetical.</p>{credits_footer("cliffs_detail")}</div></footer>
 {JS}
 </body></html>"""
     with open(OUT, "w", encoding="utf-8") as fh:
-        fh.write(page)
+        fh.write(themed(page, "research-library.html"))
 
     ai = [f"RESEARCH LIBRARY (research-library.html) -- {n} items, newest finding / batch / backtest {newest}; "
           f"{len(srcs)} sources",
