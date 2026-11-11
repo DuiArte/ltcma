@@ -1,16 +1,16 @@
 {
- "as_of": "2026-11-06",
- "built": "2026-11-10T08:00:55",
+ "as_of": "2026-11-09",
+ "built": "2026-11-11T08:00:47",
  "coverage": {
   "house": {
    "source": "House Clerk PTR filings (official)",
-   "since": "2026-04-24",
-   "filings_parsed": 252,
+   "since": "2026-04-25",
+   "filings_parsed": 253,
    "needs_ocr": 2,
    "ocr_filled_from_mirror": 3389,
    "parse_fail": 0,
    "parse_rate_text_pdfs": 1.0,
-   "rows": 5416,
+   "rows": 5419,
    "comp_rows": 1,
    "date_anomalies": 3,
    "unmatched_districts": []
@@ -18,7 +18,7 @@
   "senate": {
    "status": "mirror",
    "source": "open dataset austin-starks/congressional-stock-trades (built from official Senate eFD filings; validated 99.6% vs our own House parse, 2026-10-23)",
-   "generatedAt": "2026-11-10T07:42:10.618Z",
+   "generatedAt": "2026-11-11T03:59:14.809Z",
    "processedAt": "2026-11-05T11:50:47.385Z",
    "rows": 1701
   },
@@ -526,58 +526,51 @@
    {
     "sector": "Consumer Cyclical",
     "buy": 292500,
-    "sell": 870000,
-    "n": 65,
-    "net": -577500
-   },
-   {
-    "sector": "Energy",
-    "buy": 32000,
-    "sell": 603500,
-    "n": 16,
-    "net": -571500
+    "sell": 821500,
+    "n": 62,
+    "net": -529000
    },
    {
     "sector": "Communication Services",
     "buy": 88500,
-    "sell": 542500,
-    "n": 29,
-    "net": -454000
+    "sell": 550500,
+    "n": 30,
+    "net": -462000
    },
    {
-    "sector": "Financial Services",
-    "buy": 153500,
-    "sell": 515500,
-    "n": 36,
-    "net": -362000
+    "sector": "Energy",
+    "buy": 32000,
+    "sell": 463500,
+    "n": 13,
+    "net": -431500
    },
    {
     "sector": "Healthcare",
     "buy": 363500,
-    "sell": 725500,
-    "n": 65,
-    "net": -362000
+    "sell": 693000,
+    "n": 64,
+    "net": -329500
    },
    {
-    "sector": "Industrials",
-    "buy": 267000,
-    "sell": 520000,
-    "n": 43,
-    "net": -253000
+    "sector": "Financial Services",
+    "buy": 153500,
+    "sell": 325000,
+    "n": 32,
+    "net": -171500
    },
    {
     "sector": "Basic Materials",
     "buy": 32000,
-    "sell": 163500,
-    "n": 13,
-    "net": -131500
+    "sell": 131000,
+    "n": 12,
+    "net": -99000
    },
    {
-    "sector": "Utilities",
-    "buy": 0,
-    "sell": 32500,
-    "n": 1,
-    "net": -32500
+    "sector": "Industrials",
+    "buy": 267000,
+    "sell": 325000,
+    "n": 37,
+    "net": -58000
    },
    {
     "sector": "Real Estate",
@@ -612,9 +605,9 @@
    {
     "sector": "Communication Services",
     "buy": 458000,
-    "sell": 1940500,
-    "n": 118,
-    "net": -1482500
+    "sell": 1948500,
+    "n": 119,
+    "net": -1490500
    },
    {
     "sector": "Energy",
@@ -1781,6 +1774,69 @@
   }
  ],
  "rows": [
+  {
+   "member": "Thomas R. Suozzi",
+   "party": "D",
+   "state_dst": "NY03",
+   "ticker": null,
+   "asset": "US Treasury Bill",
+   "asset_type": "GS",
+   "direction": "P",
+   "owner": "self",
+   "tx_date": "2026-10-13",
+   "filed_date": "2026-11-09",
+   "lag_days": 27,
+   "sector": null,
+   "jur": null,
+   "source": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035014.pdf",
+   "comp": false,
+   "status": "New",
+   "spouse_over": false,
+   "chamber": "House",
+   "amount": "$15K-50K"
+  },
+  {
+   "member": "Thomas R. Suozzi",
+   "party": "D",
+   "state_dst": "NY03",
+   "ticker": null,
+   "asset": "US Treasury Bill",
+   "asset_type": "GS",
+   "direction": "P",
+   "owner": "self",
+   "tx_date": "2026-10-15",
+   "filed_date": "2026-11-09",
+   "lag_days": 25,
+   "sector": null,
+   "jur": null,
+   "source": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035014.pdf",
+   "comp": false,
+   "status": "New",
+   "spouse_over": false,
+   "chamber": "House",
+   "amount": "$15K-50K"
+  },
+  {
+   "member": "David Kustoff",
+   "party": "R",
+   "state_dst": "TN08",
+   "ticker": "WBD",
+   "asset": "Warner Bros. Discovery, Inc. - Series A Common Stock (WBD)",
+   "asset_type": "ST",
+   "direction": "S",
+   "owner": "JT",
+   "tx_date": "2026-10-07",
+   "filed_date": "2026-11-09",
+   "lag_days": 33,
+   "sector": "Communication Services",
+   "jur": null,
+   "source": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20024921.pdf",
+   "comp": false,
+   "status": "New",
+   "spouse_over": false,
+   "chamber": "House",
+   "amount": "$1K-15K"
+  },
   {
    "member": "Nancy Pelosi",
    "party": "D",
@@ -53512,27 +53568,6 @@
    "chamber": "House",
    "via": "mirror",
    "amount": "$1K-15K"
-  },
-  {
-   "member": "Suzan K. DelBene",
-   "party": "D",
-   "state_dst": "WA01",
-   "ticker": null,
-   "asset": "Fort Bend Tex Indpt SCH Dist Variable 04.00000% 08/01/2054 Rate Unltd Tax BLDG Ref BDS Ser. 2024B",
-   "asset_type": "GS",
-   "direction": "P",
-   "owner": "JT",
-   "tx_date": "2026-07-23",
-   "filed_date": "2026-08-11",
-   "lag_days": 19,
-   "sector": null,
-   "jur": null,
-   "source": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035175.pdf",
-   "comp": false,
-   "status": "New",
-   "spouse_over": false,
-   "chamber": "House",
-   "amount": "$250K-500K"
   }
  ]
 }
