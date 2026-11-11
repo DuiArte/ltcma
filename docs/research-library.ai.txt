@@ -29,7 +29,7 @@ Finding | 2026-05-28 | #3 Macro feature stores are circuit breakers, not overlay
 Finding | 2026-05-28 | #4 Regime-aware weighting beats per-strategy gating | Positive result | research.html#f4
 Finding | 2026-05-28 | #5 Check the fire-rate before you gate | Protocol rule | research.html#f5
 Finding | 2026-05-28 | #6 Verify the model that verified the result | Protocol rule | research.html#f6
-Research batch | 2026-11-01 | auto: Automated pipeline — 867 published ideas screened (736 rejected before any compute, 122 mapped to an already-closed family or blocked by data, 9 reached the engine) | Negative (0 deployable) | research.html#batches
+Research batch | 2026-11-01 | auto: Automated pipeline — 868 published ideas screened (737 rejected before any compute, 122 mapped to an already-closed family or blocked by data, 9 reached the engine) | Negative (0 deployable) | research.html#batches
 Research batch | 2026-06-01 | v0.6: Machine-learned price-path forecast features | Negative (0 deployable) | research.html#batches
 Research batch | 2026-06-01 | v0.7-T1: Synthetic-path Monte Carlo robustness features | Negative (0 deployable) | research.html#batches
 Research batch | 2026-06-01 | v0.7-T3: Valuation-cycle (earnings, valuation level) conditioners on the surviving edge | Negative (0 deployable) | research.html#batches
