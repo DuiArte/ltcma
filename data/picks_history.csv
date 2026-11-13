@@ -3597,3 +3597,43 @@ snapshot_date,rank,ticker,sector,price_usd,composite,composite_dp,is_top20,unive
 2026-11-12,38,COIN,Financial Services,130.67,-0.68,2,False,40,daily_build,2026-11-12T16:40:07-06:00,False,band15_25,2026-11-06
 2026-11-12,39,T,Communication Services,22.18,-0.74,2,False,40,daily_build,2026-11-12T16:40:07-06:00,False,band15_25,2026-11-06
 2026-11-12,40,NVO,Healthcare,40.65,-0.87,2,False,40,daily_build,2026-11-12T16:40:07-06:00,False,band15_25,2026-11-06
+2026-11-13,1,CRWD,Technology,226.61,0.808,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,2,NET,Technology,305.81,0.651,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,3,PLTR,Technology,167.99,0.644,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,4,SHOP,Technology,147.09,0.579,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,5,ARM,Technology,190.53,0.567,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,6,AMD,Technology,534.06,0.529,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,7,NVDA,Technology,162.85,0.453,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,8,DDOG,Technology,184.16,0.451,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,9,LLY,Healthcare,1443.50,0.403,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,10,SMCI,Technology,26.86,0.396,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,11,TSLA,Consumer Cyclical,390.22,0.325,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,12,SNOW,Technology,291.00,0.294,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,13,ANET,Technology,197.29,0.284,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,14,WMT,Consumer Defensive,128.09,0.261,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,15,COST,Consumer Defensive,1106.21,0.238,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,16,AAPL,Technology,356.27,0.226,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,17,AVGO,Technology,347.01,0.211,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,18,MSFT,Technology,523.88,0.187,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,19,META,Communication Services,641.69,0.17,2,True,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,20,GOOGL,Communication Services,295.77,0.101,3,True,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,21,KO,Consumer Defensive,99.25,0.02,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,22,NOW,Technology,102.25,0.01,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,23,ORCL,Technology,125.35,0.010,3,False,40,daily_build,2026-11-13T16:39:53-06:00,True,band15_25,2026-11-06
+2026-11-13,24,AMZN,Consumer Cyclical,266.66,-0.01,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,25,HD,Consumer Cyclical,348.69,-0.02,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,26,INTU,Technology,341.70,-0.21,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,27,ABBV,Healthcare,295.03,-0.22,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,28,CRM,Technology,217.84,-0.35,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,29,JPM,Financial Services,346.19,-0.41,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,30,MSTR,Technology,111.62,-0.46,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,31,UNH,Healthcare,407.46,-0.48,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,32,XOM,Energy,170.59,-0.51,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,33,CVX,Energy,219.89,-0.54,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,34,BAC,Financial Services,51.02,-0.54,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,35,NFLX,Communication Services,62.15,-0.55,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,36,ADBE,Technology,243.08,-0.56,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,37,VZ,Communication Services,46.36,-0.67,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,38,COIN,Financial Services,127.64,-0.69,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,39,T,Communication Services,22.18,-0.74,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
+2026-11-13,40,NVO,Healthcare,41.63,-0.87,2,False,40,daily_build,2026-11-13T16:39:53-06:00,False,band15_25,2026-11-06
