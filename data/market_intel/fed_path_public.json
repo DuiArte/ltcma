@@ -1,5 +1,5 @@
 {
- "taken_at": "2026-11-13T16:45:06",
+ "taken_at": "2026-11-16T16:45:07",
  "meetings": [
   {
    "meeting": "Dec 2026",
@@ -7,82 +7,82 @@
    "month": "december",
    "kalshi": {
     "cut": 0.0099,
-    "hold": 0.0246,
-    "hike": 0.9655,
+    "hold": 0.0443,
+    "hike": 0.9458,
     "quality": "firm",
-    "volume": 12637656,
+    "volume": 14200870,
     "outcomes": [
      {
       "outcome": "Hike 25bps",
-      "prob": 0.885
+      "prob": 0.905
      },
      {
       "outcome": "Hike >25bps",
-      "prob": 0.095
+      "prob": 0.055
      },
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.025
+      "prob": 0.045
      }
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
    "polymarket": {
-    "cut": 0.0071,
-    "hold": 0.0239,
-    "hike": 0.969,
+    "cut": 0.007,
+    "hold": 0.032,
+    "hike": 0.961,
     "quality": "firm",
-    "volume": 32971795,
+    "volume": 35664689,
     "url": "https://polymarket.com/event/fed-decision-in-december-20260729232808632"
    },
-   "p_move_by_then": 0.9754
+   "p_move_by_then": 0.9557
   },
   {
    "meeting": "Jan 2027",
    "date": "2027-01-27",
    "month": "january",
    "kalshi": {
-    "cut": 0.019,
-    "hold": 0.4,
-    "hike": 0.581,
+    "cut": 0.0202,
+    "hold": 0.3283,
+    "hike": 0.6515,
     "quality": "firm",
-    "volume": 482963,
+    "volume": 491390,
     "outcomes": [
      {
       "outcome": "Hike 25bps",
-      "prob": 0.585
+      "prob": 0.63
      },
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.42
+      "prob": 0.325
      },
      {
-      "outcome": "Hike >25bps",
-      "prob": 0.025
+      "outcome": "Cut 25bps",
+      "prob": 0.015
      }
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
    "polymarket": {
-    "cut": 0.0093,
-    "hold": 0.3963,
-    "hike": 0.5944,
+    "cut": 0.0179,
+    "hold": 0.3524,
+    "hike": 0.6298,
     "quality": "firm",
-    "volume": 3330169,
+    "volume": 3738842,
     "url": "https://polymarket.com/event/fed-decision-in-january-20260729233815502"
    },
-   "p_move_by_then": 0.9902
+   "p_move_by_then": 0.9855
   },
   {
    "meeting": "Mar 2027",
    "date": "2027-03-17",
    "month": "march",
    "kalshi": {
-    "cut": 0.0431,
-    "hold": 0.3493,
+    "cut": 0.0478,
+    "hold": 0.3445,
     "hike": 0.6077,
     "quality": "firm",
-    "volume": 117332,
+    "volume": 119404,
     "outcomes": [
      {
       "outcome": "Hike 25bps",
@@ -90,43 +90,43 @@
      },
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.365
+      "prob": 0.36
      },
      {
       "outcome": "Cut 25bps",
-      "prob": 0.035
+      "prob": 0.04
      }
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
    "polymarket": {
-    "cut": 0.0328,
-    "hold": 0.3725,
-    "hike": 0.5946,
+    "cut": 0.0543,
+    "hold": 0.3617,
+    "hike": 0.5841,
     "quality": "firm",
-    "volume": 234068,
+    "volume": 254491,
     "url": "https://polymarket.com/event/fed-decision-in-march-2027"
    },
-   "p_move_by_then": 0.9966
+   "p_move_by_then": 0.995
   },
   {
    "meeting": "Apr 2027",
    "date": "2027-04-28",
    "month": "april",
    "kalshi": {
-    "cut": 0.1457,
-    "hold": 0.6231,
-    "hike": 0.2312,
+    "cut": 0.1429,
+    "hold": 0.6059,
+    "hike": 0.2512,
     "quality": "firm",
-    "volume": 131118,
+    "volume": 131273,
     "outcomes": [
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.62
+      "prob": 0.615
      },
      {
       "outcome": "Hike 25bps",
-      "prob": 0.22
+      "prob": 0.24
      },
      {
       "outcome": "Cut 25bps",
@@ -136,29 +136,29 @@
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
    "polymarket": {
-    "cut": 0.1099,
-    "hold": 0.6053,
-    "hike": 0.2847,
+    "cut": 0.1149,
+    "hold": 0.5975,
+    "hike": 0.2876,
     "quality": "firm",
-    "volume": 79196,
+    "volume": 83703,
     "url": "https://polymarket.com/event/fed-decision-in-april-2027"
    },
-   "p_move_by_then": 0.9979
+   "p_move_by_then": 0.997
   },
   {
    "meeting": "Jun 2027",
    "date": "2027-06-09",
    "month": "june",
    "kalshi": {
-    "cut": 0.0881,
-    "hold": 0.6269,
-    "hike": 0.285,
+    "cut": 0.0938,
+    "hold": 0.6198,
+    "hike": 0.2865,
     "quality": "firm",
-    "volume": 48348,
+    "volume": 48878,
     "outcomes": [
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.605
+      "prob": 0.595
      },
      {
       "outcome": "Hike 25bps",
@@ -166,31 +166,31 @@
      },
      {
       "outcome": "Cut 25bps",
-      "prob": 0.075
+      "prob": 0.08
      }
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
-   "p_move_by_then": 0.9987
+   "p_move_by_then": 0.9981
   },
   {
    "meeting": "Jul 2027",
    "date": "2027-07-28",
    "month": "july",
    "kalshi": {
-    "cut": 0.0784,
-    "hold": 0.8824,
-    "hike": 0.0392,
+    "cut": 0.0825,
+    "hold": 0.8786,
+    "hike": 0.0388,
     "quality": "firm",
-    "volume": 206226,
+    "volume": 206291,
     "outcomes": [
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.9
+      "prob": 0.905
      },
      {
       "outcome": "Cut 25bps",
-      "prob": 0.06
+      "prob": 0.065
      },
      {
       "outcome": "Hike 25bps",
@@ -199,22 +199,22 @@
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
-   "p_move_by_then": 0.9988
+   "p_move_by_then": 0.9983
   },
   {
    "meeting": "Sep 2027",
    "date": "2027-09-15",
    "month": "september",
    "kalshi": {
-    "cut": 0.1294,
-    "hold": 0.796,
-    "hike": 0.0746,
+    "cut": 0.1275,
+    "hold": 0.799,
+    "hike": 0.0735,
     "quality": "firm",
-    "volume": 56199,
+    "volume": 56379,
     "outcomes": [
      {
       "outcome": "Fed maintains rate",
-      "prob": 0.8
+      "prob": 0.815
      },
      {
       "outcome": "Cut 25bps",
@@ -227,18 +227,18 @@
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
-   "p_move_by_then": 0.9991
+   "p_move_by_then": 0.9987
   },
   {
    "meeting": "Oct 2027",
    "date": "2027-10-27",
    "month": "october",
    "kalshi": {
-    "cut": 0.0198,
-    "hold": 0.9455,
-    "hike": 0.0347,
+    "cut": 0.0199,
+    "hold": 0.9502,
+    "hike": 0.0299,
     "quality": "firm",
-    "volume": 204302,
+    "volume": 204427,
     "outcomes": [
      {
       "outcome": "Fed maintains rate",
@@ -246,7 +246,7 @@
      },
      {
       "outcome": "Hike 25bps",
-      "prob": 0.03
+      "prob": 0.025
      },
      {
       "outcome": "Cut 25bps",
@@ -255,7 +255,7 @@
     ],
     "url": "https://kalshi.com/markets/kxfeddecision"
    },
-   "p_move_by_then": 0.9991
+   "p_move_by_then": 0.9987
   }
  ],
  "next": {
@@ -264,45 +264,45 @@
   "month": "december",
   "kalshi": {
    "cut": 0.0099,
-   "hold": 0.0246,
-   "hike": 0.9655,
+   "hold": 0.0443,
+   "hike": 0.9458,
    "quality": "firm",
-   "volume": 12637656,
+   "volume": 14200870,
    "outcomes": [
     {
      "outcome": "Hike 25bps",
-     "prob": 0.885
+     "prob": 0.905
     },
     {
      "outcome": "Hike >25bps",
-     "prob": 0.095
+     "prob": 0.055
     },
     {
      "outcome": "Fed maintains rate",
-     "prob": 0.025
+     "prob": 0.045
     }
    ],
    "url": "https://kalshi.com/markets/kxfeddecision"
   },
   "polymarket": {
-   "cut": 0.0071,
-   "hold": 0.0239,
-   "hike": 0.969,
+   "cut": 0.007,
+   "hold": 0.032,
+   "hike": 0.961,
    "quality": "firm",
-   "volume": 32971795,
+   "volume": 35664689,
    "url": "https://polymarket.com/event/fed-decision-in-december-20260729232808632"
   },
-  "p_move_by_then": 0.9754
+  "p_move_by_then": 0.9557
  },
  "first_likely_move": {
   "meeting": "Dec 2026",
   "date": "2026-12-09",
   "direction": "hike",
-  "prob": 0.9655,
+  "prob": 0.9458,
   "quality": "firm"
  },
  "first_cumulative_over_half": {
   "meeting": "Dec 2026",
-  "p": 0.9754
+  "p": 0.9557
  }
 }
