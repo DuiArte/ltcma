@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://duiarte.github.io/ltcma/sitemap.xml

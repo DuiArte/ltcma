@@ -94,7 +94,9 @@ main{padding:4rem 0 5rem}
    overflow:hidden clips the plot while it settles instead of letting it push. */
 .tile{background:var(--panel);border:1px solid var(--line);padding:14px;
   box-shadow:none;transition:background .15s ease-out;
-  min-width:0;overflow:hidden}
+  min-width:0;overflow:hidden;overflow:clip}
+/* wave r3 (bug a): overflow:clip clips the same way but does not make the tile a scroll container, so a sticky
+   table head inside it follows the page (design_system ET_CSS: the head's offset); hidden stays as the fallback */
 .tile:hover{background:var(--panel,#fff)}
 .chart.wide{grid-column:1 / -1}
 .ch{width:100%}
@@ -218,8 +220,10 @@ main{padding:4rem 0 5rem}
 
 /* ---- interaction polish (2026-06-10): smooth anchors, scroll-reveal, ---- */
 /* ---- sticky table headers, sortable/searchable tables, print          ---- */
-html{scroll-behavior:smooth}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* fix round 1 (r3 continuation, V2-11): smooth only once the r3 head script (design_system.SITE_JS) set html.sm,
+   after the page loaded and settled -- a cold #link then lands under the header instead of overshooting */
+html.sm{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html,html.sm{scroll-behavior:auto}}
 .rv{opacity:0;transform:translateY(6px);transition:opacity .3s ease-out,transform .3s ease-out}
 .rv.vis,.vis{opacity:1;transform:none}
 .ptable thead th{position:sticky;top:59px;background:var(--panel);z-index:2}
@@ -239,7 +243,10 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
 .tsearch:focus{border-color:var(--accent-line)}
 .tsearch::placeholder{color:var(--muted)}
 @media print{
-  .shell,.shell-foot,.pills,.toc,.btctl,.ccy-toggle,.tsearch{display:none!important}
+  .shell,.pills,.toc,.btctl,.ccy-toggle,.tsearch{display:none!important}
+  /* wave r3 (bug c): .shell-foot is no longer hidden: every printout keeps "not investment advice" and the credit */
+  .shell-foot{padding:1rem 0 0;border-top:1px solid #bbb}
+  tr{break-inside:avoid}
   body{background:#fff}
   .hero{padding:1rem 0}
   main{padding:1rem 0}
@@ -272,6 +279,8 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
   /* round 1 (review V9): the 5-across rule above (<= 1100 px, 3 columns) out-specified this one, so on a phone
      portfolio's money tiles sat 3 to a row and ran 25 px past their cards */
   .metrics[style*="repeat(5"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  /* wave r3: the fifth tile of a 5-tile row does not sit alone in half a row */
+  .metrics[style*="repeat(5"]>.metric:last-child:nth-child(odd){grid-column:1 / -1}
   .hero{padding:3.5rem 0 2.5rem}
 }
 @media(max-width:560px){
@@ -331,13 +340,21 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
   outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 /* the sticky header's height (JS keeps --hdr exact; these are the no-JS / first-paint values): anchors land below
    it (scroll-padding: #sources, #about, #summary ...), and sticky table heads sit under it, not behind it */
-:root{--hdr:65px}
-html{scroll-padding-top:calc(var(--hdr) + 14px)}
-.ptable thead th{top:calc(var(--hdr) - 1px)}
+:root{--hdr:65px;--otph:0px}
+html{scroll-padding-top:calc(var(--hdr) + var(--otph) + 14px)}
+.ptable thead th{top:calc(var(--hdr) + var(--otph) - 1px)}
 /* round 1 (review V8): a tile clips (overflow:hidden), which makes IT the sticky container: an offset of the header's
    height pushed the head 64 px down inside the tile, over the first rows (regime.html, every stock page). Inside a
    tile the head stays at the top of its table. */
 .tile .ptable thead th{top:0}
+/* wave r3 (bug a, 2026-11-10): with overflow:clip (17's .tile rule, where supported) a tile clips WITHOUT being a
+   scroll container, so the head of a table sitting directly in a tile sticks below the site header again (regime,
+   every stock page); a tile that scrolls sideways (inline overflow-x) keeps its head at the top of the table, and a
+   browser without overflow:clip keeps the rule above (the tile is then still the sticky container). On phones
+   (<= 560 px) 17's legacy layer makes the table itself scroll sideways (display:block; overflow-x:auto): the TABLE
+   is then the sticky container, so its head stays at its own top there */
+@supports (overflow:clip){.tile:not([style*="overflow"])>.ptable thead th{top:calc(var(--hdr) + var(--otph) - 1px)}
+  @media(max-width:560px){.tile:not([style*="overflow"])>.ptable thead th{top:0}}}
 /* while the page boots, the header does not animate (the active tab / corner state is set by the script) */
 .js:not(.ready) .shell *{transition:none!important}
 
@@ -632,9 +649,152 @@ body .btcard{border-top-width:3px}
 .today-head h2{margin:0;font:500 clamp(22px,2.4vw,30px)/1.2 var(--serif);border:0;padding:0}
 .sec-h{margin:0 0 18px}
 .sec-h h2{margin:0;font:500 clamp(24px,2.8vw,34px)/1.2 var(--serif);border:0;padding:0}
+/* ---- wave r3 (builder B): the sticky "On this page" bar of the long pages (otp_insert: stocks, Congress, the archived
+   report, strategies, portfolio, where it carries the MXN | USD switch: one strip, not two). Under the header; the
+   section links scroll sideways with an edge fade on narrow screens; the current section is underlined
+   (aria-current="location", set by OTP_JS); without JS it is a plain sticky row of links. --otph = its height
+   (OTP_JS keeps it exact; the :has() value is the no-JS one): anchors and sticky table heads clear it. On a landscape
+   phone (<= 500 px tall) it scrolls with the page. */
+:root:has(nav.otp){--otph:45px}
+.otp{display:block;margin:0;position:sticky;top:var(--hdr);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.otp-in{display:flex;align-items:center;gap:6px 14px;min-height:44px;width:100%;box-sizing:border-box}
+.otp-k{flex:none;font-size:11.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.otp-sc{flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch}
+.otp-sc::-webkit-scrollbar{display:none}
+.otp-l{display:flex;gap:2px;margin:0;padding:0;list-style:none;white-space:nowrap}
+.otp-l li{margin:0;padding:0}
+.otp-l a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;font-size:13.5px;font-weight:500;
+  color:var(--sec);text-decoration:none;border-bottom:2px solid transparent;box-sizing:border-box}
+.otp-l a:hover{color:var(--ink);border-bottom-color:var(--line-strong)}
+.otp-l a[aria-current]{color:var(--ink);border-bottom-color:var(--accent)}
+.otp-sc.fr{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}
+.otp-sc.fl{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to left,#000 calc(100% - 28px),transparent)}
+.otp-sc.fl.fr{-webkit-mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
+.otp .ccy-in{flex:none;display:inline-flex;align-items:center;gap:10px}
+.otp .ccy-sub{display:none}
+.otp .ccy-toggle{margin:0}
+.otp .ccy-toggle button{min-height:44px;min-width:58px}
+.otp+main{padding-top:clamp(30px,4vw,48px)}
+@media(max-width:640.98px){.otp-k{display:none}.otp-l a{padding:0 9px;font-size:13px}
+  .otp .ccy-lbl,.otp .ccy-sub{display:none}.otp .ccy-toggle{padding:2px}
+  .otp .ccy-toggle button{min-width:44px;min-height:40px;padding:0 9px;font-size:12.5px}}
+@media(max-height:500px){.otp{position:static}:root:has(nav.otp){--otph:0px}}
+@media print{.otp{display:none!important}}
+/* ---- wave r3 (builder B): note() -- the explanatory notes in two roles. Disclosure: always visible, short, a thin
+   amber rule. Method: a native <details> closed by default (no script needed; find-in-page opens it). */
+.nt{max-width:52em;margin:0 0 1.1rem;font-size:14px;line-height:1.55;color:var(--sec)}
+.nt-d{border-left:2px solid var(--amber);padding:.1rem 0 .1rem .85rem}
+.nt-m{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.nt-m>summary{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;cursor:pointer;list-style:none;
+  font-size:13.5px;font-weight:500;color:var(--ink)}
+.nt-m>summary::-webkit-details-marker{display:none}
+.nt-m>summary::before{content:"";flex:none;width:7px;height:7px;margin:0 2px;border-right:1.6px solid var(--sec);
+  border-bottom:1.6px solid var(--sec);transform:rotate(-45deg);transition:transform .15s}
+.nt-m[open]>summary::before{transform:rotate(45deg)}
+.nt-m>summary:hover{color:var(--accent)}
+.nt-b{padding:0 16px 12px 33px}
+.nt-b>p{margin:.55rem 0 0}
+.nt-b>p:first-child{margin-top:0}
+.metrics+.nt,.tile+.nt{margin-top:1rem}
+@media(max-width:640.98px){.nt-b{padding:0 12px 12px 14px}}
+/* ---- wave r3 (builder C): the Stock Research tables. Desktop: the Pick Tracker (table.ptrack.fit,
+   picks_tracker.tracker_fit) lets a cell's lines wrap only where the tracker allows (after a separator, between plain
+   words; a figure never leaves its label), so its 11 columns fit the 1,150 px tile at 1440 px; where it still scrolls
+   (641-1,180 px) the +/ticker columns stay in view. .spk = the rank sparkline (rank 1 at the top, the band lines dashed,
+   a dot on the latest ranking). Phones (<= 640 px): every row of a table in a .tile.pcw (design_system.card_tables) is
+   a card: each cell's column header (data-label) on the left, its value on the right; the first cell (and the ticker
+   of the picks / tracker tables) is the card's head; the tracker card lists its cells by priority (data-pri). Same
+   markup, same data: no second copy. */
+.spk{display:inline-block;vertical-align:-4px;margin-right:7px;overflow:visible}
+.spk .b{fill:none;stroke:var(--line-strong);stroke-opacity:1;stroke-width:1;stroke-dasharray:2 2}
+.spk .l{fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}
+.spk circle{fill:var(--accent)}
+.ptrack .rk1,.ptrack .nw{white-space:nowrap}
+.tile.pcw>table.ptrack.fit>thead th,.tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td{white-space:normal;padding:7px 6px}
+@media(min-width:641px){
+  .tile.pcw>table.ptrack.fit>thead th:nth-child(-n+2),
+  .tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td:nth-child(-n+2){position:sticky;z-index:1;background:var(--panel)}
+  .tile.pcw>table.ptrack.fit>thead th:nth-child(-n+2){z-index:3}
+  .tile.pcw>table.ptrack.fit>thead th:first-child,
+  .tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td:first-child{left:0;box-sizing:border-box;width:38px;min-width:38px}
+  .tile.pcw>table.ptrack.fit>thead th:nth-child(2),
+  .tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td:nth-child(2){left:38px}
+}
+@media(max-width:640.98px){
+  .tile.pcw{padding:0!important;overflow:visible!important;background:none;border:0;box-shadow:none;border-radius:0}
+  .tile.pcw>table.ptable{display:block;width:100%;margin:0;font-size:13px;white-space:normal;overflow:visible}
+  .tile.pcw>table.ptable>thead{display:none}
+  .tile.pcw>table.ptable>tbody{display:block}
+  .tile.pcw>table.ptable>tbody>tr{display:flex;flex-wrap:wrap;align-items:flex-start;gap:0 14px;margin:0 0 10px;
+    padding:10px 14px 6px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .tile.pcw>table.ptable>tbody>tr[hidden]{display:none}
+  .tile.pcw>table.ptable>tbody>tr:hover>td{background:none}
+  .tile.pcw>table.ptable>tbody>tr>td{display:block;flex:1 1 calc(50% - 7px);box-sizing:border-box;min-width:0;
+    max-width:100%;padding:6px 0 7px;border:0;border-top:1px solid var(--line);text-align:left;white-space:normal}
+  .tile.pcw>table.ptable>tbody>tr>td::before{content:attr(data-label);display:block;margin:0 0 2px;
+    font:500 11.5px/1.35 var(--sans);letter-spacing:.02em;color:var(--muted);white-space:normal}
+  .tile.pcw>table.ptable>tbody>tr>td:not([data-label])::before{content:none}
+  .tile.pcw>table.ptable>tbody>tr>td:first-child{flex:1 1 100%;padding:2px 0 8px;border-top:0;font-size:14.5px}
+  .tile.pcw>table.ptable>tbody>tr>td:first-child::before{content:none}
+  .tile.pcw>table.ptable td.chips,.tile.pcw>table.ptable td.cmt{flex-basis:100%;min-width:0}
+  .tile.pcw>table.picks>tbody>tr>td.rk{flex:0 0 auto;width:auto;font-size:13px;padding-top:4px}
+  .tile.pcw>table.picks>tbody>tr>td:nth-child(2){flex:1 1 calc(100% - 64px);padding:2px 0 8px;border-top:0}
+  .tile.pcw>table.picks>tbody>tr>td:nth-child(2)::before{content:none}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td:first-child{order:2;flex:0 0 auto;padding:0 0 6px}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td:nth-child(2){order:1;flex:1 1 calc(100% - 68px);padding:8px 0;border-top:0;
+    font-size:15px}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td:nth-child(2)::before{content:none}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td[data-pri="1"]:nth-child(n+3){order:3}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td[data-pri="2"]{order:4}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td[data-pri="3"]{order:5}
+  .tile.pcw>table.ptrack .pt-x{width:40px;height:40px;line-height:36px}
+  .tile.pcw>table.ptrack>tbody>tr.pt-detail{display:block;margin:-6px 0 10px;padding:4px 12px 10px}
+  .tile.pcw>table.ptrack>tbody>tr.pt-detail[hidden]{display:none}
+  .tile.pcw>table.ptrack>tbody>tr.pt-detail>td{display:block;flex:1 1 100%;max-width:100%;padding:0;border:0;overflow-x:auto}
+  .tile.pcw .ptdet{position:static;max-width:100%;grid-template-columns:minmax(0,1fr)}
+}
+@media print{.tile.pcw{overflow:visible!important}}
+/* ---- fix round 1 (r3 continuation, 2026-11-11) --------------------------------------------------------------------
+   V2-1  phones and landscape phones: the Research menu hangs from the header row, 16 px in from its sides, right under
+         the corner button (top:auto = its place in the flow, + 8 px; never a fixed offset: without JavaScript the
+         button can sit on a second header row). With the theme control shown (JavaScript) theme.css does it
+         (design_system._THEME_CONTROL_CSS, r2's rule); the rule below gives landscape phones the same menu without
+         JavaScript (its width from the header row, not the viewport); portrait phones without JavaScript keep the
+         corner-anchored menu, which fits there (no control right of the button).
+   V2-7  a licence name ('CC BY 4.0') never breaks across two lines.
+   RG-2  a tile that scrolls sideways (inline overflow-x:auto) is a scroll container in both axes in every browser
+         (CSS Overflow 3: 'clip' next to 'auto' computes to 'hidden'; Chrome kept 'clip' and stuck those heads at the
+         viewport top, under the opaque header): their heads scroll with their table, as in r2 -- a viewport-sticky
+         head is not possible inside a sideways scroller.
+   V2-11 smooth anchor scrolling only once the page has loaded and settled (html.sm, set by the r3 head script,
+         design_system.SITE_JS): a cold #link lands under the header and the bar instead of chasing a moving target.
+   V2-12 the "Skip to content" link (SITE_JS puts it first in <body>): off-screen until it has the focus.
+   V2-8  the error page: its list inside the column, its first section clear of the hero. */
+@media(max-height:520px) and (min-width:560px) and (max-width:1279px){.shell-in{position:relative}.rc{position:static}
+  .rc-menu{left:auto;right:16px;width:min(640px,calc(100% - 32px));top:auto;margin-top:8px}}
+a[rel~="license"]{white-space:nowrap}
+.tile[style*="overflow-x:auto"]{overflow-y:hidden}
+.skip{position:absolute;left:12px;top:-80px;z-index:200;padding:10px 16px;border:2px solid var(--accent);
+  border-radius:10px;background:var(--panel);color:var(--accent);font-size:14px;font-weight:500;text-decoration:none}
+.skip:focus{top:10px}
+main[tabindex="-1"]:focus{outline:none}
+.nf-main{padding-top:clamp(36px,5vw,56px)}
+.nf-list{padding-left:1.3rem}
+.nf-list li{margin:0 0 .55rem;line-height:1.55}
+/* ---- polish round (r3, 2026-11-11) ---------------------------------------------------------------------------------
+   P1 (V-1 / RC2-1) phones narrower than 360 px with the theme control (JavaScript): the brand, the Research corner and
+      the control stay on ONE header row down to 320 px. Below ~335 px the control used to wrap to a row of its own
+      (the sticky header grew 103 -> 153 px) and the open menu, hanging under the corner, covered it. Here the corner
+      shows its book icon and caret only (font-size 0 hides the word; its aria-label still names it): the row needs
+      ~240 of the 269 px a 320 px phone gives it. Without JavaScript (no control) the header is unchanged. */
+@media(max-width:359.98px){[data-theme-pref] .rc>summary{font-size:0;gap:2px;padding:0 10px}
+  [data-theme-pref] .rc>summary>svg:first-child,[data-theme-pref] .rc>summary .car{display:block}}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
   .metric:hover,.scard:hover,.btcard:hover,.proj-card:hover,a.xcard:hover,.xcard.hov:hover{transform:none}
 }
-@media print{.rcn,.rc,.ptabs,.vtabs,.hero-bg,.hero-shade{display:none!important}
+@media print{.rcn,.rc,.ptabs,.vtabs,.hero-bg,.hero-shade,.hero-credit{display:none!important}
   .hero--img{background:#fff;color:#111}.hero--img h1,.hero--img .lede{color:#111}}

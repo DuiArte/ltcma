@@ -1,7 +1,16 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <base href="../">
-<title>Carlos Duarte — Report (archived 11 Aug 2026)</title>
+<title>Full Report (archived 11 Aug 2026) · Carlos Duarte</title><!--share title0="Carlos Duarte — Report (archived 11 Aug 2026)"-->
+<meta name="description" content="The 12-year capital market assumptions model: method, return tables and limits, as archived.">
+<link rel="canonical" href="https://duiarte.github.io/ltcma/archive/report_2026-08-11.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Carlos Duarte · Quantitative Research"><meta property="og:title" content="Full Report (archived 11 Aug 2026) · Carlos Duarte"><meta property="og:description" content="The 12-year capital market assumptions model: method, return tables and limits, as archived."><meta property="og:url" content="https://duiarte.github.io/ltcma/archive/report_2026-08-11.html">
+<meta property="og:image" content="https://duiarte.github.io/ltcma/assets/img/og_research.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Card: Research. The model, the research record, the strategies and the sources. Carlos Duarte, Quantitative Research."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://duiarte.github.io/ltcma/assets/img/og_research.png">
+<meta name="twitter:title" content="Full Report (archived 11 Aug 2026) · Carlos Duarte"><meta name="twitter:description" content="The 12-year capital market assumptions model: method, return tables and limits, as archived.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml"><link rel="icon" href="assets/img/favicon_32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="assets/img/apple_touch_180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>(function(){var d=document.documentElement,mv=false;['wheel','touchstart','keydown','mousedown'].forEach(function(k){addEventListener(k,function(){mv=true;},{passive:true,once:true});});function fix(){var h=location.hash.slice(1),t=null;if(h){try{t=document.getElementById(decodeURIComponent(h));}catch(e){}}if(t&&!mv)t.scrollIntoView({block:'start'});}var FW=[400,399],FQ=FW.slice(),late=false;function rf(){var P=window.Plotly,w=FQ.shift();if(!P||!P.relayout||w===undefined)return;[].forEach.call(document.querySelectorAll('.js-plotly-plot'),function(g){if(!g._fullLayout)return;var o=g.layout&&g.layout.font&&g.layout.font.weight;if(o!==undefined&&o!=='normal'&&FW.indexOf(o)<0)return;try{var r=P.relayout(g,{'font.weight':w});if(r&&r.catch)r.catch(function(){});}catch(e){}});}addEventListener('load',function(){fix();try{document.fonts.ready.then(function(){rf();document.fonts.addEventListener('loadingdone',function(){late=true;});setTimeout(function(){if(late)rf();},1500);setTimeout(fix,250);});}catch(e){}setTimeout(function(){fix();d.classList.add('sm');},1200);});document.addEventListener('DOMContentLoaded',function(){var m=document.querySelector('main');if(!m||document.querySelector('a.skip'))return;if(!m.id&&!document.getElementById('site-main'))m.id='site-main';if(!m.id)return;if(!m.hasAttribute('tabindex'))m.tabIndex=-1;var a=document.createElement('a');a.className='skip';a.href='#'+m.id;a.textContent='Skip to content';a.addEventListener('click',function(e){e.preventDefault();m.focus({preventScroll:true});m.scrollIntoView({block:'start'});});document.body.insertBefore(a,document.body.firstChild);});})();</script>
+<!--/share-->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <script>(function(){var d=document.documentElement,p='auto',m=false;try{p=localStorage.getItem('ltcma-theme')||'auto';}catch(e){}if(p!=='light'&&p!=='dark')p='auto';try{m=window.matchMedia('(prefers-color-scheme: dark)').matches;}catch(e){}d.setAttribute('data-theme-pref',p);d.setAttribute('data-theme',p==='dark'||(p==='auto'&&m)?'dark':'light');})();</script><link rel="stylesheet" href="_design_system/tokens.css"><link rel="stylesheet" href="_design_system/base.css"><link rel="stylesheet" href="_design_system/theme.css"><link rel="stylesheet" href="style.css"></head>
 <body><header class="shell"><div class="shell-in">
@@ -251,6 +260,27 @@ window.addEventListener('beforeprint',function(){PRINT=true;all();});window.addE
 window.ltcmaTheme={set:function(p){set(p==='light'||p==='dark'?p:'auto',true,false);},pref:pref,theme:cur,apply:all,map:function(c,dk){return mc(c,dk?FW:BW);}};
 })();</script>
 </div></header>
+<nav class="otp" aria-label="On this page"><div class="container otp-in"><span class="otp-k" aria-hidden="true">On this page</span><div class="otp-sc"><ul class="otp-l"><li><a href="archive/report_2026-08-11.html#1-executive-summary">Summary</a></li><li><a href="archive/report_2026-08-11.html#2-methodology">Method</a></li><li><a href="archive/report_2026-08-11.html#3-macro-backdrop-fundamentals-grid">Macro</a></li><li><a href="archive/report_2026-08-11.html#4-priced-in-indicators">Priced in</a></li><li><a href="archive/report_2026-08-11.html#5-expected-returns">Returns</a></li><li><a href="archive/report_2026-08-11.html#6-risk-volatility-correlation">Risk</a></li><li><a href="archive/report_2026-08-11.html#7-news-regimes-monte-carlo-simulation">Regimes &amp; simulation</a></li><li><a href="archive/report_2026-08-11.html#8-strategic-edge-scan">Edge scan</a></li><li><a href="archive/report_2026-08-11.html#9-sample-portfolios">Portfolios</a></li><li><a href="archive/report_2026-08-11.html#10-systematic-strategy-layer-dynamic-regime-overlays">Strategy layer</a></li><li><a href="archive/report_2026-08-11.html#11-assumptions-limitations-sources">Assumptions</a></li></ul></div></div><script>(function(){var n=document.querySelector('nav.otp');if(!n)return;var d=document.documentElement,
+sc=n.querySelector('.otp-sc'),as=[].slice.call(n.querySelectorAll('.otp-l a')),secs=[],last=-2;
+function look(){secs=as.map(function(a){var h=a.getAttribute('href');return document.getElementById(decodeURIComponent(h.slice(h.indexOf('#')+1)));});}
+function hgt(){var st=getComputedStyle(n).position==='sticky';d.style.setProperty('--otph',(st?n.offsetHeight:0)+'px');}
+function fade(){var l=sc.scrollLeft>2,r=sc.scrollLeft+sc.clientWidth<sc.scrollWidth-2;sc.classList.toggle('fl',l);sc.classList.toggle('fr',r);}
+function cur(){if(!secs.length||!secs[secs.length-1])look();
+var top=(parseFloat(getComputedStyle(d).getPropertyValue('--hdr'))||0)+n.offsetHeight+24,k=-1;
+for(var i=0;i<secs.length;i++){if(secs[i]&&secs[i].getBoundingClientRect().top<=top)k=i;}
+if(k===last)return;last=k;
+as.forEach(function(a,i){if(i===k)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});
+if(k>=0&&sc.scrollWidth>sc.clientWidth&&!n.contains(document.activeElement)){var ar=as[k].getBoundingClientRect(),
+sr=sc.getBoundingClientRect();if(ar.left<sr.left||ar.right>sr.right)sc.scrollLeft+=ar.left-sr.left-24;}}
+var raf=null;function tick(){if(!raf)raf=requestAnimationFrame(function(){raf=null;cur();});}
+sc.addEventListener('scroll',fade,{passive:true});window.addEventListener('scroll',tick,{passive:true});
+n.addEventListener('focusin',function(e){var a=e.target;if(!a||!sc.contains(a))return;var ar=a.getBoundingClientRect(),
+sr=sc.getBoundingClientRect();if(ar.left<sr.left+28)sc.scrollLeft-=sr.left+28-ar.left;
+else if(ar.right>sr.right-28)sc.scrollLeft+=ar.right-(sr.right-28);});
+window.addEventListener('resize',function(){hgt();fade();tick();});hgt();fade();
+function go(){look();cur();window.addEventListener('load',tick);
+if(window.ResizeObserver)new ResizeObserver(tick).observe(document.body);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();})();</script></nav>
 <main class="container"><article class="tile report"><div class="archive-note"><b>Archived edition &mdash; figures as of 11 August 2026.</b> This report is written by hand and has not been resynced to the current model run (08 Nov 2026); its numbers are kept unchanged as a dated record. Current expected returns, risk and market signals are on the <a href="index.html">Dashboard</a>.</div><h1 id="long-term-capital-market-assumptions-2026-edition">Long-Term Capital Market Assumptions — 2026 Edition</h1>
 <p><strong>A proprietary 12-year forward outlook for global asset classes</strong></p>
 <ul>
