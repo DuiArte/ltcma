@@ -1,5 +1,5 @@
 {
- "_about": "Source images for the site's heroes and About photo. Generators copy them byte-identically into docs/assets/img/ (scripts/design_system.py emit_assets). Hero crops are 16:9 cuts of the ESA/Webb Large JPEGs (phones get 9:16 portrait centre crops of the 3840 px cut, hero_<key>_p720 / _p1080), re-encoded without metadata; every page that shows one prints its credit line. The photo is the site author's own portrait (EXIF-free copies only).",
+ "_about": "Source images for the site's heroes and About photo. Generators copy them byte-identically into docs/assets/img/ (scripts/design_system.py emit_assets). One photograph per page (wave r3, 2026-11-10: design_system.PAGE_HEROES). Hero crops are 16:9 cuts of the original (ESA/Webb Large JPEG or NASA full-size image; crop_16x9 = the box in the original's pixels) and phones get a 9:16 cut of their own (crop_9x16); widths = the files published per key (never wider than the cut: no upscaling; dense star fields publish fewer widths to stay inside the size budgets). Re-encoded without metadata. 'credit' is the source page's credit line verbatim; every page that shows one prints title, 'cropped', credit and licence (with its link when the licence has one) in the hero and the footer (ds_gate R3). NASA media (earth_night) is public domain; its credit is still shown. The photo is the site author's own portrait (EXIF-free copies only).",
  "license_url": "https://creativecommons.org/licenses/by/4.0/",
  "heroes": {
   "cliffs": {
@@ -7,32 +7,282 @@
    "source": "https://esawebb.org/images/weic2205a/",
    "credit": "NASA, ESA, CSA, STScI",
    "license": "CC BY 4.0",
-   "crop_px": [14575, 8198]
-  },
-  "cliffs_detail": {
-   "title": "Cosmic Cliffs in Carina (JWST NIRCam), detail",
-   "source": "https://esawebb.org/images/weic2205a/",
-   "credit": "NASA, ESA, CSA, STScI",
-   "license": "CC BY 4.0",
-   "crop_px": [8016, 4509]
+   "crop_px": [
+    14575,
+    8198
+   ],
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "widths": {
+    "portrait": [
+     720,
+     1080
+    ],
+    "webp": [
+     1600,
+     2560,
+     2880,
+     3840
+    ],
+    "jpg": [
+     960,
+     1600,
+     2560
+    ]
+   }
   },
   "pillars": {
    "title": "Pillars of Creation (JWST NIRCam)",
    "source": "https://esawebb.org/images/weic2216b/",
    "credit": "NASA, ESA, CSA, STScI; J. DePasquale, A. Koekemoer, A. Pagan (STScI)",
    "license": "CC BY 4.0",
-   "crop_px": [8423, 4738]
+   "crop_px": [
+    8423,
+    4738
+   ],
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "widths": {
+    "portrait": [
+     720,
+     1080
+    ],
+    "webp": [
+     1600,
+     2560,
+     2880,
+     3840
+    ],
+    "jpg": [
+     960,
+     1600,
+     2560
+    ]
+   }
   },
-  "pillars_base": {
-   "title": "Pillars of Creation (JWST NIRCam), lower detail",
-   "source": "https://esawebb.org/images/weic2216b/",
-   "credit": "NASA, ESA, CSA, STScI; J. DePasquale, A. Koekemoer, A. Pagan (STScI)",
+  "zs7": {
+   "title": "ZS7 environment (NIRcam image)",
+   "source": "https://esawebb.org/images/weic2413a/",
+   "credit": "ESA/Webb, NASA, CSA, J. Dunlop, D. Magee, P. G. Pérez-González, H. Übler, R. Maiolino, et. al",
    "license": "CC BY 4.0",
-   "crop_px": [8423, 4738]
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "crop_px": [
+    6001,
+    3376
+   ],
+   "original": "weic2413a.jpg",
+   "original_px": [
+    6001,
+    6001
+   ],
+   "crop_16x9": [
+    0,
+    2625,
+    6001,
+    6001
+   ],
+   "crop_9x16": [
+    2625,
+    0,
+    6001,
+    6001
+   ],
+   "widths": {
+    "webp": [
+     1600,
+     2560,
+     2880,
+     3840
+    ],
+    "jpg": [
+     960,
+     1600,
+     2560
+    ],
+    "portrait": [
+     720,
+     1080
+    ]
+   }
+  },
+  "hh4647": {
+   "title": "Herbig-Haro 46/47 (NIRCam image)",
+   "source": "https://esawebb.org/images/weic2319a/",
+   "credit": "NASA, ESA, CSA, J. DePasquale (STScI)",
+   "license": "CC BY 4.0",
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "crop_px": [
+    8735,
+    4913
+   ],
+   "original": "weic2319a.jpg",
+   "original_px": [
+    14559,
+    8481
+   ],
+   "crop_16x9": [
+    0,
+    1784,
+    8735,
+    6697
+   ],
+   "crop_9x16": [
+    5694,
+    0,
+    9069,
+    6000
+   ],
+   "widths": {
+    "webp": [
+     1600,
+     2560,
+     2880,
+     3840
+    ],
+    "jpg": [
+     960,
+     1600,
+     2560
+    ],
+    "portrait": [
+     720,
+     1080
+    ]
+   }
+  },
+  "ngc6822": {
+   "title": "NIRCam’s view of NGC 6822",
+   "source": "https://esawebb.org/images/potm2309a/",
+   "credit": "ESA/Webb, NASA & CSA, M. Meixner",
+   "license": "CC BY 4.0",
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "crop_px": [
+    11230,
+    6317
+   ],
+   "original": "potm2309a.jpg",
+   "original_px": [
+    11230,
+    8059
+   ],
+   "crop_16x9": [
+    0,
+    564,
+    11230,
+    6881
+   ],
+   "crop_9x16": [
+    3910,
+    0,
+    8443,
+    8059
+   ],
+   "widths": {
+    "webp": [
+     1600,
+     2560
+    ],
+    "jpg": [
+     960,
+     1600
+    ],
+    "portrait": [
+     720
+    ]
+   }
+  },
+  "ngc6440": {
+   "title": "Star-studded cluster",
+   "source": "https://esawebb.org/images/potm2404a/",
+   "credit": "ESA/Webb, NASA & CSA, P. Freire; Acknowledgement: M. Cadelano and C. Pallanca",
+   "license": "CC BY 4.0",
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "crop_px": [
+    2880,
+    1620
+   ],
+   "original": "potm2404a.jpg",
+   "original_px": [
+    3597,
+    2300
+   ],
+   "crop_16x9": [
+    0,
+    340,
+    2880,
+    1960
+   ],
+   "crop_9x16": [
+    1980,
+    0,
+    3274,
+    2300
+   ],
+   "widths": {
+    "webp": [
+     1600,
+     2560,
+     2880
+    ],
+    "jpg": [
+     960,
+     1600,
+     2560
+    ],
+    "portrait": [
+     720
+    ]
+   }
+  },
+  "earth_night": {
+   "title": "Space Station View of Earth at Night",
+   "source": "https://www.nasa.gov/image-article/space-station-view-of-earth-at-night/",
+   "credit": "NASA/Jessica Meir",
+   "license": "public domain (NASA media)",
+   "license_url": null,
+   "crop_px": [
+    7040,
+    3960
+   ],
+   "original": "nasa_earth_night_55534901810.jpg",
+   "original_px": [
+    8256,
+    5504
+   ],
+   "crop_16x9": [
+    1216,
+    0,
+    8256,
+    3960
+   ],
+   "crop_9x16": [
+    3840,
+    0,
+    6068,
+    3960
+   ],
+   "widths": {
+    "webp": [
+     1600,
+     2560,
+     2880,
+     3840
+    ],
+    "jpg": [
+     960,
+     1600,
+     2560
+    ],
+    "portrait": [
+     720,
+     1080
+    ]
+   }
   }
  },
  "photo": {
-  "files": ["carlos_duarte_640x800.jpg", "carlos_duarte_1200x1500.jpg"],
+  "files": [
+   "carlos_duarte_640x800.jpg",
+   "carlos_duarte_1200x1500.jpg"
+  ],
   "alt": "Carlos Duarte"
  }
 }

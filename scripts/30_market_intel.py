@@ -18,9 +18,11 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from glossary import NAV
 from design_system import CSS_LINKS, hero, credits_footer, TABS_JS   # hero/credits/tabs: 2026-11-10 remake
+from design_system import hero_for, credits_for, note   # wave r3: one photograph per page; note()
 from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 # pc / money / the firm count are shared with the home summary (17), which must not import this script (round 1, P1)
 from design_system import pc, money, cma_firm, cma_firms
+from design_system import fed_path_newest   # wave r3: ONE Fed-odds vintage per page (shared with the home)
 from paths import DATA, DOCS, cuser
 
 SRC = os.path.join(DATA, "market_intel", "consensus_public.json")
@@ -108,6 +110,36 @@ display:inline-flex;align-items:center;border:1px solid var(--line-strong);borde
 .mi.ol td.q{color:#c4c9cf}
 @media (max-width:700px){.dv .sides{grid-template-columns:1fr}.mi th.pub{height:80px}
 .mi.ol td{min-width:56px;padding:4px 5px}.mi.ol td.a,.mi.ol th.a{min-width:108px;max-width:132px}}
+/* wave r3 (builder C): Congress trades grouped by filing; the filter bar (JavaScript only); 50 at a time */
+.cgbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;width:100%;margin:.5rem 0 .6rem}
+.cgbar label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:500;letter-spacing:.05em;
+text-transform:uppercase;color:var(--sec)}
+.cgbar input,.cgbar select{min-height:44px;box-sizing:border-box;padding:0 10px;font:400 14px var(--sans);
+letter-spacing:0;text-transform:none;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);
+border-radius:8px}
+.cgbar input{width:min(15em,80vw)}.cgbar select{max-width:min(17em,80vw)}
+.cgcount{margin:.2rem 0 .7rem;font-size:13px;color:var(--sec)}.cgcount:empty{display:none}
+.mi.cgt th.tk,.mi.cgt td.tk{position:sticky;left:0;z-index:1;background:var(--bg);text-align:left}
+.mi.cgt td.tk a{color:inherit}
+.mi.cgt tr.cgh>th{text-align:left;vertical-align:middle;white-space:normal;padding:9px 8px 8px;font-size:12.5px;
+font-weight:400;letter-spacing:0;color:var(--ink);background:var(--chip);border-top:1px solid var(--line-strong)}
+.mi.cgt .cgh-in{position:sticky;left:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;
+max-width:calc(94vw - 52px);max-width:calc(100cqi - 20px)}
+.mi.cgt .cgh-t{flex:1 1 30em;line-height:1.5}
+/* fix round 1 (r3 continuation, V2-2 / V2-3 / V2-4): the filing header is as wide as its scroller's visible width
+   (a container: 100cqi, minus the header's 8 px sticky offset and 8 px right padding; 94vw - 52px where container
+   units are missing), so no glyph hides past the scroller's edge; a filing date or a dollar band never breaks at its
+   hyphen; the party-district label reads >= 4.5:1 on the header's chip ground */
+.mi-wrap.cgw{container-type:inline-size}
+.mi.cgt .nw{white-space:nowrap}
+.mi.cgt tr.cgh .cv{color:var(--sec)}
+.mi.cgt tr.cgr:focus{outline:none}.mi.cgt tr.cgr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.mi.cgt tr.cgmr>td{text-align:left;padding:8px 7px}
+.mi.cgt tr[hidden],.mi.cgt tbody[hidden]{display:none}
+button.cgmore{margin:.8rem 0 0}button.cgmore[hidden]{display:none!important}
+#trades .mi-wrap+.note,#trades button.cgmore+.note{margin-top:.9rem}
+@media print{.mi.cgt tbody[hidden]{display:table-row-group!important}.mi.cgt tr.cgr[hidden]{display:table-row!important}
+.js .cgbar,.js .mi.cgt .cgx,button.cgmore,.mi.cgt tr.cgmr{display:none!important}}
 """
 
 
@@ -185,12 +217,21 @@ def main():
         date.fromisoformat(d["first_official"]).strftime("%d %b %Y").lstrip("0")
 
     # ---- summary
-    summary = "".join(f"<li>{e(b)}</li>" for b in d.get("summary", []))
+    newer_run, run_px = fed_newer_than_run(d), _run_stamp(d)
+    summary = "".join(f"<li>{_sum_bullet(b, newer_run, run_px)}</li>" for b in d.get("summary", []))
 
     # ---- prediction markets
     odds_html = ""
     pm = d.get("prediction") or {}
+    # wave r3 (2026-11-10): ONE vintage for the next FOMC on this page. When the Fed path (hero + table) comes from a
+    # pull newer than this consensus run's snapshot, the snapshot's "Next FOMC decision" card is drawn from that
+    # same pull and the Summary does not restate the run's older odds
+    fp_one = fed_path_newest(DATA)
+    fed_newer = bool(fp_one and fp_one.get("_source") == "daily"
+                     and str(fp_one.get("taken_at") or "")[:19] > str(pm.get("taken_at") or "")[:19])
     for t in pm.get("topics", []):
+        if fed_newer and t.get("id") == "fed_next":
+            t = {**t, "venues": _fed_next_venues(fp_one)}
         if not t.get("venues"):
             continue
         inner = ""
@@ -208,8 +249,13 @@ def main():
     fed_html = render_fed_path()
     outlook_html = render_event_outlook()
     # the snapshot cards carry their own price date (the Fed path and the outlook panel above carry theirs)
-    snap_note = (f'<p class="note" style="margin-top:1.6rem">Snapshot cards: market prices from {e(taken)} CDMX. '
-                 f'Thin markets are skipped.</p>') if odds_html and taken else ""
+    fed_day = date.fromisoformat(str(fp_one["taken_at"])[:10]).strftime("%d %b %Y") if fp_one else ""
+    # fix round 1 (r3 continuation, DCL-1): two pulls of the same day are told apart by their time
+    if fed_newer and str(fp_one.get("taken_at") or "")[:10] == str(pm.get("taken_at") or "")[:10]:
+        fed_day += " " + str(fp_one["taken_at"])[11:16]
+    snap_note = (f'<p class="note" style="margin-top:1.6rem">Snapshot cards: market prices from {e(taken)} CDMX'
+                 + (f'; the Next FOMC decision card: the Fed path\'s prices of {fed_day}' if fed_newer else "")
+                 + '. Thin markets are skipped.</p>') if odds_html and taken else ""
 
     # ---- matrix
     head = "".join(f'<th class="pub" title="{e(p["publisher"])} — {e(p["product"])}">{e(p["short"])}'
@@ -286,12 +332,15 @@ def main():
         meta = (f'{e(x["type"])} divergence &middot; public IQR {x["iqr_bp"]}bp, n={x["n"]} &middot; stances '
                 f'&#9650;{x["tally"]["up"]} &#9632;{x["tally"]["flat"]} &#9660;{x["tally"]["down"]}') if x.get("n") else \
                (f'{e(x["type"])} divergence &middot; stances &#9650;{x["tally"]["up"]} &#9632;{x["tally"]["flat"]} &#9660;{x["tally"]["down"]}')
-        divs += (f'<div class="dv"><h3>{e(x["label"])} — {e(x["headline"])}</h3><div class="meta">{meta}</div>'
+        # fix round 1 (r3 continuation, DCL-1): the divergences are consensus-run prose too: one Fed vintage
+        def fx(s):
+            return _fomc_fix(e(s), newer_run, run_px)
+        divs += (f'<div class="dv"><h3>{e(x["label"])} — {fx(x["headline"])}</h3><div class="meta">{meta}</div>'
                  f'<div class="sides"><div class="side bull"><div class="who">Higher-return / positive side: {e(", ".join(b.get("publishers", [])))}</div>'
-                 f'{e(b.get("argument"))}<div class="data">Leans on: {e(b.get("data_used"))}</div></div>'
+                 f'{fx(b.get("argument"))}<div class="data">Leans on: {fx(b.get("data_used"))}</div></div>'
                  f'<div class="side bear"><div class="who">Lower-return / negative side: {e(", ".join(br.get("publishers", [])))}</div>'
-                 f'{e(br.get("argument"))}<div class="data">Leans on: {e(br.get("data_used"))}</div></div></div>'
-                 f'<div class="watch"><b>What would settle it:</b> {e(x.get("what_to_watch"))}</div></div>')
+                 f'{fx(br.get("argument"))}<div class="data">Leans on: {fx(br.get("data_used"))}</div></div></div>'
+                 f'<div class="watch"><b>What would settle it:</b> {fx(x.get("what_to_watch"))}</div></div>')
     if not divs:
         divs = '<p class="note">No row crosses the divergence rule in this edition.</p>'
 
@@ -375,10 +424,7 @@ def main():
     # ---- 2026-11-10 remake: Pillars hero with four headline figures, each one already on this page (the Fed table,
     # the hero's firm count, the "Versus this site's LTCMA" table), and in-page views that group the EXISTING sections
     stats = []
-    try:
-        fp = json.load(open(FED_SRC, encoding="utf-8")) if fed_html and os.path.exists(FED_SRC) else None
-    except (OSError, ValueError):
-        fp = None
+    fp = fed_path_newest(DATA) if fed_html else None     # wave r3: the Fed path table's own pull
     # every Fed figure carries the date of its prices (round 1, DATA-1): the 16:45 job refreshes them every weekday,
     # after the home summary is built, so "today" would not be true all day ("prices from" is not a graded stamp)
     taken = ((fp or {}).get("taken_at") or "")[:10]
@@ -416,8 +462,12 @@ def main():
             (f'{e(wide["label"])}: this site {"below" if wide["gap_bp"] > 0 else "above"} the public median. Every '
              "asset class, its band and its gap, side by side." if wide else "No public estimate to compare yet."),
             "#vs-ltcma")]
-    sum_px = (f"; the Fed odds in the hero above are Kalshi decision-market prices from "
-              f"{date.fromisoformat(taken).strftime('%d %b %Y')}, refreshed every weekday" if taken else "")
+    # wave r3: one Fed vintage -- say whether the Fed odds above are this run's or a newer pull
+    same_day = taken == str((d.get("prediction") or {}).get("taken_at") or "")[:10]
+    sum_px = ("" if not taken else "; the Fed odds above are from the same run" if not fed_newer else
+              f"; the next FOMC's odds are given once, in the hero and the Fed path, with the newer prices of "
+              f"{date.fromisoformat(taken).strftime('%d %b %Y')}"
+              + (f" {str(fp['taken_at'])[11:16]} (the run's: {_run_stamp(d)[-5:]})" if same_day else ""))
     ov_html = ('<div class="ovc">' + "".join(
         f'<a class="xcard" href="{h}"><p class="xk">{k}</p><span class="xbig">{v}</span><p class="xn">{t}</p>'
         f'<span class="xgo">Open &rarr;</span></a>' for k, v, t, h in ovc) + '</div>')
@@ -439,7 +489,7 @@ Prediction-market odds for the macro calls are shown alongside.</p>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-{hero("pillars", hero_in, DOCS, pos="center 30%")}
+{hero_for("ltcma-consensus.html", hero_in, DOCS)}
 <main class="container">
 <div class="vtabs"><div role="tablist" aria-label="Market Intel views" data-tabs="hash">
 <a role="tab" id="vt-over" href="#summary" aria-controls="vg-over">Overview</a><a role="tab" id="vt-fed" href="#odds" aria-controls="vg-fed">Fed and events</a><a role="tab" id="vt-street" href="#matrix" aria-controls="vg-street">Street vs model</a><a role="tab" id="vt-src" href="#sources" aria-controls="vg-src">Sources and method</a></div>
@@ -453,7 +503,9 @@ market prices quoted in it are from that run{sum_px}.</p><ul class="sumlist">{su
 
 <section class="block" id="odds"><h2>Market-implied odds</h2>
 <p class="note">Prices on Kalshi and Polymarket, read from their public market data. Each part of this section is
-read at a different time and gives the date of its own prices, so the same market can show two prices. A price of
+read at a different time and gives the date of its own prices, so the same market can show two prices. The Fed path
+below is the page reference for the next FOMC (its odds are given once); event-outlook markets on the same meeting
+carry their own date. A price of
 0.83 means the market pays out as if the event were 83% likely.</p>
 {fed_html}
 {outlook_html}
@@ -514,14 +566,14 @@ here is investment advice.</p></section>
 </div>
 </main>
 <footer class="shell-foot"><div class="container"><p>Third-party forecasts are attributed to their publishers and
-linked to the originals. Not investment advice.</p>{credits_footer("pillars")}</div></footer>
+linked to the originals. Not investment advice.</p>{credits_for("ltcma-consensus.html")}</div></footer>
 {TABS_JS}
 <script>(function(){{var b=document.getElementById('side-only'),t=document.getElementById('vs-table');if(!b||!t)return;
 b.addEventListener('click',function(){{var on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on?'true':'false');
 [].forEach.call(t.querySelectorAll('tbody tr'),function(r){{var s=r.getAttribute('data-side');r.hidden=on&&(s==='inside'||s==='none');}});}});}})();</script>
 </body></html>"""
     with open(OUT, "w", encoding="utf-8") as f:
-        f.write(themed(page))
+        f.write(themed(page, "ltcma-consensus.html"))
     print(f"ltcma-consensus.html built ({len(pubs)} publishers, {len(d['matrix'])} rows, {len(d.get('divergences', []))} divergences)")
     render_street()
     render_congress()
@@ -623,21 +675,82 @@ consensus is a cross-check: it is never an input to this site's LTCMA model. Not
 firms listed. Not investment advice.</p></div></footer>
 </body></html>"""
     with open(STREET_OUT, "w", encoding="utf-8") as f:
-        f.write(themed(page))
+        f.write(themed(page, "street-ltcma.html"))
     print(f"street-ltcma.html built ({n_pub} rows, {len(idx.get('editions', []))} edition(s))")
 
 
 # ---- Fed path: market-implied odds meeting by meeting (Carlos 2026-10-22) ---------------------
 FED_SRC = os.path.join(DATA, "market_intel", "fed_path_public.json")
+# wave r3 (2026-11-10): the Congress tables' dollar totals are sums of range midpoints; said where they are read
+MIDNOTE = ('<p class="note">&asymp; Dollar totals add up the midpoint of each disclosed range (members report '
+           'ranges, not amounts); see <a href="#method">Method</a>.</p>')
+# "at 88%", "at 87.5-88.0%", "at 87.5%-88.0%" (a range may carry one percent sign)
+_FOMC_NUM = r"\d+(?:\.\d+)?%?(?:\s*[-\u2013]\s*\d+(?:\.\d+)?)?%"
+# fix round 1 (r3 continuation, DCL-1): also "at the next FOMC priced at 87.5-88.0%" and ", priced at 87.5-88.0%," (the
+# divergences' wording); the trailing comma of a parenthetical clause is kept
+_FOMC_ODDS = re.compile(r"\b(at|for) the next FOMC(,?)\s+(?:priced\s+)?at\s+" + _FOMC_NUM + r"(,?)")
+# any other percentage within a short reach of "next FOMC" (no sentence / clause break, no tag in between), either side
+_FOMC_NEAR = re.compile(r"next FOMC(?:(?!\. |; |: )[^<>]){0,25}?" + _FOMC_NUM + r"|" + _FOMC_NUM
+                        + r"(?:(?!\. |; |: )[^<>]){0,32}?next FOMC")
+
+
+def fed_newer_than_run(d):
+    """True when the page's Fed path pull is newer than this consensus run's own prediction snapshot."""
+    fp, pm = fed_path_newest(DATA), (d.get("prediction") or {})
+    return bool(fp and fp.get("_source") == "daily"
+                and str(fp.get("taken_at") or "")[:19] > str(pm.get("taken_at") or "")[:19])
+
+
+def _fomc_fix(t, newer, stamp=""):
+    """Fix round 1 (r3 continuation, DCL-1): one consensus-run text (already escaped). When the Fed path's pull is newer
+    than the run, a clause quoting the run's next-FOMC odds points at the Fed path instead of restating an older price,
+    and any other next-FOMC percentage left in the text is dated with the run's own pull ("(prices of <stamp>)"), so no
+    undated older price stands next to the newer one (ds_gate R10 fails an undated one)."""
+    if not newer:
+        return t
+    t = _FOMC_ODDS.sub(lambda m: f'{m.group(1)} the next FOMC (odds: <a href="#odds">the Fed path</a>){m.group(3)}', t)
+    if stamp:
+        t = _FOMC_NEAR.sub(lambda m: re.sub(_FOMC_NUM + r"(?!\s*\(prices of )",
+                                            lambda n: f"{n.group(0)} (prices of {stamp})", m.group(0)), t)
+    return t
+
+
+def _run_stamp(d):
+    """The consensus run's own pull, as the page dates it ('10 Nov 2026 07:17', CDMX)."""
+    t = str((d.get("prediction") or {}).get("taken_at") or "")
+    try:
+        return datetime.strptime(t[:16], "%Y-%m-%dT%H:%M").strftime("%d %b %Y %H:%M")
+    except ValueError:
+        return ""
+
+
+def _sum_bullet(b, newer, stamp=""):
+    """A Summary bullet (pipeline text, escaped) through _fomc_fix (one vintage per page)."""
+    return _fomc_fix(e(b), newer, stamp)
+
+
+def _fed_next_venues(fp):
+    """The "Next FOMC decision" snapshot card from the Fed path's pull: Kalshi's outcomes, Polymarket's cut / hold /
+    hike (the shape of a prediction topic's venues)."""
+    nx, out = (fp or {}).get("next") or {}, []
+    k, p = nx.get("kalshi") or {}, nx.get("polymarket") or {}
+    if k.get("outcomes"):
+        out.append({"venue": "Kalshi", "url": k.get("url") or "https://kalshi.com", "volume": k.get("volume") or 0,
+                    "outcomes": sorted(k["outcomes"], key=lambda o: -o["prob"])})
+    if all(x in p for x in ("cut", "hold", "hike")):
+        out.append({"venue": "Polymarket", "url": p.get("url") or "https://polymarket.com", "volume": p.get("volume") or 0,
+                    "outcomes": sorted(({"outcome": lab, "prob": p[x]} for x, lab in
+                                        (("hike", "Hike"), ("hold", "Hold"), ("cut", "Cut"))), key=lambda o: -o["prob"])})
+    return out
 
 
 def render_fed_path():
     """'If no change is expected this month, when does the market see one?' One row per FOMC meeting:
     Kalshi cut / hold / hike odds (Polymarket alongside where it lists the meeting). Refreshed daily by
     market-intel-daily. No 'as of' wording: the page's freshness stamp stays the consensus edition."""
-    if not os.path.exists(FED_SRC):
+    f = fed_path_newest(DATA)       # wave r3: the newer of the daily file and the consensus run's own pull
+    if not f:
         return ""
-    f = json.load(open(FED_SRC, encoding="utf-8"))
     ms = f.get("meetings") or []
     if not ms:
         return ""
@@ -870,6 +983,108 @@ def dp2(s):
     return re.sub(r"(\d+\.\d\d)\d+", r"\1", s or "")
 
 
+# wave r3 (builder C, Carlos written 2026-11-10 ~15:00 "Dale play a todo"): the trades grouped by FILING. One periodic
+# transaction report can list hundreds of trades (on 2026-11-10, 291 of the 400 newest rows were one Ro Khanna filing),
+# so the trades table has one <tbody> per filing, newest first: a header row (the member, the chamber, the filing date,
+# the filing's link and a summary: how many trades, the sides, the tickers and the largest disclosed band, so a large
+# trade cannot hide inside a group), then the filing's trades with their own facts (the member, filing date and link are
+# the header's, said once). The page shows every filing that has a trade among the newest CG_MAXROWS trades, WHOLE: a
+# filing is never cut in two, and every trade the old 400-row table showed is still there. A filter (ticker / asset text, member, chamber, side) and "show 50 more" run without a framework (CONG_JS):
+# filings start collapsed to their header row, a filter opens the ones that match; WITHOUT JavaScript every filing and
+# every trade shows (no row carries `hidden` in the HTML). The weekly / daily congress job renders the page through this
+# same script, so its page is this page.
+CG_SIDE = {"P": "P", "S": "S", "S-partial": "S", "E": "E"}            # the filter's side codes; anything else is O(ther)
+CG_SIDES = (("P", "Buy", "buy"), ("S", "Sell", "sale"), ("E", "Exchange", "exchange"), ("O", "Other", "other"))
+CG_COLS = 8                                                            # the trades table's columns
+CG_MAXROWS = 400                                                       # the trades table's cap: the filings of the newest 400 trades, whole
+
+
+def _band_lo(a):
+    """The lower bound of a disclosed band, to pick a filing's largest ('$15K-50K' -> 15e3; 'Over $1M' and '> $50M'
+    sit just above their bound); -1 for an empty or unreadable band."""
+    m = re.search(r"\$\s?([\d.,]+)\s?([KMB]?)", a or "")
+    if not m:
+        return -1.0
+    try:
+        v = float(m.group(1).replace(",", "")) * {"": 1, "K": 1e3, "M": 1e6, "B": 1e9}[m.group(2)]
+    except ValueError:
+        return -1.0
+    return v + (0.5 if re.match(r"\s*(?:over|>)", a, re.I) else 0.0)
+
+
+def _plural(n, w):
+    return f"{n} {w}{'' if n == 1 else 's'}"
+
+
+def _filing_id(src, member, filed, used):
+    """A stable anchor per filing (its report's file / id in the source link), unique on the page."""
+    base = re.sub(r"[^A-Za-z0-9_-]", "", os.path.splitext(os.path.basename(str(src or "").rstrip("/")))[0])[:48]
+    if not base:
+        base = re.sub(r"[^A-Za-z0-9]+", "-", f"{member}-{filed}").strip("-").lower()[:48]
+    gid, k = f"filing-{base}", 2
+    while gid in used:
+        gid, k = f"filing-{base}-{k}", k + 1
+    used.add(gid)
+    return gid
+
+
+def congress_filings(rows, maxrows):
+    """[((member, filed_date, source), [rows])]: every filing that has a trade among the newest `maxrows` rows (the rows
+    come newest-filed first), WHOLE, in the order those rows first show it -- so the page holds every trade the
+    400-row table held, and no filing is cut in two (ds_gate R12 re-derives this from the data file)."""
+    allg, order = {}, []
+    for r in rows:
+        k = (r.get("member"), r.get("filed_date"), r.get("source"))
+        allg.setdefault(k, []).append(r)
+    for r in rows[:maxrows]:
+        k = (r.get("member"), r.get("filed_date"), r.get("source"))
+        if k not in order:
+            order.append(k)
+    return [(k, allg[k]) for k in order]
+
+
+CONG_JS = r"""<script>(function(){var t=document.querySelector('table.cgt');if(!t)return;
+var P=50,q=document.getElementById('cgq'),fm=document.getElementById('cgm'),fc=document.getElementById('cgc'),
+fs=document.getElementById('cgs'),cl=document.getElementById('cgr'),out=document.getElementById('cgn'),lim=P,G=[];
+if(!q||!fm||!fc||!fs||!cl||!out)return;
+function pl(n,w){return n+' '+w+(n===1?'':'s');}
+[].forEach.call(t.tBodies,function(b){var rows=[].slice.call(b.querySelectorAll('tr.cgr')),x=b.querySelector('.cgx'),
+g={b:b,x:x,rows:rows,m:b.getAttribute('data-m'),c:b.getAttribute('data-c'),open:null,k:P,more:null,
+s:rows.map(function(r){return r.getAttribute('data-s');}),
+q:rows.map(function(r){return ((r.getAttribute('data-t')||'')+' '+(r.cells[1]?r.cells[1].textContent:'')).toLowerCase();})};
+if(x)x.addEventListener('click',function(){g.open=x.getAttribute('aria-expanded')!=='true';g.k=P;draw();});
+G.push(g);});
+var gm=document.createElement('button'),wrap=t.parentNode;gm.type='button';gm.className='chipbtn cgmore';gm.hidden=true;
+wrap.parentNode.insertBefore(gm,wrap.nextSibling);gm.addEventListener('click',function(){
+var n0=G.filter(function(g){return !g.b.hidden;}).length;lim+=P;draw();
+var vis=G.filter(function(g){return !g.b.hidden;});if(vis[n0]&&vis[n0].x)vis[n0].x.focus();});
+function draw(){var qq=q.value.trim().toLowerCase(),f=!!(qq||fm.value||fc.value||fs.value),ng=0,nr=0,sg=0;
+G.forEach(function(g){var hit=[],i,show={},k=0;
+if((!fm.value||g.m===fm.value)&&(!fc.value||g.c===fc.value)){for(i=0;i<g.rows.length;i++){
+if((!fs.value||g.s[i]===fs.value)&&(!qq||g.q[i].indexOf(qq)>=0))hit.push(i);}}
+if(hit.length){ng++;nr+=hit.length;}
+var vis=hit.length>0&&sg<lim;if(vis)sg++;g.b.hidden=!vis;
+var open=g.open===null?f:g.open;
+hit.forEach(function(j){if(open&&k<g.k){show[j]=1;k++;}});
+for(i=0;i<g.rows.length;i++)g.rows[i].hidden=!show[i];
+if(g.x){g.x.setAttribute('aria-expanded',open?'true':'false');
+g.x.textContent=open?'Hide trades':'Show '+(hit.length<g.rows.length?hit.length+' of '+g.rows.length:pl(g.rows.length,'trade'));}
+var left=open?hit.length-k:0;
+if(left>0){if(!g.more){g.more=document.createElement('tr');g.more.className='cgmr';
+var td=document.createElement('td'),bt=document.createElement('button');td.colSpan=8;bt.type='button';bt.className='chipbtn';
+bt.addEventListener('click',function(){var k0=g.k;g.k+=P;draw();
+var v=g.rows.filter(function(r){return !r.hidden;});if(v[k0]){v[k0].tabIndex=-1;v[k0].focus();}});td.appendChild(bt);g.more.appendChild(td);g.b.appendChild(g.more);}
+g.more.hidden=false;g.more.firstChild.firstChild.textContent='Show '+Math.min(P,left)+' more trades of this filing ('+left+' not shown)';}
+else if(g.more)g.more.hidden=true;});
+gm.hidden=ng<=sg;gm.textContent='Show '+Math.min(P,ng-sg)+' more filings ('+(ng-sg)+' not shown)';
+out.textContent=(f?pl(nr,'trade')+' in '+pl(ng,'filing')+' match':pl(ng,'filing')+' with '+pl(nr,'trade')+'; open a filing for its trades')
++(sg<ng?' (the first '+sg+' filings are listed).':'.');}
+function reset(){lim=P;G.forEach(function(g){g.open=null;g.k=P;});draw();}
+q.addEventListener('input',reset);[fm,fc,fs].forEach(function(el){el.addEventListener('change',reset);});
+cl.addEventListener('click',function(){q.value='';fm.value='';fc.value='';fs.value='';reset();q.focus();});
+draw();})();</script>"""
+
+
 def render_congress():
     """Congressional Periodic Transaction Reports, checked every weekday (since 2026-11-10; the data file changes only
     when a new filing arrives). Built off-repo by Trading_Index/market_intel
@@ -877,7 +1092,7 @@ def render_congress():
     parse of the House Clerk PDFs. Senate (and scanned House PDFs): the open dataset built from the official
     filings, on the page with Carlos's OK; those rows carry via=mirror and are marked with a dagger.
     Without mirror rows the page falls back to House-only wording. Amounts are the disclosure ranges; flows
-    use range midpoints."""
+    use range midpoints. Wave r3 (builder C): the trades table is grouped by filing (congress_filings; CONG_JS)."""
     if not os.path.exists(CONG_SRC):
         print("congress: no congress_public.json yet - page not built")
         return
@@ -887,7 +1102,7 @@ def render_congress():
     h = cov["house"]
     sen = cov.get("senate") or {}
     mirror = sen.get("status") == "mirror"
-    MAXROWS = 400
+    MAXROWS = CG_MAXROWS
     n_sen = sum(1 for r in c["rows"] if r.get("chamber") == "Senate")
 
     def src_link(x):
@@ -938,8 +1153,8 @@ def render_congress():
                       f'<td>{r["n"]}</td><td class="v">{money(r["buy"])}</td><td class="v">{money(r["sell"])}</td></tr>'
                       for r in rows[:12])
         fl += (f'<div class="fwin" data-win="{e(w)}" id="win-{e(w)}"><h3 style="font-size:14.5px;margin:1rem 0 .3rem">Last {w.replace("d", " days")} (by filing date)</h3>'
-               f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Net (sold &larr; &rarr; bought)</th>'
-               f'<th>Trades</th><th>Bought</th><th>Sold</th></tr></thead><tbody>{trs}</tbody></table></div></div>')
+               f'<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Sector</th><th>Net &asymp; (sold &larr; &rarr; bought)</th>'
+               f'<th>Trades</th><th>Bought &asymp;</th><th>Sold &asymp;</th></tr></thead><tbody>{trs}</tbody></table></div></div>')
     wbtn = ("".join(f'<button type="button" class="chipbtn jsonly" data-win="{e(w)}" aria-pressed="{"true" if w == dflt else "false"}">'
                     f'Last {w.replace("d", " days")}</button>' for w in wins) if len(wins) > 1 else "")
     cnt = {t: sum(1 for a in c["alerts"] if a["type"] == t) for t in ("LARGE", "OPTIONS", "LATE")}
@@ -949,14 +1164,65 @@ def render_congress():
     hstats = ('<div class="hero-stats">' + "".join(
         f'<a class="hero-stat" href="{h}"><span class="v">{v}</span><span class="l">{lab}</span></a>' for v, lab, h in cstats)
         + '</div>')
-    tr = "".join(f'<tr><td>{e(r["filed_date"])}</td><td class="a">{who(r)}</td><td><b>{e(r["ticker"] or "")}</b></td>'
-                 f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(dp2(r["asset"][:70]))}</td>'
-                 f'<td>{e(ATYPE.get(r["asset_type"], r["asset_type"]))}</td><td>{DIR.get(r["direction"], e(r["direction"]))}</td>'
-                 f'<td>{e(r["amount"])}</td><td>{e(r["tx_date"])}</td><td>{e(r["owner"])}</td>'
-                 f'<td>{e(r.get("jur") or "")}</td><td>{src_link(r)}</td></tr>' for r in c["rows"][:MAXROWS])
-    capnote = (f'<p class="note">Showing the newest {MAXROWS} of {len(c["rows"]):,} trades. All of them are in the '
+    # wave r3 (builder C): the trades grouped by filing (see CG_SIDE above): every filing with a trade among the newest
+    # MAXROWS trades, whole, newest first; each filing's header row says who, when, where, and sums its trades up
+    from collections import Counter
+    import glob
+    stock_pages = {os.path.basename(f)[6:-5] for f in glob.glob(os.path.join(DOCS, "stock_*.html"))}
+
+    def tick(t):
+        return f'<a href="stock_{e(t)}.html"><b>{e(t)}</b></a>' if t and t in stock_pages else f'<b>{e(t)}</b>'
+    filings = congress_filings(c["rows"], MAXROWS)
+    used, tbodies, n_shown = set(), [], 0
+    for (_mem, filed, src), rows_f in filings:
+        r0, n = rows_f[0], len(rows_f)
+        gid = _filing_id(src, r0["member"], filed, used)
+        sides = Counter(CG_SIDE.get(x["direction"], "O") for x in rows_f)
+        tks = Counter(x["ticker"] for x in rows_f if x.get("ticker"))
+        tl = [t for t, _k in sorted(tks.items(), key=lambda kv: (-kv[1], kv[0]))]
+        bands = [x["amount"] for x in rows_f if x.get("amount")]
+        big = max(bands, key=_band_lo) if bands else ""
+        if n == 1:
+            summ = (f'<b>1 trade</b>: {DIR.get(r0["direction"], e(r0["direction"]))}'
+                    + (f' {tick(r0["ticker"])}' if r0.get("ticker") else "")
+                    + (f', <span class="nw">{e(big)}</span>' if big else ""))
+        else:
+            summ = (f'<b>{_plural(n, "trade")}</b>: '
+                    + ", ".join(_plural(sides[s], w) for s, _lab, w in CG_SIDES if sides[s])
+                    + ((f' &middot; {_plural(len(tl), "ticker")}: ' + ", ".join(tick(t) for t in tl[:6])
+                        + (f' and {len(tl) - 6} more' if len(tl) > 6 else "")) if tl else "")
+                    + (f' &middot; largest band <span class="nw">{e(big)}</span>' if big else ""))
+        head = (f'{who(r0)} &middot; {e(r0.get("chamber") or "")} &middot; filed <span class="nw">{e(filed)}</span> '
+                f'&middot; {src_link(r0)}'
+                f' &middot; {summ}')
+        trs = "".join(f'<tr class="cgr" data-t="{e(x["ticker"] or "")}" data-s="{CG_SIDE.get(x["direction"], "O")}">'
+                      f'<td class="tk">{tick(x["ticker"] or "")}</td>'
+                      f'<td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis">{e(dp2((x["asset"] or "")[:70]))}</td>'
+                      f'<td>{e(ATYPE.get(x["asset_type"], x["asset_type"]))}</td><td>{DIR.get(x["direction"], e(x["direction"]))}</td>'
+                      f'<td>{e(x["amount"])}</td><td>{e(x["tx_date"])}</td><td>{e(x["owner"])}</td>'
+                      f'<td>{e(x.get("jur") or "")}</td></tr>' for x in rows_f)
+        tbodies.append(f'<tbody class="cgg" id="{gid}" data-m="{e(r0["member"])}" data-c="{e(r0.get("chamber") or "")}">'
+                       f'<tr class="cgh"><th colspan="{CG_COLS}" scope="rowgroup"><div class="cgh-in"><span class="cgh-t">'
+                       f'{head}</span><button type="button" class="chipbtn cgx jsonly" aria-expanded="true" '
+                       f'aria-controls="{gid}">Hide trades</button></div></th></tr>{trs}</tbody>')
+        n_shown += n
+    tr = "".join(tbodies)
+    mopts = "".join(f'<option value="{e(m)}">{e(m)}</option>' for m in sorted({rf[0]["member"] for _k, rf in filings}))
+    copts = "".join(f'<option value="{e(ch)}">{e(ch)}</option>'
+                    for ch in sorted({rf[0].get("chamber") for _k, rf in filings if rf[0].get("chamber")}))
+    have = {CG_SIDE.get(x["direction"], "O") for _k, rf in filings for x in rf}
+    sopts = "".join(f'<option value="{s}">{lab}</option>' for s, lab, _w in CG_SIDES if s in have)
+    cbar = ('<div class="cgbar jsonly" role="search" aria-label="Filter the trades">'
+            '<label>Ticker or asset<input type="search" id="cgq" autocomplete="off" spellcheck="false"></label>'
+            f'<label>Member<select id="cgm"><option value="">All members</option>{mopts}</select></label>'
+            f'<label>Chamber<select id="cgc"><option value="">Any chamber</option>{copts}</select></label>'
+            f'<label>Side<select id="cgs"><option value="">Any side</option>{sopts}</select></label>'
+            '<button type="button" class="chipbtn" id="cgr">Clear</button></div>'
+            '<p class="cgcount" id="cgn" aria-live="polite"></p>')
+    capnote = (f'<p class="note">Showing the newest {len(filings)} filings, whole: {n_shown:,} of the {len(c["rows"]):,} '
+               f'trades filed in the last 13 weeks. All of them are in the '
                f'<a href="https://github.com/DuiArte/ltcma/blob/main/data/market_intel/congress_public.json">data file</a>.</p>'
-               if len(c["rows"]) > MAXROWS else "")
+               if len(c["rows"]) > n_shown else "")
     if mirror:
         lede = ("Stock and bond trades that members of the U.S. House and Senate report under the STOCK Act, checked "
                 "for new filings every weekday, with the members' committees attached.")
@@ -983,9 +1249,12 @@ def render_congress():
                   f'are scanned images and {h["parse_fail"]} could not be read; they are counted, not dropped.')
         foot = ('Source: U.S. House of Representatives, Office of the Clerk, financial disclosure reports. Committee '
                 'data: unitedstates/congress-legislators. Not investment advice.')
-    hero_c = hero("pillars_base", '<p class="kicker">Congress</p><h1>Congressional trading — what members disclose</h1>'
+    # wave r3 (builder B): the coverage box is a closed method note; its summary says which chambers are covered
+    covsum = ("Coverage: both chambers &middot; how the trades are read" if mirror else
+              "Coverage: House only, the Senate is not shown &middot; how the trades are read")
+    hero_c = hero_for("congressional-activity.html", '<p class="kicker">Congress</p><h1>Congressional trading — what members disclose</h1>'
                   f'<p class="lede">{lede}</p> <p class="asof">Disclosures as of {asof} &middot; {cover}</p>{hstats}',
-                  DOCS, pos="center 60%")
+                  DOCS)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="ltcma-content-asof" content="{c['as_of']}">
@@ -997,16 +1266,19 @@ def render_congress():
 </div></header>
 {hero_c}
 <main class="container">
-<div class="prelim">{boxtxt}</div>
-<div class="toc"><a href="#alerts">Signals</a><a href="#members">Members</a><a href="#sectors">Sectors</a><a href="#trades">Trades</a><a href="#method">Method</a></div>
+{note(boxtxt.replace("<b>Coverage.</b> ", "", 1), "method", covsum)}
 <section class="block" id="alerts"><h2>Signals</h2>{al or '<p class="note">None in the window.</p>'}</section>
 <section class="block" id="members"><h2>Most active members</h2>
-<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Member</th><th>Trades</th><th>Bought</th><th>Sold</th>
-<th>Median filing lag</th><th>Late</th><th>Last filed</th></tr></thead><tbody>{mt}</tbody></table></div></section>
-<section class="block" id="sectors"><h2>Net flow by sector</h2>{('<div class="fwins" role="group" aria-label="Window">' + wbtn + '</div>') if wbtn else ''}{fl}</section>
+<div class="mi-wrap"><table class="mi"><thead><tr><th class="a">Member</th><th>Trades</th><th>Bought &asymp;</th><th>Sold &asymp;</th>
+<th>Median filing lag</th><th>Late</th><th>Last filed</th></tr></thead><tbody>{mt}</tbody></table></div>{MIDNOTE}</section>
+<section class="block" id="sectors"><h2>Net flow by sector</h2>{('<div class="fwins" role="group" aria-label="Window">' + wbtn + '</div>') if wbtn else ''}{fl}{MIDNOTE}</section>
 <section class="block" id="trades"><h2>Trades filed in the last 13 weeks</h2>
-<div class="mi-wrap"><table class="mi"><thead><tr><th>Filed</th><th class="a">Member</th><th>Ticker</th><th>Asset</th><th>Type</th>
-<th>Side</th><th>Amount</th><th>Traded</th><th>Owner</th><th>Jurisdiction</th><th>Source</th></tr></thead><tbody>{tr}</tbody></table></div>{capnote}</section>
+<p class="note">One row per filing, newest first: a single periodic transaction report can list hundreds of trades. Each
+filing's row names the member, the chamber, the filing date and its link, and sums its trades up (sides, tickers, the
+largest disclosed band); the filing's trades follow it, each with its own details.</p>
+{cbar}
+<div class="mi-wrap cgw"><table class="mi cgt"><thead><tr><th class="tk">Ticker</th><th>Asset</th><th>Type</th><th>Side</th>
+<th>Amount</th><th>Traded</th><th>Owner</th><th>Jurisdiction</th></tr></thead>{tr}</table></div>{capnote}</section>
 <section class="block" id="method"><h2>Method</h2><p class="note">Members must report a trade within 45 days.
 Amounts are the ranges they disclose. Dollar totals use each range's midpoint and are rough. Dates are keyed on the
 <b>filing date</b>, when the market can first know. Owner: self, SP spouse, JT joint, DC dependent child.
@@ -1016,14 +1288,15 @@ JUR-3 a member. Only current roles count, and the committee-to-sector map is app
 members trading the same stock the same way within 14 days, totalling $500K or more. Disclosures are public records
 reproduced for research. Not investment advice.</p></section>
 </main>
-<footer class="shell-foot"><div class="container"><p>{foot}</p>{credits_footer("pillars_base")}</div></footer>
+<footer class="shell-foot"><div class="container"><p>{foot}</p>{credits_for("congressional-activity.html")}</div></footer>
 <script>(function(){{var bs=[].slice.call(document.querySelectorAll('.fwins [data-win]'));if(!bs.length)return;
 function pick(w){{bs.forEach(function(b){{b.setAttribute('aria-pressed',b.getAttribute('data-win')===w?'true':'false');}});
 [].forEach.call(document.querySelectorAll('.fwin'),function(d){{d.hidden=d.getAttribute('data-win')!==w;}});}}
 bs.forEach(function(b){{b.addEventListener('click',function(){{pick(b.getAttribute('data-win'));}});}});pick('{dflt}');}})();</script>
+{CONG_JS}
 </body></html>"""
     with open(CONG_OUT, "w", encoding="utf-8") as f:
-        f.write(themed(page))
+        f.write(themed(page, "congressional-activity.html"))
     print(f"congressional-activity.html built ({len(c['rows'])} rows, {len(c['alerts'])} signals)")
 
 

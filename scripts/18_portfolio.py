@@ -71,6 +71,7 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import hero, credits_footer          # 2026-11-10 remake: image hero + its credit
+from design_system import hero_for, credits_for, note   # wave r3: the page's own photograph; note()
 from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 from design_system import TINT, TEAL as _DS_TEAL, GRIDLN as _GRIDLN, BP_SM   # 2026-11-10: entries chart (palette tokens)
 
@@ -1789,9 +1790,11 @@ print(f"  S&P 500 YTD (from {YTD['year_end']}): USD {SPY_YTD_USD*100:+.2f}% | MX
       f"| book YTD USD {BOOK_YTD_USD*100:+.2f}% MXN {BOOK_YTD_MXN*100:+.2f}%")
 f5 = go.Figure()
 if YTD["first_trade"] > YTD["year_end"]:
+    # r3 polish follow-up (2026-11-12, RC1B-1): the note 10 px in from the band's left edge (= the plot's), clear of the
+    # y tick labels that end there, as the entries chart's (the USD view's top tick '30' touched it); pixels, any range
     f5.add_vrect(x0=YTD["year_end"], x1=YTD["first_trade"], fillcolor="#f1f1f1", opacity=1,
                  line_width=0, layer="below", annotation_text="in cash, by choice",
-                 annotation_position="top left",
+                 annotation_position="top left", annotation_xshift=10,
                  annotation_font=dict(family=SANS, size=10, color=GREY))
 for _c in ("mxn", "usd"):
     f5.add_scatter(x=_yd, y=_yp[f"book_{_c}"] * 100, mode="lines", name="This book", meta=_c,
@@ -1935,8 +1938,10 @@ for _j, (_k, _mc, _sym) in enumerate((("buy", GREEN, "triangle-up"), ("sell", RE
 if YTD["first_trade"] > YTD["year_end"]:
     f6.add_vrect(x0=YTD["year_end"], x1=YTD["first_trade"], fillcolor="#f1f1f1", opacity=1, line_width=0,
                  layer="below", row="all", col=1)
-    # inside the top panel (the legend sits above it); the mobile tuner hides it on phones, as on every chart
-    f6.add_annotation(x=YTD["year_end"], y=1.0, xref="x", yref="paper", xanchor="left", yanchor="top",
+    # inside the top panel (the legend sits above it); the mobile tuner hides it on phones, as on every chart.
+    # polish round (r3, 2026-11-11, V-2): 10 px in from the band's left edge (= the plot's), clear of the y tick labels
+    # that end there (the USD view's top tick '30' touched it); pixels, so any range / currency / width keeps the gap
+    f6.add_annotation(x=YTD["year_end"], y=1.0, xref="x", yref="paper", xanchor="left", yanchor="top", xshift=10,
                       showarrow=False, text="in cash, by choice", font=dict(family=SANS, size=10, color=GREY))
 f6.add_hline(y=0, line=dict(color="#d4d4d4", width=1), row=1, col=1)
 _F6_Y2 = "{} (scaled)"                 # DC-7: the money axis says what chart 1's says (display scaling)
@@ -2175,7 +2180,7 @@ realized_foot = (f"<tr class='h-total'><td>TOTAL</td><td></td><td></td><td></td>
     f"<td class='{_cl(REAL_STOCK)}'>{cval(REAL_STOCK*SCALE, signed=True)}</td>"
     f"<td class='{_cl(REAL_FX)}'>{cval(REAL_FX*SCALE, signed=True)}</td>"
     f"<td class='{_cl(REAL_TOTAL)}'>{cval(REAL_TOTAL*SCALE, signed=True)}</td></tr>")
-realized_section = f"""<section class="block"><h2>Realized P&amp;L Since Inception</h2>
+realized_section = f"""<section class="block" id="realized"><h2>Realized P&amp;L Since Inception</h2>
 <p class="note">Every closed sale since inception, walked fill by fill against a
 moving-average cost basis that includes commissions and taxes; proceeds are net of
 fees. Stock and FX are the same decomposition as the unrealized panel, with the small
@@ -2420,48 +2425,46 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 .ptable tr.h-total td{{font-weight:700;border-top:2px solid var(--line-strong);background:#fbfaf8}}
 .ptable tr.h-total td:first-child{{letter-spacing:.06em;color:var(--ink)}}
 /* 2026-11-10: ONE currency switch for every figure and chart on the page, in a thin bar that stays under the header
-   while the page scrolls (a child of <main>, so it is sticky for the whole page). Colours: design-system tokens only. */
-.ccy-bar{{position:sticky;top:var(--hdr);z-index:30;display:flex;justify-content:flex-end;
-  background:var(--bg);border-bottom:1px solid var(--line);padding:6px 0;margin:-1.2rem 0 .9rem}}
+   while the page scrolls. Colours: design-system tokens only. */
+/* wave r3: the switch is written here as r2's .ccy-bar and moved by design_system.otp_insert into the right end of
+   the page's sticky "On this page" bar: ONE sticky strip (sections | MXN USD); anchors and table heads clear that bar
+   through --otph (design_system ET_CSS) */
 .ccy-in{{display:inline-flex;align-items:center;gap:10px}}
 .ccy-lbl{{font-size:11.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--sec)}}
 .ccy-sub{{font-size:12.5px;color:var(--muted)}}
-.ccy-bar .ccy-toggle{{margin:0}}
-.ccy-bar .ccy-toggle button{{min-height:44px;min-width:58px}}
-.ccy-help{{margin-top:0}}
 @media(max-width:{BP_SM}px){{.ccy-sub{{display:none}}}}
-/* anchors and sticky table heads clear the bar as well as the header */
-:root{{--ccyh:57px}}
-html{{scroll-padding-top:calc(var(--hdr) + var(--ccyh) + 14px)}}
-.ptable thead th{{top:calc(var(--hdr) + var(--ccyh) - 1px)}}
-/* round 1 (review V5): on a landscape phone the header + a sticky bar covered 44% of the screen: there the bar
-   scrolls with the page (anchors and table heads then clear the header only; after the :root rule above, so it wins) */
-@media(max-height:500px){{.ccy-bar{{position:static}}:root{{--ccyh:0px}}}}
 </style></head>
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-{hero("cliffs_detail", f'''<p class="kicker">Portfolio</p>
+{hero_for("portfolio.html", f'''<p class="kicker">Portfolio</p>
 <h1>Stock Portfolio Tracker</h1>
 <p class="lede">A live view of the broker equity book &mdash; every position
 measured against its cost basis and against the portfolio as a whole.
 Table figures convert between Mexican pesos and US dollars at the current rate; the performance tiles, the
 curves and the trade markers carry each trade&rsquo;s own exchange rate.</p>
 <p class="asof">As of {asof} &middot; broker equity holdings &middot;
-USD/MXN {RATE:.4f}</p>''', DOCS, pos="center 40%")}
+USD/MXN {RATE:.4f}</p>''', DOCS)}
 <main class="container">
 <div class="ccy-bar"><div class="ccy-in" role="group" aria-label="Currency for every figure and chart on this page">
 <span class="ccy-lbl">Currency</span><span class="ccy-sub">one switch for the whole page</span>
 <div class="ccy-toggle">
 <button type="button" data-cur="mxn" class="active" aria-pressed="true" onclick="setCurrency('mxn')">MXN</button>
 <button type="button" data-cur="usd" aria-pressed="false" onclick="setCurrency('usd')">USD</button></div></div></div>
-<p class="note ccy-help">Pesos by default, the book&rsquo;s own currency. The switch above (it stays in reach as you
-scroll) moves every figure and every chart on this page to US dollars and back, one currency at a time; your choice
-is remembered on this device only.
-<noscript>JavaScript is off, so the page stays in pesos and the charts do not draw.</noscript></p>
-<div class="scaled-note"><b>Display note:</b> figures are scaled by a fixed
+<section class="block" id="performance"><h2>Performance</h2>
+<p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
+&middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
+{PK['fx_today']:.4f} (fixed at build)</p>
+{note('''<b>Display note:</b> figures are scaled by a fixed
 constant for confidentiality &mdash; magnitudes are illustrative, not the real
-amounts; prices, returns and weights are exact. Positions and cost basis come
+amounts; prices, returns and weights are exact.''', "disclosure", cls="pf-disc")}
+<noscript><p class="nt nt-d">JavaScript is off, so the page stays in pesos and the charts do not draw.</p></noscript>
+<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{kpi_money}</div>
+<div class="metrics" style="grid-template-columns:repeat(5,1fr);margin-top:1.2rem">{kpi_ret}</div>
+{note('''<p>Pesos by default, the book&rsquo;s own currency. The switch above (it stays in reach as you
+scroll) moves every figure and every chart on this page to US dollars and back, one currency at a time; your choice
+is remembered on this device only.</p>
+<p>Positions and cost basis come
 from the broker statement (source of truth), re-priced live. <b>Accounting:</b>
 every position is measured against its cost basis &mdash;
 Return = (market value &divide; cost) &minus; 1. For US-dollar holdings the peso
@@ -2470,18 +2473,13 @@ at) and <b>FX</b> (the peso's move on the original cost); the two sum to Total
 P/L = market value &minus; cost. (Stock here folds in a small price&times;FX
 interaction term, itemized separately in <b>FX Attribution</b> below.) The MXN money-fund
 cash sleeve, FX positions and non-custodian bank cash are excluded from the equity
-book.</div>
-<section class="block"><h2>Performance</h2>
-<p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Performance as of {PK['as_of']}
-&middot; share counts independently reconciled to {RECON_ASOF} &middot; USD/MXN
-{PK['fx_today']:.4f} (fixed at build)</p>
-<p class="note"><b>Two standard measures, and no assumed base behind either.</b>
+book.</p>
+<p><b>Two standard measures, and no assumed base behind either.</b>
 <b>Money-weighted</b> is the internal rate of return of every dated buy and sale against
 today&rsquo;s market value &mdash; what the money earned, sized and timed as it actually was.
 <b>Time-weighted</b> chain-links daily returns with the flows stripped out &mdash; what the
-decisions earned. No peak-capital or fixed-base denominator is used anywhere on this page.</p>
-<div class="metrics" style="grid-template-columns:repeat(5,1fr)">{kpi_money}</div>
-<div class="metrics" style="grid-template-columns:repeat(5,1fr);margin-top:1.2rem">{kpi_ret}</div>
+decisions earned. No peak-capital or fixed-base denominator is used anywhere on this page.</p>''', "method",
+"How these figures are built: the currency switch, the scaling, the accounting, the two return measures")}
 <div class="tile chart" style="margin-top:1.5rem"><div class="ch">{div(f4, "pf-peak")}</div></div>
 <p class="note" style="margin-top:.8rem">Each point is the money-weighted return from the
 first trade to that day: the one rate at which every buy and sale up to then, and that
@@ -2539,7 +2537,7 @@ triangle for the trades behind it. One currency at a time: the switch at the top
 <p class="note" style="margin-top:.8rem">Timing read off a chart is a description of what happened, not a test of
 skill and not a recommendation; past performance is no guide to the future. Money levels carry the
 page&rsquo;s display scaling; returns are exact.</p></section>
-<section class="block"><h2>Market Value vs Cost Basis</h2>
+<section class="block" id="value"><h2>Market Value vs Cost Basis</h2>
 <p class="asof" style="margin-top:-.9rem;margin-bottom:1.2rem">Equity curve as of
 {_CURVE_ASOF} &middot; trades through {_MK_LAST_S} &middot; {_N_BUYD} buy days
 &middot; {_N_SELLD} sell days</p>
@@ -2565,7 +2563,7 @@ and peso amounts in the hover carry the page&rsquo;s display scaling, prices do
 not. <b>NEW</b> flags the first purchase of a name, <b>CLOSE</b> a sale that takes
 the position to zero.</p></section>
 {fxa_section}
-<section class="block"><h2>Holdings</h2>
+<section class="block" id="holdings"><h2>Holdings</h2>
 <input type="search" id="h-search" class="tsearch" placeholder="Filter holdings&hellip; press /"
  aria-label="Filter holdings by ticker">
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
@@ -2576,12 +2574,12 @@ the position to zero.</p></section>
 <p class="note" style="margin-top:.8rem">Click a column header to sort; type to
 filter. Sorting and filtering are display-only; the TOTAL row stays pinned.</p></section>
 {realized_section}
-<section class="block"><h2>Portfolio vs Its Holdings</h2>
+<section class="block" id="relative"><h2>Portfolio vs Its Holdings</h2>
 <div class="grid"><div class="tile chart"><div class="ch">{div(f2, "pf-rel")}</div></div>
 <div class="tile chart"><div class="ch">{div(f3, "pf-alloc")}</div></div></div></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Figures scaled for
-confidentiality. Research and monitoring, not investment advice.</p>{credits_footer("cliffs_detail")}</div></footer>
+confidentiality. Research and monitoring, not investment advice.</p>{credits_for("portfolio.html")}</div></footer>
 {JS}</body></html>"""
 
 # --- confidentiality guard -------------------------------------------------

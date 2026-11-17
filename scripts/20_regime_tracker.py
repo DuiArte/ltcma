@@ -18,6 +18,7 @@ from glossary import NAV, ccy_badge
 from paths import DATA_S as DATA, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
+from design_system import hero_for, credits_for   # wave r3: the page's own photograph (PAGE_HEROES)
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
@@ -243,6 +244,15 @@ snap_html = "".join(
     for k, v in SNAP)
 
 # ---------- HTML page ----------
+HERO_IN = f"""
+<h1>Regime Tracker</h1>
+<p class="lede">A composite monthly stress index for spotting when markets are
+moving from calm to stress &mdash; or back again &mdash; in time to adjust the
+strategy. Combined with a near-term tactical overlay from event-study research.</p>
+<p class="asof">As of {pd.Timestamp.now().strftime('%d %b %Y')} &middot;
+monthly composite through {comp.index[-1].strftime('%b %Y')} &middot;
+4 facets: economic, political, AI-cycle, environmental</p>
+"""
 HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Carlos Duarte — Regime Tracker</title>
@@ -251,15 +261,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-<section class="hero"><div class="container">
-<h1>Regime Tracker</h1>
-<p class="lede">A composite monthly stress index for spotting when markets are
-moving from calm to stress &mdash; or back again &mdash; in time to adjust the
-strategy. Combined with a near-term tactical overlay from event-study research.</p>
-<p class="asof">As of {pd.Timestamp.now().strftime('%d %b %Y')} &middot;
-monthly composite through {comp.index[-1].strftime('%b %Y')} &middot;
-4 facets: economic, political, AI-cycle, environmental</p>
-</div></section>
+{hero_for("regime.html", HERO_IN, DOCS)}
 <main class="container">
 <section class="block"><h2>Current State</h2>
 {ccy_badge("USD", "US-centred indicators")}
@@ -268,9 +270,8 @@ monthly composite through {comp.index[-1].strftime('%b %Y')} &middot;
 inputs spanning four facets (economic, political, AI-cycle, environmental).
 A reading above &plus;0.5 flags <b>stress</b>; below &minus;0.5 flags
 <b>calm</b>; in between is neutral. The stress-vol multiplier compares realised
-S&amp;P monthly vol in the identified stress regimes vs the calm ones &mdash; this
-cross-validates the &asymp;1.5&ndash;1.6&times; figure used in the LTCMA's regime-
-switching Monte Carlo.</p></section>
+S&amp;P monthly vol in the identified stress regimes with the calm ones. (The LTCMA's
+regime-switching Monte Carlo uses its own stress-vol figure, &asymp;1.5&ndash;1.6&times;.)</p></section>
 
 <section class="block"><h2>Facet Breakdown</h2>
 <p class="note">The composite blends four facets so no single channel dominates.
@@ -319,7 +320,7 @@ finding. Real and tradeable; the equity tilt in the LTCMA's Edge-Tilted book
 benefits from this on each new meeting cycle.</p>
 <p style="font-weight:600;font-size:14px;margin:18px 0 10px">VIX panic &rarr; equity rally</p>
 <p style="font-size:13px;color:#393939">When the VIX closes above 30, the
-S&amp;P has returned, on average, the dollar amount shown in the chart over
+S&amp;P has returned, on average, the percentage shown in the chart over
 the following 21 trading days &mdash; the well-known mean-reversion effect.
 Consistent with this LTCMA's finding that stress regimes amplify volatility
 without reliably depressing returns.</p>
@@ -339,7 +340,7 @@ Definitions in the <a href="glossary.html">Glossary</a>.</p>
 </section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Research and monitoring,
-not investment advice.</p></div></footer></body></html>"""
+not investment advice.</p>{credits_for("regime.html")}</div></footer></body></html>"""
 open(f"{DOCS}/regime.html", "w", encoding="utf-8").write(themed(HTML, "regime.html"))
 # The home's "Market Regime" tile reads THIS state. Until 2026-10-01 it computed its own
 # (GPR+EPU only, top-tercile cut) and the two pages disagreed on the same day: home

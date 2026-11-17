@@ -1,9 +1,13 @@
-"""LTCMA - site rules R1-R9 on the pages the refresh just built (2026-11-10 remake, round 1: P3 / P9; R8 2026-11-10).
+"""LTCMA - site rules R1-R12 on the pages the refresh just built (2026-11-10 remake, round 1: P3 / P9; R8 2026-11-10).
 
 Runs tools/ds_gate.py's remake rules -- R1 header + reachability, R2 Street held, R3 hero credits, R4 assets /
 budgets, R5 no image metadata, R6 the home summary against the pages it restates (vintage-aware), R7 the Research
 Library's links, coverage and sources, R8 no page shows the same headline figure twice in one view
-(scripts/fig_repeats.py), R9 dark mode (tools/theme_gate.py T1-T7) -- right after 31_research_library.py in daily_refresh.ps1. Best-effort:
+(scripts/fig_repeats.py), R9 dark mode (tools/theme_gate.py T1-T7), R10 (wave r3) the share head / 404 / sitemap /
+robots, the Plotly bundle, one Fed-odds vintage, the Congress money format, R11 (wave r3, builder B) the sticky
+"On this page" bar and the note() component (R3 now also: one photograph per page, credits from
+assets/credits.json), R12 (wave r3, builder C) Congress grouped by filing, the Stock Research phone cards and the
+fitted Pick Tracker -- right after 31_research_library.py in daily_refresh.ps1. Best-effort:
 a failure is logged as a WARN by the refresh (it publishes nothing and never blocks the build); the same rules
 run in full with `python tools/ds_gate.py`. Read-only: writes nothing.
 """

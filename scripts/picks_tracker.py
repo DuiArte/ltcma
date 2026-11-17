@@ -48,6 +48,10 @@ TRACK RECORD ("will they keep doing well?")
     so it is descriptive only.
 Returns are price-only (no dividends) on the page's own build-time Yahoo prices, split-adjusted only for
 Yahoo-confirmed splits; any window spanning an unexplained split-like jump is n/a.
+WAVE r3 (builder C, 2026-11-10, Carlos "Dale play a todo"): tracker_fit() makes the tracker's 11 columns fit a
+1440 px screen (line-break points, column priorities, sticky first columns where it still scrolls) and
+rank_sparks() draws each name's rank history (ranks only, from the page's own history) before its rank;
+on phones the table is a column of cards (design_system.card_tables).
 """
 from __future__ import annotations
 
@@ -59,6 +63,10 @@ from datetime import date, datetime
 import numpy as np
 import pandas as pd
 
+# wave r3 (builder B): the Pick Tracker intro = a folded method note + this visible disclosure (design_system.note)
+TRACKER_NOTE = "How the tracker reads: the list rule, today's changes, the history behind it"
+TRACKER_DISC = ("<b>The overlays are context only: they do not change the composite\n"
+                "or the ranks</b>; whether any of them should enter the model is a separate decision. Not advice.")
 from picks_history import (BAND, ENTER, EXIT_RANK, LIST_LAUNCH, Panel, RULE_BAND, RULE_FALLBACK,  # noqa: F401
                             RULE_ONE_SIDED, STAY, TOP_N, published_list)
 
@@ -1088,16 +1096,18 @@ def tracker_section(rows, ov, exit_res, cut, meta):
     chg_txt = method_change_txt(mi)
     chg_txt = f" {e(chg_txt)}" if chg_txt else ""
     n_chg_left = sum(len(c.get("left") or []) for c in (mi.get("changes") or {}).values())
-    return f"""<section class="block" id="tracker">
-<h2>Pick Tracker</h2>
-<p class="note">Follows every pick from the day it entered the list: how long it has been on it, how it has done
+    from design_system import note        # wave r3 (builder B): method text folded, the disclosure visible
+    intro = f"""Follows every pick from the day it entered the list: how long it has been on it, how it has done
 since (against SPY and the equal-weight universe over the same dates), how far it sits above its exit line, how
 long names in its rank band have tended to stay, and the analyst, earnings, insider and congressional context.
 The list is {TOP_N} names: {band_txt}.{rule_note}{chg_txt} Open a row
 (+) for the detail. Built daily from the page's own history ({len(meta['dates'])} daily rankings since the list began
 on {dfmt(LIST_LAUNCH, True)}, each dated by the session whose closes it holds; the latest is the
-{dfmt(meta['dates'][-1], True)} close).{rec_note} <b>The overlays are context only: they do not change the composite
-or the ranks</b>; whether any of them should enter the model is a separate decision. Not advice.</p>
+{dfmt(meta['dates'][-1], True)} close).{rec_note}"""
+    return f"""<section class="block" id="tracker">
+<h2>Pick Tracker</h2>
+{note(intro, "method", TRACKER_NOTE)}
+{note(TRACKER_DISC, "disclosure")}
 <div class="ptpills" role="group" aria-label="rows">
   <button class="pill on" type="button" data-f="pick">Picks ({n_on})</button>
   <button class="pill" type="button" data-f="all">All {len(rows)}</button>
@@ -1131,6 +1141,164 @@ purchases (code P) and sales (code S: open market or private). Congress = STOCK 
 member (many are a spouse's or a joint account; see the Owner column in the detail; &dagger; open dataset).</p>
 {gap_note}
 </section>"""
+
+
+# ============================================================ wave r3 (builder C): the tracker fits, rank sparklines
+# Carlos (written 2026-11-10 ~15:00, "Dale play a todo"): the Pick Tracker's 11 columns fit the 1,150 px tile at 1440 px
+# (they ran to ~1,530 px: Analysts, Insiders 90 d and Congress were off-screen) and every row carries a small rank
+# sparkline. tracker_fit() is a pure function of the section tracker_section() writes: 25 runs it on its own output and
+# the staged preview runs the SAME function on the committed page (site_r3 tools\preview_c.py). No cell's text changes:
+# the cells only learn where a line may wrap (after a separator, before "(", between two plain words; every other space
+# becomes a no-break space, so a figure never leaves its label), their column priority (data-pri: the order of a phone
+# card) and the sparkline before today's rank. rank_sparks() reads ONLY the ranks of the page's own history
+# (Panel.rank, from data/picks_history.csv): no composite, no weight, no new source.
+TRACK_PRI = (1, 1, 2, 1, 1, 1, 2, 2, 3, 3, 3)   # +, Ticker | On list since | Since entry, Rank, Exit estimate | Analyst
+#   target, Next earnings | Analysts, Insiders 90 d, Congress: 1 = the list's own figures, 2 = entry date / target /
+#   earnings, 3 = the analyst / insider / congress context
+SPARK_W, SPARK_H, SPARK_PAD = 60, 20, 2.0
+SPARK_NOTE = (f" The small line before each rank is the name's rank at every daily ranking in the history (rank 1 at "
+              f"the top; the dashed lines are ranks {ENTER} and {EXIT_RANK}: a name off the list enters at {ENTER}th or "
+              f"better, a pick stays while it ranks {EXIT_RANK}th or better; the dot is the latest ranking; partial "
+              f"rankings are left out).")
+_FIT_TABLE = '<table class="ptable ptrack">'
+_FIT_NOTE = '<p class="note" style="font-size:11.5px;margin-top:.9rem">td = NYSE trading days.'
+_FIT_ROW = re.compile(r'<tr data-pick="[01]"(?: hidden)?>.*?</tr>', re.S)
+_FIT_TD = re.compile(r"<td([^>]*)>(.*?)</td>", re.S)
+_FIT_TAG = re.compile(r"(<[^>]+>)")
+_FIT_WORD = re.compile(r"[A-Za-z][A-Za-z.'’\-]*")
+_FIT_NUM = re.compile(r"[+\-−]?\d+(?:[.,]\d+)?%?")      # a signed figure ('+54', '−2', '+10%')
+
+
+def _sp(v):
+    """a coordinate: one decimal, no trailing .0"""
+    s = f"{v:.1f}"
+    return s[:-2] if s.endswith(".0") else s
+
+
+def rank_sparks(p):
+    """{ticker: '<svg ...>'} -- each name's rank at every ranking of the history (Panel.dates / Panel.rank; a partial
+    ranking or a day without the name is a gap), rank 1 at the top, the band lines (ENTER, EXIT_RANK) dashed, a dot on
+    the latest ranking that has the name. Never raises ({} when the history cannot be read)."""
+    try:
+        dates = list(p.dates)
+        if len(dates) < 2:
+            return {}
+        part = set(p.partial)
+        top = int(max(p.full_n or 0, np.nanmax(p.rank.values.astype(float))))
+        W, H, P = SPARK_W, SPARK_H, SPARK_PAD
+        sx = (W - 2 * P) / (len(dates) - 1)
+        sy = (H - 2 * P) / max(1, top - 1)
+
+        def y(r):
+            return _sp(P + (r - 1) * sy)
+        guide = "".join(f"M0 {y(k)}H{W}" for k in (ENTER, EXIT_RANK))
+        out = {}
+        for tk in p.rank.columns:
+            col = p.rank[tk]
+            ser = []
+            for d in dates:
+                v = col.get(d, np.nan)
+                ser.append(None if (d in part or v is None or not np.isfinite(v)) else int(v))
+            known = [(i, v) for i, v in enumerate(ser) if v is not None]
+            if not known:
+                continue
+            path, prev = "", None
+            for i, v in enumerate(ser):
+                if v is None:
+                    prev = None
+                    continue
+                if prev is None:
+                    path += f"M{_sp(P + i * sx)} {y(v)}"
+                elif v == prev:
+                    path += f"H{_sp(P + i * sx)}"
+                else:
+                    path += f"L{_sp(P + i * sx)} {y(v)}"
+                prev = v
+            i0, v0 = known[0]
+            il, vl = known[-1]
+            vals = [v for _i, v in known]
+            tip = (f"{tk}: rank at each of the {len(known)} daily rankings from {dfmt(dates[i0], True)} to "
+                   f"{dfmt(dates[il], True)} (1 = best): {v0} at the first, {vl} at the latest; best {min(vals)}, "
+                   f"worst {max(vals)}")
+            # no <title> child: a page has ONE <title> (R10); the hover text is the wrapping span's title (tracker_fit).
+            # The presentation attributes draw it in the text colour wherever style.css's .spk rules are absent.
+            out[str(tk)] = (f'<svg class="spk" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
+                            f'aria-label="{e(tip)}" fill="none" stroke="currentColor">'
+                            f'<path class="b" d="{guide}" stroke-dasharray="2 2" stroke-opacity=".4"/>'
+                            f'<path class="l" d="{path}"/><circle cx="{_sp(P + il * sx)}" cy="{y(vl)}" r="1.9" '
+                            f'fill="currentColor"/></svg>')
+        return out
+    except Exception:                                                   # noqa: BLE001
+        return {}
+
+
+def _keep(cell):
+    """A cell's text with every space that is not a line-break point made a no-break space. Break points: after a
+    '&middot;' separator, after a ' / ', before '(', and between two plain words. Tags and attributes are untouched;
+    a space at the edge of a text run (next to a tag) is kept together; a piece holding a minus sign before '$' or an
+    en dash is wrapped in <span class="nw"> (no break inside it)."""
+    parts = _FIT_TAG.split(cell)
+    for k in range(0, len(parts), 2):
+        t = parts[k]
+        if " " not in t:
+            continue
+        toks = t.split(" ")
+        segs = [toks[0]]
+        n = len(toks)
+
+        def lone(i):
+            # fix round 1 (r3 continuation, V2-6): a signed figure that ends its piece ('+54 / -2': no word after it)
+            return i < n and bool(_FIT_NUM.fullmatch(toks[i])) and not (i + 1 < n and _FIT_WORD.fullmatch(toks[i + 1]))
+        for i in range(1, n):
+            a, b = toks[i - 1], toks[i]
+            # 'targets +54 / -2': the second figure stays with its slash (a lone '-2' would read as a number of its
+            # own); the line may break before the pair instead ('targets' | '+54 / -2'), so the fit is unchanged
+            pair = a == "/" and lone(i)
+            before_pair = (bool(_FIT_WORD.fullmatch(a)) and bool(_FIT_NUM.fullmatch(b)) and i + 2 < n
+                           and toks[i + 1] == "/" and lone(i + 2))
+            brk = (a.endswith("&middot;") or a.endswith("·") or (a == "/" and not pair) or b.startswith("(")
+                   or (bool(_FIT_WORD.fullmatch(a)) and bool(_FIT_WORD.fullmatch(b))) or before_pair)
+            if brk:
+                segs.append(b)
+            else:
+                segs[-1] += "&nbsp;" + b
+        # a minus sign before "$" and an en dash are line-break points of their own for the browser ("net -" /
+        # "$460.4M", "$132-" / "$325"): such a segment is kept on one line as a whole
+        parts[k] = " ".join(f'<span class="nw">{g}</span>' if ("−$" in g or "–" in g) else g for g in segs)
+    return "".join(parts)
+
+
+def tracker_fit(section, sparks=None):
+    """Wave r3 (builder C): the Pick Tracker section as tracker_section() writes it -> the same cells fitted for 1440 px
+    (class "fit", line-break points, data-pri) with the rank sparkline (rank_sparks) before each row's rank, and one
+    sentence on the sparkline in the footnote. Idempotent; a row of an unexpected shape is left as it is."""
+    if _FIT_TABLE not in section:
+        return section                                  # a data-gap section, or already fitted
+    sparks = sparks or {}
+    sec = section.replace(_FIT_TABLE, '<table class="ptable ptrack fit">', 1)
+
+    def row(m):
+        r = m.group(0)
+        cells = _FIT_TD.findall(r)
+        if len(cells) != len(TRACK_PRI):
+            return r
+        tk = re.search(r'aria-controls="ptd-([^"]+)"', r)
+        tk = _h.unescape(tk.group(1)) if tk else ""
+        out = []
+        for i, (a, c) in enumerate(cells):
+            if i >= 2:
+                c = _keep(c)
+            if i == 4 and tk in sparks:
+                j = c.find("<br>")
+                first, rest = (c[:j], c[j:]) if j >= 0 else (c, "")
+                lab = re.search(r'aria-label="([^"]*)"', sparks[tk])
+                c = f'<span class="rk1" title="{lab.group(1) if lab else ""}">{sparks[tk]}{first}</span>{rest}'
+            out.append(f'<td{a} data-pri="{TRACK_PRI[i]}">{c}</td>')
+        return r[:r.index(">") + 1] + "".join(out) + "</tr>"
+    sec = _FIT_ROW.sub(row, sec)
+    if sparks and _FIT_NOTE in sec:
+        sec = sec.replace(_FIT_NOTE, _FIT_NOTE + SPARK_NOTE, 1)
+    return sec
 
 
 # ============================================================ HTML: track record

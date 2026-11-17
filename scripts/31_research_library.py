@@ -23,7 +23,9 @@ from datetime import date
 
 import research_index as ri
 from design_system import CSS_LINKS, hero, credits_footer
+from design_system import hero_for, credits_for   # wave r3: one photograph per page (PAGE_HEROES)
 from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
+from design_system import emit_sitemap   # fix round 1 (r3 continuation, PIPE2-2): the sitemap after the last generator
 from glossary import NAV
 from paths import DATA, DOCS
 
@@ -284,7 +286,7 @@ def main():
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-{hero("cliffs_detail", inner, str(DOCS), pos="center 45%")}
+{hero_for("research-library.html", inner, str(DOCS))}
 <main class="container">
 <section class="block" id="foundation"><p class="kicker">How this site is built</p><h2>The foundation, in three lines</h2>
 {found}</section>
@@ -311,7 +313,7 @@ only. Research and education, not investment advice; backtests are
 hypothetical.</p></section>
 </main>
 <footer class="shell-foot"><div class="container"><p>Research and education, not investment advice. Backtests are
-hypothetical.</p>{credits_footer("cliffs_detail")}</div></footer>
+hypothetical.</p>{credits_for("research-library.html")}</div></footer>
 {JS}
 </body></html>"""
     with open(OUT, "w", encoding="utf-8") as fh:
@@ -326,6 +328,10 @@ hypothetical.</p>{credits_footer("cliffs_detail")}</div></footer>
     ai += ["", "REPORT REFERENCES"] + [f"{t} {u}".strip() for t, u in refs]
     with open(AI_OUT, "w", encoding="utf-8") as fh:
         fh.write("\n".join(ai) + "\n")
+    # fix round 1 (r3 continuation, PIPE2-2): 17 wrote docs/sitemap.xml before 24 could add a page in this refresh;
+    # this is the refresh's last page generator, so the sitemap is written once more (only when it changes)
+    if emit_sitemap(DOCS):
+        print("sitemap.xml rewritten: a page was added after 17 in this run")
     print(f"research-library.html built: {n} items ({', '.join(f'{k} {v}' for k, v in types)}), "
           f"{len(srcs)}/{len(src_checked)} sources, {len(refs)} report references, {len(probs)} problem(s)")
     if probs or n_src_bad:

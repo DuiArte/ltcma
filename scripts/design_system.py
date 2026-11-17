@@ -605,8 +605,14 @@ def pc(x):
 
 
 def money(x):
-    """A dollar amount in the Congress tables' style: $1.2M / $350K."""
-    return f"${x / 1e6:,.1f}M" if abs(x) >= 1e6 else f"${x / 1e3:,.0f}K"
+    """A dollar amount in the Congress tables' style: $1.2M / $350K; a sale total reads −$2.4M (a real minus
+    sign before the dollar sign), a non-zero total under $500 "<$1K", none "$0" (wave r3, 2026-11-10: it printed
+    "$-2.4M" and "$0K"). Shared by the home (17) and the Congress page (30), so the two always agree (R6)."""
+    a = abs(x)
+    if a == 0:
+        return "$0"
+    s = "<$1K" if a < 500 else (f"${a / 1e6:,.1f}M" if a >= 999_500 else f"${a / 1e3:,.0f}K")
+    return "\u2212" + s if x < 0 else s
 
 
 def cma_firm(p):
@@ -623,7 +629,24 @@ import os as _os
 _ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 ASSET_SRC = _os.path.join(_ROOT, "assets", "img")
 ASSET_URL = "assets/img"                     # relative to docs/ (every page sits at docs/ root)
-HERO_KEYS = ("cliffs", "cliffs_detail", "pillars", "pillars_base")
+HERO_KEYS = ("cliffs", "pillars", "zs7", "hh4647", "ngc6822", "ngc6440", "earth_night")
+# wave r3 (Carlos, written 2026-11-10 ~15:00, "Dale play a todo" on the hero plan): ONE photograph per page. The two
+# second crops of the remake are retired (their files leave assets/img and docs/assets/img with the r3 deploy).
+RETIRED_HERO_KEYS = ("cliffs_detail", "pillars_base")
+# page -> (hero key, object-position). The generators call hero_for(page, ...); the deploy and the previews of the
+# pages 19 / 20 / 25 render (they cannot run offline) put the same hero on a committed page with hero_retrofit().
+# Every stock page (stock_<TICKER>.html) shares the Stock Research photograph (STOCK_PAGE). Reading pages stay plain.
+PAGE_HEROES = {
+    "index.html": ("cliffs", "center 38%"),
+    "portfolio.html": ("zs7", "center 40%"),
+    "ltcma-consensus.html": ("hh4647", "center 30%"),
+    "congressional-activity.html": ("ngc6822", "center 40%"),
+    "research-library.html": ("pillars", "center 40%"),
+    "stocks.html": ("ngc6440", "center 40%"),
+    "regime.html": ("earth_night", "center 50%"),
+}
+STOCK_PAGE = r"stock_[A-Za-z0-9.\-]+\.html"
+STOCK_HERO = ("ngc6440", "center 40%")
 # Round 1 (2026-11-10 review, V3/V13): phones get 9:16 PORTRAIT crops (hero_<k>_p720/p1080.webp): their heroes are
 # portrait boxes, and a 960 px 16:9 source was stretched 3.2-3.8x there. Larger screens get 16:9 WebP 1600-3840, with
 # a 2880 step for 1440-1512 px screens at 2x (they took the 3840 file before). The 960 WebP is no longer published.
@@ -644,9 +667,26 @@ def _credits():
         return {}
 
 
+def hero_widths(key):
+    """(portrait, webp, jpg) widths published for a key: credits.json `widths` (wave r3: per key, never wider than the
+    cut), else the remake's defaults."""
+    w = ((_credits().get("heroes") or {}).get(key) or {}).get("widths") or {}
+    return (tuple(w.get("portrait", HERO_PORTRAIT)), tuple(w.get("webp", HERO_WEBP)), tuple(w.get("jpg", HERO_JPG)))
+
+
 def hero_files(key):
-    return ([f"hero_{key}_p{w}.webp" for w in HERO_PORTRAIT] + [f"hero_{key}_{w}.webp" for w in HERO_WEBP]
-            + [f"hero_{key}_{w}.jpg" for w in HERO_JPG])
+    por, webp, jpg = hero_widths(key)
+    return ([f"hero_{key}_p{w}.webp" for w in por] + [f"hero_{key}_{w}.webp" for w in webp]
+            + [f"hero_{key}_{w}.jpg" for w in jpg])
+
+
+def page_hero(page):
+    """(key, object-position) of the page's photograph, or None for a page without an image hero."""
+    if page in PAGE_HEROES:
+        return PAGE_HEROES[page]
+    if _re.fullmatch(STOCK_PAGE, page or ""):
+        return STOCK_HERO
+    return None
 
 
 def all_asset_names():
@@ -688,12 +728,16 @@ def _esc(s):
 
 
 def hero_credit(key):
-    """'Image: <title>, cropped · <credit> · CC BY 4.0' with links to the source page and the licence."""
+    """'Image: <title>, cropped · <credit> · <licence>' with links to the source page and (when the licence has one:
+    CC BY 4.0) the licence. Wave r3: the licence and its link come from credits.json per key (NASA media is public
+    domain: no licence link; the credit is still shown)."""
     c = (_credits().get("heroes") or {}).get(key)
     if not c:
         return ""
+    lu = c.get("license_url", LICENSE_URL if c.get("license") == "CC BY 4.0" else None)
+    lic = (f'<a href="{_esc(lu)}" rel="noopener license">{_esc(c["license"])}</a>' if lu else _esc(c["license"]))
     return (f'Image: <a href="{_esc(c["source"])}" rel="noopener">{_esc(c["title"])}</a>, cropped &middot; '
-            f'{_esc(c["credit"])} &middot; <a href="{LICENSE_URL}" rel="noopener license">{_esc(c["license"])}</a>')
+            f'{_esc(c["credit"])} &middot; {lic}')
 
 
 def hero(key, inner, docs_dir, pos="center 40%", cls=""):
@@ -707,9 +751,10 @@ def hero(key, inner, docs_dir, pos="center 40%", cls=""):
         return (f'<section class="hero hero--img hero--plain {cls}" data-hero="{key}">'
                 f'<div class="container hero-in">{inner}</div></section>')
     u = lambda w, ext: f"{ASSET_URL}/hero_{key}_{w}.{ext}"
-    por = ", ".join(f"{u(f'p{w}', 'webp')} {w}w" for w in HERO_PORTRAIT)
-    webp = ", ".join(f"{u(w, 'webp')} {w}w" for w in HERO_WEBP)
-    jpg = ", ".join(f"{u(w, 'jpg')} {w}w" for w in HERO_JPG)
+    pw, ww, jw = hero_widths(key)
+    por = ", ".join(f"{u(f'p{w}', 'webp')} {w}w" for w in pw)
+    webp = ", ".join(f"{u(w, 'webp')} {w}w" for w in ww)
+    jpg = ", ".join(f"{u(w, 'jpg')} {w}w" for w in jw)
     return (f'<section class="hero hero--img {cls}" data-hero="{key}">'
             f'<picture class="hero-bg">'
             f'<source type="image/webp" media="(max-width: {BP_SM}px)" srcset="{por}" sizes="100vw">'
@@ -725,6 +770,64 @@ def credits_footer(*keys):
     """The footer line every page with an image carries (CC BY 4.0 wants it findable, not only on the image)."""
     parts = [hero_credit(k) for k in keys if hero_credit(k)]
     return (f'<p class="credits">{" &middot; ".join(parts)}</p>' if parts else "")
+
+
+def hero_for(page, inner, docs_dir, cls=""):
+    """The page's own photograph (PAGE_HEROES) as an image hero: what every generator with a hero calls (wave r3)."""
+    key, pos = page_hero(page)
+    return hero(key, inner, docs_dir, pos=pos, cls=cls)
+
+
+def credits_for(page):
+    """The footer credit of the page's photograph."""
+    ph = page_hero(page)
+    return credits_footer(ph[0]) if ph else ""
+
+
+_HERO_IMG = _re.compile(r'<section class="hero hero--img ?([^"]*)" data-hero="([^"]+)">(.*?)</section>', _re.S)
+_HERO_PLAIN = _re.compile(r'<section class="hero"><div class="container">(.*?)</div></section>', _re.S)
+_FOOT = _re.compile(r'(<footer class="shell-foot"><div class="container">)(.*?)(</div></footer>)', _re.S)
+_CREDITS = _re.compile(r'<p class="credits">.*?</p>', _re.S)
+
+
+def hero_retrofit(html, page, docs_dir):
+    """Wave r3: give a COMMITTED page (rendered by older code) the hero its generator now writes, without running the
+    generator: the page's hero section (an image hero of another key, or the plain hero of the reading-page look) is
+    rebuilt with hero_for(page, <its own inner HTML, byte for byte>, ...) and the footer's credit line follows. Used by
+    the r3 deploy (commit 2: the committed pages; the retired photographs leave in the same commit) and by the staged
+    previews of the pages 19 / 20 / 25 render. Idempotent; a page without an entry, or whose hero / footer is not
+    found exactly once, is returned unchanged (the caller checks)."""
+    ph = page_hero(page)
+    if not ph:
+        return html
+    m = list(_HERO_IMG.finditer(html))
+    p = list(_HERO_PLAIN.finditer(html))
+    if len(m) + len(p) != 1:
+        return html
+    if m:
+        cls, body = m[0].group(1), m[0].group(3)
+        a = body.find('<div class="container hero-in">')
+        b = body.rfind('</div><p class="container hero-credit">')
+        if a < 0:
+            return html
+        if b < 0:                                           # hero--plain (rendered without its image)
+            b = len(body) - len("</div>")
+            if not body.endswith("</div>"):
+                return html
+            cls = cls.replace("hero--plain", "").strip()
+        inner, span = body[a + len('<div class="container hero-in">'):b], m[0].span()
+    else:
+        inner, cls, span = p[0].group(1), "", p[0].span()
+        if "<div" in inner:                                 # a plain hero with blocks of its own: not ours to rebuild
+            return html
+    new = hero_for(page, inner, docs_dir, cls=cls)
+    out = html[:span[0]] + new + html[span[1]:]
+    f = list(_FOOT.finditer(out))
+    if len(f) != 1:
+        return html
+    head, mid, tail = f[0].groups()
+    mid2 = _CREDITS.sub("", mid) + credits_for(page)
+    return out[:f[0].start()] + head + mid2 + tail + out[f[0].end():]
 
 
 def photo(docs_dir, cls="about-photo"):
@@ -759,13 +862,21 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
   outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 /* the sticky header's height (JS keeps --hdr exact; these are the no-JS / first-paint values): anchors land below
    it (scroll-padding: #sources, #about, #summary ...), and sticky table heads sit under it, not behind it */
-:root{--hdr:65px}
-html{scroll-padding-top:calc(var(--hdr) + 14px)}
-.ptable thead th{top:calc(var(--hdr) - 1px)}
+:root{--hdr:65px;--otph:0px}
+html{scroll-padding-top:calc(var(--hdr) + var(--otph) + 14px)}
+.ptable thead th{top:calc(var(--hdr) + var(--otph) - 1px)}
 /* round 1 (review V8): a tile clips (overflow:hidden), which makes IT the sticky container: an offset of the header's
    height pushed the head 64 px down inside the tile, over the first rows (regime.html, every stock page). Inside a
    tile the head stays at the top of its table. */
 .tile .ptable thead th{top:0}
+/* wave r3 (bug a, 2026-11-10): with overflow:clip (17's .tile rule, where supported) a tile clips WITHOUT being a
+   scroll container, so the head of a table sitting directly in a tile sticks below the site header again (regime,
+   every stock page); a tile that scrolls sideways (inline overflow-x) keeps its head at the top of the table, and a
+   browser without overflow:clip keeps the rule above (the tile is then still the sticky container). On phones
+   (<= 560 px) 17's legacy layer makes the table itself scroll sideways (display:block; overflow-x:auto): the TABLE
+   is then the sticky container, so its head stays at its own top there */
+@supports (overflow:clip){.tile:not([style*="overflow"])>.ptable thead th{top:calc(var(--hdr) + var(--otph) - 1px)}
+  @media(max-width:560px){.tile:not([style*="overflow"])>.ptable thead th{top:0}}}
 /* while the page boots, the header does not animate (the active tab / corner state is set by the script) */
 .js:not(.ready) .shell *{transition:none!important}
 
@@ -1060,11 +1171,154 @@ body .btcard{border-top-width:3px}
 .today-head h2{margin:0;font:500 clamp(22px,2.4vw,30px)/1.2 var(--serif);border:0;padding:0}
 .sec-h{margin:0 0 18px}
 .sec-h h2{margin:0;font:500 clamp(24px,2.8vw,34px)/1.2 var(--serif);border:0;padding:0}
+/* ---- wave r3 (builder B): the sticky "On this page" bar of the long pages (otp_insert: stocks, Congress, the archived
+   report, strategies, portfolio, where it carries the MXN | USD switch: one strip, not two). Under the header; the
+   section links scroll sideways with an edge fade on narrow screens; the current section is underlined
+   (aria-current="location", set by OTP_JS); without JS it is a plain sticky row of links. --otph = its height
+   (OTP_JS keeps it exact; the :has() value is the no-JS one): anchors and sticky table heads clear it. On a landscape
+   phone (<= 500 px tall) it scrolls with the page. */
+:root:has(nav.otp){--otph:45px}
+.otp{display:block;margin:0;position:sticky;top:var(--hdr);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.otp-in{display:flex;align-items:center;gap:6px 14px;min-height:44px;width:100%;box-sizing:border-box}
+.otp-k{flex:none;font-size:11.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.otp-sc{flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch}
+.otp-sc::-webkit-scrollbar{display:none}
+.otp-l{display:flex;gap:2px;margin:0;padding:0;list-style:none;white-space:nowrap}
+.otp-l li{margin:0;padding:0}
+.otp-l a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;font-size:13.5px;font-weight:500;
+  color:var(--sec);text-decoration:none;border-bottom:2px solid transparent;box-sizing:border-box}
+.otp-l a:hover{color:var(--ink);border-bottom-color:var(--line-strong)}
+.otp-l a[aria-current]{color:var(--ink);border-bottom-color:var(--accent)}
+.otp-sc.fr{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}
+.otp-sc.fl{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to left,#000 calc(100% - 28px),transparent)}
+.otp-sc.fl.fr{-webkit-mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
+.otp .ccy-in{flex:none;display:inline-flex;align-items:center;gap:10px}
+.otp .ccy-sub{display:none}
+.otp .ccy-toggle{margin:0}
+.otp .ccy-toggle button{min-height:44px;min-width:58px}
+.otp+main{padding-top:clamp(30px,4vw,48px)}
+@media(max-width:__SM__.98px){.otp-k{display:none}.otp-l a{padding:0 9px;font-size:13px}
+  .otp .ccy-lbl,.otp .ccy-sub{display:none}.otp .ccy-toggle{padding:2px}
+  .otp .ccy-toggle button{min-width:44px;min-height:40px;padding:0 9px;font-size:12.5px}}
+@media(max-height:500px){.otp{position:static}:root:has(nav.otp){--otph:0px}}
+@media print{.otp{display:none!important}}
+/* ---- wave r3 (builder B): note() -- the explanatory notes in two roles. Disclosure: always visible, short, a thin
+   amber rule. Method: a native <details> closed by default (no script needed; find-in-page opens it). */
+.nt{max-width:52em;margin:0 0 1.1rem;font-size:14px;line-height:1.55;color:var(--sec)}
+.nt-d{border-left:2px solid var(--amber);padding:.1rem 0 .1rem .85rem}
+.nt-m{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.nt-m>summary{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;cursor:pointer;list-style:none;
+  font-size:13.5px;font-weight:500;color:var(--ink)}
+.nt-m>summary::-webkit-details-marker{display:none}
+.nt-m>summary::before{content:"";flex:none;width:7px;height:7px;margin:0 2px;border-right:1.6px solid var(--sec);
+  border-bottom:1.6px solid var(--sec);transform:rotate(-45deg);transition:transform .15s}
+.nt-m[open]>summary::before{transform:rotate(45deg)}
+.nt-m>summary:hover{color:var(--accent)}
+.nt-b{padding:0 16px 12px 33px}
+.nt-b>p{margin:.55rem 0 0}
+.nt-b>p:first-child{margin-top:0}
+.metrics+.nt,.tile+.nt{margin-top:1rem}
+@media(max-width:__SM__.98px){.nt-b{padding:0 12px 12px 14px}}
+/* ---- wave r3 (builder C): the Stock Research tables. Desktop: the Pick Tracker (table.ptrack.fit,
+   picks_tracker.tracker_fit) lets a cell's lines wrap only where the tracker allows (after a separator, between plain
+   words; a figure never leaves its label), so its 11 columns fit the 1,150 px tile at 1440 px; where it still scrolls
+   (641-1,180 px) the +/ticker columns stay in view. .spk = the rank sparkline (rank 1 at the top, the band lines dashed,
+   a dot on the latest ranking). Phones (<= __SM__ px): every row of a table in a .tile.pcw (design_system.card_tables) is
+   a card: each cell's column header (data-label) on the left, its value on the right; the first cell (and the ticker
+   of the picks / tracker tables) is the card's head; the tracker card lists its cells by priority (data-pri). Same
+   markup, same data: no second copy. */
+.spk{display:inline-block;vertical-align:-4px;margin-right:7px;overflow:visible}
+.spk .b{fill:none;stroke:var(--line-strong);stroke-opacity:1;stroke-width:1;stroke-dasharray:2 2}
+.spk .l{fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}
+.spk circle{fill:var(--accent)}
+.ptrack .rk1,.ptrack .nw{white-space:nowrap}
+.tile.pcw>table.ptrack.fit>thead th,.tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td{white-space:normal;padding:7px 6px}
+@media(min-width:__SM1__px){
+  .tile.pcw>table.ptrack.fit>thead th:nth-child(-n+2),
+  .tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td:nth-child(-n+2){position:sticky;z-index:1;background:var(--panel)}
+  .tile.pcw>table.ptrack.fit>thead th:nth-child(-n+2){z-index:3}
+  .tile.pcw>table.ptrack.fit>thead th:first-child,
+  .tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td:first-child{left:0;box-sizing:border-box;width:38px;min-width:38px}
+  .tile.pcw>table.ptrack.fit>thead th:nth-child(2),
+  .tile.pcw>table.ptrack.fit>tbody>tr:not(.pt-detail)>td:nth-child(2){left:38px}
+}
+@media(max-width:__SM__.98px){
+  .tile.pcw{padding:0!important;overflow:visible!important;background:none;border:0;box-shadow:none;border-radius:0}
+  .tile.pcw>table.ptable{display:block;width:100%;margin:0;font-size:13px;white-space:normal;overflow:visible}
+  .tile.pcw>table.ptable>thead{display:none}
+  .tile.pcw>table.ptable>tbody{display:block}
+  .tile.pcw>table.ptable>tbody>tr{display:flex;flex-wrap:wrap;align-items:flex-start;gap:0 14px;margin:0 0 10px;
+    padding:10px 14px 6px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .tile.pcw>table.ptable>tbody>tr[hidden]{display:none}
+  .tile.pcw>table.ptable>tbody>tr:hover>td{background:none}
+  .tile.pcw>table.ptable>tbody>tr>td{display:block;flex:1 1 calc(50% - 7px);box-sizing:border-box;min-width:0;
+    max-width:100%;padding:6px 0 7px;border:0;border-top:1px solid var(--line);text-align:left;white-space:normal}
+  .tile.pcw>table.ptable>tbody>tr>td::before{content:attr(data-label);display:block;margin:0 0 2px;
+    font:500 11.5px/1.35 var(--sans);letter-spacing:.02em;color:var(--muted);white-space:normal}
+  .tile.pcw>table.ptable>tbody>tr>td:not([data-label])::before{content:none}
+  .tile.pcw>table.ptable>tbody>tr>td:first-child{flex:1 1 100%;padding:2px 0 8px;border-top:0;font-size:14.5px}
+  .tile.pcw>table.ptable>tbody>tr>td:first-child::before{content:none}
+  .tile.pcw>table.ptable td.chips,.tile.pcw>table.ptable td.cmt{flex-basis:100%;min-width:0}
+  .tile.pcw>table.picks>tbody>tr>td.rk{flex:0 0 auto;width:auto;font-size:13px;padding-top:4px}
+  .tile.pcw>table.picks>tbody>tr>td:nth-child(2){flex:1 1 calc(100% - 64px);padding:2px 0 8px;border-top:0}
+  .tile.pcw>table.picks>tbody>tr>td:nth-child(2)::before{content:none}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td:first-child{order:2;flex:0 0 auto;padding:0 0 6px}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td:nth-child(2){order:1;flex:1 1 calc(100% - 68px);padding:8px 0;border-top:0;
+    font-size:15px}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td:nth-child(2)::before{content:none}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td[data-pri="1"]:nth-child(n+3){order:3}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td[data-pri="2"]{order:4}
+  .tile.pcw>table.ptrack>tbody>tr:not(.pt-detail)>td[data-pri="3"]{order:5}
+  .tile.pcw>table.ptrack .pt-x{width:40px;height:40px;line-height:36px}
+  .tile.pcw>table.ptrack>tbody>tr.pt-detail{display:block;margin:-6px 0 10px;padding:4px 12px 10px}
+  .tile.pcw>table.ptrack>tbody>tr.pt-detail[hidden]{display:none}
+  .tile.pcw>table.ptrack>tbody>tr.pt-detail>td{display:block;flex:1 1 100%;max-width:100%;padding:0;border:0;overflow-x:auto}
+  .tile.pcw .ptdet{position:static;max-width:100%;grid-template-columns:minmax(0,1fr)}
+}
+@media print{.tile.pcw{overflow:visible!important}}
+/* ---- fix round 1 (r3 continuation, 2026-11-11) --------------------------------------------------------------------
+   V2-1  phones and landscape phones: the Research menu hangs from the header row, 16 px in from its sides, right under
+         the corner button (top:auto = its place in the flow, + 8 px; never a fixed offset: without JavaScript the
+         button can sit on a second header row). With the theme control shown (JavaScript) theme.css does it
+         (design_system._THEME_CONTROL_CSS, r2's rule); the rule below gives landscape phones the same menu without
+         JavaScript (its width from the header row, not the viewport); portrait phones without JavaScript keep the
+         corner-anchored menu, which fits there (no control right of the button).
+   V2-7  a licence name ('CC BY 4.0') never breaks across two lines.
+   RG-2  a tile that scrolls sideways (inline overflow-x:auto) is a scroll container in both axes in every browser
+         (CSS Overflow 3: 'clip' next to 'auto' computes to 'hidden'; Chrome kept 'clip' and stuck those heads at the
+         viewport top, under the opaque header): their heads scroll with their table, as in r2 -- a viewport-sticky
+         head is not possible inside a sideways scroller.
+   V2-11 smooth anchor scrolling only once the page has loaded and settled (html.sm, set by the r3 head script,
+         design_system.SITE_JS): a cold #link lands under the header and the bar instead of chasing a moving target.
+   V2-12 the "Skip to content" link (SITE_JS puts it first in <body>): off-screen until it has the focus.
+   V2-8  the error page: its list inside the column, its first section clear of the hero. */
+@media(max-height:520px) and (min-width:560px) and (max-width:__NAV__px){.shell-in{position:relative}.rc{position:static}
+  .rc-menu{left:auto;right:16px;width:min(640px,calc(100% - 32px));top:auto;margin-top:8px}}
+a[rel~="license"]{white-space:nowrap}
+.tile[style*="overflow-x:auto"]{overflow-y:hidden}
+.skip{position:absolute;left:12px;top:-80px;z-index:200;padding:10px 16px;border:2px solid var(--accent);
+  border-radius:10px;background:var(--panel);color:var(--accent);font-size:14px;font-weight:500;text-decoration:none}
+.skip:focus{top:10px}
+main[tabindex="-1"]:focus{outline:none}
+.nf-main{padding-top:clamp(36px,5vw,56px)}
+.nf-list{padding-left:1.3rem}
+.nf-list li{margin:0 0 .55rem;line-height:1.55}
+/* ---- polish round (r3, 2026-11-11) ---------------------------------------------------------------------------------
+   P1 (V-1 / RC2-1) phones narrower than 360 px with the theme control (JavaScript): the brand, the Research corner and
+      the control stay on ONE header row down to 320 px. Below ~335 px the control used to wrap to a row of its own
+      (the sticky header grew 103 -> 153 px) and the open menu, hanging under the corner, covered it. Here the corner
+      shows its book icon and caret only (font-size 0 hides the word; its aria-label still names it): the row needs
+      ~240 of the 269 px a 320 px phone gives it. Without JavaScript (no control) the header is unchanged. */
+@media(max-width:359.98px){[data-theme-pref] .rc>summary{font-size:0;gap:2px;padding:0 10px}
+  [data-theme-pref] .rc>summary>svg:first-child,[data-theme-pref] .rc>summary .car{display:block}}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
   .metric:hover,.scard:hover,.btcard:hover,.proj-card:hover,a.xcard:hover,.xcard.hov:hover{transform:none}
 }
-@media print{.rcn,.rc,.ptabs,.vtabs,.hero-bg,.hero-shade{display:none!important}
+@media print{.rcn,.rc,.ptabs,.vtabs,.hero-bg,.hero-shade,.hero-credit{display:none!important}
   .hero--img{background:#fff;color:#111}.hero--img h1,.hero--img .lede{color:#111}}
 """.replace("__SM1__", str(BP_SM + 1)).replace("__SM__", str(BP_SM)).replace("__MD__", str(BP_MD)).replace(
     "__LG__", str(BP_LG)).replace("__NAV__", str(NAV_BP))
@@ -1107,7 +1361,9 @@ if(t){sel(t);var el=document.getElementById(id);if(el&&el.scrollIntoView)el.scro
 #     `@media screen :root[data-theme="dark"]` (an explicit choice). Print never matches (screen only): it stays
 #     light. A page that is NOT themed (a committed copy from an older generator, internal/freshness.html) does not
 #     link theme.css, so it stays light whatever the system says: no page can ever go dark with unconverted CSS.
-#   * The header control (glossary.NAV, THEME_BUTTON + THEME_JS) cycles Auto -> Dark -> Light -> Auto, keeps the
+#   * The header control (glossary.NAV, THEME_BUTTON + THEME_JS) is a two-state toggle: each press shows the other
+#     look (light <-> dark), and landing on the device's own look is Auto again (follow the device; polish round
+#     2026-11-11: no Auto -> Dark -> Light cycle). It keeps the
 #     choice per viewer in localStorage (every access in try/catch) and re-themes every Plotly chart through ONE
 #     light->dark palette map (CHART_DARK): on load (Plotly.newPlot is wrapped, so a dark page never paints a light
 #     chart), on a theme change, and after any later restyle / relayout (portfolio's currency switch, the backtest
@@ -1334,10 +1590,10 @@ def themed(html, page="page"):
     """Make one generated page dark-capable (idempotent). Returns the page unchanged, with a WARN line, when its
     head does not carry CSS_LINKS exactly once: such a page then simply stays light (it never links theme.css)."""
     if HEAD_LINKS in html:
-        return html
+        return site_head(otp_insert(html, page), page)   # wave r3: the share head + Plotly bundle; the bar (B)
     if html.count(CSS_LINKS) != 1:
         print(f"WARN theme: {page}: CSS_LINKS found {html.count(CSS_LINKS)}x, page left light-only")
-        return html
+        return site_head(otp_insert(html, page), page)
     html = html.replace(CSS_LINKS, HEAD_LINKS, 1)
     out = []
     for k, seg in enumerate(_SEG.split(html)):
@@ -1354,7 +1610,7 @@ def themed(html, page="page"):
             v = m.group(2) if m.group(2) is not None else m.group(3)
             return m.group(1) + q + _decls(v, f"{page} style=") + q
         out.append(_STYLE_ATTR.sub(attr, seg))
-    return "".join(out)
+    return site_head(otp_insert("".join(out), page), page)
 
 
 # --- the head: the boot script runs BEFORE the stylesheets, so the first paint already has the right theme ----
@@ -1553,3 +1809,560 @@ window.addEventListener('storage',function(e){if(e.key===K){var p=e.newValue;set
 window.addEventListener('beforeprint',function(){PRINT=true;all();});window.addEventListener('afterprint',function(){PRINT=false;all();});
 window.ltcmaTheme={set:function(p){set(p==='light'||p==='dark'?p:'auto',true,false);},pref:pref,theme:cur,apply:all,map:function(c,dk){return mc(c,dk?FW:BW);}};
 })();</script>""".replace("__KEY__", THEME_KEY).replace("__MAP__", __import__("json").dumps(CHART_DARK, separators=(",", ":")))
+
+
+# =====================================================================================================================
+# 2026-11-10 wave r3 (Carlos, written ~15:00, "Dale play a todo" on the r3 package): pages ready to share, lighter
+# pages, one Fed-odds vintage. Three entry points:
+#   site_head(html, page) -- run by themed() on EVERY generated page (so 19 / 20 / 25 get it at their next render, and
+#     the r3 deploy applies the SAME function to the committed copies, tools/deploy_docs_r3.py): the title pattern
+#     "<Name> · Carlos Duarte", a description, canonical + Open Graph + Twitter-card meta (one 1200x630 typographic card
+#     per main tab: page name, one line, the URL; no figure, no photo -- a JWST crop in a link preview would travel
+#     without its CC BY credit), the favicon set (the header's CD mark), a font preconnect, and the Plotly bundle: the
+#     OFFICIAL cartesian partial bundle of the same pinned version when every trace on the page is a cartesian type,
+#     else the full bundle. Idempotent (the block is delimited and re-derived); a page it does not know (a redirect
+#     stub) only gets the bundle rule. share_strip() undoes the block exactly (the rollback).
+#   emit_share(docs_dir) -- 17 calls it beside emit(): the favicon / card files (source of truth assets/img, copied
+#     byte-identically like the hero images), 404.html (GitHub Pages serves docs/404.html), sitemap.xml, robots.txt.
+#     A `git clean -fd docs` + refresh therefore always re-creates them.
+#   fed_path_newest(data_dir) -- ONE Fed-path vintage for the home (17) and Market Intel (30): the newer of the daily
+#     file (fed_path_public.json, the 16:45 job) and the consensus run's own pull (consensus_public.json -> prediction).
+# =====================================================================================================================
+SITE_URL = "https://duiarte.github.io/ltcma"
+SITE_NAME = "Carlos Duarte"
+PLOTLY_FULL = "https://cdn.plot.ly/plotly-2.35.0.min.js"
+PLOTLY_CARTESIAN = "https://cdn.plot.ly/plotly-cartesian-2.35.0.min.js"
+# what the official plotly.js 2.35.0 cartesian bundle registers (lib/index-cartesian.js: scatter in the core + bar,
+# box, contour, heatmap, histogram, histogram2d, histogram2dcontour, image, pie, scatterternary, violin); the r3
+# browser probe reads Plotly.PlotSchema of the served file and asserts this set
+CARTESIAN_TYPES = frozenset({"scatter", "bar", "box", "contour", "heatmap", "histogram", "histogram2d",
+                             "histogram2dcontour", "image", "pie", "scatterternary", "violin"})
+_PLOTLY_TAG = '<script src="{}"></script>'
+FAVICONS = ("favicon.svg", "favicon_32.png", "apple_touch_180.png")
+OG_KEYS = ("home", "portfolio", "stocks", "regime", "market_intel", "congress", "research")
+SHARE_FILES = FAVICONS + tuple(f"og_{k}.png" for k in OG_KEYS)
+# fix round 1 (r3 continuation, V2-9): what each 1200 x 630 card SHOWS (tools/make_share_assets.py CARDS: the page name
+# and its one line, under the CD mark and "Carlos Duarte, Quantitative Research"), for og:image:alt -- an image's alt
+# text describes the image, not the page it is attached to
+OG_CARD_TEXT = {
+    "home": ("Capital Market Assumptions", "A long-run model, my own live book and the markets around it"),
+    "portfolio": ("Portfolio", "My own equity book, in pesos or dollars, against the S&P 500"),
+    "stocks": ("Stock Research", "Composite picks, a pick tracker and CFA-style analyses of stocks"),
+    "regime": ("Regime Tracker", "A composite stress index: economic, political, AI-cycle, environmental"),
+    "market_intel": ("Market Intel", "What the Street expects, set against this site's own model"),
+    "congress": ("Congress", "The trades members of Congress disclose, checked every weekday"),
+    "research": ("Research", "The model, the research record, the strategies and the sources"),
+}
+
+
+def og_alt(card):
+    n, line = OG_CARD_TEXT[card]
+    return f"Card: {n}. {line}. Carlos Duarte, Quantitative Research."
+_FONTS_HOST = "https://fonts.googleapis.com"
+# page -> (name in the title, description (None = the page's own), card). Descriptions: <= 160 characters, no figure
+# that can go stale, nothing that reads as advice.
+PAGE_META = {
+    "index.html": ("Capital Market Assumptions",
+                   "A 12-year capital market assumptions model, my own live book against the S&P 500, the Fed path, "
+                   "congressional trades and stock research on one page.", "home"),
+    "portfolio.html": ("Portfolio",
+                       "My own equity book in pesos or dollars: holdings, returns against the S&P 500, and every buy "
+                       "and sell. Figures scaled; not a recommendation.", "portfolio"),
+    "stocks.html": ("Stock Research",
+                    "Composite stock picks, a pick tracker and CFA-style analyses of individual stocks, built from "
+                    "public data. Research, not investment advice.", "stocks"),
+    "regime.html": ("Regime Tracker",
+                    "A composite stress index across economic, political, AI-cycle and environmental inputs, with its "
+                    "history and recent regime changes.", "regime"),
+    "ltcma-consensus.html": ("Market Intel",
+                             "Long-run expected returns from the asset managers and banks that publish them, on one "
+                             "grid against this site's model, with the market-implied Fed path.", "market_intel"),
+    "street-ltcma.html": ("Street LTCMA",
+                          "The Street's published capital market assumptions, aggregated by asset class.",
+                          "market_intel"),
+    "congressional-activity.html": ("Congress",
+                                    "Trades that members of the U.S. Congress disclose under the STOCK Act, checked "
+                                    "every weekday: signals, members, sectors and every filing.", "congress"),
+    "research-library.html": ("Research Library", None, "research"),
+    "research.html": ("Research Notes", "The research record behind this site's model and strategies, negative "
+                      "results included.", "research"),
+    "strategies.html": ("Strategies", "The strategy catalogue: systematic strategies with their backtest reports, "
+                        "risks and limits. Research, not investment advice.", "research"),
+    "projects.html": ("Projects", None, "research"),
+    "glossary.html": ("Glossary", "Plain-language definitions of every term used on this site.", "research"),
+    "404.html": ("Page not found", None, None),
+}
+_SHARE_RE = _re.compile(r'<!--share title0="([^"]*)"-->.*?<!--/share-->', _re.S)
+
+
+def page_meta(page, html=""):
+    """(title, description or None, card or None, canonical path) for a page, or None for a page this does not know."""
+    import html as _h
+    name = str(page).replace("\\", "/")
+    if name in PAGE_META:
+        lab, desc, card = PAGE_META[name]
+        path = "" if name == "index.html" else name
+        return f"{lab} · {SITE_NAME}", desc, card, path
+    m = _re.fullmatch(r"stock_([A-Z][A-Z0-9.\-]*)\.html", name)
+    if m:
+        t = m.group(1)
+        return (f"{t} · Stock Research · {SITE_NAME}",
+                f"A CFA-style analysis of {t} from public data: valuation multiples, 12-month targets by method and "
+                "price history. Research, not investment advice.", "stocks", name)
+    if _re.fullmatch(r"bt_[a-z0-9_]+\.html", name):
+        t0 = _re.search(r"<title>(.*?)</title>", html, _re.S)
+        lab = _h.unescape(t0.group(1)) if t0 else name
+        lab = _re.sub(r"\s+[—-]\s+Backtest Report\s*$", "", lab).strip()
+        return (f"{_h.escape(lab, quote=False)} · Backtest report · {SITE_NAME}",
+                "A backtest report from the strategy catalogue: method, results, risks and limits. Research, not "
+                "investment advice.", "research", name)
+    m = _re.fullmatch(r"archive/report_[0-9\-]+\.html", name)
+    if m:
+        t0 = _re.search(r"\((archived [^)]+)\)", html[:4000])
+        tag = f" ({t0.group(1)})" if t0 else " (archived edition)"
+        return (f"Full Report{tag} · {SITE_NAME}",
+                "The 12-year capital market assumptions model: method, return tables and limits, as archived.",
+                "research", name)
+    return None
+
+
+def _plotly_bundle(html):
+    """The pinned full bundle -> the official cartesian bundle of the same version when every trace type on the page
+    is cartesian (and back, when a page gains a non-cartesian trace). A page whose figures cannot be read keeps the
+    bundle it has."""
+    full, cart = _PLOTLY_TAG.format(PLOTLY_FULL), _PLOTLY_TAG.format(PLOTLY_CARTESIAN)
+    if full not in html and cart not in html:
+        return html
+    try:
+        types = {tr.get("type", "scatter") for _d, data, _l in _plotly_calls(html) for tr in data}
+    except (ValueError, AttributeError):
+        return html
+    want = cart if types and types <= CARTESIAN_TYPES else full
+    other = full if want == cart else cart
+    return html.replace(other, want)
+
+
+def _attr(s):
+    import html as _h
+    return _h.escape(_h.unescape(str(s)), quote=True)
+
+
+def _enc_t0(t):
+    """The page's own title, kept inside the share block's opening comment (lossless; no '"' and no '--' in it)."""
+    return t.replace("%", "%25").replace('"', "%22").replace("--", "-%2D")
+
+
+def _dec_t0(t):
+    return t.replace("-%2D", "--").replace("%22", '"').replace("%25", "%")
+
+
+def share_strip(html):
+    """Remove the share block and put the page's own <title> back (exact inverse of site_head's head part)."""
+    m = _SHARE_RE.search(html)
+    if not m:
+        return html
+    t0 = _dec_t0(m.group(1))
+    html = html[:m.start()] + html[m.end():]
+    return _re.sub(r"<title>.*?</title>", lambda _m: f"<title>{t0}</title>", html, count=1, flags=_re.S)
+
+
+def site_head(html, page="page"):
+    """The r3 head for one generated page (see the block comment above). Idempotent."""
+    html = _plotly_bundle(html)
+    if "<!--share" in html:
+        html = share_strip(html)
+    pm = page_meta(page, html)
+    if pm is None or html.count("<title>") != 1 or html.count("</head>") != 1 or 'http-equiv="refresh"' in html:
+        return html
+    title, desc, card, path = pm
+    m = _re.search(r"<title>(.*?)</title>", html, _re.S)
+    t0 = m.group(1)
+    own = _re.search(r'<meta name="description" content="([^"]*)">', html)
+    url = f"{SITE_URL}/{path}"
+    out = [f'<!--share title0="{_enc_t0(t0)}"-->']
+    if page == "404.html":
+        out.append('<meta name="robots" content="noindex">')
+    else:
+        if own:                                   # the page's own description wins (merge, never two)
+            desc = own.group(1)
+        elif desc:
+            out.append(f'<meta name="description" content="{_attr(desc)}">')
+        out.append(f'<link rel="canonical" href="{url}">')
+        out.append('<meta property="og:type" content="website">'
+                   f'<meta property="og:site_name" content="{SITE_NAME} · Quantitative Research">'
+                   f'<meta property="og:title" content="{_attr(title)}">'
+                   + (f'<meta property="og:description" content="{_attr(desc)}">' if desc else "")
+                   + f'<meta property="og:url" content="{url}">')
+        if card:
+            img = f"{SITE_URL}/{ASSET_URL}/og_{card}.png"
+            out.append(f'<meta property="og:image" content="{img}">'
+                       '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+                       f'<meta property="og:image:alt" content="{_attr(og_alt(card) if card in OG_CARD_TEXT else title)}">'
+                       '<meta name="twitter:card" content="summary_large_image">'
+                       f'<meta name="twitter:image" content="{img}">')
+        out.append(f'<meta name="twitter:title" content="{_attr(title)}">'
+                   + (f'<meta name="twitter:description" content="{_attr(desc)}">' if desc else ""))
+    out.append(f'<link rel="icon" href="{ASSET_URL}/favicon.svg" type="image/svg+xml">'
+               f'<link rel="icon" href="{ASSET_URL}/favicon_32.png" sizes="32x32" type="image/png">'
+               f'<link rel="apple-touch-icon" href="{ASSET_URL}/apple_touch_180.png">')
+    if _FONTS_HOST in html:
+        out.append(f'<link rel="preconnect" href="{_FONTS_HOST}">'
+                   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>')
+    out.append(SITE_JS)                           # fix round 1 (r3 continuation): V2-11 / V2-12
+    out.append("<!--/share-->")
+    return html[:m.start()] + f"<title>{title}</title>" + "\n".join(out) + html[m.end():]
+
+
+ROBOTS_TXT = f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+# fix round 1 (r3 continuation, 2026-11-11): one small script in the r3 head (the share block), so every page -- generated,
+# or committed and transformed by the deploy's commit 2 -- carries it, and share_strip takes it out again:
+#   V2-11 a cold load with #id: once the page has loaded, again when the fonts are in and once more at 1.2 s, the target
+#         is aligned under the sticky header / bar (scroll-padding-top), unless the viewer scrolled, clicked or pressed a
+#         key meanwhile; smooth anchor scrolling (html.sm, style.css) starts only after that, so the browser's own
+#         fragment scroll never animates towards a position the late layout (fonts, charts) moves
+#   V2-12 a "Skip to content" link, the first Tab stop (style.css .skip: off-screen until focused): focus to <main>
+# polish round (r3, 2026-11-11, V-5): once the web fonts are in, every Plotly chart is redrawn. Plotly measures a text
+#   once and caches its width by the text + its style, so a chart drawn before Inter arrived keeps the fallback font's
+#   widths (the regime legend's text ran past its box, the track-record legend items touched): a redraw alone hits the
+#   same cache. The redraw sets font.weight 400 (= normal: the same look, a new style string, so Plotly measures
+#   again); a second pass (399: still the regular face, none lighter is loaded) runs only if a font face finished
+#   loading in the 1.5 s after the first. A chart that sets its own weight keeps it. The theme script re-maps the
+#   colours after any relayout and finds nothing to change; the currency switch and the mobile tuner never set the
+#   weight, so they keep it. (No `name=number` literal in the script: scripts/confscan.sh lists those on the research
+#   pages, and a counter like that would be a new hit.)
+SITE_JS = ("<script>(function(){var d=document.documentElement,mv=false;"
+           "['wheel','touchstart','keydown','mousedown'].forEach(function(k){addEventListener(k,function(){mv=true;},"
+           "{passive:true,once:true});});"
+           "function fix(){var h=location.hash.slice(1),t=null;if(h){try{t=document.getElementById(decodeURIComponent(h));}"
+           "catch(e){}}if(t&&!mv)t.scrollIntoView({block:'start'});}"
+           "var FW=[400,399],FQ=FW.slice(),late=false;"
+           "function rf(){var P=window.Plotly,w=FQ.shift();if(!P||!P.relayout||w===undefined)return;"
+           "[].forEach.call(document.querySelectorAll('.js-plotly-plot'),function(g){if(!g._fullLayout)return;"
+           "var o=g.layout&&g.layout.font&&g.layout.font.weight;if(o!==undefined&&o!=='normal'&&FW.indexOf(o)<0)return;"
+           "try{var r=P.relayout(g,{'font.weight':w});if(r&&r.catch)r.catch(function(){});}catch(e){}});}"
+           "addEventListener('load',function(){fix();try{document.fonts.ready.then(function(){rf();"
+           "document.fonts.addEventListener('loadingdone',function(){late=true;});"
+           "setTimeout(function(){if(late)rf();},1500);setTimeout(fix,250);});}"
+           "catch(e){}setTimeout(function(){fix();d.classList.add('sm');},1200);});"
+           "document.addEventListener('DOMContentLoaded',function(){var m=document.querySelector('main');"
+           "if(!m||document.querySelector('a.skip'))return;if(!m.id&&!document.getElementById('site-main'))m.id='site-main';"
+           "if(!m.id)return;if(!m.hasAttribute('tabindex'))m.tabIndex=-1;"
+           "var a=document.createElement('a');a.className='skip';a.href='#'+m.id;a.textContent='Skip to content';"
+           "a.addEventListener('click',function(e){e.preventDefault();m.focus({preventScroll:true});"
+           "m.scrollIntoView({block:'start'});});document.body.insertBefore(a,document.body.firstChild);});})();</script>")
+
+
+def sitemap_xml(docs_dir):
+    """Every public page that exists in docs/: the main tabs, the Research corner, then the stock / backtest /
+    archived-report sub-pages. Redirect stubs, internal/ and the AI copies are not listed; no lastmod (a date here
+    would be one more stamp to keep true)."""
+    import glossary as _g          # lazy: glossary imports this module
+    names, seen = [], set()
+    for h in [h for h, _t in _g.MAIN_TABS] + [h for h, _t, _d in _g.RESEARCH_LINKS]:
+        n = h.split("#")[0]
+        if n not in seen:
+            seen.add(n)
+            names.append(n)
+    subs = []
+    for rx, _par in _g.SUBPAGES:
+        base = rx.split("/")[0] if "/" in rx else ""
+        d = _os.path.join(docs_dir, base) if base else docs_dir
+        if _os.path.isdir(d):
+            for f in sorted(_os.listdir(d)):
+                rel = f"{base}/{f}" if base else f
+                if _re.fullmatch(rx, rel):
+                    subs.append(rel)
+    urls = []
+    for n in names + subs:
+        p = _os.path.join(docs_dir, *n.split("/"))
+        if not _os.path.isfile(p):
+            continue
+        with open(p, encoding="utf-8", errors="replace") as fh:
+            if 'http-equiv="refresh"' in fh.read(3000):
+                continue
+        urls.append(f"{SITE_URL}/" + ("" if n == "index.html" else n))
+    body = "".join(f"<url><loc>{u}</loc></url>\n" for u in urls)
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + body + "</urlset>\n")
+
+
+def page_404():
+    """docs/404.html: GitHub Pages serves it for any missing path, at any depth, so every link and sheet resolves from
+    the site root (<base href="/ltcma/">); noindex."""
+    import glossary as _g          # lazy: glossary imports this module
+    tabs = "".join(f'<a class="chipbtn" href="{h}">{t}</a>' for h, t in _g.MAIN_TABS)
+    rc = "".join(f'<li><a href="{h}">{t}</a> &middot; {d}</li>' for h, t, d in _g.RESEARCH_LINKS)
+    html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="/ltcma/">
+<title>Page not found</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+{CSS_LINKS}<link rel="stylesheet" href="style.css"></head>
+<body><header class="shell"><div class="shell-in">
+<span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{_g.NAV}
+</div></header>
+<section class="hero"><div class="container"><p class="kicker">Page not found</p><h1>This page does not exist</h1>
+<p class="lede">The address may be mistyped, or the page may have moved. Every page of the site is one click away:
+the tabs above, or the links below.</p></div></section>
+<main class="container nf-main">
+<section class="block"><h2>The tabs</h2><div class="nf-tabs" style="display:flex;flex-wrap:wrap;gap:8px">{tabs}</div></section>
+<section class="block"><h2>The Research corner</h2><ul class="sumlist nf-list">{rc}</ul></section>
+</main>
+<footer class="shell-foot"><div class="container"><p>Research and education, not investment advice.</p></div></footer>
+</body></html>"""
+    return themed(html, "404.html")
+
+
+def emit_share(docs_dir):
+    """Write the share files into docs/ (17 calls it on every build, beside emit()): the favicon set and the cards from
+    assets/img (byte-identical, idempotent), 404.html, sitemap.xml, robots.txt (rewritten only when they change).
+    Returns True when every image source exists (False in a sandbox without assets/: the pages still name them)."""
+    ok = emit_assets(docs_dir, SHARE_FILES)
+    for name, body in (("404.html", page_404()), ("sitemap.xml", sitemap_xml(docs_dir)), ("robots.txt", ROBOTS_TXT)):
+        p = _os.path.join(docs_dir, name)
+        try:
+            with open(p, encoding="utf-8") as fh:            # text mode both ways (CRLF on Windows, as the pages)
+                if fh.read() == body:
+                    continue
+        except OSError:
+            pass
+        with open(p, "w", encoding="utf-8") as fh:            # text mode, as every page
+            fh.write(body)
+    return ok
+
+
+def emit_sitemap(docs_dir):
+    """Fix round 1 (r3 continuation, PIPE2-2): docs/sitemap.xml = sitemap_xml(docs_dir), rewritten only when it changes.
+    17 writes it first (emit_share); 31_research_library.py, the refresh's last page generator, calls this so a page
+    added after 17 in the same refresh (a new bt_*.html from 24) is listed the same day. Returns True when written."""
+    body, p = sitemap_xml(docs_dir), _os.path.join(docs_dir, "sitemap.xml")
+    try:
+        with open(p, encoding="utf-8") as fh:
+            if fh.read() == body:
+                return False
+    except OSError:
+        pass
+    with open(p, "w", encoding="utf-8") as fh:            # text mode, as emit_share writes it
+        fh.write(body)
+    return True
+
+
+def fed_path_newest(data_dir):
+    """The Fed path ONE vintage of which every Fed figure on a page is drawn from (wave r3: Market Intel showed the
+    next FOMC's odds from two pulls at once). The newer by taken_at of data/market_intel/fed_path_public.json (written
+    by the 16:45 market-intel-daily job) and the consensus run's own pull (consensus_public.json -> prediction.fed_path,
+    taken at prediction.taken_at). Same shape as fed_path_public.json plus "_source" ("daily" | "consensus"); None when
+    neither file carries meetings."""
+    import json
+    mi = _os.path.join(data_dir, "market_intel")
+    best = None
+    try:
+        with open(_os.path.join(mi, "fed_path_public.json"), encoding="utf-8") as fh:
+            d = json.load(fh)
+        if isinstance(d, dict) and d.get("meetings"):
+            best = dict(d, _source="daily")
+    except (OSError, ValueError):
+        pass
+    try:
+        with open(_os.path.join(mi, "consensus_public.json"), encoding="utf-8") as fh:
+            pm = (json.load(fh) or {}).get("prediction") or {}
+        fp, t = pm.get("fed_path") or {}, str(pm.get("taken_at") or "")
+        if isinstance(fp, dict) and fp.get("meetings") and t and \
+                (best is None or t[:19] > str(best.get("taken_at") or "")[:19]):
+            best = dict(fp, taken_at=t, _source="consensus")
+    except (OSError, ValueError, AttributeError):
+        pass
+    return best
+
+
+# =====================================================================================================================
+# Wave r3 (builder B, Carlos written 2026-11-10 ~15:00 "Dale play a todo"): the sticky "On this page" bar and note().
+# =====================================================================================================================
+# The long pages' sections: (id, short label). A link is drawn only when its id is on the page (a section a generator
+# leaves out on a data gap simply has no link); ids are the pages' own (never renamed): 18 / 23 gained ids for their
+# sections that had none. The archived report (<base href="../">) links through its own path.
+PAGE_SECTIONS = {
+    "portfolio.html": (("performance", "Performance"), ("entries", "Entries & exits"), ("value", "Value vs cost"),
+                       ("fxa-root", "FX"), ("holdings", "Holdings"), ("realized", "Realized"),
+                       ("relative", "vs holdings")),
+    "stocks.html": (("picks", "Picks"), ("tracker", "Pick Tracker"), ("track-record", "Track record"),
+                    ("signals", "Macro signals"), ("companies", "Company reports")),
+    "congressional-activity.html": (("alerts", "Signals"), ("members", "Members"), ("sectors", "Sectors"),
+                                    ("trades", "Trades"), ("method", "Method")),
+    "strategies.html": (("growth", "Growth of 100"), ("drawdown", "Drawdown"), ("mexico", "Mexico vs IPC"),
+                        ("indicators", "Indicators"), ("ember", "EMBER"), ("rotation-family", "Rotation family"),
+                        ("backtests", "Backtests")),
+}
+REPORT_PAGE = r"archive/report_[0-9\-]+\.html"
+REPORT_SECTIONS = (("1-executive-summary", "Summary"), ("2-methodology", "Method"),
+                   ("3-macro-backdrop-fundamentals-grid", "Macro"), ("4-priced-in-indicators", "Priced in"),
+                   ("5-expected-returns", "Returns"), ("6-risk-volatility-correlation", "Risk"),
+                   ("7-news-regimes-monte-carlo-simulation", "Regimes & simulation"),
+                   ("8-strategic-edge-scan", "Edge scan"), ("9-sample-portfolios", "Portfolios"),
+                   ("10-systematic-strategy-layer-dynamic-regime-overlays", "Strategy layer"),
+                   ("11-assumptions-limitations-sources", "Assumptions"))
+OTP_MARK = '<nav class="otp" aria-label="On this page">'
+# portfolio.html: r2's sticky currency bar (18 still writes it as the first block of <main>); its switch moves into
+# the bar's right end, so the page has ONE sticky strip
+_CCY_BAR = _re.compile(r'<div class="ccy-bar">(<div class="ccy-in" role="group"[^>]*>.*?</button></div></div>)</div>\n?',
+                       _re.S)
+OTP_JS = r"""<script>(function(){var n=document.querySelector('nav.otp');if(!n)return;var d=document.documentElement,
+sc=n.querySelector('.otp-sc'),as=[].slice.call(n.querySelectorAll('.otp-l a')),secs=[],last=-2;
+function look(){secs=as.map(function(a){var h=a.getAttribute('href');return document.getElementById(decodeURIComponent(h.slice(h.indexOf('#')+1)));});}
+function hgt(){var st=getComputedStyle(n).position==='sticky';d.style.setProperty('--otph',(st?n.offsetHeight:0)+'px');}
+function fade(){var l=sc.scrollLeft>2,r=sc.scrollLeft+sc.clientWidth<sc.scrollWidth-2;sc.classList.toggle('fl',l);sc.classList.toggle('fr',r);}
+function cur(){if(!secs.length||!secs[secs.length-1])look();
+var top=(parseFloat(getComputedStyle(d).getPropertyValue('--hdr'))||0)+n.offsetHeight+24,k=-1;
+for(var i=0;i<secs.length;i++){if(secs[i]&&secs[i].getBoundingClientRect().top<=top)k=i;}
+if(k===last)return;last=k;
+as.forEach(function(a,i){if(i===k)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});
+if(k>=0&&sc.scrollWidth>sc.clientWidth&&!n.contains(document.activeElement)){var ar=as[k].getBoundingClientRect(),
+sr=sc.getBoundingClientRect();if(ar.left<sr.left||ar.right>sr.right)sc.scrollLeft+=ar.left-sr.left-24;}}
+var raf=null;function tick(){if(!raf)raf=requestAnimationFrame(function(){raf=null;cur();});}
+sc.addEventListener('scroll',fade,{passive:true});window.addEventListener('scroll',tick,{passive:true});
+n.addEventListener('focusin',function(e){var a=e.target;if(!a||!sc.contains(a))return;var ar=a.getBoundingClientRect(),
+sr=sc.getBoundingClientRect();if(ar.left<sr.left+28)sc.scrollLeft-=sr.left+28-ar.left;
+else if(ar.right>sr.right-28)sc.scrollLeft+=ar.right-(sr.right-28);});
+window.addEventListener('resize',function(){hgt();fade();tick();});hgt();fade();
+function go(){look();cur();window.addEventListener('load',tick);
+if(window.ResizeObserver)new ResizeObserver(tick).observe(document.body);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();})();</script>"""
+
+
+def page_sections(page):
+    if page in PAGE_SECTIONS:
+        return PAGE_SECTIONS[page]
+    if _re.fullmatch(REPORT_PAGE, page or ""):
+        return REPORT_SECTIONS
+    return None
+
+
+def section_nav(page, html, right=""):
+    """The bar for `page`: the sections whose id is on `html` (in the table's order), the optional right-hand control
+    (portfolio: the currency switch). '' when fewer than two sections are on the page."""
+    secs = page_sections(page) or ()
+    have = [(i, lab) for i, lab in secs if f'id="{i}"' in html]
+    if len(have) < 2:
+        return ""
+    pre = page if "<base href=" in html[:4000] else ""          # the archived report resolves links against ../
+    lis = "".join(f'<li><a href="{_esc(pre)}#{_esc(i)}">{_esc(lab)}</a></li>' for i, lab in have)
+    return (f'{OTP_MARK}<div class="container otp-in"><span class="otp-k" aria-hidden="true">On this page</span>'
+            f'<div class="otp-sc"><ul class="otp-l">{lis}</ul></div>{right}</div>{OTP_JS}</nav>\n')
+
+
+def otp_insert(html, page="page"):
+    """Wave r3: put the sticky "On this page" bar on a long page (PAGE_SECTIONS / the archived report), right before
+    <main>. Run by themed() on every generated page (like site_head), by the r3 deploy on the committed pages and so by
+    the previews. Idempotent: a page that already has the bar is returned unchanged. On portfolio.html the currency
+    switch of r2's .ccy-bar moves into the bar (one sticky strip)."""
+    if OTP_MARK in html or not page_sections(page):
+        return html
+    right, out = "", html
+    if page == "portfolio.html":
+        m = list(_CCY_BAR.finditer(out))
+        if len(m) == 1:
+            right = m[0].group(1)
+            out = out[:m[0].start()] + out[m[0].end():]
+    nav = section_nav(page, out, right)
+    # the one <main> start tag outside <script> / <style> (a comment or a string may name it)
+    pos, at = [], 0
+    for k, seg in enumerate(_SEG.split(out)):
+        if k % 2 == 0:
+            pos += [at + mm.start() for mm in _re.finditer(r"<main[\s>]", seg)]
+        at += len(seg)
+    if not nav or len(pos) != 1:
+        return html
+    return out[:pos[0]] + nav + out[pos[0]:]
+
+
+def note(body, role="method", summary="How these figures are built", cls=""):
+    """Wave r3: the one component for the explanatory notes. role="disclosure": always visible, at most two sentences,
+    a thin amber rule (e.g. the portfolio's scaling disclosure, kept above the first money figure). role="method": a
+    native <details> closed by default, `summary` naming what is inside (works without JavaScript; find-in-page opens
+    it). `body` is HTML (paragraphs allowed in a method note)."""
+    c = f" {cls}" if cls else ""
+    if role == "disclosure":
+        return f'<p class="nt nt-d{c}">{body}</p>'
+    return f'<details class="nt nt-m{c}"><summary>{summary}</summary><div class="nt-b">{body}</div></details>'
+
+
+# =====================================================================================================================
+# Wave r3 (builder C, Carlos written 2026-11-10 ~15:00 "Dale play a todo"): the Stock Research tables become cards on
+# phones. card_tables() is pure markup on a page (no text changes): every table.ptable that sits in its scrolling tile
+# (<div class="tile" style="...overflow-x:auto">) gets the tile class `pcw`, and every body cell of that table (not the
+# cells of a nested table, e.g. the Pick Tracker's detail drawers) its column's header text as data-label. style.css
+# (ET_CSS, "wave r3 (builder C)") draws each row as a card below BP_SM px: the label on the left, the value on the right,
+# the row's first cell (+ the ticker cell of the picks / tracker tables) as the card's head. Desktop is unchanged. 25 runs
+# it on stocks.html (25_stock_picks.main); the staged preview runs the SAME function on the committed page. Idempotent.
+# =====================================================================================================================
+CARD_WRAP = "pcw"
+_CARD_TILE = _re.compile(r'<div class="tile"( style="[^"]*overflow-x:auto[^"]*">)(\s*)(<table class="ptable(?: [^"]*)?">)')
+_CARD_TAG = _re.compile(r"<(/?)(table|thead|tbody|tr|td|th)\b([^>]*)>", _re.I)
+_COLSPAN = _re.compile(r'\bcolspan="(\d+)"')
+
+
+def _cell_text(s):
+    import html as _h
+    return _re.sub(r"\s+", " ", _h.unescape(_re.sub(r"<[^>]+>", " ", s))).strip()
+
+
+def _table_end(html, start):
+    """index just past the </table> that closes the <table> starting at `start` (nested tables counted), or -1"""
+    depth = 0
+    for m in _re.finditer(r"<(/?)table\b[^>]*>", html[start:], _re.I):
+        depth += -1 if m.group(1) else 1
+        if depth == 0:
+            return start + m.end()
+    return -1
+
+
+def card_labels(table):
+    """One '<table>...</table>' string: each body <td> of the OUTER table gets data-label = its column's header text
+    (the outer <thead>'s first row; colspan honoured). A cell spanning several columns, a cell under an empty header
+    and every cell of a nested table get none; a cell that already has a data-label keeps it."""
+    heads, depth, sect, col, out, last = [], 0, "", 0, [], 0
+    for t in _CARD_TAG.finditer(table):
+        close, tag, attrs = t.group(1), t.group(2).lower(), t.group(3)
+        if tag == "table":
+            depth += -1 if close else 1
+            continue
+        if depth != 1:
+            continue
+        if tag in ("thead", "tbody"):
+            sect = "" if close else tag
+            continue
+        if tag == "tr" and not close:
+            col = 0
+            continue
+        if close or tag not in ("td", "th"):
+            continue
+        sp = _COLSPAN.search(attrs)
+        n = int(sp.group(1)) if sp else 1
+        if sect == "thead":
+            if tag == "th":
+                end = table.find("</th>", t.end())
+                heads += [_cell_text(table[t.end():end]) if n == 1 else ""] * n
+            continue
+        if tag == "td" and n == 1 and "data-label=" not in attrs and col < len(heads) and heads[col]:
+            out.append(table[last:t.end() - 1] + f' data-label="{_esc(heads[col])}"')
+            last = t.end() - 1
+        col += n
+    out.append(table[last:])
+    return "".join(out)
+
+
+def card_tables(html):
+    """Wave r3 (builder C): the phone cards of every table.ptable in a scrolling tile (see the block comment above)."""
+    out, pos = [], 0
+    for m in _CARD_TILE.finditer(html):
+        if m.start() < pos:
+            continue                                          # inside a table already handled
+        t0 = m.start(3)
+        t1 = _table_end(html, t0)
+        if t1 < 0:
+            continue
+        out.append(html[pos:m.start()])
+        out.append(f'<div class="tile {CARD_WRAP}"' + m.group(1) + m.group(2) + card_labels(html[t0:t1]))
+        pos = t1
+    out.append(html[pos:])
+    return "".join(out)

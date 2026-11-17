@@ -23,6 +23,7 @@ from glossary import NAV, ccy_badge
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
+from design_system import hero_for, credits_for   # wave r3: the Stock Research photograph (PAGE_HEROES)
 INK, BLUE, GOLD, GREEN, RED, GREY = "#111111", "#0a2540", "#6b7280", "#0a5d3a", "#7c2d12", "#888888"
 RF, ERP = 0.045, 0.045            # CAPM risk-free & equity risk premium assumptions
 G_CAP = 0.045                     # terminal nominal growth cap (long-run US GDP)
@@ -115,7 +116,7 @@ def big(x):
         if abs(x) >= d: return f"${x/d:.1f}{u}"
     return f"${x:,.0f}"
 
-def page(title, body):
+def page(title, body, name="page"):
     return themed(f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{title}</title>{FONTS}{CSS_LINKS}<link rel="stylesheet" href="style.css">'
@@ -125,7 +126,7 @@ def page(title, body):
             f'</span>{NAV}</div></header>{body}'
             f'<footer class="shell-foot"><div class="container"><p>CFA-framework '
             f'analysis on free Yahoo Finance data. Educational research, not '
-            f'investment advice.</p></div></footer></body></html>', title)
+            f'investment advice.</p>{credits_for(name)}</div></footer></body></html>', name)   # wave r3: the file name (its r3 head)
 
 # ---- wave "no repeats" (2026-11-10, Carlos: "intenta que no se repita info en la misma pestana") -------------------
 # The Snapshot tiles carry the price, the trailing P/E and the synthesized target; the Financial Health tiles carry the
@@ -155,19 +156,22 @@ def verdict_html(name, syn, upside, pe, just_pe, r, g, tgt_bit, payout):
     """The CFA View: the direction and the comparisons, not the tiles' figures again.
     2026-11-10 (Carlos, written): the justified P/E is compared only where the page applies it (payout >= 30%, the
     same gate as the targets in analyze() and the Forecast note); below that it is n/m (not meaningful), since it
-    values only the dividend stream of a retention-heavy firm."""
+    values only the dividend stream of a retention-heavy firm.
+    Polish round (r3, 2026-11-11, C4): below 30% the clause no longer needs a truthy justified P/E (0.0 at payout 0,
+    None without an ROE): a payout of 0 prints 'n/m (no dividend)', like every other payout below 30% (AMZN / BA used to
+    print no clause at all)."""
     bits = []
     if syn:
         bits.append(f"the CFA-framework methods put the 12-month fair value "
                     f"{'above' if upside >= 0 else 'below'} the market price (the forecast above)")
-    if pe and just_pe:
-        if payout >= 0.30:
-            gap = ("above" if pe > just_pe * 1.15
-                   else "in line with" if pe > just_pe * 0.85 else "below")
-            bits.append(f"the trailing P/E sits {gap} its justified "
-                        f"P/E of {just_pe:.1f} (CAPM r={r*100:.1f}%, g={pct(g)})")
-        else:
-            bits.append(f"the justified P/E is n/m (payout {pct(payout)} &lt; 30%)")
+    if pe and just_pe and payout >= 0.30:
+        gap = ("above" if pe > just_pe * 1.15
+               else "in line with" if pe > just_pe * 0.85 else "below")
+        bits.append(f"the trailing P/E sits {gap} its justified "
+                    f"P/E of {just_pe:.1f} (CAPM r={r*100:.1f}%, g={pct(g)})")
+    elif pe and payout < 0.30:
+        bits.append("the justified P/E is n/m (no dividend)" if payout == 0
+                    else f"the justified P/E is n/m (payout {pct(payout)} &lt; 30%)")
     if tgt_bit:
         bits.append(tgt_bit)
     return f"{name} &mdash; " + "; ".join(bits) + "."
@@ -353,11 +357,12 @@ def analyze(ticker):
                   ("Synth. Target", f"${syn:,.2f}" if syn else "n/a")])
     val_rows = "".join(
         f"<tr><td>{k}</td><td>{rt(v)}</td></tr>" for k, v in mult)
-    body = f"""<section class="hero"><div class="container">
+    hero_in = f"""
 <h1>{name} <span style="color:#888888">({ticker})</span></h1>
 <p class="lede">{info.get('sector','')} &middot; {info.get('industry','')}</p>
 <p class="asof">As of {hist_d.index[-1].strftime('%Y-%m-%d') if len(hist_d) else 'n/a'} &middot; CFA-framework equity analysis &middot; data: Yahoo Finance</p>
-</div></section><main class="container">
+"""
+    body = hero_for(f"stock_{ticker}.html", hero_in, DOCS) + f"""<main class="container">
 <section class="block"><h2>Snapshot</h2>
 {ccy_badge("USD", "US-listed stock, figures in US dollars")}{snap}</section>
 <section class="block"><h2>Forecast &amp; Price Targets</h2>
@@ -407,7 +412,7 @@ CAPM r = {r*100:.1f}% &middot; {g1_note_html(g1, num(info.get('earningsGrowth'))
 <div class="scaled-note" style="border-left-color:#0a2540">{verdict}</div></section>
 </main>"""
     open(f"{DOCS}/stock_{ticker}.html", "w", encoding="utf-8").write(
-        page(f"{ticker} — Equity Analysis", body))
+        page(f"{ticker} — Equity Analysis", body, f"stock_{ticker}.html"))
     syn_s = f"${syn:,.2f}" if syn else "n/a"
     print(f"  {ticker}: P/E {rt(pe)}  ROE {pct(roe)}  syn-target {syn_s}  -> stock_{ticker}.html")
     return {"ticker": ticker, "name": name, "sector": info.get("sector", ""),
@@ -643,13 +648,14 @@ else:
         print(f"  screener NOT published ({_why}); stocks.html left at its committed copy")
         ys.alert(f"19 screener not published ({_why}); stocks.html kept at its committed copy")
 
-land = f"""<section class="hero"><div class="container">
+land_hero = f"""
 <h1>Equity Research</h1>
 <p class="lede">CFA-framework analysis of individual stocks &mdash;
 profitability, DuPont, financial health, and relative &amp; absolute
 valuation. A reusable tool: run it on any ticker.</p>
 <p class="asof">Data: Yahoo Finance &middot; {len(existing)} companies analyzed</p>
-</div></section><main class="container">
+"""
+land = hero_for("stocks.html", land_hero, DOCS) + f"""<main class="container">
 <section class="block"><h2>Companies</h2>
 {ccy_badge("USD", "all company figures in US dollars")}
 <div class="scards">{cards}</div></section>
@@ -660,5 +666,5 @@ if SCREENER is None:                     # publish guard above: keep the committ
           f"{len(done)}/{len(watch)} stock pages refreshed")
 else:
     open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(
-        page("Equity Research — CFA-style Stock Analysis", land))
+        page("Equity Research — CFA-style Stock Analysis", land, "stocks.html"))
     print(f"\nLanding page: stocks.html ({len(existing)} companies)")

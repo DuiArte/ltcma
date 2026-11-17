@@ -13,6 +13,12 @@ Sections, in order:
 Picker internals (the variable WEIGHTS) stay in picker.py and are never rendered;
 the cards show the ranked result + each pick's variable contributions only.
 
+Wave r3 (builder C, 2026-11-10, Carlos "Dale play a todo"): the Pick Tracker goes through
+picks_tracker.tracker_fit (its 11 columns fit a 1440 px screen; a rank sparkline per row, ranks only, from the
+page's own history) and the whole page through design_system.card_tables before themed(): every table becomes a
+column of cards on phones (each cell labelled with its column header). Neither changes a figure or a word of the
+tables; the staged preview runs the same two functions on the committed page.
+
 Wave 13 (2026-11-04): a Pick Tracker (tenure, since-entry return vs SPY and the universe, exit
 estimate, price targets, earnings / analyst / insider / congress overlays) right after Composite
 Picks, and a Track Record section. They are built by picks_history / picks_overlays / picks_tracker
@@ -47,6 +53,8 @@ import plotly.graph_objects as go
 from glossary import NAV, ccy_badge
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import themed   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
+from design_system import hero_for, credits_for, note   # wave r3: the page's photograph; note()
+from design_system import card_tables   # wave r3 (builder C): phone cards for the tables
 import picker
 
 from paths import DOCS_S as DOCS  # repo-anchored (2026-06-10)
@@ -140,6 +148,13 @@ def chips(cs, n=5):
     return out
 
 
+# wave r3 (builder B): the intro's method text folds into a closed note; its disclosure stays visible
+note_c = note
+PICKS_NOTE = "How the composite is built (and today's list changes)"
+PICKS_DISC = ("Educational research on the public universe — not\n"
+              "advice, and not a statement of any holding.")
+
+
 def picks_section(df, meta, mem=None):
     """mem = the published list (wave 14: picks_history.membership); None = the plain top 20."""
     contrib = meta["contrib"]
@@ -184,22 +199,23 @@ def picks_section(df, meta, mem=None):
                 f"list could not be applied ({_page_safe(m.get('why') or 'no usable previous list')}).")
     else:
         rule = " Tickers are ranked; the top 20 (★) are the picks."
-    return f"""<section class="block" id="picks">
-<h2>Composite Picks</h2>
-<p class="note">Every numeric variable from <b>both</b> stock pipelines — CFA/Buffett
+    intro = f"""Every numeric variable from <b>both</b> stock pipelines — CFA/Buffett
 fundamentals (ROE, margins, FCF yield, margin of safety, growth, leverage, 12-1
 momentum) and macro-signal sensitivities (earnings yield, β to rates / dollar / CAD,
 macro R²) — is z-scored across the {meta['n_universe']}-name universe, then combined
 into one composite score per ticker, {note}. The variable <i>direction</i> is set by
 that correlation, not hand-picked. Tickers are ranked by composite.{rule}
 Each row shows the variables that contributed most (direction + relative size); the
-underlying weights are proprietary. Educational research on the public universe — not
-advice, and not a statement of any holding.</p>
+underlying weights are proprietary."""
+    return f"""<section class="block" id="picks">
+<h2>Composite Picks</h2>
+{note_c(intro, "method", PICKS_NOTE)}
+{note_c(PICKS_DISC, "disclosure")}
 <div class="pills" data-group="picks">
-  <button class="pill on" data-f="all">All ({meta['n_universe']})</button>
-  <button class="pill" data-f="buy">Buy candidates ({n_buy})</button>
-  <button class="pill" data-f="watch">Watch list ({meta['n_universe']-n_buy})</button>
-  <button class="pill" data-f="pick">Picks (★)</button>
+  <button class="pill on" data-f="all" aria-pressed="true">All ({meta['n_universe']})</button>
+  <button class="pill" data-f="buy" aria-pressed="false">Buy candidates ({n_buy})</button>
+  <button class="pill" data-f="watch" aria-pressed="false">Watch list ({meta['n_universe']-n_buy})</button>
+  <button class="pill" data-f="pick" aria-pressed="false">Picks (★)</button>
 </div>
 <div class="tile" style="padding:0 14px 8px;overflow-x:auto">
 <table class="ptable picks"><thead><tr>
@@ -344,12 +360,17 @@ background:#f4f4f4;padding:2px 7px;margin:2px 3px 2px 0;white-space:nowrap}
 td.cmt{font-size:12px;color:#444;line-height:1.45;min-width:240px}
 """
 
+# r3 decisions pass (Carlos, written 2026-11-11: "Abre en picks"): on a phone (the card layout, <= 640.98 px wide when
+# the page loads) the Composite Picks open on the Picks (star) pill; desktop opens on All as before. The HTML keeps All
+# as the 'on' pill, so without JavaScript every row shows, the 20 picks starred.
+# polish round (r3, 2026-11-11, RC2-2): aria-pressed follows the 'on' pill on every click (the phone default included);
+# the markup starts with All pressed.
 FILTER_JS = r"""<script>
 document.querySelectorAll('.pills').forEach(function(grp){
   grp.querySelectorAll('.pill').forEach(function(b){
     b.addEventListener('click',function(){
-      grp.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on');});
-      b.classList.add('on');var f=b.getAttribute('data-f');
+      grp.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on');x.setAttribute('aria-pressed','false');});
+      b.classList.add('on');b.setAttribute('aria-pressed','true');var f=b.getAttribute('data-f');
       document.querySelectorAll('table.picks tbody tr').forEach(function(tr){
         var show=(f==='all')||(f==='pick'&&tr.getAttribute('data-pick')==='1')||
                  (tr.getAttribute('data-status')===f);
@@ -358,6 +379,8 @@ document.querySelectorAll('.pills').forEach(function(grp){
     });
   });
 });
+(function(){if(!(window.matchMedia&&matchMedia('(max-width:640.98px)').matches))return;
+  var p=document.querySelector('.pills[data-group="picks"] .pill[data-f="pick"]');if(p)p.click();})();
 </script>"""
 
 
@@ -577,7 +600,9 @@ def _tracker_extras(df, meta, now, log=print, hist=None, mem=None, macro=None):
         tr["method"] = mi
         m2 = {"dates": p.dates, "today": rec["session"], "gap_lines": gl, "record": rec, "list": mem,
               "band_since": mi["band_since"], "method": mi}
-        out.update(tracker=pt.tracker_section(rows, ov.get("by_ticker") or {}, ex, cut, m2),
+        # wave r3 (builder C): the same section, fitted for 1440 px, with each name's rank sparkline
+        out.update(tracker=pt.tracker_fit(pt.tracker_section(rows, ov.get("by_ticker") or {}, ex, cut, m2),
+                                          pt.rank_sparks(p)),
                    record=pt.record_section(tr, chart, macro=macro),
                    method=pt.methodology_html(mi["band_since"], mi),
                    ai=pt.ai_fields(rows, ov.get("by_ticker") or {}), ok=True, css=pt.TRACKER_CSS,
@@ -615,13 +640,14 @@ def main():
     hist, mem = _membership(df, now, log=_log)   # wave 14: the published list (two-sided band); df is not touched
     extra = _tracker_extras(df, meta, now, log=_log, hist=hist, mem=mem, macro=macro)
 
-    body = f"""<section class="hero"><div class="container">
+    hero_in = f"""
 <h1>Stock Research</h1>
 <p class="lede">Picks, analysis and signals in one place. A reproducible composite
 picker reads <b>every variable</b> from the fundamental and macro-signal pipelines,
 z-scores and combines them, and ranks the {meta['n_universe']}-name research universe.</p>
 <p class="asof">As of {asof} &middot; {meta['n_universe']} names &middot; data: Yahoo Finance (prices, fundamentals, dollar index, USD/CAD) + FRED (10-year yield, fed funds){macro_txt}</p>
-</div></section>
+"""
+    body = f"""{hero_for("stocks.html", hero_in, DOCS)}
 <main class="container">
 {ccy_badge("USD", "figures in US dollars; ratios are currency-neutral")}
 {picks_section(df, meta, mem)}
@@ -666,8 +692,8 @@ future returns.</p></div></section>
             f'</span>{NAV}</div></header>{body}'
             f'<footer class="shell-foot"><div class="container"><p>Composite picker '
             f'and CFA-framework analysis on free public data. Educational research, '
-            f'not investment advice.</p></div></footer>{FILTER_JS}{extra.get("js", "")}</body></html>')
-    open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(themed(html, "stocks.html"))
+            f'not investment advice.</p>{credits_for("stocks.html")}</div></footer>{FILTER_JS}{extra.get("js", "")}</body></html>')
+    open(f"{DOCS}/stocks.html", "w", encoding="utf-8").write(themed(card_tables(html), "stocks.html"))
 
     # low-token AI copy + reproducibility dump (weights stay OUT of the public copy)
     # wave 14: the pick lines are the PUBLISHED list (rank order), which may include a name ranked 21-25

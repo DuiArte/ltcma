@@ -616,11 +616,11 @@ re-bases to 100 and every indicator recomputes from the month you choose. The US
 comparison chart begins Jan&nbsp;2007 (the first month all three USD strategies coexist);
 earlier starts only extend the longer-history columns in the indicator table below.</p>
 {CTRL}</section>
-<section class="block"><h2>Growth of 100 — USD strategies vs S&amp;P 500</h2>
+<section class="block" id="growth"><h2>Growth of 100 — USD strategies vs S&amp;P 500</h2>
 <div class="tile chart wide"><div class="ch">{div(f_eq,'eq')}</div></div>
 <p class="note">Log scale, indexed to 100 at the chosen start. Every strategy compounds
 with materially lower drawdowns than the index (below).</p></section>
-<section class="block"><h2>Drawdown</h2>
+<section class="block" id="drawdown"><h2>Drawdown</h2>
 <div class="tile chart wide"><div class="ch">{div(f_dd,'dd')}</div></div></section>
 <section class="block"><h2>Drawdown Episodes</h2>
 <p class="note">The three deepest peak-to-recovery episodes per strategy inside
@@ -630,9 +630,9 @@ range button above to reset the view.</p>
 <table class="ptable" id="dd-ep"><thead><tr><th style="text-align:left">Strategy</th>
 <th>Peak</th><th>Trough</th><th>Depth</th><th>To trough</th><th>Recovered</th></tr></thead>
 <tbody id="dd-ep-body"></tbody></table></div></section>
-<section class="block"><h2>Mexican Equity Rotation vs IPC (MXN)</h2>
+<section class="block" id="mexico"><h2>Mexican Equity Rotation vs IPC (MXN)</h2>
 <div class="tile chart wide"><div class="ch">{div(f_bars,'bars')}</div></div></section>
-<section class="block"><h2>Indicator Set</h2>
+<section class="block" id="indicators"><h2>Indicator Set</h2>
 <div class="tile" style="padding:0 16px 8px;overflow-x:auto">
 <table class="ptable"><thead><tr><th>Indicator</th>{head}</tr></thead>
 <tbody>{body}</tbody></table></div>

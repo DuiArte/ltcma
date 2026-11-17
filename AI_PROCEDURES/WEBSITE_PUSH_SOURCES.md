@@ -23,10 +23,20 @@ It also runs `scripts/31_research_library.py` (2026-11-10, the Research Library 
 "Research" corner), which writes exactly `docs/research-library.html` + `docs/research-library.ai.txt`: an
 index of every research item the other generators publish (built from the same data, every link checked against
 the pages) and the sources behind the public pages. Render-only, no network. Right after it the refresh runs
-`scripts/guard_site_rules.py` (ds_gate R1-R9 on the built pages; writes nothing; R8 = no headline figure shown twice on a page, `scripts/fig_repeats.py`; R9 = dark mode, `tools/theme_gate.py`). Dark mode (2026-11-10 wave r2) adds one generated file, `docs/_design_system/theme.css`, written by 17 with tokens.css / base.css (`design_system.emit()`); every public generator passes its page through `design_system.themed()`. The deploy's page transformation ships with the sources (`tools/deploy_docs_r2.py`, `tools/theme_transform.py`, the header / head strings in `tools/theme_kit/`): it writes the generated commit of that wave and is the rollback's reverse step (`--reverse`), so neither depends on a local folder. The image heroes (2026-11-10) are
+`scripts/guard_site_rules.py` (ds_gate R1-R12 on the built pages; writes nothing; R12 = Congress grouped by filing, the Stock Research phone cards and the fitted Pick Tracker, and the r3 CSS fixes in style.css (sticky table heads, the printed footer, the phone Research menu, with its rules in theme.css, the one-row phone header with the theme control below 360 px; browser half: `tools/layout_browser_check.js`), the Composite Picks pills' `aria-pressed`, the stock pages' justified-P/E n/m clause against their payout and the offset of every "in cash, by choice" note on the portfolio page (the entries and the decisions chart); R11 = the "On this page" bar and note(); R8 = no headline figure shown twice on a page, `scripts/fig_repeats.py`; R9 = dark mode, `tools/theme_gate.py`; R10 = the share head (with its script and the card's alt text), 404 / sitemap / robots, the Plotly bundle, one Fed vintage on the whole page, the Congress money format). Dark mode (2026-11-10 wave r2) adds one generated file, `docs/_design_system/theme.css`, written by 17 with tokens.css / base.css (`design_system.emit()`); every public generator passes its page through `design_system.themed()`. The deploy's page transformation ships with the sources (`tools/deploy_docs_r2.py`, `tools/theme_transform.py`, the header / head strings in `tools/theme_kit/`): it writes the generated commit of that wave and is the rollback's reverse step (`--reverse`), so neither depends on a local folder. The image heroes (2026-11-10) are
 emitted by `scripts/design_system.py` `emit_assets()` from the committed `assets/img/` into `docs/assets/img/`,
-byte-identical, by every generator whose page shows one (17, 18, 30, 31), so a single job's render (e.g. the
-07:00 consensus job running 30 alone) never leaves a page without its image.
+byte-identical, by every generator whose page shows one (17, 18, 19, 20, 25, 30, 31; wave r3: one photograph
+per page, `design_system.PAGE_HEROES`), so a single job's render (e.g. the 07:00 consensus job running 30 alone)
+never leaves a page without its image.
+Wave r3 (2026-11-10) adds generated files written by 17 on every build through `design_system.emit_share()`:
+`docs/404.html` (GitHub Pages serves it for any missing path), `docs/sitemap.xml`, `docs/robots.txt`, and the share
+images (`favicon.svg`, `favicon_32.png`, `apple_touch_180.png`, `og_<tab>.png`) copied byte-identically from the
+committed `assets/img/` into `docs/assets/img/` (the same mechanism as the heroes). Every page's head (title, share
+meta, favicon, the Plotly bundle) is `design_system.site_head()`, run inside `themed()`; so is the long pages'
+sticky "On this page" bar (`design_system.otp_insert`). The r3 deploy's generated commit is written by
+`tools/deploy_docs_r3.py` (shipped with the sources; `--reverse` is the rollback's step): it also puts each page's
+photograph on the committed pages (`design_system.hero_retrofit`), publishes the new photographs and removes the
+retired ones' files from `docs/assets/img/`.
 
 It also runs `scripts/35_bt_replay.py` (2026-10-07), which writes only `data/bt_replay/<key>.json`
 (the out-of-sample replays of the public backtests, rendered by `24_backtests.py` on `bt_*.html`

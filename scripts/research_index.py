@@ -362,9 +362,12 @@ def section_items():
         if pg is None:
             continue
         for sid, h2, body in SEC_RX.findall(pg):
-            note = re.search(r'<p class="note"[^>]*>(.*?)</p>', body, re.S)
+            # the section's first explanatory note: a plain .note paragraph or (wave r3) a note() component's body
+            note = re.search(r'<p class="note"[^>]*>(.*?)</p>|<div class="nt-b">(.*?)</div></details>'
+                             r'|<p class="nt nt-d[^"]*">(.*?)</p>', body, re.S)
+            nt = next((g for g in note.groups() if g is not None), "") if note else ""
             out.append(_item(id=f"sec-{rel.split('.')[0]}-{sid}", type="Page section", title=text(h2),
-                             summary=brief(note.group(1)) if note else "", page=label, href=f"{rel}#{sid}"))
+                             summary=brief(nt) if nt else "", page=label, href=f"{rel}#{sid}"))
         lede = re.search(r'<p class="lede">(.*?)</p>', pg, re.S)
         out.append(_item(id=f"page-{rel.split('.')[0]}", type="Page", title=label,
                          summary=brief(lede.group(1)) if lede else "", page=label, href=rel))

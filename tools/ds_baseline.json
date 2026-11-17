@@ -1,4 +1,9 @@
 {
+ "404.html": {
+  "charts": 1,
+  "tables": 0,
+  "tiles": 0
+ },
  "backtests.html": {
   "charts": 0,
   "tables": 0,

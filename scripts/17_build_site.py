@@ -11,6 +11,7 @@ from glossary import (GLOSSARY, NAV, ccy_badge, bt_load, bt_common,
                       bt_indicators, bt_g100, BT_JS)
 from design_system import CSS_LINKS, axis_formats, assert_no_entities
 from design_system import hero, photo, credits_footer, ET_CSS, TABS_JS   # 2026-11-10 remake
+from design_system import hero_for, credits_for   # wave r3: one photograph per page (design_system.PAGE_HEROES)
 from design_system import themed, themed_css   # 2026-11-10 wave r2: dark mode (head boot + colour tokens)
 import design_system
 
@@ -487,6 +488,16 @@ for _lbl, _ser, _unit, _dec in RECAP_SPEC:
         _DELTA[_lbl] = f"<span style='color:{GREY}'>{_when}</span>"
         continue
     _d = _cur - _base
+    # wave r3 (2026-11-10): a move of a yield, rate, breakeven or spread reads in basis points ("+2 bp", not "+0.02%")
+    if _unit == "%":
+        _bp = round(_d * 100)
+        if _bp == 0:
+            _DELTA[_lbl] = f"<span style='color:{GREY}'>{_when} &middot; unchanged</span>"
+        else:
+            _DELTA[_lbl] = (f"<span style='color:{GREY}'>{_when} &middot;</span> "
+                            f"<span style='color:{INK};font-weight:600'>{'&#9650;' if _bp > 0 else '&#9660;'} "
+                            f"{_bp:+d} bp</span>")
+        continue
     if abs(_d) < 0.5 * 10 ** (-_dec):
         _DELTA[_lbl] = f"<span style='color:{GREY}'>{_when} &middot; unchanged</span>"
     else:
@@ -682,7 +693,7 @@ except Exception as _e:  # noqa: BLE001
 # regime_state.json (20's single writer)
 _FED_ROWS, _WATCH_FED, _fp, _fp_day = "", "", None, ""
 try:
-    _fp = _load_json(f"{D}/market_intel/fed_path_public.json", None)
+    _fp = design_system.fed_path_newest(D)      # wave r3: the same ONE vintage as Market Intel (30)
     if _fp and _fp.get("meetings"):
         _fp_day = (_fp.get("taken_at") or "")[:10]
         _nx, _fm = _fp["next"], _fp.get("first_likely_move")
@@ -725,7 +736,7 @@ try:
                 f'<div class="gauge" role="img" aria-label="stress {float(_rs["stress"]):+.2f} sigma on a scale from minus 2 to plus 2">'
                 f'<i style="left:{_pos:.1f}%"></i></div><div class="gends"><span>calm</span><span>stress</span></div></div>')
     if _WATCH_FED or _reg:
-        _fed_src = (f'Fed odds: Kalshi decision-market prices from {_day(_fp_day)}, refreshed every weekday (the Market Intel page can be a day newer). '
+        _fed_src = (f'Fed odds: Kalshi decision-market prices from {_day(_fp_day)}, refreshed every weekday (the Market Intel page can be newer). '
                     if _WATCH_FED and _fp_day else "")
         _WATCH_HTML = ('<article class="xcard"' + (f' data-fed-taken="{_fp_day}"' if _WATCH_FED else "") + '>'
                        '<p class="xk"><i>3</i>Watch &middot; what markets price</p>'
@@ -924,7 +935,7 @@ INDEX = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <body><header class="shell"><div class="shell-in">
 <span class="brand">Carlos Duarte&nbsp;·&nbsp;<b>Quantitative Research</b></span>{NAV}
 </div></header>
-{hero("cliffs", _HERO_IN, DOCS, pos="center 38%")}
+{hero_for("index.html", _HERO_IN, DOCS)}
 <main class="container">
 {SUMMARY}
 {TODAY}
@@ -958,7 +969,7 @@ applications. Mexico City &middot; CFA Level I Candidate.</p>
 <footer class="shell-foot"><div class="container">
 <p>Built with free public data and open-source tools. Expected returns are
 forward-looking estimates, not guarantees; actual outcomes will differ.
-This is research, not investment advice.</p>{credits_footer("cliffs")}</div></footer>
+This is research, not investment advice.</p>{credits_for("index.html")}</div></footer>
 {TABS_JS}
 </body></html>"""
 open(f"{DOCS}/index.html", "w", encoding="utf-8").write(themed(INDEX, "index.html"))
@@ -1240,7 +1251,9 @@ main{padding:4rem 0 5rem}
    overflow:hidden clips the plot while it settles instead of letting it push. */
 .tile{background:var(--panel);border:1px solid var(--line);padding:14px;
   box-shadow:none;transition:background .15s ease-out;
-  min-width:0;overflow:hidden}
+  min-width:0;overflow:hidden;overflow:clip}
+/* wave r3 (bug a): overflow:clip clips the same way but does not make the tile a scroll container, so a sticky
+   table head inside it follows the page (design_system ET_CSS: the head's offset); hidden stays as the fallback */
 .tile:hover{background:#fff}
 .chart.wide{grid-column:1 / -1}
 .ch{width:100%}
@@ -1364,8 +1377,10 @@ main{padding:4rem 0 5rem}
 
 /* ---- interaction polish (2026-06-10): smooth anchors, scroll-reveal, ---- */
 /* ---- sticky table headers, sortable/searchable tables, print          ---- */
-html{scroll-behavior:smooth}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* fix round 1 (r3 continuation, V2-11): smooth only once the r3 head script (design_system.SITE_JS) set html.sm,
+   after the page loaded and settled -- a cold #link then lands under the header instead of overshooting */
+html.sm{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html,html.sm{scroll-behavior:auto}}
 .rv{opacity:0;transform:translateY(6px);transition:opacity .3s ease-out,transform .3s ease-out}
 .rv.vis,.vis{opacity:1;transform:none}
 .ptable thead th{position:sticky;top:59px;background:var(--panel);z-index:2}
@@ -1385,7 +1400,10 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
 .tsearch:focus{border-color:var(--accent-line)}
 .tsearch::placeholder{color:var(--muted)}
 @media print{
-  .shell,.shell-foot,.pills,.toc,.btctl,.ccy-toggle,.tsearch{display:none!important}
+  .shell,.pills,.toc,.btctl,.ccy-toggle,.tsearch{display:none!important}
+  /* wave r3 (bug c): .shell-foot is no longer hidden: every printout keeps "not investment advice" and the credit */
+  .shell-foot{padding:1rem 0 0;border-top:1px solid #bbb}
+  tr{break-inside:avoid}
   body{background:#fff}
   .hero{padding:1rem 0}
   main{padding:1rem 0}
@@ -1418,6 +1436,8 @@ th.sortable .arr{font-size:9px;color:var(--accent);margin-left:3px}
   /* round 1 (review V9): the 5-across rule above (<= 1100 px, 3 columns) out-specified this one, so on a phone
      portfolio's money tiles sat 3 to a row and ran 25 px past their cards */
   .metrics[style*="repeat(5"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  /* wave r3: the fifth tile of a 5-tile row does not sit alone in half a row */
+  .metrics[style*="repeat(5"]>.metric:last-child:nth-child(odd){grid-column:1 / -1}
   .hero{padding:3.5rem 0 2.5rem}
 }
 @media(max-width:560px){
@@ -1467,6 +1487,13 @@ open(f"{DOCS}/style.css", "w", encoding="utf-8").write(themed_css(CSS + ET_CSS, 
 # base.css are <link>ed BEFORE style.css, so style.css still wins every shared selector
 # until a page opts in with `<body class="ds-v2">`.
 _ds_out = design_system.emit(DOCS)
+# wave r3: the favicon set + the share cards (from assets/img), 404.html, sitemap.xml and robots.txt, every run
+if not design_system.emit_share(DOCS):
+    print("  WARN share: a favicon / card source is missing under assets/img (the pages still name them)")
+# wave r3 (builder B): every page's photograph, every run -- a page 19 / 20 / 25 keep at its committed copy (Yahoo / FRED
+# block) still finds its images even in a fresh docs/ (the generators that show one emit their own as well)
+if not design_system.emit_assets(DOCS, design_system.all_asset_names()):
+    print("  WARN heroes: a photograph's source is missing under assets/img (design_system.all_asset_names())")
 print(f"Carbon site built -> {DOCS}  | regime={regime} | as-of {ASOF}")
 print(f"  index.html, report.html, style.css, figures/  ({len(CHARTS)} locked charts)")
 print(f"  design system -> {_ds_out} (tokens.css, base.css)")
