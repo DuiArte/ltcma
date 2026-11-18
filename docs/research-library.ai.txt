@@ -59,19 +59,19 @@ Backtest | 2026-05-26 | Candle Range Theory (CRT) + Regime Filter | Research · 
 Backtest | 2026-05-26 | Breedon-Ranaldo | Failed / archived | strategies.html#backtests
 Backtest | 2026-05-26 | Momentum Rotation | Failed / archived | strategies.html#backtests
 Backtest | 2026-05-26 | Relative-Weakness Pairs | Failed / archived | strategies.html#backtests
-Project | 2026-11-16 | Static Drift-Weight 50/30/20 | Research | projects.html
+Project | 2026-11-17 | Static Drift-Weight 50/30/20 | Research | projects.html
 Project | 2026-11-09 | LTCMA Methodology | Research | projects.html
 Project | 2026-10-09 | AI Procedures (Quant) | Tooling | projects.html
 Project | 2026-10-09 | Backtests Archive | Research | projects.html
 Project | 2026-05-28 | Terse | Tooling | projects.html
-Stock page | 2026-11-17 | AMZN: CFA-framework equity analysis | - | stock_AMZN.html
-Stock page | 2026-11-17 | GOOGL: CFA-framework equity analysis | - | stock_GOOGL.html
-Stock page | 2026-11-17 | MSFT: CFA-framework equity analysis | - | stock_MSFT.html
-Stock page | 2026-11-17 | META: CFA-framework equity analysis | - | stock_META.html
-Stock page | 2026-11-17 | IBM: CFA-framework equity analysis | - | stock_IBM.html
-Stock page | 2026-11-17 | BA: CFA-framework equity analysis | - | stock_BA.html
-Stock page | 2026-11-17 | NVDA: CFA-framework equity analysis | - | stock_NVDA.html
-Stock page | 2026-11-17 | AAPL: CFA-framework equity analysis | - | stock_AAPL.html
+Stock page | 2026-11-18 | AMZN: CFA-framework equity analysis | - | stock_AMZN.html
+Stock page | 2026-11-18 | GOOGL: CFA-framework equity analysis | - | stock_GOOGL.html
+Stock page | 2026-11-18 | MSFT: CFA-framework equity analysis | - | stock_MSFT.html
+Stock page | 2026-11-18 | META: CFA-framework equity analysis | - | stock_META.html
+Stock page | 2026-11-18 | IBM: CFA-framework equity analysis | - | stock_IBM.html
+Stock page | 2026-11-18 | BA: CFA-framework equity analysis | - | stock_BA.html
+Stock page | 2026-11-18 | NVDA: CFA-framework equity analysis | - | stock_NVDA.html
+Stock page | 2026-11-18 | AAPL: CFA-framework equity analysis | - | stock_AAPL.html
 Page section | - | The discovery funnel | - | research.html#funnel
 Page section | - | The batch record — 15 consecutive negatives | - | research.html#batches
 Page section | - | Everything tested, by source | - | research.html#tally
