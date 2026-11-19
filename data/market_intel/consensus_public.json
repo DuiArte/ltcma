@@ -1,17 +1,17 @@
 {
  "edition": "official",
- "run_date": "2026-11-18",
+ "run_date": "2026-11-19",
  "month": "2026-11",
  "first_official": "2026-11-01",
  "summary": [
-  "Among public-equity rows with n>=4, Europe (8.1) and EM (8.0, n=7) lead; US large cap sits at 6.0 (n=8, range 1.7-7.6), US small cap 6.5, Japan 6.4, global 6.8.",
-  "Managers agree most on rates and credit: intermediate Treasuries 4.9 (IQR 24bp, n=8), IG corporates 5.4 (23bp, n=6), high yield 5.9 (27bp, n=8), with cash at 3.7 (n=6).",
-  "Private equity has the highest median of any row, 9.7 (n=5); private credit sits at 7.0 (IQR 127bp, n=4) and hedge funds at 5.5 (n=4).",
-  "Ranked by IQR among rows with n>=4, the widest disagreements are EM equity (250bp), commodities (171bp), US small cap (165bp) and private equity (155bp); the tightest is EM local debt (20bp).",
-  "This site's LTCMA differs most on commodities: 3.5 vs public median 5.7 (220bp below, n=7); it is also below on UK equity (7.0 vs 8.9, n=3) and US high yield (5.0 vs 5.9, n=8).",
-  "This site's LTCMA is higher on DM ex-US equity (7.7 vs 7.1, n=3) and gold (3.3 vs 1.6, a single publisher), and 40bp lower on cash (3.3 vs 3.7), intermediate Treasuries and IG.",
-  "Next FOMC: a 25bp hike priced at 92.5% on both venues, a hold at 3.0-3.5%; zero cuts this year at 98.3-98.8%, backing Invesco's and BlackRock Investment Institute's higher-for-longer calls over Goldman Sachs AM's easing.",
-  "US recession starting this year is priced at 2.0% (Kalshi) and 2.2% (Polymarket), consistent with Robeco's and Mercer's mid-cycle calls, but with the year nearly over it says little about next year."
+  "Among equity rows with n>=4, Europe (8.1%, n=4) and EM (8.0%, n=7) lead; global 6.8% (n=6), US small cap 6.5% (n=6), Japan 6.4% (n=4); US large cap trails at 6.0% (n=8).",
+  "Fixed income holds the tightest IQRs among rows with n>=4: EM local debt 5.3% (IQR 20bp), IG corporate 5.4% (23bp), intermediate Treasuries 4.9% (24bp), high yield 5.9% (27bp); cash 3.7% (n=6).",
+  "Ranked by IQR (rows with n>=4), the widest disagreements are EM equity (250bp), commodities (171bp), US small cap (165bp) and private equity (155bp), which also has the top median, 9.7%.",
+  "US large cap spans 1.7-7.6% around a 6.0% median (n=8); the split is valuation drag (Ninety One, Invesco, Vanguard, below) versus AI-boosted earnings (BNY Investments, Fidelity International, above).",
+  "High yield's numbers are tight (IQR 27bp, n=8) but stances split: PIMCO and Amundi underweight, Goldman Sachs AM and UBS GWM CIO overweight; in private credit, PIMCO's high-conviction underweight faces a mostly overweight field.",
+  "This site's LTCMA trails public medians most on commodities (3.5% vs 5.7%, n=7), UK equity (7.0% vs 8.9%, n=3), China equity (7.4% vs 8.5%, n=3) and US high yield (5.0% vs 5.9%, n=8).",
+  "Prediction markets side with higher-for-longer calls (Invesco, BlackRock Investment Institute): a 25bp hike at the next FOMC is priced at 91.5% on both venues, zero 2026 cuts at 98.4% (Polymarket) to 99.0% (Kalshi).",
+  "That pricing contradicts Goldman Sachs AM's soft-landing case of possibly two 2026 cuts and Mercer's accommodative-policy view; 2026 US recession is priced at 1.5% (Kalshi) and 2.4% (Polymarket), consistent with resilient-growth calls."
  ],
  "publishers": [
   {
@@ -372,14 +372,14 @@
    "publisher": "UBS GWM CIO",
    "firm": "UBS GWM CIO",
    "product": "Year Ahead forecasts",
-   "edition": "Year Ahead 2027: Sustaining resilience (published 18 Nov 2026)",
+   "edition": "Year Ahead 2027: Sustaining resilience (launched 18 Nov 2026)",
    "horizon": 1,
    "basis": "unknown",
    "currency": null,
    "url": "https://www.ubs.com/global/en/wealthmanagement/insights/chief-investment-office/year-ahead/forecasts.html",
    "numbers_shown": true,
    "n_forecasts": 0,
-   "n_views": 15,
+   "n_views": 18,
    "tier": "Q"
   },
   {
@@ -570,7 +570,7 @@
     "stance": "neutral",
     "conv": "medium",
     "view_only": true,
-    "why": "Stay invested: solid earnings and AI capex support equities, but high expectations leave risk-reward more balanced; reduce concentration and diversify."
+    "why": "Stay invested, but strong gains and high expectations leave global equity risk-reward more balanced, with moderate returns and greater dispersion expected."
    },
    "A31": {
     "v": 7.7,
@@ -1641,7 +1641,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Likes high yield bonds (region unspecified) for additional income and return potential, complementing quality bonds; elevated carry supportive."
+    "why": "High yield bonds (region unspecified) liked as a complement to quality bonds, adding income and return potential."
    },
    "A31": {
     "v": 6.1,
@@ -1862,7 +1862,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Likes emerging market bonds (currency unspecified) for additional income and return potential alongside a core of quality bonds."
+    "why": "Emerging market bonds liked for additional income and return potential; currency not specified, mapped here to hard-currency sovereigns."
    },
    "A31": {
     "v": 5.8,
@@ -2181,7 +2181,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Broad commodities and copper should benefit from structural demand from power networks, data centers and electrification, diversifying return drivers."
+    "why": "Broad commodity exposure adds return drivers, hedges supply and inflation risks, and benefits from structural demand from power networks, data centers, electrification."
    },
    "A23": {
     "stance": "neutral",
@@ -2249,7 +2249,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Favors hedge fund strategies exploiting market dispersion, adding differentiated relative-value returns beyond public stocks and bonds."
+    "why": "Favor hedge fund strategies that exploit market dispersion, adding differentiated relative-value returns beyond public equities and bonds."
    },
    "A31": {
     "v": 5.8,
@@ -2333,7 +2333,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Favors operationally focused private equity and secondaries to broaden growth sources within a diversified portfolio."
+    "why": "Favor operationally focused private equity and secondaries to broaden growth sources within a diversified portfolio."
    },
    "A31": {
     "v": 10.5,
@@ -2606,7 +2606,7 @@
     "stance": "underweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Put excess cash to work: beyond near-term liquidity needs, surplus cash likely drags long-term returns and offers weaker inflation protection."
+    "why": "Excess cash (generally, not US-specific) drags on long-term returns; keep liquidity for near-term needs and redeploy the surplus."
    },
    "A33": {
     "v": 3.7,
@@ -3225,7 +3225,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Gold diversifies and hedges fiscal, geopolitical and inflation risks; government debt, geopolitical uncertainty and central bank demand should support it."
+    "why": "Gold diversifies portfolios and hedges fiscal, geopolitical and inflation risks; government debt, geopolitical uncertainty and central bank demand should support it."
    },
    "A33": {
     "v": 1.6,
@@ -3279,7 +3279,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Favors core and core-plus infrastructure with visible cash flows, aided by investment in AI capacity, power generation and electrification."
+    "why": "Favor core and core-plus infrastructure with visible cash flows; investment in AI capacity, power, electrification and defense supports demand."
    },
    "A31": {
     "v": 6.7,
@@ -3348,7 +3348,7 @@
     "stance": "overweight",
     "conv": "medium",
     "view_only": true,
-    "why": "Favors select emerging market carry strategies; higher-yielding currency pairs benefit from policy and interest rate divergence."
+    "why": "Favor select emerging market carry strategies and certain EM currency pairs to earn higher yields."
    },
    "A40": {
     "stance": "overweight",
@@ -3905,33 +3905,33 @@
     "down": 3,
     "flat": 0
    },
-   "headline": "US large cap: 1.7-7.6 range splits on whether AI-driven earnings growth outruns valuation compression.",
+   "headline": "US large cap: valuation drag versus AI earnings, 1.7-7.6% around a 6.0% median (n=8)",
    "bull": {
     "publishers": [
-     "AQR",
      "BNY Investments",
      "T. Rowe Price",
      "Fidelity International",
+     "AQR",
      "Goldman Sachs AM",
      "BlackRock Investment Institute"
     ],
-    "argument": "AI lifts productivity and earnings. BNY Investments, at the 7.6 range high, builds in AI-boosted earnings-share growth with valuations held constant; Fidelity International cites AI revenue growth and buybacks; Goldman Sachs AM cites mega-cap earnings power and lasting AI capex; BlackRock Investment Institute's overweight is now strategic only. AQR and T. Rowe Price sit just above the median.",
-    "data_used": "Earnings growth from real GDP, inflation and AI-driven revenue and margin gains, plus dividends and buybacks; BNY holds valuation multiples constant."
+    "argument": "Above the 6.0% median, up to BNY Investments' 7.6%: BNY assumes AI-lifted earnings-share growth with flat multiples; Fidelity International cites AI-driven revenue, dividends and buybacks. Goldman Sachs AM and BlackRock Investment Institute are overweight on mega-cap earnings and AI productivity, though the Institute's November table cut US equities to neutral. AQR and T. Rowe Price land above despite rich valuations.",
+    "data_used": "Earnings and revenue growth boosted by AI, dividend and buyback yield, real GDP and inflation; BNY Investments holds valuation multiples constant rather than assuming mean reversion."
    },
    "bear": {
     "publishers": [
-     "State Street",
      "Vanguard",
      "Invesco",
+     "State Street",
      "Ninety One",
      "PIMCO",
      "Lazard",
      "Amundi"
     ],
-    "argument": "Starting valuations dominate: Ninety One's 1.7 is a record low for its series, with among its most negative revaluation effects; Invesco keeps a material valuation drag; Vanguard sees rich valuations partly offsetting stronger earnings. PIMCO puts the equity risk premium near zero versus bonds; Lazard doubts US resilience and expects allocators to rotate away; Amundi is underweight.",
-    "data_used": "Starting valuations and multiple-change assumptions (State Street, Invesco, Ninety One); equity risk premium versus bond yields (PIMCO); macro resilience (Lazard)."
+    "argument": "Below the median, down to Ninety One's 1.7%, a record low on negative revaluation. Invesco's valuation drag stays material despite tech earnings and buybacks; for Vanguard, high valuations damp stronger earnings; State Street's building blocks include multiple change. PIMCO sees a negligible equity risk premium versus bonds, Lazard doubts US resilience and expects rotation away, and Amundi is underweight.",
+    "data_used": "Starting valuations and assumed multiple contraction, revaluation impact on long-run returns, and the equity risk premium relative to bond yields."
    },
-   "what_to_watch": "Whether AI investment shows up in US earnings and margins; a P/E de-rating without earnings acceleration supports the lower-return side, sustained margin gains the higher."
+   "what_to_watch": "Whether AI-driven earnings growth validates current multiples: forward EPS revisions, profit margins versus long-run equilibrium, and the earnings yield gap to Treasuries."
   },
   {
    "asset": "US_SmallCap",
@@ -3944,27 +3944,27 @@
     "down": 0,
     "flat": 0
    },
-   "headline": "US small cap: 165bp IQR; the split is whether small caps earn a premium over large caps.",
+   "headline": "US small cap: 165bp IQR, split over whether small caps beat large caps; median 6.5% (n=6)",
    "bull": {
     "publishers": [
-     "Vanguard",
-     "AQR",
      "BNY Investments",
+     "AQR",
+     "Vanguard",
      "Goldman Sachs AM"
     ],
-    "argument": "Vanguard and AQR put small caps above their large-cap figures; Vanguard notes small caps weakened last quarter. Goldman Sachs AM cites attractive valuations, expected rate cuts, faster earnings growth and a pickup in M&A. BNY Investments' 7.5 range high sits slightly below its broad US equity figure, as it assumes little size premium with firms staying private longer.",
-    "data_used": "Relative valuations after small-cap weakness, expected rate cuts, earnings acceleration and M&A activity; BNY's factor model with a weak size premium."
+    "argument": "Above the 6.5% median, up to BNY Investments' 7.5%. Vanguard (after third-quarter weakness) and AQR rank small caps above their own large-cap figures; BNY lands high despite a weak size premium, since its broad US equity view is high. Goldman Sachs AM is overweight on valuations, expected rate cuts, accelerating earnings and renewed M&A.",
+    "data_used": "Valuations, earnings acceleration, expected rate cuts and M&A (Goldman Sachs AM); AQR's real return plus inflation; BNY Investments' factor model with a weak size premium."
    },
    "bear": {
     "publishers": [
-     "State Street",
+     "T. Rowe Price",
      "Invesco",
-     "T. Rowe Price"
+     "State Street"
     ],
-    "argument": "State Street, Invesco and T. Rowe Price all rank small caps below their own large-cap figures. Invesco's valuation drag narrowed, but slower long-run earnings growth leaves small caps trailing mid caps; T. Rowe Price's valuation-anchored figure was upgraded yet stays below the median; State Street's 5.0 range low comes from dividend, earnings-growth and multiple building blocks.",
-    "data_used": "Building blocks of dividend yield, real earnings growth and multiple change; Invesco's lower long-term earnings-growth assumption; T. Rowe Price's valuation anchor."
+    "argument": "Below the median, down to State Street's 5.0%. State Street, Invesco and T. Rowe Price each put small caps under their own large-cap figures. Invesco cites weaker long-run earnings growth despite a smaller valuation drag; T. Rowe Price upgraded the segment from its prior edition but stays valuation-anchored. No publisher is underweight.",
+    "data_used": "Building blocks of dividend yield, real earnings growth and multiple change; lower long-term small-cap earnings growth; valuation-anchored forecasts."
    },
-   "what_to_watch": "Small-minus-large earnings revisions and relative valuation; also the Fed path: a 25bp hike is priced at 92.5% on both venues, against Goldman Sachs AM's rate-cut premise."
+   "what_to_watch": "Small-cap earnings growth relative to large caps and refinancing costs; Goldman Sachs AM's rate-cut premise faces zero 2026 cuts priced at 99.0% (Kalshi) and 98.4% (Polymarket)."
   },
   {
    "asset": "EM_Eq",
@@ -3977,30 +3977,30 @@
     "down": 0,
     "flat": 0
    },
-   "headline": "EM equity: widest IQR (250bp) among n>=4 rows; all stated stances positive, but the low side reaches 3.7.",
+   "headline": "EM equity: earnings and weaker-dollar optimism versus revaluation risk; widest IQR (250bp) among rows with n>=4",
    "bull": {
     "publishers": [
-     "BNY Investments",
-     "T. Rowe Price",
      "Robeco",
+     "T. Rowe Price",
+     "BNY Investments",
      "Goldman Sachs AM",
      "BlackRock Investment Institute",
      "Amundi",
      "CIBC Asset Management"
     ],
-    "argument": "T. Rowe Price cites improving earnings momentum and forward estimates; BlackRock Investment Institute upgraded on strong earnings and lower valuations; Goldman Sachs AM cites dollar weakness, cooler inflation, Fed cuts and the P/E discount to the US; BNY Investments adds GDP-led earnings and currency gains. Robeco (8.8) tops the range; Amundi and CIBC Asset Management are overweight.",
-    "data_used": "Earnings momentum and forward estimates, P/E discount to the US, real GDP growth, expected dollar weakness; Robeco and T. Rowe Price use a shorter horizon than the low side."
+    "argument": "Above the 8.0% median, up to Robeco's 8.8%; both top figures (Robeco, T. Rowe Price) are five-year horizons. BNY Investments cites the largest real-GDP lift to earnings plus dollar weakness. Goldman Sachs AM adds Fed cuts and a wide P/E discount to the US; BlackRock Investment Institute cites earnings, cheaper valuations and AI supply-chain exposure. Amundi and CIBC are overweight.",
+    "data_used": "Forward earnings momentum, real GDP contribution to earnings, a weaker dollar, Fed easing assumptions and the P/E discount to US equities."
    },
    "bear": {
     "publishers": [
-     "Vanguard",
      "Invesco",
+     "Vanguard",
      "Ninety One"
     ],
-    "argument": "Ninety One's 3.7 range low reflects negative revaluation, leaving its hedged return in the bottom quartile of its history; Vanguard raised its figure on moderating valuations and firmer fundamentals but stays far below the median and flags the highest volatility among equities; Invesco leans on currency support and dividends, with results hinging on earnings and country valuations.",
-    "data_used": "Negative revaluation from starting valuations (Ninety One); moderating valuations, fundamentals and volatility (Vanguard); currency, dividends and country valuations (Invesco)."
+    "argument": "Below the median, down to Ninety One's 3.7%, a hedged figure in the bottom quartile of its history on negative revaluation. Vanguard raised its view on easing valuations and better fundamentals yet stays below the median, flagging the highest volatility among equities. Invesco is unchanged, with currency and dividend support but outcomes tied to earnings delivery and country valuations.",
+    "data_used": "Revaluation from current multiples, currency-hedged returns versus history, volatility, and dependence on earnings delivery and country-level valuations."
    },
-   "what_to_watch": "EM earnings versus rebounding forward estimates, and the dollar: earnings delivery with a weaker dollar supports the high side; renewed de-rating supports the low."
+   "what_to_watch": "EM earnings revisions, the dollar and the P/E discount to the US; Goldman Sachs AM's assumed Fed cuts are priced out: zero 2026 cuts at 99.0% (Kalshi), 98.4% (Polymarket)."
   },
   {
    "asset": "US_HighYield",
@@ -4013,29 +4013,29 @@
     "down": 2,
     "flat": 1
    },
-   "headline": "US high yield: figures cluster (27bp IQR) but stances split on whether tight spreads underprice rising defaults.",
+   "headline": "US high yield: tight numbers (IQR 27bp, n=8) but stances split on defaults versus income",
    "bull": {
     "publishers": [
-     "BNY Investments",
      "Ninety One",
+     "BNY Investments",
      "Goldman Sachs AM",
      "UBS GWM CIO"
     ],
-    "argument": "Goldman Sachs AM cites solid interest coverage, contained defaults, an improved rating mix, steady demand and M&A support; UBS GWM CIO values the extra income. Ninety One's 6.3 range high reflects higher Treasury yields despite tight spreads and default losses; BNY Investments stays above the median even after netting defaults and assuming spreads widen toward their long-run norm.",
-    "data_used": "All-in yields and carry, higher Treasury yields, interest coverage, ratings mix, demand and M&A; BNY models yield minus defaults with spreads reverting wider."
+    "argument": "Above the 5.9% median, up to Ninety One's 6.3%, lifted by higher Treasury yields rather than spreads; BNY Investments nets defaults off yield while assuming spreads widen toward their long-run median. Goldman Sachs AM is overweight given solid interest cover, contained defaults, an improved ratings mix and M&A support; UBS GWM CIO, region unspecified, values high yield's income.",
+    "data_used": "Higher starting Treasury yields, yield net of expected default losses, interest coverage, default trends and ratings mix; BNY Investments already assumes spread widening."
    },
    "bear": {
     "publishers": [
      "State Street",
-     "AQR",
      "T. Rowe Price",
+     "AQR",
      "PIMCO",
      "Amundi"
     ],
-    "argument": "PIMCO reads tight spreads as complacency while defaults climb and AI threatens leveraged legacy-sector borrowers; T. Rowe Price expects spread widening to absorb part of the carry; State Street adjusts yields and spreads for default probability; AQR's real-return-plus-inflation build gives the 5.0 range low; Amundi is underweight.",
-    "data_used": "Spread levels versus history, default-probability haircuts, expected spread widening, default trends and AI disruption of levered issuers; AQR adds expected inflation to a real return."
+    "argument": "Below the median, down to AQR's 5.0%, built as real return plus expected inflation. T. Rowe Price expects spread widening to eat part of the carry; State Street haircuts yields and spreads for default probability. PIMCO, underweight, reads tight spreads as complacency as defaults rise and AI threatens leveraged legacy borrowers, in a late credit cycle. Amundi is underweight.",
+    "data_used": "Tight spreads versus a rising default trend, default-adjusted yield models, and AQR's real-return-plus-inflation build."
    },
-   "what_to_watch": "HY default rates and spreads: widening from near-historic tights with rising defaults supports the lower-return side; stable spreads and contained defaults let carry dominate."
+   "what_to_watch": "Realized US high-yield default and loss rates versus spread levels: rising defaults with spreads still tight would support PIMCO; contained defaults would support Goldman Sachs AM."
   },
   {
    "asset": "Commodities",
@@ -4048,7 +4048,7 @@
     "down": 0,
     "flat": 1
    },
-   "headline": "Commodities: 171bp IQR (n=7) hinges on futures returns over cash; this site's LTCMA (3.5) sits with the low side.",
+   "headline": "Commodities: 171bp IQR around a 5.7% median (n=7); futures-premium models versus low, thinly explained forecasts",
    "bull": {
     "publishers": [
      "AQR",
@@ -4056,19 +4056,19 @@
      "Robeco",
      "UBS GWM CIO"
     ],
-    "argument": "AQR (6.7, range high) adds a long-run excess return of equal-weighted futures over cash to the expected real cash return; Invesco cites exposure to inflation and supply shocks; Robeco, barely above the median, ties outcomes to conflicts and the dollar; UBS GWM CIO expects demand from grid build-out, data centers and electrification, notably for copper.",
-    "data_used": "Long-run excess returns of commodity futures over cash plus real cash yield (AQR); inflation and supply-shock sensitivity; electrification and data-center demand for copper."
+    "argument": "Above the 5.7% median, up to AQR's 6.7%, built from a futures excess return over cash plus the real cash return. Invesco cites inflation and supply-shock sensitivity; Robeco ties outcomes to conflicts and the dollar. UBS GWM CIO is overweight as a hedge against supply and inflation risk, with structural demand from power grids, data centers and electrification.",
+    "data_used": "Long-run futures excess return over cash plus real cash yield (AQR), inflation and supply-shock sensitivity, and structural demand from electrification and data centers."
    },
    "bear": {
     "publishers": [
+     "T. Rowe Price",
      "State Street",
-     "BNY Investments",
-     "T. Rowe Price"
+     "BNY Investments"
     ],
-    "argument": "State Street builds from US inflation and dollar-index forecasts, futures roll return, positioning and collateral return. BNY Investments sits at the 2.3 range low with high volatility, little changed from its prior edition, but does not explain its drivers; T. Rowe Price gives no asset-specific rationale either.",
-    "data_used": "Inflation and dollar-index forecasts, roll yield, positioning and collateral return (State Street); BNY Investments and T. Rowe Price explain no asset-specific drivers."
+    "argument": "Below the median, down to BNY Investments' 2.3%, a low, high-volatility figure little changed on the year whose drivers BNY does not explain; T. Rowe Price also gives no rationale. Only State Street details a build: US inflation and dollar forecasts, futures roll return, positioning and collateral return. No publisher is underweight.",
+    "data_used": "State Street's inputs: US inflation and dollar-index forecasts, futures roll return, positioning and collateral return; BNY Investments and T. Rowe Price disclose no drivers."
    },
-   "what_to_watch": "Roll yield on broad commodity futures and the dollar trend; sustained backwardation and a weaker dollar would support the high side, contango the low."
+   "what_to_watch": "Futures roll yield and realized inflation versus T-bill collateral returns; the 25bp hike priced at 91.5% on both venues would lift the collateral component."
   },
   {
    "asset": "Global_Govt_Bonds",
@@ -4081,15 +4081,15 @@
     "down": 1,
     "flat": 2
    },
-   "headline": "Global govt bonds: figures span only 4.8-5.3; the split is fiscal strain versus diversification and policy divergence.",
+   "headline": "Global government bonds: narrow numbers (IQR 39bp, n=4) but stances split on fiscal strain versus diversification",
    "bull": {
     "publishers": [
      "Robeco",
      "Ninety One",
      "PIMCO"
     ],
-    "argument": "PIMCO's highest-conviction view: out-of-sync economies and divergent central banks open diversification, country and curve opportunities from attractive starting yields. Robeco says higher yields improved expected returns, though not without risk; Ninety One, after a severe developed-bond bear market, puts developed bond expected returns at their highest in decades. Both sit at the 5.3 range high.",
-    "data_used": "Starting yields, cross-country divergence in cycles and policy, curve positioning; both above-median figures are USD-hedged (Robeco, Ninety One)."
+    "argument": "Above the 5.1% median, both at the 5.3% range top on USD-hedged composites: Robeco says higher yields lifted expected returns, though not without risk; Ninety One puts developed sovereign returns near the centre of their history. PIMCO's highest-conviction overweight rests on desynchronized cycles and diverging policy, creating diversification and country and curve opportunities from attractive starting yields.",
+    "data_used": "Starting yields hedged to USD, cross-country cycle and policy divergence, and curve and country-selection opportunities."
    },
    "bear": {
     "publishers": [
@@ -4097,10 +4097,10 @@
      "Fidelity International",
      "BNY Investments"
     ],
-    "argument": "BNY Investments argues fiscal strain and steeper curves weaken sovereigns' risk-adjusted appeal, preferring real assets and private markets for diversification. Invesco and Fidelity International project income-driven returns from current yields; Fidelity, at the 4.8 range low, is nonetheless overweight, expecting sovereigns to cushion recessions.",
-    "data_used": "Starting yields as the main return driver (Invesco, Fidelity International); fiscal strain and curve steepening (BNY Investments)."
+    "argument": "Below the median, down to Fidelity International's 4.8%, which sits low despite Fidelity's overweight: it sees income as the main driver and sovereigns diversifying in recessionary shocks. Invesco's figure rests on income from starting yields. BNY Investments, underweight, argues fiscal strain weakens sovereigns' risk-adjusted appeal and points to real assets and private markets for diversification.",
+    "data_used": "Income from current yield curves, fiscal strain on sovereign balance sheets, and the relative appeal of real assets and private markets as diversifiers."
    },
-   "what_to_watch": "Term premia and curve steepness across DM sovereigns, and the stock-bond correlation: steepening on fiscal supply supports BNY's view; a negative correlation in risk-off episodes supports PIMCO's."
+   "what_to_watch": "Stock-bond correlation during equity drawdowns, term premia under fiscal strain, and cross-country policy divergence, with the Fed's next move priced as a 25bp hike at 91.5% on both venues."
   },
   {
    "asset": "Private_Equity",
@@ -4113,27 +4113,26 @@
     "down": 0,
     "flat": 0
    },
-   "headline": "Private equity: 6.6-10.5 range turns on whether an illiquidity premium survives fees and leverage.",
+   "headline": "Private equity: illiquidity premium versus levered public equity net of fees; 6.6-10.5% around a 9.7% median (n=5)",
    "bull": {
     "publishers": [
      "BNY Investments",
      "T. Rowe Price",
-     "Fidelity International",
      "UBS GWM CIO",
      "CIBC Asset Management"
     ],
-    "argument": "BNY Investments adds an illiquidity premium to public-equity exposure, with private capital funding AI and infrastructure; T. Rowe Price cites the premium and active management; Fidelity International, overweight, says manager choice is key given higher rates and dry powder. The side's figures run from the 9.7 median (Fidelity) to 10.5. UBS GWM CIO and CIBC Asset Management are overweight.",
-    "data_used": "Public-equity factor exposure plus an assumed illiquidity premium (BNY Investments, T. Rowe Price); Cambridge Associates global PE benchmark; manager selection amid elevated dry powder."
+    "argument": "Above the 9.7% median, up to BNY Investments' 10.5%: BNY adds a strong illiquidity premium to public-equity factor exposure, with private capital funding AI innovation and infrastructure. T. Rowe Price, on a five-year horizon, credits the illiquidity premium and active management. UBS GWM CIO is overweight operationally focused private equity and secondaries; CIBC Asset Management is also overweight.",
+    "data_used": "Public-equity factor exposure plus an illiquidity premium, Cambridge Associates Global PE history, active management, and private capital's role financing AI and infrastructure."
    },
    "bear": {
     "publishers": [
      "State Street",
      "AQR"
     ],
-    "argument": "After fees, private equity resembles levered public equity: AQR's levered dividend discount model for US buyouts, net of fees, produces the 6.6 range low despite an upgrade; State Street extrapolates fund history, landing near leverage-adjusted public equity after fees. AQR sees compressed risk premia in private assets against positive real cash rates.",
-    "data_used": "Levered dividend discount model for US buyouts net of fees, with debt cost and multiple inputs (AQR); extrapolated fund returns versus leverage-adjusted listed equity (State Street)."
+    "argument": "Below the median, down to AQR's 6.6%, a levered dividend-discount model of US buyouts net of heavy fees; cheaper debt and multiple expansion lifted it, yet AQR still sees compressed premia in private assets. State Street extrapolates historical fund returns, which after fees roughly match leverage-adjusted listed equity, implying little premium beyond leverage. No publisher is underweight.",
+    "data_used": "Levered dividend-discount model with fee drag and financing costs (AQR); extrapolated fund history benchmarked to leverage-adjusted listed equity (State Street)."
    },
-   "what_to_watch": "Net-of-fee buyout returns versus leverage-matched public equity, exit and distribution activity, and buyout financing costs."
+   "what_to_watch": "Net-of-fee buyout returns against leverage-adjusted public equity, exit and distribution activity, and buyout debt costs, whose decline lifted AQR's estimate."
   },
   {
    "asset": "Private_Credit",
@@ -4146,29 +4145,29 @@
     "down": 1,
     "flat": 0
    },
-   "headline": "Private credit: most stances positive, but PIMCO sees direct-lending stress and AQR sees fees erasing the premium.",
+   "headline": "Private credit: PIMCO's high-conviction underweight versus a mostly overweight field; 5.0-9.2% around a 7.0% median (n=4)",
    "bull": {
     "publishers": [
-     "State Street",
      "T. Rowe Price",
+     "State Street",
      "Goldman Sachs AM",
      "BlackRock Investment Institute",
      "Amundi",
      "CIBC Asset Management"
     ],
-    "argument": "Goldman Sachs AM sees a yield pickup over public credit with historically fewer defaults than syndicated loans, favoring strong underwriting. T. Rowe Price, at the 9.2 range high, cites an illiquidity premium and demand for private financing; BlackRock Investment Institute backs only selected private credit. State Street sits above the median; Amundi and CIBC Asset Management are overweight.",
-    "data_used": "Yield spread over public credit, historical default rates versus syndicated loans, illiquidity premium, Cliffwater Direct Lending index (T. Rowe Price), senior private debt benchmark (State Street)."
+    "argument": "Above the 7.0% median: T. Rowe Price's five-year 9.2% (range top) rests on an illiquidity premium and structural demand for private capital; State Street's net-of-fee senior-debt figure is unexplained. Goldman Sachs AM cites a yield pickup over public credit and a lower default history than syndicated loans. BlackRock Investment Institute, Amundi and CIBC Asset Management are overweight, the Institute selectively.",
+    "data_used": "Illiquidity premium and Cliffwater Direct Lending history (T. Rowe Price), yield spread over public credit, and historical default rates versus syndicated loans."
    },
    "bear": {
     "publishers": [
-     "AQR",
      "Fidelity International",
+     "AQR",
      "PIMCO"
     ],
-    "argument": "PIMCO sees the most strain in middle-market direct lending (extended maturities, PIK, financial engineering), expects far larger losses and prefers asset-based finance. AQR, at the 5.0 range low, models it as levered floating-rate high yield whose fees absorb any illiquidity premium. Fidelity International sits just below the median despite an overweight stance, seeing no immediate stress.",
-    "data_used": "Borrower stress signals: maturity extensions, PIK use, financial engineering (PIMCO); a levered floating-rate high-yield model net of fees, at current spreads and cash rates (AQR)."
+    "argument": "Below the median, down to AQR's 5.0%: modeled as levered floating-rate high yield, fees absorb any illiquidity premium, and tighter spreads and lower cash rates cut it. Fidelity International is overweight but sits just below the median, seeing no immediate stress. PIMCO's high-conviction underweight cites maturity extensions, PIK use and financial engineering in direct lending, expecting much higher losses.",
+    "data_used": "Stress signals in direct lending (maturity extensions, PIK, financial engineering) and AQR's levered floating-rate high-yield proxy net of fees, sensitive to spreads and cash rates."
    },
-   "what_to_watch": "Direct-lending non-accruals, PIK share and realized losses, plus amend-and-extend volume; rising losses would confirm PIMCO's stress call, stable ones the yield-pickup case."
+   "what_to_watch": "Direct-lending non-accruals, PIK share and realized losses; the 25bp hike priced at 91.5% on both venues would lift floating-rate income and borrower strain alike."
   }
  ],
  "diff_prior": {
@@ -4429,15 +4428,15 @@
     "topic": "Next FOMC decision",
     "venue": "Kalshi",
     "outcome": "Fed maintains rate",
-    "prob_now": 0.035,
+    "prob_now": 0.025,
     "prob_prior": 0.875,
-    "delta_pp": -84
+    "delta_pp": -85
    },
    {
     "topic": "Next FOMC decision",
     "venue": "Polymarket",
     "outcome": "No change",
-    "prob_now": 0.0295,
+    "prob_now": 0.0225,
     "prob_prior": 0.855,
     "delta_pp": -83
    },
@@ -4445,23 +4444,23 @@
     "topic": "Next FOMC decision",
     "venue": "Kalshi",
     "outcome": "Hike 25bps",
-    "prob_now": 0.925,
+    "prob_now": 0.915,
     "prob_prior": 0.125,
-    "delta_pp": 80
+    "delta_pp": 79
    },
    {
     "topic": "Next FOMC decision",
     "venue": "Polymarket",
     "outcome": "25 bps increase",
-    "prob_now": 0.925,
+    "prob_now": 0.915,
     "prob_prior": 0.135,
-    "delta_pp": 79
+    "delta_pp": 78
    },
    {
     "topic": "Next Banxico decision",
     "venue": "Polymarket",
     "outcome": "No change",
-    "prob_now": 0.93,
+    "prob_now": 0.935,
     "prob_prior": 0.595,
     "delta_pp": 34
    },
@@ -4469,9 +4468,9 @@
     "topic": "Next Banxico decision",
     "venue": "Polymarket",
     "outcome": "25 bps decrease",
-    "prob_now": 0.055,
+    "prob_now": 0.05,
     "prob_prior": 0.3465,
-    "delta_pp": -29
+    "delta_pp": -30
    },
    {
     "topic": "Next FOMC decision",
@@ -4485,15 +4484,15 @@
     "topic": "Next FOMC decision",
     "venue": "Polymarket",
     "outcome": "50+ bps increase",
-    "prob_now": 0.0495,
+    "prob_now": 0.0635,
     "prob_prior": 0.0035,
-    "delta_pp": 5
+    "delta_pp": 6
    },
    {
     "topic": "US recession in 2026",
     "venue": "Polymarket",
     "outcome": "US recession by end of 2026?",
-    "prob_now": 0.022,
+    "prob_now": 0.0235,
     "prob_prior": 0.075,
     "delta_pp": -5
    }
@@ -4911,9 +4910,9 @@
   {
    "publisher": "UBS GWM CIO",
    "id": "A19",
-   "cycle_phase": "Ongoing expansion near trend growth, powered by an AI investment boom, with inflation moderating",
+   "cycle_phase": "Resilient expansion near trend growth, AI investment boom, moderating inflation",
    "risk_stance": "neutral",
-   "summary": "Base case (50%): trend growth, robust earnings, rising AI capex, moderating inflation and modestly lower yields; high expectations make equity risk-reward balanced, so stay invested but diversify.",
+   "summary": "Base case (50%) of sustained resilience: solid earnings, rising AI capex, easing inflation, modestly lower yields. Equity risk-reward more balanced; stay invested, reduce concentration, broaden diversification.",
    "risks": [
     "AI bust (20% probability)",
     "Yield reset (10% probability)",
@@ -5072,7 +5071,7 @@
   }
  ],
  "prediction": {
-  "taken_at": "2026-11-18T10:46:23",
+  "taken_at": "2026-11-19T07:06:16",
   "topics": [
    {
     "id": "fed_next",
@@ -5084,37 +5083,37 @@
       "event_id": "KXFEDDECISION-26DEC",
       "url": "https://kalshi.com/markets/kxfeddecision",
       "close": "2026-12-09T18:59:00Z",
-      "volume": 15935846,
+      "volume": 16967785,
       "outcomes": [
        {
         "outcome": "Hike 25bps",
-        "prob": 0.925,
+        "prob": 0.915,
         "basis": "mid",
-        "volume": 3476298
+        "volume": 3577777
        },
        {
         "outcome": "Hike >25bps",
         "prob": 0.065,
         "basis": "mid",
-        "volume": 5346092
+        "volume": 5587813
        },
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.035,
+        "prob": 0.025,
         "basis": "mid",
-        "volume": 5233616
+        "volume": 5915557
        },
        {
         "outcome": "Cut >25bps",
         "prob": 0.005,
         "basis": "mid",
-        "volume": 846669
+        "volume": 847262
        },
        {
         "outcome": "Cut 25bps",
         "prob": 0.005,
         "basis": "mid",
-        "volume": 1033172
+        "volume": 1039376
        }
       ]
      },
@@ -5124,37 +5123,37 @@
       "event_id": "fed-decision-in-december-20260729232808632",
       "url": "https://polymarket.com/event/fed-decision-in-december-20260729232808632",
       "close": "2026-12-10T04:59:00Z",
-      "volume": 38643781,
+      "volume": 41025683,
       "outcomes": [
        {
         "outcome": "25 bps increase",
-        "prob": 0.925,
+        "prob": 0.915,
         "basis": "mid",
-        "volume": 9759780
+        "volume": 10065543
        },
        {
         "outcome": "50+ bps increase",
-        "prob": 0.0495,
+        "prob": 0.0635,
         "basis": "mid",
-        "volume": 7428850
+        "volume": 7721514
        },
        {
         "outcome": "No change",
-        "prob": 0.0295,
+        "prob": 0.0225,
         "basis": "mid",
-        "volume": 9680972
+        "volume": 10232564
        },
        {
         "outcome": "25 bps decrease",
         "prob": 0.0035,
         "basis": "mid",
-        "volume": 6207286
+        "volume": 6611778
        },
        {
         "outcome": "50+ bps decrease",
         "prob": 0.0015,
         "basis": "mid",
-        "volume": 5566893
+        "volume": 6394284
        }
       ]
      }
@@ -5170,19 +5169,19 @@
       "event_id": "KXRATECUTCOUNT-26DEC31",
       "url": "https://kalshi.com/markets/kxratecutcount",
       "close": "2027-01-01T04:59:00Z",
-      "volume": 11657548,
+      "volume": 11659600,
       "outcomes": [
        {
         "outcome": "Exactly 0 cuts",
-        "prob": 0.9875,
+        "prob": 0.99,
         "basis": "mid",
-        "volume": 3193849
+        "volume": 3194223
        },
        {
         "outcome": "Exactly 1 cut",
-        "prob": 0.011,
+        "prob": 0.009,
         "basis": "mid",
-        "volume": 1439289
+        "volume": 1440967
        },
        {
         "outcome": "Exactly 15 cuts",
@@ -5216,43 +5215,43 @@
       "event_id": "how-many-fed-rate-cuts-in-2026",
       "url": "https://polymarket.com/event/how-many-fed-rate-cuts-in-2026",
       "close": "2027-01-01T04:59:00Z",
-      "volume": 56055268,
+      "volume": 56075247,
       "outcomes": [
        {
         "outcome": "0 (0 bps)",
-        "prob": 0.983,
+        "prob": 0.9835,
         "basis": "mid",
-        "volume": 9712406
+        "volume": 9723075
        },
        {
         "outcome": "1 (25 bps)",
-        "prob": 0.0055,
+        "prob": 0.0065,
         "basis": "mid",
-        "volume": 3816040
+        "volume": 3819863
        },
        {
         "outcome": "2 (50 bps)",
-        "prob": 0.0045,
+        "prob": 0.005,
         "basis": "mid",
-        "volume": 3599316
+        "volume": 3604198
        },
        {
         "outcome": "3 (75 bps)",
         "prob": 0.0015,
         "basis": "mid",
-        "volume": 3046169
+        "volume": 3046262
        },
        {
         "outcome": "4 (100 bps)",
         "prob": 0.0015,
         "basis": "mid",
-        "volume": 2845808
+        "volume": 2846317
        },
        {
-        "outcome": "12+ (300+ bps)",
-        "prob": 0.0015,
-        "basis": "mid",
-        "volume": 4183593
+        "outcome": "5 (125 bps)",
+        "prob": 0.0005,
+        "basis": "last",
+        "volume": 3084059
        }
       ]
      }
@@ -5268,13 +5267,13 @@
       "event_id": "KXRECSSNBER-26",
       "url": "https://kalshi.com/markets/kxrecssnber",
       "close": "2027-01-31T13:25:00Z",
-      "volume": 4240176,
+      "volume": 4264216,
       "outcomes": [
        {
         "outcome": "Starts",
-        "prob": 0.02,
+        "prob": 0.015,
         "basis": "mid",
-        "volume": 4240176
+        "volume": 4264216
        }
       ]
      },
@@ -5284,13 +5283,13 @@
       "event_id": "us-recession-by-end-of-2026",
       "url": "https://polymarket.com/event/us-recession-by-end-of-2026",
       "close": "2026-12-31T00:00:00Z",
-      "volume": 2489434,
+      "volume": 2491389,
       "outcomes": [
        {
         "outcome": "US recession by end of 2026?",
-        "prob": 0.022,
+        "prob": 0.0235,
         "basis": "mid",
-        "volume": 2489434
+        "volume": 2491389
        }
       ]
      }
@@ -5306,19 +5305,19 @@
       "event_id": "bank-of-mexico-decision-in-december-2026",
       "url": "https://polymarket.com/event/bank-of-mexico-decision-in-december-2026",
       "close": "2026-12-17T23:59:00Z",
-      "volume": 31601,
+      "volume": 31622,
       "outcomes": [
        {
         "outcome": "No change",
-        "prob": 0.93,
+        "prob": 0.935,
         "basis": "mid",
         "volume": 13137
        },
        {
         "outcome": "25 bps decrease",
-        "prob": 0.055,
+        "prob": 0.05,
         "basis": "mid",
-        "volume": 12654
+        "volume": 12675
        },
        {
         "outcome": "50+ bps decrease",
@@ -5360,15 +5359,15 @@
      "date": "2026-12-09",
      "month": "december",
      "kalshi": {
-      "cut": 0.0097,
-      "hold": 0.0338,
-      "hike": 0.9565,
+      "cut": 0.0099,
+      "hold": 0.0246,
+      "hike": 0.9655,
       "quality": "firm",
-      "volume": 15935846,
+      "volume": 16968785,
       "outcomes": [
        {
         "outcome": "Hike 25bps",
-        "prob": 0.925
+        "prob": 0.915
        },
        {
         "outcome": "Hike >25bps",
@@ -5376,20 +5375,20 @@
        },
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.035
+        "prob": 0.025
        }
       ],
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
      "polymarket": {
       "cut": 0.005,
-      "hold": 0.0292,
-      "hike": 0.9658,
+      "hold": 0.0224,
+      "hike": 0.9727,
       "quality": "firm",
-      "volume": 38643781,
+      "volume": 41025683,
       "url": "https://polymarket.com/event/fed-decision-in-december-20260729232808632"
      },
-     "p_move_by_then": 0.9662
+     "p_move_by_then": 0.9754
     },
     {
      "meeting": "Jan 2027",
@@ -5397,46 +5396,46 @@
      "month": "january",
      "kalshi": {
       "cut": 0.0195,
-      "hold": 0.3756,
-      "hike": 0.6049,
+      "hold": 0.3854,
+      "hike": 0.5951,
       "quality": "firm",
-      "volume": 511034,
+      "volume": 533082,
       "outcomes": [
        {
         "outcome": "Hike 25bps",
-        "prob": 0.605
+        "prob": 0.585
        },
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.385
+        "prob": 0.395
        },
        {
-        "outcome": "Cut 25bps",
-        "prob": 0.015
+        "outcome": "Hike >25bps",
+        "prob": 0.025
        }
       ],
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
      "polymarket": {
-      "cut": 0.0154,
-      "hold": 0.3529,
-      "hike": 0.6317,
+      "cut": 0.0142,
+      "hold": 0.3585,
+      "hike": 0.6272,
       "quality": "firm",
-      "volume": 3930396,
+      "volume": 4038269,
       "url": "https://polymarket.com/event/fed-decision-in-january-20260729233815502"
      },
-     "p_move_by_then": 0.9873
+     "p_move_by_then": 0.9905
     },
     {
      "meeting": "Mar 2027",
      "date": "2027-03-17",
      "month": "march",
      "kalshi": {
-      "cut": 0.0287,
-      "hold": 0.3541,
-      "hike": 0.6172,
+      "cut": 0.029,
+      "hold": 0.3478,
+      "hike": 0.6232,
       "quality": "firm",
-      "volume": 130116,
+      "volume": 132368,
       "outcomes": [
        {
         "outcome": "Hike 25bps",
@@ -5444,7 +5443,7 @@
        },
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.37
+        "prob": 0.36
        },
        {
         "outcome": "Hike >25bps",
@@ -5454,25 +5453,25 @@
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
      "polymarket": {
-      "cut": 0.0353,
-      "hold": 0.3827,
-      "hike": 0.582,
+      "cut": 0.0407,
+      "hold": 0.3482,
+      "hike": 0.6111,
       "quality": "firm",
-      "volume": 277219,
+      "volume": 289382,
       "url": "https://polymarket.com/event/fed-decision-in-march-2027"
      },
-     "p_move_by_then": 0.9955
+     "p_move_by_then": 0.9967
     },
     {
      "meeting": "Apr 2027",
      "date": "2027-04-28",
      "month": "april",
      "kalshi": {
-      "cut": 0.1508,
-      "hold": 0.6131,
-      "hike": 0.2362,
+      "cut": 0.1421,
+      "hold": 0.6193,
+      "hike": 0.2386,
       "quality": "firm",
-      "volume": 131802,
+      "volume": 131817,
       "outcomes": [
        {
         "outcome": "Fed maintains rate",
@@ -5490,57 +5489,57 @@
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
      "polymarket": {
-      "cut": 0.1064,
-      "hold": 0.6152,
-      "hike": 0.2783,
+      "cut": 0.1147,
+      "hold": 0.625,
+      "hike": 0.2603,
       "quality": "firm",
-      "volume": 88083,
+      "volume": 89659,
       "url": "https://polymarket.com/event/fed-decision-in-april-2027"
      },
-     "p_move_by_then": 0.9972
+     "p_move_by_then": 0.998
     },
     {
      "meeting": "Jun 2027",
      "date": "2027-06-09",
      "month": "june",
      "kalshi": {
-      "cut": 0.085,
-      "hold": 0.605,
-      "hike": 0.31,
+      "cut": 0.0773,
+      "hold": 0.6392,
+      "hike": 0.2835,
       "quality": "firm",
       "volume": 49711,
       "outcomes": [
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.605
+        "prob": 0.62
        },
        {
         "outcome": "Hike 25bps",
-        "prob": 0.305
+        "prob": 0.27
        },
        {
         "outcome": "Cut 25bps",
-        "prob": 0.06
+        "prob": 0.065
        }
       ],
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
-     "p_move_by_then": 0.9983
+     "p_move_by_then": 0.9987
     },
     {
      "meeting": "Jul 2027",
      "date": "2027-07-28",
      "month": "july",
      "kalshi": {
-      "cut": 0.0637,
-      "hold": 0.8873,
-      "hike": 0.049,
+      "cut": 0.064,
+      "hold": 0.8867,
+      "hike": 0.0493,
       "quality": "firm",
-      "volume": 206906,
+      "volume": 206930,
       "outcomes": [
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.905
+        "prob": 0.9
        },
        {
         "outcome": "Cut 25bps",
@@ -5553,17 +5552,17 @@
       ],
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
-     "p_move_by_then": 0.9985
+     "p_move_by_then": 0.9988
     },
     {
      "meeting": "Sep 2027",
      "date": "2027-09-15",
      "month": "september",
      "kalshi": {
-      "cut": 0.1366,
-      "hold": 0.7902,
-      "hike": 0.0732,
-      "quality": "firm",
+      "cut": 0.1729,
+      "hold": 0.757,
+      "hike": 0.0701,
+      "quality": "thin",
       "volume": 56574,
       "outcomes": [
        {
@@ -5572,7 +5571,7 @@
        },
        {
         "outcome": "Cut 25bps",
-        "prob": 0.085
+        "prob": 0.13
        },
        {
         "outcome": "Hike 25bps",
@@ -5581,26 +5580,26 @@
       ],
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
-     "p_move_by_then": 0.9988
+     "p_move_by_then": 0.9991
     },
     {
      "meeting": "Oct 2027",
      "date": "2027-10-27",
      "month": "october",
      "kalshi": {
-      "cut": 0.0246,
-      "hold": 0.9557,
-      "hike": 0.0197,
+      "cut": 0.0199,
+      "hold": 0.9602,
+      "hike": 0.0199,
       "quality": "firm",
       "volume": 211033,
       "outcomes": [
        {
         "outcome": "Fed maintains rate",
-        "prob": 0.97
+        "prob": 0.965
        },
        {
         "outcome": "Cut 25bps",
-        "prob": 0.02
+        "prob": 0.015
        },
        {
         "outcome": "Hike 25bps",
@@ -5609,7 +5608,7 @@
       ],
       "url": "https://kalshi.com/markets/kxfeddecision"
      },
-     "p_move_by_then": 0.9989
+     "p_move_by_then": 0.9992
     }
    ],
    "next": {
@@ -5617,15 +5616,15 @@
     "date": "2026-12-09",
     "month": "december",
     "kalshi": {
-     "cut": 0.0097,
-     "hold": 0.0338,
-     "hike": 0.9565,
+     "cut": 0.0099,
+     "hold": 0.0246,
+     "hike": 0.9655,
      "quality": "firm",
-     "volume": 15935846,
+     "volume": 16968785,
      "outcomes": [
       {
        "outcome": "Hike 25bps",
-       "prob": 0.925
+       "prob": 0.915
       },
       {
        "outcome": "Hike >25bps",
@@ -5633,31 +5632,31 @@
       },
       {
        "outcome": "Fed maintains rate",
-       "prob": 0.035
+       "prob": 0.025
       }
      ],
      "url": "https://kalshi.com/markets/kxfeddecision"
     },
     "polymarket": {
      "cut": 0.005,
-     "hold": 0.0292,
-     "hike": 0.9658,
+     "hold": 0.0224,
+     "hike": 0.9727,
      "quality": "firm",
-     "volume": 38643781,
+     "volume": 41025683,
      "url": "https://polymarket.com/event/fed-decision-in-december-20260729232808632"
     },
-    "p_move_by_then": 0.9662
+    "p_move_by_then": 0.9754
    },
    "first_likely_move": {
     "meeting": "Dec 2026",
     "date": "2026-12-09",
     "direction": "hike",
-    "prob": 0.9565,
+    "prob": 0.9655,
     "quality": "firm"
    },
    "first_cumulative_over_half": {
     "meeting": "Dec 2026",
-    "p": 0.9662
+    "p": 0.9754
    }
   }
  },
