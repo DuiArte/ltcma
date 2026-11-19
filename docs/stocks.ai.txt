@@ -1,25 +1,25 @@
 STOCK COMPOSITE PICKS — AI COPY (low-token)
-asof=18 Nov 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
-composite=sum(corr-derived-weight*zscore); weights private; picks=20 names, rule=band15_25: a listed name stays while rank<=25; an unlisted name enters at rank<=15 (displacing the worst-ranked pick); other free places go to the best-ranked unlisted names; band15_25 since 2026-11-09; macro inputs rebuilt weekly since 2026-11-09 (frozen at May 2026 data before; entries/exits on 2026-11-09 are a method change); exit_median_td: nearly all model moves (1925 of 2100) on frozen inputs, likely overstates stays
+asof=19 Nov 2026; universe=40; target=mean post-FOMC fwd5; coverage=40/40; fallback=False
+composite=sum(corr-derived-weight*zscore); weights private; picks=20 names, rule=band15_25: a listed name stays while rank<=25; an unlisted name enters at rank<=15 (displacing the worst-ranked pick); other free places go to the best-ranked unlisted names; band15_25 since 2026-11-09; macro inputs rebuilt weekly since 2026-11-09 (frozen at May 2026 data before; entries/exits on 2026-11-09 are a method change); exit_median_td: nearly all model moves (1925 of 2125) on frozen inputs, likely overstates stays
 fields: rank|ticker|sector|price|composite|dominant_var
 tracker fields (appended; na = not available today; on_list_since prefixed >= only when the spell began before the stored history): on_list_since|td_on_list|ret_since_entry_pct|vs_spy_pp|exit_median_td|target_mean|target_upside_pct|next_earnings
-1|CRWD|Technology|237.03|+0.786|12-1 momentum|2026-11-09|8|+3.7|+6.7|>117|251.28|+6.0|2026-12-01 amc
-2|NET|Technology|300.91|+0.624|Buffett score|2026-06-04|117|+12.0|+15.6|>117|344.19|+14.4|na
-3|PLTR|Technology|156.67|+0.621|Margin of safety|2026-06-04|117|+10.6|+14.1|>117|222.90|+42.3|2027-02-01 amc
-4|SHOP|Technology|139.42|+0.558|Margin of safety|2026-11-09|8|-8.3|-5.3|>117|177.18|+27.1|na
-5|ARM|Technology|182.76|+0.539|Margin of safety|2026-11-09|8|-1.9|+1.1|>117|272.43|+49.1|2027-02-03 amc
-6|AMD|Technology|530.14|+0.525|12-1 momentum|2026-11-03|12|+9.6|+12.8|>117|657.74|+24.1|2027-02-02 amc
-7|SMCI|Technology|24.37|+0.474|Revenue growth|2026-06-04|117|-48.0|-44.5|>117|43.60|+78.9|2027-02-02 amc
-8|NVDA|Technology|150.96|+0.460|Margin of safety|2026-06-04|117|-31.0|-27.4|>117|253.67|+68.0|na
-9|DDOG|Technology|167.11|+0.412|12-1 momentum|2026-08-05|75|-41.0|-35.8|>117|269.65|+61.4|na
-10|LLY|Healthcare|1382.75|+0.407|Margin of safety|2026-06-04|117|+22.9|+26.4|>117|1468.57|+6.2|na
-11|TSLA|Consumer Cyclical|383.72|+0.303|Buffett score|2026-11-09|8|+1.5|+4.5|>117|412.48|+7.5|2027-01-27 amc
-12|ANET|Technology|193.94|+0.278|Rate beta|2026-11-09|8|+4.2|+7.2|>117|249.65|+28.7|na
-13|WMT|Consumer Defensive|127.36|+0.263|Buffett score|2026-06-04|117|+8.2|+11.7|>117|131.90|+3.6|2026-11-19 bmo
-14|SNOW|Technology|279.62|+0.262|Buffett score|2026-09-03|54|-21.6|-16.0|>117|433.02|+54.9|2026-12-02 amc
-15|COST|Consumer Defensive|1096.62|+0.236|Margin of safety|2026-06-04|117|+12.8|+16.3|>117|1085.35|-1.0|2026-12-10 amc
-16|AVGO|Technology|354.05|+0.229|Margin of safety|2026-06-05|116|-8.2|-7.2|106|528.17|+49.2|2026-12-09 amc
-17|AAPL|Technology|352.45|+0.228|Margin of safety|2026-06-04|117|+13.2|+16.8|106|345.63|-1.9|2027-01-28 amc
-18|MSFT|Technology|508.29|+0.189|Margin of safety|2026-08-19|65|+5.0|+10.0|106|636.12|+25.1|2027-01-27 amc
-20|GOOGL|Communication Services|282.44|+0.128|Margin of safety|2026-07-23|84|-11.1|-10.0|106|400.37|+41.8|na
-21|ORCL|Technology|113.89|+0.043|FCF yield|2026-06-04|117|-51.8|-48.3|48|236.18|+107.4|2026-12-14 amc
+1|CRWD|Technology|243.46|+0.793|12-1 momentum|2026-11-09|9|+6.5|+11.4|>118|251.28|+3.2|2026-12-01 amc
+2|NET|Technology|303.68|+0.629|Buffett score|2026-06-04|118|+13.0|+18.5|>118|344.19|+13.3|na
+3|PLTR|Technology|153.68|+0.625|Margin of safety|2026-06-04|118|+8.5|+13.9|>118|222.90|+45.0|2027-02-01 amc
+4|SHOP|Technology|131.97|+0.560|Margin of safety|2026-11-09|9|-13.2|-8.3|>118|177.18|+34.3|na
+5|ARM|Technology|177.17|+0.544|Margin of safety|2026-11-09|9|-4.9|-0.0|>118|272.43|+53.8|2027-02-03 amc
+6|AMD|Technology|489.19|+0.526|12-1 momentum|2026-11-03|13|+1.1|+6.2|>118|657.74|+34.5|2027-02-02 amc
+7|SMCI|Technology|23.84|+0.470|Revenue growth|2026-06-04|118|-49.2|-43.7|>118|43.60|+82.9|2027-02-02 amc
+8|DDOG|Technology|166.46|+0.415|12-1 momentum|2026-08-05|76|-41.2|-34.2|>118|269.65|+62.0|na
+9|LLY|Healthcare|1351.12|+0.410|Margin of safety|2026-06-04|118|+20.1|+25.5|>118|1468.57|+8.7|na
+10|NVDA|Technology|145.98|+0.399|Revenue growth|2026-06-04|118|-33.2|-27.8|>118|246.67|+69.0|na
+11|TSLA|Consumer Cyclical|374.41|+0.307|Buffett score|2026-11-09|9|-1.0|+3.9|>118|412.48|+10.2|2027-01-27 amc
+12|ANET|Technology|189.59|+0.280|Rate beta|2026-11-09|9|+1.8|+6.7|>118|249.65|+31.7|na
+13|WMT|Consumer Defensive|126.04|+0.267|Buffett score|2026-06-04|118|+7.0|+12.5|>118|131.90|+4.7|2026-11-19 bmo
+14|SNOW|Technology|268.59|+0.254|Buffett score|2026-09-03|55|-24.7|-17.2|>118|433.02|+61.2|2026-12-02 amc
+15|COST|Consumer Defensive|1093.83|+0.240|Margin of safety|2026-06-04|118|+12.5|+17.9|>118|1085.35|-0.8|2026-12-10 amc
+16|AVGO|Technology|346.65|+0.233|Margin of safety|2026-06-05|117|-10.1|-7.2|107|526.47|+51.9|2026-12-09 amc
+17|AAPL|Technology|349.21|+0.232|Margin of safety|2026-06-04|118|+12.2|+17.6|107|345.63|-1.0|2027-01-28 amc
+18|MSFT|Technology|498.30|+0.193|Margin of safety|2026-08-19|66|+2.9|+9.8|107|636.12|+27.7|2027-01-27 amc
+20|GOOGL|Communication Services|272.66|+0.133|Margin of safety|2026-07-23|85|-14.2|-11.2|107|400.15|+46.8|na
+21|ORCL|Technology|110.57|+0.045|FCF yield|2026-06-04|118|-53.2|-47.8|48|236.18|+113.6|2026-12-14 amc

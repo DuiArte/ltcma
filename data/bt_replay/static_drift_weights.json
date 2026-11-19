@@ -3,11 +3,11 @@
  "label": "out-of-sample replay",
  "rules_frozen": "2026-05-30",
  "start": "2026-04-30",
- "asof": "2026-11-18",
+ "asof": "2026-11-19",
  "metrics": {
-  "return_pct": -3.86,
-  "max_drawdown_pct": -5.52,
-  "trading_days": 140,
+  "return_pct": -4.26,
+  "max_drawdown_pct": -5.91,
+  "trading_days": 141,
   "n_trades": 18,
   "n_rebalances": 6
  },
@@ -169,6 +169,7 @@
   {"date":"2026-11-13","value":96.9},
   {"date":"2026-11-16","value":96.59},
   {"date":"2026-11-17","value":96.47},
-  {"date":"2026-11-18","value":96.14}
+  {"date":"2026-11-18","value":96.15},
+  {"date":"2026-11-19","value":95.74}
  ]
 }
