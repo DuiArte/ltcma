@@ -1369,6 +1369,7 @@ _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_07102026.csv")]   # 01-
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261021.csv")]   # 13-oct VUG buy, 16-oct DCA QQQ/VGT/VUG/SOXX (SOXX 23+10+10 partials)
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261030.csv")]   # 23-oct DCA + XLE trim, 29-oct AAPL/IBM sells + GOOGL buy (one row says Cancelada = fill), 30-oct DCA
 _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261109.csv")]   # 05-nov DCA (SOXX in post-split units, after its 3:1 split that day)
+_DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261120.csv")]   # 11-nov NVDA buy, LLY + COST sold out; 20-nov DCA QQQ/VGT/VUG/SOXX
 _DM_CACHE = None
 
 
