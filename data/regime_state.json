@@ -1,6 +1,6 @@
 {
- "state": "stress",
- "stress": 0.5243,
+ "state": "neutral",
+ "stress": 0.4988,
  "month": "2026-11",
- "months_in_state": 1
+ "months_in_state": 3
 }
