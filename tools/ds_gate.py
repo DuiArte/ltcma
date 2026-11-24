@@ -15,7 +15,8 @@ The assertions split cleanly by what they need:
     S4   the design-system links precede style.css on every styled page
     R1-R7 (2026-11-10 remake) header completeness, Street held, hero credits, assets / budgets / EXIF,
          the home summary against the pages it summarises, the Research Library's links and sources --
-         see remake_gate() below.
+         see remake_gate() below. R2 also (wave r3s, 2026-11-17): no retail-broker / trading-platform name
+         in any public file under docs/ or data/ (scripts/vendor_names.py)
     R8   (2026-11-10, wave "no repeats") no page shows the same headline figure twice in one view
          (scripts/fig_repeats.py; functional repeats are listed in its ALLOW with a reason)
     R9   (2026-11-10, wave r2, dark mode) tools/theme_gate.py T1-T7: every page with the header is themed (boot,
@@ -168,7 +169,13 @@ def static_gate(write_baseline=False):
 #       page, a declared sub-page (glossary.SUBPAGES) or a redirect stub (round 1, P9)
 #   R2  no page links to the held Street LTCMA page while its public JSON is absent (street.hold); and (addendum
 #       2026-11-10, Carlos, written) no public file under docs/ names a denylisted private source or script
-#       (PRIVATE_NAMES, case-insensitive: every .html / .txt / .css / .js / .json / .xml under docs/, archive/ included)
+#       (PRIVATE_NAMES, case-insensitive: every .html / .txt / .css / .js / .json / .xml under docs/, archive/ included);
+#       and (wave r3s; public pages describe the retail broker and its trading platform in general words,
+#       Carlos, 2026-11-17) no public file under docs/ OR data/ names the retail broker, its trading platform,
+#       the platform's vendor, scripting language or servers
+#       (scripts/vendor_names.py: every file git would publish there -- text, Office / zip / gz members, .xls cells,
+#       image metadata; a PDF / unknown binary there fails;
+#       the same scan is the load-bearing scripts/guard_vendor_names.py in the refresh, and confscan's last section)
 #   R3  every image hero has its picture AND a visible credit line (credit + CC BY 4.0 + source link);
 #       a hero rendered without its image (hero--plain) fails; every page that shows an image prints the
 #       credit in its footer too. Wave r3 (builder B, Carlos 2026-11-10 "Dale play a todo"): the credit line is
@@ -270,7 +277,9 @@ def _hero_credit_checks(name, sec, html, ds, errs, used):
 # R2 denylist (addendum 2026-11-10, Carlos, written): names of the private research stack that must never reach a
 # public file. "dukascopy" = a market-data vendor (cards and report pages scrub it at render time:
 # glossary.bt_scrub_vendor); "macro_event_study" = a private research script (regime.html's Tactical Overlay note).
-# Add a name here and the gate fails wherever it appears; FxPro / MetaTrader are an open question, not listed.
+# Add a name here and the gate fails wherever it appears. The retail broker and its trading platform are not
+# listed here: scripts/vendor_names.py checks them against its PRIVATE term list (wave r3s; read at run time from
+# outside the repo), scans docs/ AND data/, and its scrub rewrites them.
 PRIVATE_NAMES = ("dukascopy", "macro_event_study")
 _PN_EXT = (".html", ".htm", ".txt", ".css", ".js", ".json", ".xml")
 
@@ -398,6 +407,15 @@ def remake_gate(errs, warns):
     # R2 denylist: no private source / script name in any public file
     for e in private_name_checks(DOCS):
         fail(e, errs)
+    # R2 (wave r3s): no retail-broker / trading-platform name in any public file, docs/ AND data/ (any file type)
+    import vendor_names
+    # the repo that holds DOCS (a negative test points DOCS at a copy: its data/ is read too, when it has one)
+    try:
+        vbad, vcount = vendor_names.scan(os.path.dirname(os.path.abspath(DOCS)))
+    except vendor_names.TermsMissing as e:      # the private term list is missing: R2 fails (fail closed)
+        vbad, vcount = [("(the vendor-name check)", str(e))], {}
+    for rel, why in vbad:
+        fail(f"R2 {rel}: {why}", errs)
     # R4 assets
     pub = os.path.join(DOCS, "assets", "img")
     src = os.path.join(ROOT, "assets", "img")
@@ -442,7 +460,10 @@ def remake_gate(errs, warns):
     print(f"remake gate: {n_hdr} headers, {n_hero} image heroes, {len(have)} published images "
           f"({sum(os.path.getsize(os.path.join(pub, f)) for f in have):,} B), {n6} summary pairs, {n7} library items, "
           f"{n8p} pages / {n8f} counted figures checked for repeats, {n9}; R10: {n10} pages with a share head; "
-          f"R11: {n11}; R12: {n12}")
+          f"R11: {n11}; R12: {n12}; R2 vendor names: {sum(vcount.values())} public files "
+          f"({vcount.get('text', 0)} text, {vcount.get('office', 0) + vcount.get('zip', 0) + vcount.get('xls', 0)} "
+          f"office / zip / xls read, "
+          f"{vcount.get('image', 0)} images' metadata read, {vcount.get('known', 0)} known)")
 
 
 def _read(name):

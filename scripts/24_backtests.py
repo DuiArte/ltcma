@@ -14,6 +14,9 @@ Since 2026-10-07 each report page opens with the strategy's out-of-sample replay
 its backtest ended (data/bt_replay/<key>.json, written by 35_bt_replay.py: chart +
 one paragraph), or with its frozen notice (glossary.BT_FROZEN).
 
+Wave r3s (2026-11-17): the fallback JSON's text values and every report page put the retail broker and its
+trading platform in neutral words (scripts/vendor_names.py), so data/ and docs/ name neither.
+
 Run from the scripts/ dir (the daily refresh does `cd scripts && python3 ...`).
 Failures are non-fatal to the pipeline: the daily refresh guards this with `|| echo`.
 """
@@ -35,6 +38,7 @@ sys.path.insert(0, HERE)
 from glossary import NAV, bt_card, bt_replay, bt_day, bt_pct, BT_FROZEN, bt_scrub_vendor  # noqa: E402
 from design_system import CSS_LINKS, axis_formats, assert_no_entities, NAVY, BENCH  # noqa: E402
 from design_system import themed  # noqa: E402  (2026-11-10 wave r2: dark mode)
+from vendor_names import scrub_obj as vendor_scrub_obj  # noqa: E402  (wave r3s: the fallback JSON's text values)
 
 PLOTLY = "https://cdn.plot.ly/plotly-2.35.0.min.js"
 
@@ -128,6 +132,7 @@ def load_catalog():
                 for s in safe.get("strategies", []):
                     s.pop("paths", None)
                 safe = _redact_private(safe)       # free-text fields carried paths too (10-07)
+                safe = vendor_scrub_obj(safe)      # wave r3s: neutral words for the broker / platform in data/
                 os.makedirs(os.path.dirname(FALLBACK), exist_ok=True)
                 with open(FALLBACK, "w", encoding="utf-8") as out:
                     json.dump(safe, out, indent=2, ensure_ascii=False)
@@ -442,7 +447,8 @@ def render_report_page(strat):
     out = shell(f"{esc(strat['name'])} — Backtest Report", body, plot=has_chart,
                 css=OOS_CSS if oos else "")
     # 2026-11-10 (Carlos, written): no private market-data vendor on a public page -- the same scrub as the cards
-    # (glossary.bt_scrub_vendor), next to the private-path redaction above, over the whole page (title included)
+    # (glossary.bt_scrub_vendor), next to the private-path redaction above, over the whole page (title included);
+    # wave r3s (2026-11-17): the same call puts the retail broker / trading platform in neutral words
     out = bt_scrub_vendor(out)
     with open(os.path.join(DOCS, out_name), "w", encoding="utf-8") as fh:
         fh.write(themed(out, out_name))
@@ -508,7 +514,7 @@ def main():
         '<li><b>S&amp;P 500 gate</b> &mdash; must close-or-beat the index on at least one risk-adjusted axis.</li>'
         '<li><b>Survival bar</b> &mdash; maximum drawdown under 10%.</li>'
         '</ol>'
-        '<p>Cost model is pessimistic retail (FxPro embedded per-bar spread as the floor, '
+        '<p>Cost model is pessimistic retail (the retail broker\'s embedded per-bar spread as the floor, '
         'plus markup and stop slippage). Sizing is 1% fixed-fractional; under R-multiple '
         'accounting the Sharpe ratio is sizing-invariant. "n/a" means the metric was not '
         'computed in that report &mdash; it is never guessed.</p></div></section>')

@@ -369,3 +369,32 @@ Chart palette map (`CHART_DARK`, light -> dark): `#ffffff` -> `#171B21`, `#11111
 - **Stock pages, CFA View**: below a 30% payout the justified P/E is "n/m"; a 0% payout says "n/m (no dividend)", any
   other "n/m (payout X% < 30%)"; at 30% or more the trailing P/E is compared with it (19 `verdict_html`). R12 fails a
   clause that does not match the page's payout.
+
+## 2026-11-17 wave r3s: the retail broker and its trading platform in general words (Carlos, 2026-11-17)
+
+- **The retail broker and its trading platform in general words.** Some backtests and the archived report used
+  intraday FX / CFD prices from a retail broker, exported from a retail trading platform. Pages say exactly that,
+  in those words: "retail-broker M5 data", "the retail-broker CSVs", "a retail trading platform",
+  "broker-data window".
+- **Neutral, never false.** Do not name another vendor in its place. Do not suggest exchange data. Keep every
+  attribution a source's licence asks for.
+- **Where it happens.** Text the site writes itself is neutral in the source (the home's skills list). Text it
+  publishes from elsewhere (the strategy catalogue, the backtest REPORT.md files, the hand-written report) goes
+  through `scripts/vendor_names.py` `scrub()` at render time. A new phrasing that reads badly gets a phrase rule
+  there, with a test line in the private term list.
+- **Gate.** ds_gate R2, the load-bearing `guard_vendor_names.py` and confscan read every public file under `docs/`
+  and `data/` (what git publishes). A PDF there fails (it cannot be read); an image's metadata is read, text
+  drawn inside a picture is checked by eye. A name joined to other letters or digits fails too, and so does a long
+  name in any spelling but the brand's own (spaced, dashed, other capitals: such words may be ordinary words, and
+  a rewrite could be untrue), and so do the platform's short name outside the skills list and the server names,
+  its scripting language in any form but its own capitals with a version in one piece (no version, a plural, a
+  separator, other capitals) and a file kind with its dot anywhere but right after a file name in the list's
+  spelling (alone, or in other capitals); the short name and the language are also ordinary acronyms elsewhere.
+  The scrub rewrites none of these, so the text or a phrase rule needs a fix.
+  `data/fx_monthly.csv`'s header line is KNOWN while that file is public (Carlos to decide; `vendor_names.KNOWN`);
+  the same words anywhere else fail.
+- **The term list is private.** It lives outside every repo (`Documents\LTCMA_private\vendor_terms.txt`), with
+  the self-test's cases. `scripts/vendor_names.py` holds only the scrub and the scan and spells no term (its
+  self-test checks its own source). A finding names the kind of term and the line, never the spelling: keep it
+  that way in logs, commit messages and notes. Without the list the gate and the generators stop (fail closed;
+  in the refresh, 17_build_site.py stops first).

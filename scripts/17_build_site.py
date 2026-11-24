@@ -16,6 +16,7 @@ from design_system import themed, themed_css   # 2026-11-10 wave r2: dark mode (
 import design_system
 
 import paths
+from vendor_names import scrub as vendor_scrub   # wave r3s (2026-11-17): neutral words for the broker / platform
 from paths import DATA_S as D, REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
 os.makedirs(f"{DOCS}/figures", exist_ok=True)
 
@@ -360,10 +361,13 @@ EXPERIENCE = [
      "Data pipelines from government APIs (SAT) to executive Power BI dashboards, "
      "with a focus on sensitive data, governance and audit traceability."),
 ]
-SKILLS = ["Python", "C++ / C#", "MQL5", "SQL", "scikit-learn", "hmmlearn", "SciPy",
+# wave r3s: public pages describe the retail broker and its trading platform in general words (Carlos,
+# 2026-11-17). The two tags say what the skill is, in neutral words (vendor_names.scrub maps the old tags to
+# these exact strings, for the committed page).
+SKILLS = ["Python", "C++ / C#", "Trading-platform scripting", "SQL", "scikit-learn", "hmmlearn", "SciPy",
           "Power BI / DAX", "ETL pipelines", "Hidden Markov Models", "Kalman filters",
           "Risk management", "Monte Carlo", "Backtesting", "Asset allocation",
-          "AWS S3", "Financial APIs (IBKR, FxPro, MT5)", "Claude Code (AI-assisted dev)"]
+          "AWS S3", "Financial APIs (IBKR, retail broker platforms)", "Claude Code (AI-assisted dev)"]
 CERTS = ["CFA — Level I Candidate (exam May 2026)",
          "AMIB Figure 3 — current securities-advisory license (renewed Nov 2025)",
          "B.S. Finance — Tecnológico de Monterrey (2019–2021)"]
@@ -980,6 +984,10 @@ for f in os.listdir(f"{REP}/figures"):
 _md = open(f"{REP}/LTCMA_2026.md", encoding="utf-8").read()
 # "toc" only adds an id to each heading (2026-11-10): the Research Library links the report section by section.
 body = markdown.markdown(_md, extensions=["tables", "fenced_code", "sane_lists", "toc"])
+# wave r3s (2026-11-17): the hand-written report names the retail broker and its platform; the PAGE says it in
+# neutral words (vendor_names.scrub on the rendered body). The .md stays as written: editing it would move the
+# report's resync clock (refresh_manifest resync_rule: data newer than report/LTCMA_2026.md).
+body = vendor_scrub(body)
 
 _banner = ""
 if REPORT_ARCHIVED:

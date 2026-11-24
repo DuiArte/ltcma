@@ -9,6 +9,7 @@ Re-run after 17_build_site.py. Idempotent.
 import os, re
 
 from paths import REPORT_S as REP, DOCS_S as DOCS  # repo-anchored (2026-06-10)
+from vendor_names import scrub as vendor_scrub   # wave r3s (2026-11-17): neutral words for the broker / platform
 
 
 def first_sentence(text):
@@ -86,7 +87,18 @@ def digest(md_path, out_path, title):
         out.extend(rows)
         out.append("")
 
-    open(out_path, "w", encoding="utf-8").write("\n".join(out))
+    # wave r3s: the digest quotes the hand-written report; broker / platform names leave in neutral words. The text
+    # is built and scrubbed first and written last, through a temporary file and a replace: a scrub that stops (the
+    # private term list missing, say) leaves the last report.ai.txt as it was, never an empty file.
+    txt = vendor_scrub("\n".join(out))
+    tmp = out_path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(txt)
+        os.replace(tmp, out_path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
     n_tok_est = len("\n".join(out)) // 4
     print(f"  {out_path}  (~{n_tok_est} tokens, {len(contents)} sections, {len(tables)} tables)")
 

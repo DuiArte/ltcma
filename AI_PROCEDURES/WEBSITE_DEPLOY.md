@@ -230,6 +230,7 @@ backstop. Re-grep rendered HTML before every push (see "Sanity scan").
 | Feature formula, universe list | | ✅ |
 | Real $ / position sizes | | ✅ (scale) |
 | Internal paths (`Trading_Index`, `SignalLib`, `/home`, `Downloads`) | | ✅ |
+| Broker / trading-platform names (its vendor, scripting language, servers) | | ✅ neutral words (`scripts/vendor_names.py`, wave r3s) |
 
 ### Sanity scan before commit
 
@@ -239,9 +240,14 @@ paths; real positions. Any hit (other than the allowed `50/30/20`, the viewport
 `initial-scale=1`, JS slider vars, and metric-label fragments in `.ai.txt`) →
 redact in `_BT_PUBLIC` / `_bt_redact` and rebuild.
 
+Since wave r3s its last section reads EVERY public file (`docs/` and `data/`, `bt_*.html`,
+`portfolio.html` and `data/*.json` included) for the retail-broker / trading-platform names
+(`scripts/vendor_names.py --scan`). That section is the only one that fails: confscan exits 1 on a hit. The same
+scan is ds_gate R2 and the load-bearing `scripts/guard_vendor_names.py` in the refresh.
+
 **`confscan.sh` does not scan `portfolio.html`.** It never has. Do not read a
 clean confscan as "the portfolio page is clean" — that page is covered only by
-the in-script guards described below.
+the in-script guards described below. (Exception since wave r3s: the last section, broker / platform names only.)
 
 ### Build-time guards in `18_portfolio.py`
 

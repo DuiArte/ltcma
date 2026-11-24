@@ -732,10 +732,22 @@ _BT_REDACT = [
 ]
 
 
+def _vendor_scrub(text):
+    """scripts/vendor_names.scrub (wave r3s, 2026-11-17: broker / platform names in neutral words), imported on first
+    use, not at module import: a generator that only needs NAV (30_market_intel.py, also inside the Market Intel
+    tests, whose fixture copies a fixed list of five site scripts) must not need vendor_names.py next to it."""
+    from vendor_names import scrub
+    return scrub(text)
+
+
 def _bt_redact(text):
-    """Backstop redactor for any non-curated public text (defence in depth)."""
+    """Backstop redactor for any non-curated public text (defence in depth).
+
+    Wave r3s (2026-11-17): first the broker / platform names become neutral words (vendor_names.scrub), so every
+    research text that reaches a page through this function (23, 27, research_index for 31) names neither."""
     if not text:
         return text
+    text = _vendor_scrub(text)
     for rx, repl in _BT_REDACT:
         text = rx.sub(repl, text)
     # the private verdict lines are typed in a terminal: " -- " is an em dash on the page
@@ -746,19 +758,23 @@ def _bt_redact(text):
 # 2026-11-10 (Carlos, written): no market-data vendor of the private research stack on a public page. ONE scrub,
 # applied at render time to every text that reaches a backtest card (bt_card, the whole card) or a bt_*.html report
 # page (24_backtests.render_report_page, the whole page), so neither the catalogue (data/backtests_strategies.json /
-# the private hub) nor a REPORT.md can bring it back; tools/ds_gate.py R2 fails any page that names it. FxPro and
-# MetaTrader are NOT touched here (an open question for Carlos).
+# the private hub) nor a REPORT.md can bring it back; tools/ds_gate.py R2 fails any page that names it.
+# Wave r3s: public pages describe the retail broker and its trading platform in general words (Carlos,
+# 2026-11-17). The same pass puts those two in neutral, true words (scripts/vendor_names.py: the scrub and the
+# scan; its term list is private, read at run time from outside the repo; ds_gate R2 and the load-bearing
+# guard_vendor_names.py fail any public file under docs/ or data/ that names them).
 #   "23y Dukascopy revalidation" -> "23y revalidation"; "(Dukascopy XAU + extended" -> "(XAU + extended"
 _BT_VENDOR = ((_re.compile(r"\(Dukascopy ", _re.I), "("), (_re.compile(r"\s*\bDukascopy\b", _re.I), ""))
 
 
 def bt_scrub_vendor(text):
-    """Drop the private market-data vendor's name from public card / report text (case-insensitive)."""
+    """Drop the private market-data vendor's name from public card / report text (case-insensitive), and put the
+    retail broker / trading platform in neutral words (vendor_names.scrub, wave r3s)."""
     if not text:
         return text
     for rx, repl in _BT_VENDOR:
         text = rx.sub(repl, text)
-    return text
+    return _vendor_scrub(text)
 
 
 # Curated public-safe (name, what_it_tests, verdict) for each public entry. Keeps

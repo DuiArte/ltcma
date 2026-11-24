@@ -400,6 +400,15 @@ try {
     # deleted content before; this fails the refresh BEFORE commit if it reappears.
     # Every writer of docs/ is listed in AI_PROCEDURES\WEBSITE_PUSH_SOURCES.md.
     Run-Step 'guard_no_snapshot.py'  -LoadBearing | Out-Null
+    # Wave r3s: public pages describe the retail broker and its trading platform in general words (Carlos,
+    # 2026-11-17). The generators write neutral words (scripts/vendor_names.py); this fails the refresh BEFORE
+    # the commit if a retail-broker / trading-platform name still slips into a public file (docs/ + data/, every
+    # file type), so it never reaches GitHub. Load-bearing like the two guards above. The scrub and this guard
+    # read the PRIVATE term list (Documents\LTCMA_private\vendor_terms.txt, outside the repo). Without it the
+    # refresh already stops at 17_build_site.py (TermsMissing: the private term list ... is missing), and this
+    # step would fail too (fail closed): put the file back, check it with `python scripts\vendor_names.py
+    # --terms`, re-run.
+    Run-Step 'guard_vendor_names.py' -LoadBearing | Out-Null
     Pop-Location
     Log "Site rebuild complete."
     # Yahoo fetch-policy gaps (2026-10-23): scripts\yahoo_session.py never retries a 401/403/410/

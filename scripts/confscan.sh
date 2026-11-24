@@ -6,6 +6,9 @@
 # meta initial-scale=1, embedded JS slider vars, and metric-label fragments in
 # the .ai.txt (Tail=/Sharpe=/Omega= etc.). Anything else -> redact in
 # glossary._BT_PUBLIC / _bt_redact and rebuild. See AI_PROCEDURES/WEBSITE_DEPLOY.md.
+# Wave r3s (2026-11-17): the last section scans EVERY public file (docs/ + data/, bt_*.html, portfolio.html and
+# data/*.json included) for the retail broker / trading-platform names (scripts/vendor_names.py). It is the one
+# section that fails: confscan exits 1 when it finds one. The sections above only print.
 cd "$(dirname "$0")/../docs" || exit 1
 for f in backtests.html strategies.html strategies.ai.txt research.html research.ai.txt research-library.html research-library.ai.txt; do
   [ -f "$f" ] || continue
@@ -16,3 +19,5 @@ for f in backtests.html strategies.html strategies.ai.txt research.html research
   echo "--- internal paths / repos ---"; grep -oiE 'Trading_Index|SignalLib|/home/|C:..Users|Downloads|REPORT\.md|/mnt/c' "$f" | sort -u | head
   echo
 done
+echo "============ broker / trading-platform names (every public file: docs/ + data/) ============"
+"${PYTHON:-python}" -X utf8 -B ../scripts/vendor_names.py --scan .. || exit 1
