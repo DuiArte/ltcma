@@ -4,6 +4,7 @@ The 2013-26 ETF window contains no global financial crisis.
 - FX long history: FxPro M5 pairs (clean continuous spot data since 2000).
 NB: the FxPro INDEX CFDs (#USNDAQ100 etc.) were found to have spurious
 year-boundary jumps in early years and are excluded -- FX pairs only.
+Input: fx_monthly.csv from private_data.PRIVATE_DIR (outside the public repo).
 Output: data/regime_longhistory.csv
 """
 import os
@@ -11,9 +12,11 @@ import numpy as np
 import pandas as pd
 
 from paths import DATA_S as D  # repo-anchored (2026-06-10)
+import private_data            # wave r3s: fx_monthly.csv lives outside the public repo
 
 # ---- clean long series: equity from Shiller, FX from FxPro ----
-fx = pd.read_csv(f"{D}/fx_monthly.csv", index_col=0, parse_dates=True)
+fx = pd.read_csv(private_data.require(private_data.FX_MONTHLY, "14_longhistory_regimes.py"), index_col=0,
+                 parse_dates=True)
 fxret = fx[[c for c in fx.columns if c.endswith("_ret")]].copy()
 fxret.columns = [c[:-4] for c in fxret.columns]
 shiller = pd.read_csv(f"{D}/longhistory/shiller_monthly.csv", index_col=0, parse_dates=True)

@@ -16,6 +16,9 @@ data/blotter_clean.csv
 *blotter*.csv
 *fxpro_forex_m5*
 FxPro_M5_*.csv
+# wave r3s (2026-11-17): fx_monthly.csv is a private input of 14_longhistory_regimes.py and lives outside
+# the repo (scripts/private_data.py); a stray copy under data/ is never committed
+data/fx_monthly.csv
 logs/
 
 # local scratch/diagnostic files must never trip the dirty-tree guard or get committed

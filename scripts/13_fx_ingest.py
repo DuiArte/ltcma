@@ -1,14 +1,16 @@
 """Ingest of FxPro M5 data -> monthly returns.
 Tries cudf (GPU) for speed, falls back to pandas per file if the GPU is
 unavailable. Aggregates each instrument to month-end close + monthly returns.
-Output: data/fx_monthly.csv  (monthly close levels + *_ret return columns)
+Output: fx_monthly.csv  (monthly close levels + *_ret return columns) in private_data.PRIVATE_DIR, OUTSIDE the
+public repo; .gitignore keeps data/fx_monthly.csv out.
 """
 import os, time
 import pandas as pd
 
 import paths as _paths
+import private_data as _private   # wave r3s: fx_monthly.csv never goes back under data/ (public)
 SRC = _paths.cuser("Downloads", "fxpro_forex_m5")
-OUT = _paths.DATA_S
+OUT = str(_private.PRIVATE_DIR)
 
 # instruments most useful to the LTCMA risk / regime / currency layers
 WANT = ["#USSPX500", "#USNDAQ100", "#US30", "#US2000",
@@ -62,6 +64,7 @@ ret = lev.pct_change()
 ret.columns = [c + "_ret" for c in ret.columns]
 out = pd.concat([lev, ret], axis=1)
 out.index.name = "Date"
+os.makedirs(OUT, exist_ok=True)
 out.to_csv(f"{OUT}/fx_monthly.csv")
 print(f"\n{engine} ingest of {len(monthly)} instruments in {elapsed:.1f}s")
 print(f"wrote fx_monthly.csv  ({len(lev)} months, {len(monthly)} instruments)")
