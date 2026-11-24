@@ -469,7 +469,7 @@ two remains an open decision, not a settled one.</p>
 <h3 id="23-risk-model-shrinkage-and-long-history">2.3 Risk model — shrinkage and long history</h3>
 <p>Volatility blends a trailing-window estimate with multi-decade history (Shiller
 1871+, Ken French 1990+, Damodaran 1928+), plus <strong>25 years of intraday FX history</strong>
-(FxPro M5 data aggregated to monthly — EURUSD/USDJPY since 2000, USDMXN since
+(retail-broker M5 data aggregated to monthly — EURUSD/USDJPY since 2000, USDMXN since
 2007). The covariance matrix uses <strong>Ledoit-Wolf shrinkage</strong> — well-conditioned
 and positive semi-definite, a requirement for the simulation engine.</p>
 <h3 id="24-priced-in-indicators">2.4 Priced-in indicators</h3>
@@ -1341,7 +1341,7 @@ a deliberate, risk-budgeted decision.</p>
 <p>The regime model is calibrated on 2013–2026 ETF data — a window with no global
 financial crisis. To test whether that biases the result, the calibration was
 re-run on a longer, cleaner dataset: Shiller US equity since 2000 and 25 years of
-FxPro intraday FX history (EURUSD/USDJPY from 2000, USDMXN from 2007), which <em>do</em>
+retail-broker intraday FX history (EURUSD/USDJPY from 2000, USDMXN from 2007), which <em>do</em>
 include the 2008 GFC, the 2000–02 dot-com bust, and 2020.</p>
 <table>
 <thead>
@@ -1382,7 +1382,7 @@ stress regimes, more than equities (1.5×) or developed-market FX (1.2×). The
 peso-heavy Edge-Tilted portfolio therefore concentrates stress risk in the
 currency; that is a deliberate, identified exposure, not a hidden one.</p>
 <blockquote>
-<p><em>Data-quality note:</em> the FxPro index-CFD series (#USNDAQ100 etc.) were found to
+<p><em>Data-quality note:</em> the retail-broker index-CFD series (the US tech 100 index CFD etc.) were found to
 have spurious year-boundary jumps in early years and were <strong>excluded</strong>; only the
 clean continuous FX-pair data and Shiller's equity series were used.</p>
 </blockquote>
@@ -1753,7 +1753,7 @@ confidentiality agreement. The libraries behind it include <strong>scikit-learn<
   has been validated against 25 years of FX/equity history including 2008 and
   2020 (Section 7.6); the deterministic scenario (7.5) imports crisis-magnitude
   shocks explicitly.</li>
-<li><strong>FX/index data quality:</strong> the FxPro intraday FX pairs are clean; the broker's
+<li><strong>FX/index data quality:</strong> the retail-broker intraday FX pairs are clean; the broker's
   index-CFD series had year-boundary artifacts and were excluded (see 7.6).</li>
 <li>This is the <strong>strategic (Step 1)</strong> layer only.</li>
 </ul>
@@ -1778,8 +1778,7 @@ https://pages.stern.nyu.edu/~adamodar/</p>
 <p>French, K. R. (2026). <em>Data library: Developed and emerging-market factor
 returns</em> [Data set]. Tuck School of Business, Dartmouth College.
 https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/</p>
-<p>FxPro. (2026). <em>MetaTrader 5 historical price data</em> [Data set]. FxPro Financial
-Services Ltd.</p>
+<p>FX/CFD retail broker. (2026). <em>Intraday price history (M5 bars), exported from a retail trading platform</em> [Data set].</p>
 <p>J.P. Morgan Asset Management. (2026). <em>Long-term capital market assumptions</em>
 (30th annual ed.). J.P. Morgan.</p>
 <p>Shiller, R. J. (2026). <em>U.S. stock market data, 1871–present, and the

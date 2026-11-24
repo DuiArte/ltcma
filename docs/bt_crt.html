@@ -281,9 +281,9 @@ window.ltcmaTheme={set:function(p){set(p==='light'||p==='dark'?p:'auto',true,fal
 <p><strong>Date:</strong> 2026-05-26
 <strong>Author:</strong> Claude (Dispatch agent)
 <strong>For:</strong> the operator Duarte
-<strong>Instruments:</strong> EURUSD, USDJPY, XAU/USD (Gold), XAG/USD (Silver) — FxPro M5 OHLC, 2016 → 2026-05-19
+<strong>Instruments:</strong> EURUSD, USDJPY, XAU/USD (Gold), XAG/USD (Silver) — retail-broker M5 OHLC, 2016 → 2026-05-19
 <strong>Risk model:</strong> 1% of equity per trade. Walk-forward IS = 2016–2022; OOS = 2023-01-01 → 2026-05-19.
-<strong>Cost model:</strong> Per-bar broker spread from the FxPro CSVs (half spread on entry, half on exit) + fixed slippage on stop fills (3 points EURUSD/USDJPY, 10 GOLD, 20 SILVER).</p>
+<strong>Cost model:</strong> Per-bar broker spread from the retail-broker CSVs (half spread on entry, half on exit) + fixed slippage on stop fills (3 points EURUSD/USDJPY, 10 GOLD, 20 SILVER).</p>
 <hr />
 <h2>! Caveat on strategy rules (read first)</h2>
 <p>The audio your partner sent (<code>[audio file]</code>) <strong>was not on disk</strong> at backtest time. I searched the entire mount — uploads folder empty, no <code>.m4a/.mp3/.wav/.opus/.aac</code> anywhere with that name or any matching pattern. <strong>I did not fabricate a transcription.</strong></p>
@@ -339,7 +339,7 @@ window.ltcmaTheme={set:function(p){set(p==='light'||p==='dark'?p:'auto',true,fal
 <h2>Method</h2>
 <h3>Data</h3>
 <ul>
-<li>FxPro M5 tab-separated CSVs, <code>Time / Open / High / Low / Close / TickVolume / RealVolume / Spread</code>.</li>
+<li>Retail-broker M5 tab-separated CSVs, <code>Time / Open / High / Low / Close / TickVolume / RealVolume / Spread</code>.</li>
 <li>2016 onwards (~770k M5 bars per FX pair, ~720k for metals).</li>
 <li>Per-bar spread is in points; embedded directly in the cost model.</li>
 </ul>
@@ -412,7 +412,7 @@ Overlay (post-hoc filter on base trades):</p>
 <h3>Risk + cost model</h3>
 <ul>
 <li><strong>Risk:</strong> 1% of running equity per trade. PnL multiplier <code>(1 + 0.01 × R)</code>. Compounding equity curve.</li>
-<li><strong>Spread:</strong> half spread (from FxPro <code>Spread</code> column at entry bar) subtracted from entry, half added back at exit.</li>
+<li><strong>Spread:</strong> half spread (from the retail-broker <code>Spread</code> column at entry bar) subtracted from entry, half added back at exit.</li>
 <li><strong>Stop slippage:</strong> when stop is hit, fill is degraded by <code>slip_points × point</code> per instrument (3pt EURUSD/USDJPY, 10pt Gold, 20pt Silver). No slippage on TPs (limit fills).</li>
 <li><strong>No TP slippage assumed.</strong> Realistic for retail limit-order TPs but a tail-risk you should know about.</li>
 </ul>
@@ -640,7 +640,7 @@ Direction split:                 382 long / 125 short (trend-up bias of gold)
 1. <strong>The 2016–2018 segment is mostly flat or down.</strong> The strategy made its money in the 2019–2024 gold bull. If gold transitions to a bear or sideways regime, the long-skewed trend filter will hurt.
 2. <strong>2026 YTD already mildly negative</strong> — early signal that regime conditions may be shifting.
 3. <strong>Sharpe 0.59, Calmar 0.33</strong> — below the threshold most quant shops use to commit capital (&gt;1 / &gt;0.5).
-4. <strong>Cost drag is real but small</strong> — 12% of edge eaten by spread+slippage. If your live broker spreads are wider than the FxPro historical median, this gets worse fast.
+4. <strong>Cost drag is real but small</strong> — 12% of edge eaten by spread+slippage. If your live broker spreads are wider than the retail-broker historical median, this gets worse fast.
 5. <strong>Stop slippage on Gold:</strong> I assumed 10 points (~$0.10). If your live broker slips $0.30–$0.50 on volatile sessions, that doubles cost drag and might kill the edge.
 6. <strong>Silver winners have tiny n.</strong> 138–192 trades over 11 years is not enough to be confident the PF 1.5–1.7 is anything but lucky sampling. I'd require 500+ trades before deploying capital.</p>
 <hr />
@@ -687,9 +687,9 @@ Direction split:                 382 long / 125 short (trend-up bias of gold)
    - GBP: 07:00–17:00 GMT</li>
 <li><strong>Signal:</strong> Short the currency during its local hours, long it during foreign hours.</li>
 <li><strong>Implementation on M5 data:</strong> Compute the intraday return of each currency-pair during the "local" hours of the base vs the quote. Trade direction = sign(quote-local-hours-return − base-local-hours-return).</li>
-<li><strong>Cost model:</strong> Identical to CRT — broker spread per bar from FxPro CSVs.</li>
+<li><strong>Cost model:</strong> Identical to CRT — broker spread per bar from the retail-broker CSVs.</li>
 <li><strong>Variations to sweep:</strong> Hold periods (1h / 4h / 1d), with/without ATR regime, with/without trend filter, equal-weight vs return-weighted portfolio.</li>
-<li><strong>Universe:</strong> EURUSD, USDJPY, GBPUSD, EURJPY, EURGBP (need to add GBP M5 if not already present — confirmed yes in <code>fxpro_forex_m5/FxPro_M5_GBPUSD.csv</code>).</li>
+<li><strong>Universe:</strong> EURUSD, USDJPY, GBPUSD, EURJPY, EURGBP (need to add GBP M5 if not already present — confirmed yes in the retail-broker GBPUSD M5 file).</li>
 <li><strong>Walk-forward:</strong> Same IS 2016-2022 / OOS 2023-2026 split.</li>
 </ol>
 <p>Estimated runtime on this 2-core sandbox: under 5 minutes for the full sweep.</p>
