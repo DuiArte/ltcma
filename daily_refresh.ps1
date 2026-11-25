@@ -454,8 +454,14 @@ try {
         $haveReg = Select-String -Path $regimeFile -Pattern 'class="asof"' | Select-Object -First 1
         Fail ("regime.html as-of mismatch (today {0}). Found: {1}" -f $TodayLong, ($haveReg.Line))
     }
-    $regression = Select-String -Path (Join-Path $Docs '*.html') -Pattern 'fxaANEL','fxaOS'
-    if (($regression | Measure-Object).Count -gt 0) { Fail "CSS regression: fxaANEL/fxaOS found. Aborting." }
+    # F3 guard, exact (2026-11-24): the mangled tokens are exact-case and follow ':' (background:@PANEL, color:@POS
+    # in scripts/fxa_section.py). Select-String is case-insensitive by default, and Plotly's base64 arrays
+    # ("bdata", '/' JSON-escaped as \u002f) matched 'fxaOS' in regime.html on 2026-11-24 16:31 (false positive).
+    $regression = Select-String -Path (Join-Path $Docs '*.html') -CaseSensitive -Pattern '(?<![A-Za-z0-9+/])fxa(?:ANEL|OS)'
+    if (($regression | Measure-Object).Count -gt 0) {
+        $where = ($regression | Select-Object -ExpandProperty Filename -Unique) -join ', '
+        Fail ("CSS regression: fxaANEL/fxaOS found in {0}. Aborting." -f $where)
+    }
     Log "As-of + regression checks passed."
 
     if ($BuildOnly) {
