@@ -1,6 +1,6 @@
 {
  "_comment": "Counts only, by source. Built by scripts/27_research_notes.py from a private ledger of every campaign with its documentation reference.",
- "asof": "2026-11-25",
+ "asof": "2026-11-26",
  "groups": [
   {
    "id": "discovery",
@@ -30,7 +30,7 @@
    "id": "hunt_loop",
    "label": "Strategy Hunt Loop backtests (since 24 Sep 2026)",
    "unit": "strategies",
-   "n": 40
+   "n": 41
   },
   {
    "id": "pipeline",
@@ -39,6 +39,6 @@
    "n": 2
   }
  ],
- "total": 329,
+ "total": 330,
  "unclassified_findings": []
 }

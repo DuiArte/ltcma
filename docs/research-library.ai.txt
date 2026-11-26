@@ -59,8 +59,8 @@ Backtest | 2026-05-26 | Candle Range Theory (CRT) + Regime Filter | Research · 
 Backtest | 2026-05-26 | Breedon-Ranaldo | Failed / archived | strategies.html#backtests
 Backtest | 2026-05-26 | Momentum Rotation | Failed / archived | strategies.html#backtests
 Backtest | 2026-05-26 | Relative-Weakness Pairs | Failed / archived | strategies.html#backtests
+Project | 2026-11-25 | Static Drift-Weight 50/30/20 | Research | projects.html
 Project | 2026-11-24 | Backtests Archive | Research | projects.html
-Project | 2026-11-23 | Static Drift-Weight 50/30/20 | Research | projects.html
 Project | 2026-11-18 | LTCMA Methodology | Research | projects.html
 Project | 2026-10-09 | AI Procedures (Quant) | Tooling | projects.html
 Project | 2026-05-28 | Terse | Tooling | projects.html
