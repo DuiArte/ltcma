@@ -1373,6 +1373,17 @@ _DMF += [os.path.join(_HISTD, "DetalleMovimientos_228128_20261120.csv")]   # 11-
 _DM_CACHE = None
 
 
+def _dm_fill_px(r, sh):
+    """The price a fill EXECUTED at: Importe bruto / Titulos asignados (= the row's `Costo promedio`).
+    `Precio de la orden` is the ORDER's price -- for a limit order, the limit. 44 of 249 fills differ, and
+    7 of them (from 13-Aug on) reach the markers through this family. Example: VGT on 20-Nov had a 1,915.19
+    limit and filled at 1,904.00. The older Historial exports already carry the executed price (VGT 12-May:
+    1,904.76 against a 1,914 order), so this puts both families on one convention (2026-11-27).
+    Display only: cost and P&L come from the net amount. Falls back to the order price for a row with no gross."""
+    gross = _rnum(r.get("Importe bruto"))
+    return round(gross / sh, 6) if sh > 0 and gross > 0 else _rnum(r.get("Precio de la orden"))
+
+
 def _dm_rows():
     global _DM_CACHE
     if _DM_CACHE is not None:
@@ -1407,7 +1418,7 @@ def _dm_rows():
             bucket[key].append(("buy" if r["Movimiento"] == "Buy" else "sell",
                                 _rtk(r["Instrumento"]),
                                 pd.Timestamp(int(_yy), int(_mm), int(_dd)),
-                                sh, _rnum(r.get("Precio de la orden"))))
+                                sh, _dm_fill_px(r, sh)))
         per_page.append(bucket)
     merged = {}
     for bucket in per_page:
