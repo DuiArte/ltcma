@@ -64,14 +64,14 @@ Project | 2026-11-24 | Backtests Archive | Research | projects.html
 Project | 2026-11-18 | LTCMA Methodology | Research | projects.html
 Project | 2026-10-09 | AI Procedures (Quant) | Tooling | projects.html
 Project | 2026-05-28 | Terse | Tooling | projects.html
-Stock page | 2026-11-25 | AMZN: CFA-framework equity analysis | - | stock_AMZN.html
-Stock page | 2026-11-25 | GOOGL: CFA-framework equity analysis | - | stock_GOOGL.html
-Stock page | 2026-11-25 | MSFT: CFA-framework equity analysis | - | stock_MSFT.html
-Stock page | 2026-11-25 | META: CFA-framework equity analysis | - | stock_META.html
-Stock page | 2026-11-25 | IBM: CFA-framework equity analysis | - | stock_IBM.html
-Stock page | 2026-11-25 | BA: CFA-framework equity analysis | - | stock_BA.html
-Stock page | 2026-11-25 | NVDA: CFA-framework equity analysis | - | stock_NVDA.html
-Stock page | 2026-11-25 | AAPL: CFA-framework equity analysis | - | stock_AAPL.html
+Stock page | 2026-11-27 | AMZN: CFA-framework equity analysis | - | stock_AMZN.html
+Stock page | 2026-11-27 | GOOGL: CFA-framework equity analysis | - | stock_GOOGL.html
+Stock page | 2026-11-27 | MSFT: CFA-framework equity analysis | - | stock_MSFT.html
+Stock page | 2026-11-27 | META: CFA-framework equity analysis | - | stock_META.html
+Stock page | 2026-11-27 | IBM: CFA-framework equity analysis | - | stock_IBM.html
+Stock page | 2026-11-27 | BA: CFA-framework equity analysis | - | stock_BA.html
+Stock page | 2026-11-27 | NVDA: CFA-framework equity analysis | - | stock_NVDA.html
+Stock page | 2026-11-27 | AAPL: CFA-framework equity analysis | - | stock_AAPL.html
 Page section | - | The discovery funnel | - | research.html#funnel
 Page section | - | The batch record — 15 consecutive negatives | - | research.html#batches
 Page section | - | Everything tested, by source | - | research.html#tally
